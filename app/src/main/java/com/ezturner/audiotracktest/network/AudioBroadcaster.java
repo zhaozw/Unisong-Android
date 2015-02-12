@@ -2,16 +2,24 @@ package com.ezturner.audiotracktest.network;
 
 import android.util.Log;
 
+import com.ezturner.audiotracktest.network.NTP.NtpServer;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Random;
@@ -36,8 +44,8 @@ public class AudioBroadcaster {
     //The multicast listener for giving out the IP of the multicast stream
     private MulticastSocket mManagementSocket;
 
-    //The listener for when a client requests a packet to be re-sent
-    private DatagramSocket mReliabilitySocket;
+    //The listener for when a client joins the session and starts a TCP handshake
+    private ServerSocket mReliabilityServerSocket;
 
     //The thread that will listen for reliability packets
     private Thread mReliabilityListener;
@@ -54,12 +62,18 @@ public class AudioBroadcaster {
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte streamID;
 
+    //The list of all of the TCP control sockets that are listening for reliability packets
+    private ArrayList<Socket> mReliabilitySockets;
+
     public AudioBroadcaster(){
         try {
             mManagementSocket = new MulticastSocket(PORT);
             mManagementSocket.joinGroup(Inet4Address.getByName("238.17.0.29"));
 
-            mReliabilitySocket = new DatagramSocket(PORT);
+            NtpServer.startNtpServer();
+
+            mReliabilityServerSocket = new ServerSocket(PORT);//
+            //TODO: Configure mReliabilitySocket for TCP
 
         } catch(IOException e){
             e.printStackTrace();
@@ -74,9 +88,10 @@ public class AudioBroadcaster {
 
         packets = new TreeMap<Integer, byte[]>();
 
-
+        mReliabilitySockets = new ArrayList<Socket>();
     }
 
+    //Starts streaming the song, starts the reliability listeners, and starts the control listener
     public void startSongStream(){
         //If another stream is running,
         if(mStreamRunning){
@@ -84,7 +99,7 @@ public class AudioBroadcaster {
             //mReliabilityListener.stop();
         }
 
-        mReliabilityListener = startListener();
+        mReliabilityListener = startReliabilityConnectionListener();
         mReliabilityListener.start();
 
         streamID++;
@@ -92,14 +107,56 @@ public class AudioBroadcaster {
         packets = new TreeMap<Integer, byte[]>();
     }
 
-    private Thread startListener(){
+    //Starts the listener for new connections
+    private Thread startReliabilityConnectionListener(){
         return new Thread(){
             public void run(){
                 while(mStreamRunning){
-                    recieveReliabilityPacket();
+                    Socket socket = null;
+
+                    try {
+                        socket = mReliabilityServerSocket.accept();
+                    } catch(IOException e){
+                        e.printStackTrace();
+                    }
+
+                    if(socket != null){
+                        startSocketListener(socket);
+                    }
                 }
             }
-        });
+        };
+    }
+
+    private Thread startSocketListener(Socket socket){
+
+        class SocketRunnable implements Runnable {
+            Socket socket;
+            SocketRunnable(Socket s) { socket = s; }
+            public void run() {
+                try {
+                    listenToReliabilitySocket(socket);
+                } catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        return new Thread(new SocketRunnable(socket));
+    }
+
+    //Handle new data coming in from a Reliability socket
+    private void listenToReliabilitySocket(Socket socket) throws IOException{
+        BufferedReader inFromClient =
+                new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        DataOutputStream outToClient = new DataOutputStream(socket.getOutputStream());
+
+        while(mStreamRunning) {
+            int packetID = inFromClient.read();
+            System.out.println("Received: " + clientSentence);
+            capitalizedSentence = clientSentence.toUpperCase() + '\n';
+            outToClient.writeBytes(capitalizedSentence);
+        }
     }
 
     public void setListenerState(boolean isRunning){

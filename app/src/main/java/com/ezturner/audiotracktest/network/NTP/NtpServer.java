@@ -3,6 +3,7 @@ package com.ezturner.audiotracktest.network.NTP;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 /**
  * Created by Ethan on 2/10/2015.
@@ -53,6 +54,21 @@ public class NtpServer {
 
     private static void handleNtpPacket(DatagramPacket packet){
 
+        InetAddress address = packet.getAddress();
+        byte[] buf = new NtpMessage().toByteArray();
+        DatagramPacket responsePacket =
+                new DatagramPacket(buf, buf.length, address, 123);
+
+        // Set the transmit timestamp *just* before sending the packet
+        // ToDo: Does this actually improve performance or not?
+        NtpMessage.encodeTimestamp(packet.getData(), 40,
+                (System.currentTimeMillis()/1000.0) + 2208988800.0);
+
+        try {
+            mDatagramSocket.send(responsePacket);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     public static void stopNtpServer(){

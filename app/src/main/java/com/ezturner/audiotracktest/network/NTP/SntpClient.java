@@ -1,12 +1,15 @@
 package com.ezturner.audiotracktest.network.NTP;
 
+import android.test.InstrumentationTestRunner;
 import android.util.Log;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 
 /**
@@ -37,13 +40,95 @@ import java.text.DecimalFormat;
  */
 public class SntpClient
 {
+    //The current server IP
+    private String mServerIP = "";
 
-    public static double getOffset(String serverIP) throws IOException{
+    //The list of offsets to ensure that none of them are crazy innacurate
+    private  ArrayList<Double> list = new ArrayList<Double>();
 
+    //The offset, for everyone to see.
+    private  double mTimeOffset;
+
+    //Set to check if the calculation is done.
+    private int mNumberDone;
+
+    //
+
+    public SntpClient(String serverIP){
+        mServerIP = serverIP;
+
+    }
+
+    //Sends 4 different NTP packets and then calculates the average response time, removing outliers.
+    public double calculateOffset(String serverIP) throws IOException{
+
+        mNumberDone = 0;
+
+        for(int i = 0; i < 4; i++){
+            startOffsetAcquisition();
+            try {
+                wait(5);
+            } catch(InterruptedException e){
+
+            }
+        }
+
+        while(mNumberDone <= 2){
+            try {
+                wait();
+            } catch(InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+
+        double average = 0;
+
+        for(int i = 0; i < list.size(); i++){
+            average += list.get(i);
+        }
+
+        average = average / list.size();
+
+        mTimeOffset = average;
+        list = new ArrayList<Double>();
+
+        return average;
+    }
+
+    public double getOffset(){
+        return mTimeOffset;
+    }
+
+    private Thread startOffsetAcquisition(){
+        return new Thread(){
+            public void run(){
+                try {
+                    getOneOffset();
+                } catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+    }
+
+
+    private Thread waitForRecheck(){
+        return new Thread(){
+            public void run(){
+                try {
+                    Thread.sleep(15 * 60 * 1000);
+                } catch (InterruptedException e){
+                    Log.d("ezturner" , "NTP Re-Check wait interrupted!");
+                }
+            }
+        };
+    }
+
+    private void getOneOffset() throws IOException{
 
         // Send request
         DatagramSocket socket = new DatagramSocket();
-        InetAddress address = InetAddress.getByName(serverIP);
+        InetAddress address = InetAddress.getByName(mServerIP);
         byte[] buf = new NtpMessage().toByteArray();
         DatagramPacket packet =
                 new DatagramPacket(buf, buf.length, address, 123);
@@ -57,9 +142,16 @@ public class SntpClient
 
 
         // Get response
-        Log.d("ezturner" , "NTP request sent, waiting for response...\n");
+        Log.d("ezturner.ntp" , "NTP request sent, waiting for response...\n");
         packet = new DatagramPacket(buf, buf.length);
-        socket.receive(packet);
+        socket.setSoTimeout(100);
+        try {
+            socket.receive(packet);
+        } catch (SocketTimeoutException e) {
+            // resend
+            mNumberDone++;
+            return;
+        }
 
         // Immediately record the incoming timestamp
         double destinationTimestamp =
@@ -79,44 +171,25 @@ public class SntpClient
 
 
         // Display response
-        Log.d("ezturner" , "NTP server: " + serverIP);
-        Log.d("ezturner" , msg.toString());
+        Log.d("ezturner.ntp" , "NTP server: " + mServerIP);
+        Log.d("ezturner.ntp" , msg.toString());
 
-        Log.d("ezturner" , "Dest. timestamp:     " +
+        Log.d("ezturner.ntp" , "Dest. timestamp:     " +
                 NtpMessage.timestampToString(destinationTimestamp));
 
-        Log.d("ezturner" , "Round-trip delay: " +
+        Log.d("ezturner.ntp" , "Round-trip delay: " +
                 new DecimalFormat("0.00").format(roundTripDelay*1000) + " ms");
 
-        Log.d("ezturner" , "Local clock offset: " +
+        Log.d("ezturner.ntp" , "Local clock offset: " +
                 new DecimalFormat("0.00").format(localClockOffset*1000) + " ms");
 
         socket.close();
 
-        return localClockOffset * 1000;
+        list.add(localClockOffset * 1000);
+        mNumberDone++;
+        notifyAll();
     }
 
 
-    /**
-     * Prints usage
-     */
-    static void printUsage()
-    {
-        Log.d("ezturner" ,
-                "NtpClient - an NTP client for Java.\n" +
-                        "\n" +
-                        "This program connects to an NTP server and prints the response to the console.\n" +
-                        "\n" +
-                        "\n" +
-                        "Usage: java NtpClient server\n" +
-                        "\n" +
-                        "\n" +
-                        "This program is copyright (c) Adam Buckley 2004 and distributed under the terms\n" +
-                        "of the GNU General Public License.  This program is distributed in the hope\n" +
-                        "that it will be useful, but WITHOUT ANY WARRANTY; without even the implied\n" +
-                        "warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU\n" +
-                        "General Public License available at http://www.gnu.org/licenses/gpl.html for\n" +
-                        "more details.");
 
-    }
 }
