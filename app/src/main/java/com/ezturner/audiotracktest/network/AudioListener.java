@@ -1,9 +1,9 @@
 package com.ezturner.audiotracktest.network;
 
-import com.ezturner.audiotracktest.network.NTP.SntpClient;
+import com.ezturner.audiotracktest.MainActivity;
+import com.ezturner.audiotracktest.network.ntp.SntpClient;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.MulticastSocket;
 import java.net.Socket;
@@ -24,7 +24,7 @@ public class AudioListener {
 
         try {
             //forgive the lack of class constants, port 1731 4ever
-            mManagementSocket = new MulticastSocket(1731);
+            mManagementSocket = new MulticastSocket(AudioBroadcaster.PORT);
             mManagementSocket.joinGroup(Inet4Address.getByName("238.17.0.29"));
         } catch(IOException e){
             e.printStackTrace();
@@ -34,6 +34,23 @@ public class AudioListener {
 
 
     private void sendControlRequest(){
+
+    }
+
+    //Start listening to the multicast stream
+    public void startListening(){
+        if(! MainActivity.mCastLock.isHeld()){
+            MainActivity.mCastLock.acquire();
+        }
+    }
+
+
+    //Stop listening to the multicast stream
+    public void stopListening(){
+        if(MainActivity.mCastLock.isHeld()){
+            MainActivity.mCastLock.release();
+        }
+
 
     }
 

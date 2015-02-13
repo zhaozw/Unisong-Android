@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest.network.NTP;
+package com.ezturner.audiotracktest.network.ntp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

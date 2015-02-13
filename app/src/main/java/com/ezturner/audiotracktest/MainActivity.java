@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
@@ -14,22 +15,26 @@ import android.view.View;
 
 import com.ezturner.audiotracktest.MediaService.MediaServiceBinder;
 
-import java.io.File;
-import com.ezturner.audiotracktest.Lame;
-
 public class MainActivity extends ActionBarActivity {
 
     private MediaService mediaService;
     private boolean hasStarted = false;
+    public static WifiManager wifiManager;
+    public static WifiManager.MulticastLock mCastLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Log.d("plz" , "work");
         if(!hasStarted) {
+            Log.d("plz" , "work");
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
             Intent ServiceIntent = new Intent(this, MediaService.class);
             bindService(ServiceIntent, mediaConnection, Context.BIND_AUTO_CREATE);
+
+
+            wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+
+            mCastLock = wifiManager.createMulticastLock("mydebuginfo");
         }
         hasStarted = true;
 

@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest.network.NTP;
+package com.ezturner.audiotracktest.network.ntp;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;

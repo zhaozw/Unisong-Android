@@ -1,6 +1,5 @@
-package com.ezturner.audiotracktest.network.NTP;
+package com.ezturner.audiotracktest.network.ntp;
 
-import android.test.InstrumentationTestRunner;
 import android.util.Log;
 
 import java.io.IOException;
@@ -69,17 +68,19 @@ public class SntpClient
             try {
                 wait(5);
             } catch(InterruptedException e){
-
+                e.printStackTrace();
             }
         }
 
-        while(mNumberDone <= 2){
+        while(mNumberDone < 4){
             try {
                 wait();
             } catch(InterruptedException e){
                 e.printStackTrace();
             }
         }
+
+        mNumberDone = 0;
 
         double average = 0;
 

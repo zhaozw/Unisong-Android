@@ -2,24 +2,20 @@ package com.ezturner.audiotracktest.network;
 
 import android.util.Log;
 
-import com.ezturner.audiotracktest.network.NTP.NtpServer;
+import com.ezturner.audiotracktest.audio.AudioFrame;
+import com.ezturner.audiotracktest.network.ntp.NtpServer;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Random;
@@ -30,25 +26,25 @@ import java.util.TreeMap;
  */
 public class AudioBroadcaster {
 
-    public final int PORT = 1731;
+
+    //TODO: Find a good place to put this and the control multicast IP
+    public static final int PORT = 1731;
+    //public static final String CONTROL_MUTLICAST_IP ="238.17.0.29";
 
     private final byte STREAM_PACKET_ID = 0;
-    private final byte SONG_CHANGE_PACKET_ID = 1;
+    private final byte SONG_START_PACKET_ID = 1;
 
 
     public int MAX_PACKET_SIZE = 2048;
 
-    //The IP that the multicast stream will be sent on
-    public InetAddress broadcastIP;
+    //The IP that the broadcast stream will be sent on
+    private InetAddress mBroadcastIP;
 
     //The multicast listener for giving out the IP of the multicast stream
-    private MulticastSocket mManagementSocket;
+    private MulticastSocket mControlSocket;
 
-    //The listener for when a client joins the session and starts a TCP handshake
-    private ServerSocket mReliabilityServerSocket;
-
-    //The thread that will listen for reliability packets
-    private Thread mReliabilityListener;
+    //The multicast listener for giving out the IP of the multicast stream
+    private DatagramSocket mStreamSocket;
 
     //True if the listeners are running, false otherwise
     private boolean mStreamRunning;
@@ -57,23 +53,33 @@ public class AudioBroadcaster {
     static private Random random = new Random();
 
     //Map of packet IDs and their audio data
-    private Map<Integer, byte[]> packets;
+    private Map<Integer, DatagramPacket> packets;
+
+    //The object that handles all reliability stuff
+    private ReliabilityHandler mReliabilityHandlder;
 
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte streamID;
 
-    //The list of all of the TCP control sockets that are listening for reliability packets
-    private ArrayList<Socket> mReliabilitySockets;
+
 
     public AudioBroadcaster(){
         try {
-            mManagementSocket = new MulticastSocket(PORT);
-            mManagementSocket.joinGroup(Inet4Address.getByName("238.17.0.29"));
+            //Disabled because android does not support multicast uniformly
+            //Start the socket for giving out the multicast address
+            //mControlSocket = new MulticastSocket(PORT);
+            //mControlSocket.joinGroup(Inet4Address.getByName(CONTROL_MUTLICAST_IP));
 
+            //Randomize the IP that the stream will be multicast on
+            //streamIP = randomizeStreamIP();
+
+            mBroadcastIP = getBroadcastAddress();
+
+            //Start the socket for the actual multicast stream
+            mStreamSocket = new DatagramSocket(PORT);
+
+            //Start the NTP server for syncing the playback
             NtpServer.startNtpServer();
-
-            mReliabilityServerSocket = new ServerSocket(PORT);//
-            //TODO: Configure mReliabilitySocket for TCP
 
         } catch(IOException e){
             e.printStackTrace();
@@ -81,14 +87,15 @@ public class AudioBroadcaster {
 
         streamID = 0;
         try {
-            broadcastIP = randomizeBroadcastIP();
-        } catch (UnknownHostException e){
+            //streamIP = randomizeStreamIP();
+            mBroadcastIP = getBroadcastAddress();
+        } catch (Exception e){
             e.printStackTrace();
         }
 
-        packets = new TreeMap<Integer, byte[]>();
+        packets = new TreeMap<Integer,DatagramPacket>();
 
-        mReliabilitySockets = new ArrayList<Socket>();
+
     }
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
@@ -98,110 +105,13 @@ public class AudioBroadcaster {
             //fix this code so it works
             //mReliabilityListener.stop();
         }
-
-        mReliabilityListener = startReliabilityConnectionListener();
-        mReliabilityListener.start();
-
         streamID++;
 
-        packets = new TreeMap<Integer, byte[]>();
+        packets = new TreeMap<Integer, DatagramPacket>();
+
     }
 
-    //Starts the listener for new connections
-    private Thread startReliabilityConnectionListener(){
-        return new Thread(){
-            public void run(){
-                while(mStreamRunning){
-                    Socket socket = null;
-
-                    try {
-                        socket = mReliabilityServerSocket.accept();
-                    } catch(IOException e){
-                        e.printStackTrace();
-                    }
-
-                    if(socket != null){
-                        startSocketListener(socket);
-                    }
-                }
-            }
-        };
-    }
-
-    private Thread startSocketListener(Socket socket){
-
-        class SocketRunnable implements Runnable {
-            Socket socket;
-            SocketRunnable(Socket s) { socket = s; }
-            public void run() {
-                try {
-                    listenToReliabilitySocket(socket);
-                } catch(IOException e){
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        return new Thread(new SocketRunnable(socket));
-    }
-
-    //Handle new data coming in from a Reliability socket
-    private void listenToReliabilitySocket(Socket socket) throws IOException{
-        BufferedReader inFromClient =
-                new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        DataOutputStream outToClient = new DataOutputStream(socket.getOutputStream());
-
-        while(mStreamRunning) {
-            int packetID = inFromClient.read();
-            System.out.println("Received: " + clientSentence);
-            capitalizedSentence = clientSentence.toUpperCase() + '\n';
-            outToClient.writeBytes(capitalizedSentence);
-        }
-    }
-
-    public void setListenerState(boolean isRunning){
-        if(isRunning){
-            mStreamRunning = false;
-        } else {
-            mStreamRunning = true;
-            mReliabilityListener.start();
-        }
-    }
-
-    private void recieveReliabilityPacket(){
-        byte[] data = new byte[MAX_PACKET_SIZE];
-        DatagramPacket packet = new DatagramPacket(data , 2048);
-
-        try {
-            mReliabilitySocket.receive(packet);
-            handleReliabilityPacket(packet);
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-
-        handleReliabilityPacket(packet);
-    }
-
-    private void handleReliabilityPacket(DatagramPacket packet){
-        //Get data
-        byte[] data = packet.getData();
-
-        //Feed the data into a Bytebuffer
-        ByteBuffer wrapped = ByteBuffer.wrap(data);
-
-        //get stream ID and check it against current
-        byte requestedStreamID = wrapped.get();
-
-        if(requestedStreamID != streamID){
-            return;
-        }
-
-        //Convert data to an int
-        int packetID = wrapped.getInt();
-
-        broadcastStreamPacket(packetID);
-    }
-
+    //Returns the IP address of the local interface. From online.
     public String getLocalIpAddress() {
         try {
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
@@ -219,45 +129,78 @@ public class AudioBroadcaster {
         return null;
     }
 
-    private InetAddress randomizeBroadcastIP() throws UnknownHostException{
+    /*
+    private InetAddress randomizeStreamIP() throws UnknownHostException{
         return Inet4Address.getByName(238 + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255));
+    }*/
+
+    public static InetAddress getBroadcastAddress() throws SocketException , UnknownHostException{
+        System.setProperty("java.net.preferIPv4Stack", "true");
+        for (Enumeration<NetworkInterface> niEnum = NetworkInterface.getNetworkInterfaces(); niEnum.hasMoreElements();) {
+            NetworkInterface ni = niEnum.nextElement();
+            if (!ni.isLoopback()) {
+                for (InterfaceAddress interfaceAddress : ni.getInterfaceAddresses()) {
+                    return Inet4Address.getByName(interfaceAddress.getBroadcast().toString().substring(1));
+                }
+            }
+        }
+        return null;df
     }
 
 
     //Broadcasts a streaming packet
     private void broadcastStreamPacket(int packetID){
-
-        //turn packet type into a byte array for combination
-        byte[] packetType = new byte[]{STREAM_PACKET_ID};
-
-        //Convert the packet ID to byte for transmission
-        byte[] packetIDByte = ByteBuffer.allocate(4).putInt(packetID).array();
-
-        //Get the data for the time to play
-        byte[] playTime = ByteBuffer.allocate(4).putLong(System.currentTimeMillis() + 250).array();
-
-        //Get the data for the MP3 frame
-        byte[] data = packets.get((Integer) packetID);
-
-
-        packetType = combineArrays(packetType , packetIDByte);
-        packetType = combineArrays(packetType , playTime);
-
-        data = combineArrays(packetType , packetIDByte);
-
-        DatagramPacket packet = new DatagramPacket(data, data.length, broadcastIP , PORT);
-
         try {
-            mReliabilitySocket.send(packet);
+            mStreamSocket.send(packets.get(packetID));
         } catch(IOException e){
             e.printStackTrace();
         }
     }
 
-    private void broadcastStartStreamPacket(){
 
+    public void addPacket(AudioFrame frame){
+
+        //turn packet type into a byte array for combination , and put the stream ID in there
+        byte[] packetType = new byte[]{STREAM_PACKET_ID , streamID};
+
+        //Convert the packet ID to byte for transmission.
+        //TODO: Decide :Should this just be a two-byte value?
+        byte[] packetIDByte = ByteBuffer.allocate(4).putInt(frame.getID()).array();
+
+        //Get the data for the time to play
+        byte[] playTime = ByteBuffer.allocate(4).putLong(System.currentTimeMillis() + 250).array();
+
+        //Get the data for the MP3 frame
+        byte[] data = frame.getData();
+
+
+        //Combines the various byte arrays into
+        packetType = combineArrays(packetType , packetIDByte);
+        packetType = combineArrays(packetType , playTime);
+
+
+        data = combineArrays(packetType , packetIDByte);
+
+        //Make the packet
+        DatagramPacket packet = new DatagramPacket(data, data.length, mBroadcastIP , PORT);
+
+        //Put the packet in the array
+        packets.put(frame.getID() , packet);
     }
 
+    public void rebroadcastPacket(int packetID){
+        broadcastStreamPacket(packetID);
+    }
+
+    public boolean isStreamRunning(){
+        return mStreamRunning;
+    }
+
+    public int getCurrentStreamID(){
+        return streamID;
+    }
+
+    //Combines two arrays into one, from stackOverflow
     static byte[] combineArrays(byte[] a, byte[] b){
         int aLen = a.length;
         int bLen = b.length;

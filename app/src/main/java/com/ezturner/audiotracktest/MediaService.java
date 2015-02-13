@@ -2,17 +2,9 @@ package com.ezturner.audiotracktest;
 
 import android.app.Service;
 import android.content.Intent;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
-import com.ezturner.audiotracktest.dds.ServiceEnvironmentImpl;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -21,41 +13,18 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class MediaService extends Service{
 
-    private final int MULTICAST_PORT = 1732;
-    private final String MULTICAST_ADDRESS = "238.231.1.1";
-
     private IBinder mBinder = new MediaServiceBinder();
-
-    private File mCurrentFile;
-    private AudioTrack mAudioTrack;
 
     private boolean mIsPlaying;
     private boolean mIsPaused;
-    private Decoder mDecoder;
 
-    private String filepath = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
+    private static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
 
 
     public MediaService(){
 
         mIsPaused = false;
         mIsPlaying = false;
-
-        mCurrentFile = new File(filepath);
-
-        mDecoder = new Decoder(mCurrentFile);
-        int bufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-
-
-        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
-
-        Log.d("ezturner" , "AudioTrack made? "  + mAudioTrack.toString());
-        try {
-            mDecoder.initialize();
-        } catch(IOException e){
-            e.printStackTrace();
-        }
 
 
     }
@@ -102,50 +71,6 @@ public class MediaService extends Service{
         stopCode = true;
     }
 
-    private Thread decode = new Thread(new Runnable()  {
-        public void run() {
-            try {
-                startDecode();
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
-    });
-
-    private void startDecode() throws IOException{
-
-
-
-        short[] data;
-        mAudioTrack.play();
-
-        //MediaPlayer mp = new MediaPlayer();
-        //mp.setDataSource(this , Uri.fromFile(mCurrentFile));
-        //int duration = mp.getDuration();
-
-        boolean notDone = true;
-        int counter = 0;
-        while(!mDecoder.streamIsEmpty() || !stopCode){
-            data = mDecoder.decodeOneFrame();
-            if(data.length == 0){
-                stopCode = true;
-                Log.d("ezturner" , "Done!");
-            } else {
-                mAudioTrack.write(data, 0, data.length);
-            }
-            Log.d("ezturner" , "run");
-            counter++;
-            if(counter >= 550){
-                System.gc();
-                counter = 0;
-            }
-
-
-        }
-
-        stopCode = false;
-
-    }
 
     private void scheduledDecode(){
         /*
@@ -197,7 +122,7 @@ public class MediaService extends Service{
 
     private void play(){
 
-        mServiceEnv.publish();
+
 
         /* if(!mIsPlaying) {
             decode.start();
