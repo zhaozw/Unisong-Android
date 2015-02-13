@@ -1,6 +1,5 @@
 package com.ezturner.audiotracktest.network;
 
-import com.ezturner.audiotracktest.MainActivity;
 import com.ezturner.audiotracktest.network.ntp.SntpClient;
 
 import java.io.IOException;
@@ -37,22 +36,6 @@ public class AudioListener {
 
     }
 
-    //Start listening to the multicast stream
-    public void startListening(){
-        if(! MainActivity.mCastLock.isHeld()){
-            MainActivity.mCastLock.acquire();
-        }
-    }
-
-
-    //Stop listening to the multicast stream
-    public void stopListening(){
-        if(MainActivity.mCastLock.isHeld()){
-            MainActivity.mCastLock.release();
-        }
-
-
-    }
 
 
 }

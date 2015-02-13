@@ -4,7 +4,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
@@ -19,8 +18,6 @@ public class MainActivity extends ActionBarActivity {
 
     private MediaService mediaService;
     private boolean hasStarted = false;
-    public static WifiManager wifiManager;
-    public static WifiManager.MulticastLock mCastLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +29,7 @@ public class MainActivity extends ActionBarActivity {
             bindService(ServiceIntent, mediaConnection, Context.BIND_AUTO_CREATE);
 
 
-            wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
 
-            mCastLock = wifiManager.createMulticastLock("mydebuginfo");
         }
         hasStarted = true;
 
