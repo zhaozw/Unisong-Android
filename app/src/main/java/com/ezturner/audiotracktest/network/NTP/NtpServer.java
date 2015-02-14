@@ -27,7 +27,6 @@ public class NtpServer {
             e.printStackTrace();
         }
         mNtpListener = startNtpListener();
-
     }
 
     private static Thread startNtpListener(){
@@ -40,6 +39,7 @@ public class NtpServer {
         };
     }
 
+    //Listens for NTP packets
     private static void listenForNtpPackets(){
         byte[] data = new byte[NTP_PACKET_MAX_SIZE];
         DatagramPacket packet = new DatagramPacket(data , 2048);
@@ -52,6 +52,7 @@ public class NtpServer {
         }
     }
 
+    //Handles an incoming NTP packet
     private static void handleNtpPacket(DatagramPacket packet){
 
         InetAddress address = packet.getAddress();

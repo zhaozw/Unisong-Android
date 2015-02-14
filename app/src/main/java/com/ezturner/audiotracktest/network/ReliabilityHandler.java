@@ -35,7 +35,7 @@ public class ReliabilityHandler {
 
         try {
             
-            mServerSocket = new ServerSocket(AudioBroadcaster.PORT);
+            mServerSocket = new ServerSocket(broadcaster.getPort());
 
         } catch(IOException e){
             e.printStackTrace();
@@ -70,6 +70,7 @@ public class ReliabilityHandler {
         };
     }
 
+    //Start listening for packets
     private Thread startSocketListener(Socket socket){
         class SocketRunnable implements Runnable {
             Socket socket;
