@@ -9,7 +9,10 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
@@ -19,18 +22,34 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.ezturner.audiotracktest.MediaService.MediaServiceBinder;
+import com.ezturner.audiotracktest.network.Master;
+
+import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity {
 
-    private MediaService mediaService;
+    //The MediaService that does basically everything
+    private MediaService mMediaService;
+
+    //A boolean so that we don't get an error from doing a bunch of startup stuff multiple times
+    //Since onCreate is called every time the screen orientation changes
     private boolean hasStarted = false;
 
+    private boolean mMasterReceived;
+
+    //The phone's phone number
     private static String sPhoneNumber;
 
+    //Objects for enabling multicast
     private static WifiManager wifiManager;
     private static WifiManager.MulticastLock mCastLock;
 
-    private IntentService mIntentService;
+    //The list of master devices that can be connected to
+    private ArrayList<Master> mMasters;
+
+
+    //The handler for interacting with the UI thread
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +81,47 @@ public class MainActivity extends ActionBarActivity {
                 sPhoneNumber = "";
             }
 
+            mMasterReceived = false;
+
+            mHandler = new Handler(Looper.getMainLooper()) {
+
+                /*
+                * handleMessage() defines the operations to perform when
+                * the Handler receives a new Message to process.
+                */
+                @Override
+                public void handleMessage(Message inputMessage) {
+                    // Gets the image task from the incoming Message object.
+                    if(!mMediaService.isPlaying()) {
+                        Master master = (Master) inputMessage.obj;
+                        mMasters.add(master);
+                    }
+
+                    //If this is the first master recieved, start the timer and set mMasterReceived to true
+                    if(!mMasterReceived && !mMediaService.isPlaying()){
+                        mHandler.postDelayed(mPromptUserForStreams , 35);
+                        mMasterReceived = true;
+                    }
+                }
+
+
+            };
         }
         hasStarted = true;
 
     }
+
+    //The runnable that will prompt users for which stream they'd like to join if there are several.
+    private Runnable mPromptUserForStreams = new Runnable() {
+        @Override
+        public void run() {
+            mMasterReceived = false;
+
+            //TODO: Prompt user to choose which stream to play
+
+            mMediaService.playFromMaster(mMasters.get(0));
+        }
+    };
 
     //connect to the service
     private ServiceConnection mediaConnection = new ServiceConnection(){
@@ -75,7 +131,7 @@ public class MainActivity extends ActionBarActivity {
 
             MediaServiceBinder binder = (MediaServiceBinder)service;
             //get service
-            mediaService = binder.getService();
+            mMediaService = binder.getService();
         }
 
         @Override
@@ -107,7 +163,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void togglePlay(View v){
-        mediaService.togglePlay();
+        mMediaService.togglePlay();
     }
 
     public static boolean multicastLockIsHeld(){

@@ -66,6 +66,9 @@ public class AudioListener {
 
     }
 
+    public void playFromMaster(Master master){
+
+    }
 
     private void startListening(String serverIP){
 

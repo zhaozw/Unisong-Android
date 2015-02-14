@@ -6,6 +6,11 @@ import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.ezturner.audiotracktest.audio.AudioTrackManager;
+import com.ezturner.audiotracktest.network.AudioBroadcaster;
+import com.ezturner.audiotracktest.network.AudioListener;
+import com.ezturner.audiotracktest.network.Master;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -16,6 +21,10 @@ public class MediaService extends Service{
 
     private IBinder mBinder = new MediaServiceBinder();
 
+    private AudioListener mListener;
+    private AudioBroadcaster mBroadcaster;
+    private AudioTrackManager mAudioTrackManager;
+
     private static boolean sIsMulticast = false;
     private boolean mIsPlaying;
     private boolean mIsPaused;
@@ -24,12 +33,21 @@ public class MediaService extends Service{
 
 
     public MediaService(){
-
+        mIsPaused = false;
+        mIsPlaying = true;
 
     }
 
     public void togglePlay(){
 
+    }
+
+    public void playFromMaster(Master master){
+        mListener.playFromMaster(master);
+    }
+
+    public boolean isPlaying(){
+        return mIsPlaying;
     }
 
     public IBinder onBind(Intent arg0) {
