@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest.network;
+package com.ezturner.speakersync.network;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;

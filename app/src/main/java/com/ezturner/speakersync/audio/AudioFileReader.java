@@ -1,7 +1,7 @@
-package com.ezturner.audiotracktest.audio;
+package com.ezturner.speakersync.audio;
 
-import com.ezturner.audiotracktest.Decoder;
-import com.ezturner.audiotracktest.network.AudioBroadcaster;
+import com.ezturner.speakersync.Decoder;
+import com.ezturner.speakersync.network.AudioBroadcaster;
 
 import java.io.File;
 import java.io.IOException;

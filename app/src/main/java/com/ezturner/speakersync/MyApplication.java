@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest;
+package com.ezturner.speakersync;
 
 import android.app.Application;
 
@@ -26,11 +26,11 @@ public class MyApplication extends Application {
         return isPlaying;
     }
 
-    public static boolean play(){
+    public static void play(){
         isPlaying = true;
     }
 
-    public static boolean stop(){
+    public static void stop(){
         isPlaying = false;
     }
 }

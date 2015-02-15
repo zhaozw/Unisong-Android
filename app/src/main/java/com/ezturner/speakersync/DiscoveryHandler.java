@@ -1,10 +1,8 @@
-package com.ezturner.audiotracktest;
+package com.ezturner.speakersync;
 
-import android.provider.MediaStore;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.ezturner.audiotracktest.network.AudioBroadcaster;
+import com.ezturner.speakersync.network.AudioBroadcaster;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -81,7 +79,7 @@ public class DiscoveryHandler {
         byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
 
         //Get phone number
-        byte[] number = MainActivity.getPhoneNumber().getBytes();
+        byte[] number = MediaService.getPhoneNumber().getBytes();
 
         //combine the two arrays
         data = AudioBroadcaster.combineArrays(data, number);

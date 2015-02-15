@@ -18,7 +18,7 @@
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package com.ezturner.audiotracktest;
+package com.ezturner.speakersync;
 
 import java.io.IOException;
 import java.io.InputStream;

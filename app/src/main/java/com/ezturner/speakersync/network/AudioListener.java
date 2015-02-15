@@ -1,13 +1,13 @@
-package com.ezturner.audiotracktest.network;
+package com.ezturner.speakersync.network;
 
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.ezturner.audiotracktest.MediaService;
-import com.ezturner.audiotracktest.audio.AudioTrackManager;
-import com.ezturner.audiotracktest.network.ntp.SntpClient;
+import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.ntp.SntpClient;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -19,6 +19,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+
 
 /**
  * Created by Ethan on 2/8/2015.

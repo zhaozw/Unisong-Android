@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest;
+package com.ezturner.speakersync;
 
 import android.app.Service;
 import android.content.Context;
@@ -8,10 +8,10 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.telephony.TelephonyManager;
 
-import com.ezturner.audiotracktest.audio.AudioTrackManager;
-import com.ezturner.audiotracktest.network.AudioBroadcaster;
-import com.ezturner.audiotracktest.network.AudioListener;
-import com.ezturner.audiotracktest.network.Master;
+import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.AudioBroadcaster;
+import com.ezturner.speakersync.network.AudioListener;
+import com.ezturner.speakersync.network.Master;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -55,7 +55,8 @@ public class MediaService extends Service{
     }
 
     public void startToListen(){
-        mListener = new AudioListener(this);
+        //TODO: uncomment after compile
+        //mListener = new AudioListener(this);
     }
 
     public void togglePlay(){

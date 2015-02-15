@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest.audio;
+package com.ezturner.speakersync.audio;
 
 /**
  * Created by Ethan on 2/12/2015.

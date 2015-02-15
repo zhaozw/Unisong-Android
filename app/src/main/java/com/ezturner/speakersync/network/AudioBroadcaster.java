@@ -1,11 +1,11 @@
-package com.ezturner.audiotracktest.network;
+package com.ezturner.speakersync.network;
 
 import android.util.Log;
 
-import com.ezturner.audiotracktest.DiscoveryHandler;
-import com.ezturner.audiotracktest.MediaService;
-import com.ezturner.audiotracktest.audio.AudioFrame;
-import com.ezturner.audiotracktest.network.ntp.NtpServer;
+import com.ezturner.speakersync.DiscoveryHandler;
+import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.network.ntp.NtpServer;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest;
+package com.ezturner.speakersync;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -18,8 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.ezturner.audiotracktest.MediaService.MediaServiceBinder;
-import com.ezturner.audiotracktest.network.Master;
+import com.ezturner.speakersync.network.Master;
+import com.ezturner.speakersync.MediaService.MediaServiceBinder;
 
 import java.util.ArrayList;
 

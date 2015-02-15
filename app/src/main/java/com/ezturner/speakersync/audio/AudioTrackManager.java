@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest.audio;
+package com.ezturner.speakersync.audio;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;

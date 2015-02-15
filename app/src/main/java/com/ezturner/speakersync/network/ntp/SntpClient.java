@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest.network.ntp;
+package com.ezturner.speakersync.network.ntp;
 
 import android.util.Log;
 
@@ -132,14 +132,14 @@ public class SntpClient
         // Send request
         DatagramSocket socket = new DatagramSocket();
         InetAddress address = InetAddress.getByName(mServerIP);
-        byte[] buf = new NtpMessage().toByteArray();
+        byte[] buf = new com.ezturner.speakersync.network.ntp.NtpMessage().toByteArray();
         DatagramPacket packet =
                 new DatagramPacket(buf, buf.length, address, 123);
 
         // Set the transmit timestamp *just* before sending the packet
         // ToDo: Does this actually improve performance or not?
-        NtpMessage.encodeTimestamp(packet.getData(), 40,
-                (System.currentTimeMillis()/1000.0) + 2208988800.0);
+        com.ezturner.speakersync.network.ntp.NtpMessage.encodeTimestamp(packet.getData(), 40,
+                (System.currentTimeMillis() / 1000.0) + 2208988800.0);
 
         socket.send(packet);
 
@@ -162,7 +162,7 @@ public class SntpClient
 
 
         // Process response
-        NtpMessage msg = new NtpMessage(packet.getData());
+        com.ezturner.speakersync.network.ntp.NtpMessage msg = new com.ezturner.speakersync.network.ntp.NtpMessage(packet.getData());
 
         // Corrected, according to RFC2030 errata
         double roundTripDelay = (destinationTimestamp-msg.originateTimestamp) -
@@ -178,7 +178,7 @@ public class SntpClient
         Log.d("ezturner.ntp" , msg.toString());
 
         Log.d("ezturner.ntp" , "Dest. timestamp:     " +
-                NtpMessage.timestampToString(destinationTimestamp));
+                com.ezturner.speakersync.network.ntp.NtpMessage.timestampToString(destinationTimestamp));
 
         Log.d("ezturner.ntp" , "Round-trip delay: " +
                 new DecimalFormat("0.00").format(roundTripDelay*1000) + " ms");

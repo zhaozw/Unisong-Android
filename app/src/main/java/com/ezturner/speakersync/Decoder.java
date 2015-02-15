@@ -1,4 +1,4 @@
-package com.ezturner.audiotracktest;
+package com.ezturner.speakersync;
 
 import android.util.Log;
 
