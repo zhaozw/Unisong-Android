@@ -56,6 +56,8 @@ public class SntpClient
     public SntpClient(String serverIP){
         mServerIP = serverIP;
 
+        startOffsetAcquisition();
+
     }
 
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.

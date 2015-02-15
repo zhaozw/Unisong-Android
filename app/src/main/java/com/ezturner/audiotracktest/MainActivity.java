@@ -1,13 +1,11 @@
 package com.ezturner.audiotracktest;
 
-import android.app.IntentService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -15,7 +13,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,12 +34,7 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean mMasterReceived;
 
-    //The phone's phone number
-    private static String sPhoneNumber;
 
-    //Objects for enabling multicast
-    private static WifiManager wifiManager;
-    private static WifiManager.MulticastLock mCastLock;
 
     //The list of master devices that can be connected to
     private ArrayList<Master> mMasters;
@@ -51,63 +43,51 @@ public class MainActivity extends ActionBarActivity {
     //The handler for interacting with the UI thread
     private Handler mHandler;
 
+    //The Intent
+    private Intent mIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(!hasStarted) {
+        Log.d("ezturner", "Status of hasStarted is 1 " + hasStarted);
 
-            //Create the activity and set the layout
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_main);
+
+        //Create the activity and set the layout
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mIntent = getIntent();
+        hasStarted = mIntent.getBooleanExtra("has-started" , false);
+
+        if(!hasStarted) {
 
             //Start MediaService
             Intent ServiceIntent = new Intent(this, MediaService.class);
-            bindService(ServiceIntent, mediaConnection, Context.BIND_AUTO_CREATE);
-
-            //Start the Multicast manager objects
-            wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
-            mCastLock = wifiManager.createMulticastLock("mydebuginfo");
+            startService(ServiceIntent);
 
 
-            //Register the broadcast reciever
-            LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                    new IntentFilter("master-discovered"));
+            mIntent.putExtra("has-started"  , true);
+        }
 
-            //Get the phone number
-            TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-            sPhoneNumber = tMgr.getLine1Number();
+        //Register the broadcast reciever
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("master-discovered"));
 
-            //TODO: Set a placeholder number for when the above method doesn't work
-            if(sPhoneNumber == null){
-                sPhoneNumber = "";
+        mMasterReceived = false;
+
+        mHandler = new Handler(Looper.getMainLooper()) {
+
+            /*
+            * handleMessage() defines the operations to perform when
+            * the Handler receives a new Message to process.
+            */
+            @Override
+            public void handleMessage(Message inputMessage) {
+                // Gets the image task from the incoming Message object.
+
             }
 
-            mMasterReceived = false;
 
-            mHandler = new Handler(Looper.getMainLooper()) {
-
-                /*
-                * handleMessage() defines the operations to perform when
-                * the Handler receives a new Message to process.
-                */
-                @Override
-                public void handleMessage(Message inputMessage) {
-                    // Gets the image task from the incoming Message object.
-                    if(!mMediaService.isPlaying()) {
-                        Master master = (Master) inputMessage.obj;
-                        mMasters.add(master);
-                    }
-
-                    //If this is the first master recieved, start the timer and set mMasterReceived to true
-                    if(!mMasterReceived && !mMediaService.isPlaying()){
-                        mHandler.postDelayed(mPromptUserForStreams , 35);
-                        mMasterReceived = true;
-                    }
-                }
-
-
-            };
-        }
-        hasStarted = true;
+        };
 
     }
 
@@ -166,23 +146,8 @@ public class MainActivity extends ActionBarActivity {
         mMediaService.togglePlay();
     }
 
-    public static boolean multicastLockIsHeld(){
-        return mCastLock.isHeld();
-    }
 
-    public static void aquireMulticastLock(){
-        if(!multicastLockIsHeld())
-            mCastLock.acquire();
-    }
 
-    public static void releaseMulticastLock(){
-        if(multicastLockIsHeld())
-            mCastLock.release();
-    }
-
-    public static String getPhoneNumber(){
-        return sPhoneNumber;
-    }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -190,13 +155,32 @@ public class MainActivity extends ActionBarActivity {
             // Get extra data included in the Intent
             String message = intent.getStringExtra("message");
             Log.d("receiver", "Got message: " + message);
+
+            if(!MyApplication.isPlaying()) {
+                Master master = (Master) intent.getSerializableExtra("master");
+                mMasters.add(master);
+            }
+
         }
     };
 
+    @Override
     protected void onDestroy() {
         // Unregister since the activity is about to be closed.
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MyApplication.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MyApplication.activityPaused();
     }
 
 }

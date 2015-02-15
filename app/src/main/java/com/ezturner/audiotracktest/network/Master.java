@@ -1,11 +1,12 @@
 package com.ezturner.audiotracktest.network;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 
 /**
  * Created by ezturner on 2/13/2015.
  */
-public class Master {
+public class Master implements Serializable{
 
     private int mPort;
     private String mPhoneNumber;
