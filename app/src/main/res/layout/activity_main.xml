@@ -18,4 +18,24 @@
         android:onClick="togglePlay"
         android:screenOrientation="portrait"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listener"
+        android:id="@+id/button"
+        android:layout_above="@+id/toggleButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="96dp"
+        android:onClick="listener" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Brodcaster"
+        android:id="@+id/button2"
+        android:layout_above="@+id/toggleButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="41dp"
+        android:onClick="broadcaster" />
+
 </RelativeLayout>

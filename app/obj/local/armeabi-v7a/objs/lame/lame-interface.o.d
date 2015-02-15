@@ -1,11 +1,11 @@
-F:/AudioTrackTest/app//obj/local/armeabi-v7a/objs/lame/lame-interface.o: \
- F:/AudioTrackTest/app//jni/lame/lame-interface.c \
- F:/AudioTrackTest/app//jni/lame/lame-interface.h \
+C:/Users/Ethan/AndroidStudioProjects/SpeakerSync/app//obj/local/armeabi-v7a/objs/lame/lame-interface.o: \
+ C:/Users/Ethan/AndroidStudioProjects/SpeakerSync/app//jni/lame/lame-interface.c \
+ C:/Users/Ethan/AndroidStudioProjects/SpeakerSync/app//jni/lame/lame-interface.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/jni.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/sys/cdefs.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/sys/cdefs_elf.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/android/api-level.h \
- F:/AudioTrackTest/app//jni/lame/lame.h \
+ C:/Users/Ethan/AndroidStudioProjects/SpeakerSync/app//jni/lame/lame.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/stdio.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/sys/types.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/stdint.h \
@@ -36,7 +36,7 @@ F:/AudioTrackTest/app//obj/local/armeabi-v7a/objs/lame/lame-interface.o: \
  C:/ndk/platforms/android-3/arch-arm/usr/include/asm/page.h \
  C:/ndk/platforms/android-3/arch-arm/usr/include/android/log.h
 
-F:/AudioTrackTest/app//jni/lame/lame-interface.h:
+C:/Users/Ethan/AndroidStudioProjects/SpeakerSync/app//jni/lame/lame-interface.h:
 
 C:/ndk/platforms/android-3/arch-arm/usr/include/jni.h:
 
@@ -46,7 +46,7 @@ C:/ndk/platforms/android-3/arch-arm/usr/include/sys/cdefs_elf.h:
 
 C:/ndk/platforms/android-3/arch-arm/usr/include/android/api-level.h:
 
-F:/AudioTrackTest/app//jni/lame/lame.h:
+C:/Users/Ethan/AndroidStudioProjects/SpeakerSync/app//jni/lame/lame.h:
 
 C:/ndk/platforms/android-3/arch-arm/usr/include/stdio.h:
 

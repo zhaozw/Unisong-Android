@@ -31,7 +31,7 @@ static hip_t hip_context;
 static mp3data_struct *mp3data;
 static int enc_delay, enc_padding;
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_initializeEncoder
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_initializeEncoder
   (JNIEnv *env, jclass class, jint sampleRate, jint numChannels)
 {
   if (!lame_context) {
@@ -48,31 +48,31 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_initializeEncoder
 }
 
 
-JNIEXPORT void JNICALL Java_com_ezturner_audiotracktest_Lame_setEncoderPreset
+JNIEXPORT void JNICALL Java_com_ezturner_speakersync_Lame_setEncoderPreset
   (JNIEnv *env, jclass class, jint preset)
 {
   // set to vbr_mtrh for fast, vbr_rh for slower
   switch (preset) {
-    case com_ezturner_audiotracktest_Lame_LAME_PRESET_MEDIUM:
+    case com_ezturner_speakersync_Lame_LAME_PRESET_MEDIUM:
       lame_set_VBR_q(lame_context, 4);
       lame_set_VBR(lame_context, vbr_rh);
       break;
-    case com_ezturner_audiotracktest_Lame_LAME_PRESET_STANDARD:
+    case com_ezturner_speakersync_Lame_LAME_PRESET_STANDARD:
       lame_set_VBR_q(lame_context, 2);
       lame_set_VBR(lame_context, vbr_rh);
       break;
-    case com_ezturner_audiotracktest_Lame_LAME_PRESET_EXTREME:
+    case com_ezturner_speakersync_Lame_LAME_PRESET_EXTREME:
       lame_set_VBR_q(lame_context, 0);
       lame_set_VBR(lame_context, vbr_rh);
       break;
-    case com_ezturner_audiotracktest_Lame_LAME_PRESET_DEFAULT:
+    case com_ezturner_speakersync_Lame_LAME_PRESET_DEFAULT:
     default:
       break;
   }
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_encode
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_encode
   (JNIEnv *env, jclass class, jshortArray leftChannel, jshortArray rightChannel,
 		  jint channelSamples, jbyteArray mp3Buffer, jint bufferSize)
 {
@@ -101,7 +101,7 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_encode
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_flushEncoder
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_flushEncoder
   (JNIEnv *env, jclass class, jbyteArray mp3Buffer, jint bufferSize)
 {
   // call lame_encode_flush when near the end of pcm buffer
@@ -122,7 +122,7 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_flushEncoder
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_closeEncoder
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_closeEncoder
   (JNIEnv *env, jclass class)
 {
   if (lame_context) {
@@ -135,7 +135,7 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_closeEncoder
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_initializeDecoder
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_initializeDecoder
   (JNIEnv *env, jclass class)
 {
   if (!hip_context) {
@@ -152,7 +152,7 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_initializeDecoder
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_nativeConfigureDecoder
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_nativeConfigureDecoder
   (JNIEnv *env, jclass class, jbyteArray mp3Buffer, jint bufferSize)
 {
   int ret = -1;
@@ -179,56 +179,56 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_nativeConfigureDeco
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderChannels
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderChannels
   (JNIEnv *env, jclass class)
 {
   return mp3data->stereo;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderSampleRate
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderSampleRate
   (JNIEnv *env, jclass class)
 {
   return mp3data->samplerate;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderDelay
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderDelay
   (JNIEnv *env, jclass class)
 {
   return enc_delay;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderPadding
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderPadding
   (JNIEnv *env, jclass class)
 {
   return enc_padding;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderTotalFrames
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderTotalFrames
   (JNIEnv *env, jclass class)
 {
   return mp3data->totalframes;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderFrameSize
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderFrameSize
   (JNIEnv *env, jclass class)
 {
   return mp3data->framesize;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_getDecoderBitrate
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_getDecoderBitrate
   (JNIEnv *env, jclass class)
 {
   return mp3data->bitrate;
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_nativeDecodeFrame
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_nativeDecodeFrame
   (JNIEnv *env, jclass class, jbyteArray mp3Buffer, jint bufferSize,
 		  jshortArray rightChannel, jshortArray leftChannel)
 {
@@ -258,7 +258,7 @@ JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_nativeDecodeFrame
 }
 
 
-JNIEXPORT jint JNICALL Java_com_ezturner_audiotracktest_Lame_closeDecoder
+JNIEXPORT jint JNICALL Java_com_ezturner_speakersync_Lame_closeDecoder
   (JNIEnv *env, jclass class)
 {
   if (hip_context) {

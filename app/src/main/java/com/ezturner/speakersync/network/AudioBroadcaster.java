@@ -3,7 +3,6 @@ package com.ezturner.speakersync.network;
 import android.util.Log;
 
 import com.ezturner.speakersync.DiscoveryHandler;
-import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.ntp.NtpServer;
 
@@ -30,7 +29,7 @@ public class AudioBroadcaster {
 
 
     //TODO: Find a good place to put this and the control multicast IP
-    public static final int STREAM_PORT_BASE = 55987;
+    public static final int STREAM_PORT_BASE = 55989;
     public static final int PORT_RANGE = 800;
     public static final int DISCOVERY_PORT = 55988;
     public static final String CONTROL_MUTLICAST_IP ="238.17.0.29";
@@ -41,7 +40,7 @@ public class AudioBroadcaster {
     //The port that the stream will broadcast on
     public int mPort;
 
-    //TODO : What's this for again?
+
     public int MAX_PACKET_SIZE = 2048;
 
     //The IP that the broadcast stream will be sent on
@@ -77,26 +76,18 @@ public class AudioBroadcaster {
     //Creates the sockets, starts the NTP server and instantiates variables
     public AudioBroadcaster(){
 
-        mPort = STREAM_PORT_BASE + random.nextInt(PORT_RANGE);
+        mPort = STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
         //TODO: Listen for other streams and ensure that you don't use the same port
         try {
 
-            if(MediaService.isMulticast()) {
-                //Start the socket for giving out the multicast address
 
-                mControlSocket = new MulticastSocket(getPort());
-                mControlSocket.joinGroup(Inet4Address.getByName(CONTROL_MUTLICAST_IP));
 
-                //Randomize the IP that the stream will be multicast on
-                mStreamIP = randomizeStreamIP();
-            } else {
+            mStreamIP = getBroadcastAddress();
+            //Start the socket for the actual stream
+            mStreamSocket = new DatagramSocket(getPort() , mStreamIP);
 
-                mStreamIP = getBroadcastAddress();
-                //Start the socket for the actual stream
-                mStreamSocket = new DatagramSocket(getPort() , mStreamIP);
+            mDiscoveryHandler = new DiscoveryHandler(this);
 
-                mDiscoveryHandler = new DiscoveryHandler(this);
-            }
 
             //Start the NTP server for syncing the playback
             NtpServer.startNtpServer();
@@ -166,7 +157,9 @@ public class AudioBroadcaster {
             NetworkInterface ni = niEnum.nextElement();
             if (!ni.isLoopback()) {
                 for (InterfaceAddress interfaceAddress : ni.getInterfaceAddresses()) {
-                    return Inet4Address.getByName(interfaceAddress.getBroadcast().toString());
+                    if(interfaceAddress.getBroadcast() != null) {
+                        return Inet4Address.getByName(interfaceAddress.getBroadcast().toString().substring(1));
+                    }
                 }
             }
         }

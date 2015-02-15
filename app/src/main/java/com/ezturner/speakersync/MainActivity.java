@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,7 +35,8 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean mMasterReceived;
 
-
+    //The phone's phone number
+    private static String sPhoneNumber;
 
     //The list of master devices that can be connected to
     private ArrayList<Master> mMasters;
@@ -48,9 +50,15 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d("ezturner", "Status of hasStarted is 1 " + hasStarted);
 
+        //Get the phone number
+        TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
+        sPhoneNumber = tMgr.getLine1Number();
 
+        //TODO: Set a placeholder number for when the above method doesn't work
+        if(sPhoneNumber == null){
+            sPhoneNumber = "";
+        }
         //Create the activity and set the layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -146,7 +154,21 @@ public class MainActivity extends ActionBarActivity {
         mMediaService.togglePlay();
     }
 
+    public void listener(View v){
+        Intent intent = new Intent("service-interface");
+        // You can also include some extra data.
+        intent.putExtra("command" , "listener");
 
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    public void broadcaster(View v){
+        Intent intent = new Intent("service-interface");
+        // You can also include some extra data.
+        intent.putExtra("command" , "broadcaster");
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -181,6 +203,11 @@ public class MainActivity extends ActionBarActivity {
     protected void onPause() {
         super.onPause();
         MyApplication.activityPaused();
+    }
+
+
+    public static String getPhoneNumber(){
+        return sPhoneNumber;
     }
 
 }

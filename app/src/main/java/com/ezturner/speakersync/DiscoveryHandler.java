@@ -24,16 +24,15 @@ public class DiscoveryHandler {
 
     public DiscoveryHandler(AudioBroadcaster parent){
 
-        if(MediaService.isMulticast()){
+        mParent = parent;
 
-        } else {
-            try {
-                mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
-                mSocket.setBroadcast(true);
-            } catch (Exception e) {
-                Log.e("ezturner", e.toString());
-            }
+        try {
+            mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
+            mSocket.setBroadcast(true);
+        } catch (Exception e) {
+            Log.e("ezturner", e.toString());
         }
+
 
         mListenerThread = startPacketListener();
 
@@ -79,7 +78,7 @@ public class DiscoveryHandler {
         byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
 
         //Get phone number
-        byte[] number = MediaService.getPhoneNumber().getBytes();
+        byte[] number = MainActivity.getPhoneNumber().getBytes();
 
         //combine the two arrays
         data = AudioBroadcaster.combineArrays(data, number);

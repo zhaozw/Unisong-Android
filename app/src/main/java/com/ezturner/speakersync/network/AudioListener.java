@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 
@@ -15,8 +14,8 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -47,15 +46,10 @@ public class AudioListener {
     //the socket for receiving the stream
     private DatagramSocket mSocket;
 
-    //The socket used when a user tries to manually join a stream or starts up the device.
+    //The socket for listening for discovery packets
     private DatagramSocket mDiscoverySocket;
-    private DatagramSocket mPassiveDiscoverySocket;
 
-    //The listener for when a client requests a packet to be re-sent
-    private Socket mReliabilitySocket;
-
-    private Thread mActiveDiscoveryThread;
-    private Thread mPassiveDiscoveryThread;
+    private Thread mDiscoveryThread;
 
     //The boolean used to tell if the timer that waits 75ms
     private boolean mHasRecievedDiscoverPacket;
@@ -75,31 +69,25 @@ public class AudioListener {
     //Whether the master has been chosen and the class is now listening to it, or not.
     private boolean mListening;
 
+    //The broadcast address that will be used
+    private InetAddress mAddress;
+
     private AudioTrackManager mAudioTrackManager;
 
     public AudioListener(Context context , AudioTrackManager atm){
 
         mAudioTrackManager = atm;
         mContext = context;
-
         try {
-            if(MediaService.isMulticast()) {
 
-                mManagementSocket = new MulticastSocket(AudioBroadcaster.DISCOVERY_PORT);
-                mManagementSocket.joinGroup(Inet4Address.getByName("238.17.0.29"));
-            } else {
-                mDiscoverySocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
-                mPassiveDiscoverySocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
-            }
+            mAddress = AudioBroadcaster.getBroadcastAddress();
+
+            mDiscoverySocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , mAddress);
+
         } catch(IOException e){
             e.printStackTrace();
         }
 
-        mActiveDiscoveryThread = getActiveDiscoveryThread();
-        //mActiveDiscoveryThread.start();
-
-        mPassiveDiscoveryThread = getPassiveDiscoveryThread();
-        mPassiveDiscoveryThread.start();
 
         mHasRecievedDiscoverPacket = false;
 
@@ -111,7 +99,8 @@ public class AudioListener {
 
         mPassiveListen = true;
 
-        mListening = false;
+        mListening = true;
+
     }
 
     //Start playing from a master, start listening to the stream
@@ -121,32 +110,29 @@ public class AudioListener {
     }
 
     //Sends a request
-    private void sendDiscoveryRequest(){
+    private synchronized void sendDiscoveryRequest(){
+        DatagramPacket packet = null;
+        try {
+            packet = new DatagramPacket(new byte[512], 512, Inet4Address.getByName("192.168.1.255"), AudioBroadcaster.DISCOVERY_PORT);
+        } catch(UnknownHostException e){
+            e.printStackTrace();
+        }
+        //mDiscoverySocket.close();
 
-        DatagramPacket packet = new DatagramPacket(new byte[64] , 64);
-
+        Log.d("ezturner" , "huhhuhhuh");
         try {
             mDiscoverySocket.send(packet);
+            Log.d("ezturner" , "Packet sent");
         } catch(IOException e){
-            Log.e("ezturner", e.toString());
+            Log.e("ezturner","Line 127 : " + e.toString());
         }
-        listenForDiscoveryResponse(true);
+
+        //mDiscoveryThread = getActiveDiscoveryThread();
+        //mDiscoveryThread.start();
     }
 
-
-    //Start listening to the multicast stream
-    private void startListeningMulticast(){
-        if(! MediaService.multicastLockIsHeld()) {
-            MediaService.aquireMulticastLock();
-        }
-    }
-
-
-    //Stop listening to the multicast stream
-    private void stopListeningMulticast(){
-        if(MediaService.multicastLockIsHeld()) {
-            MediaService.releaseMulticastLock();
-        }
+    //Starts the process of finding masters
+    public void findMasters(){
 
     }
 
@@ -155,68 +141,52 @@ public class AudioListener {
     private Thread getActiveDiscoveryThread(){
         return new Thread(){
             public void run(){
-                mPassiveListen = false;
-                mPassiveDiscoverySocket.close();
                 mIsDeciding = true;
 
-                while(mIsDeciding) {
-                    sendDiscoveryRequest();
-                }
+                sendDiscoveryRequest();
             }
         };
     }
 
-    private Thread getPassiveDiscoveryThread(){
-        return new Thread(){
-            public void run(){
-                while(mPassiveListen) {
-                    listenForDiscoveryResponse(false);
-                }
-            }
-        };
-    }
+
 
     //Listen for a discovery packet, and if you get one start listening and modify the UI to ask the user
     //if they want to play the stream
-    private synchronized void listenForDiscoveryResponse(boolean active){
+    private synchronized void listenForDiscoveryResponse(){
+        while(mListening) {
+            DatagramPacket packet = new DatagramPacket(new byte[256], 256);
 
-        DatagramPacket packet = new DatagramPacket(new byte[256] , 256);
-        if(active) {
             try {
-                mDiscoverySocket.setSoTimeout(5000);
+                mDiscoverySocket.setSoTimeout(750);
             } catch (SocketException e) {
+                Log.e("ezturner-error", e.toString());
+            }
+
+            try {
+                mDiscoverySocket.receive(packet);
+            } catch (IOException e) {
                 Log.e("ezturner", e.toString());
             }
-        }
 
-        try {
-            if(active) {
-                mDiscoverySocket.receive(packet);
-            } else {
-                mPassiveDiscoverySocket.receive(packet);
+            if(mDiscoverySocket.isClosed()){
+                Log.d("ezturner" , "Socket closed");
+                return;
             }
-        } catch(IOException e){
-            Log.e("ezturner" , e.toString());
-        }
 
 
+            byte[] data = packet.getData();
 
-        byte[] data = packet.getData();
+            InetAddress addr = packet.getAddress();
 
-        InetAddress addr = packet.getAddress();
+            byte[] portArr = new byte[]{data[0], data[1], data[2], data[3]};
 
-        byte[] portArr = new byte[]{data[0 ] , data[1] , data[2] , data[3]};
+            ByteBuffer wrapped = ByteBuffer.wrap(portArr); // big-endian by default
+            int port = wrapped.getInt(); // 1
+            //TODO: Get phone number from this. Needs to be tested with a real phone to see what the format of the phone number
+            //TODO: string is and how long it is, and more importantly how many bytes it takes up
 
-        ByteBuffer wrapped = ByteBuffer.wrap(portArr); // big-endian by default
-        int port = wrapped.getInt(); // 1
-        //TODO: Get phone number from this. Needs to be tested with a real phone to see what the format of the phone number
-        //TODO: string is and how long it is, and more importantly how many bytes it takes up
+            Master master = new Master(port, "4252414577", addr);
 
-        Master master = new Master(port ,"4252414577" , addr);
-
-        if(!active){
-
-        } else {
 
             //Checks to see if we've already recieved this master so we don't get duplicates
             if (mTempMasters.contains(master)) {
@@ -330,8 +300,5 @@ public class AudioListener {
         };
     }
 
-    public void startListening(){
-        mActiveDiscoveryThread.start();
-    }
 
 }
