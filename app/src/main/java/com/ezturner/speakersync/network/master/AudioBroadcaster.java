@@ -1,8 +1,7 @@
-package com.ezturner.speakersync.network;
+package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 
-import com.ezturner.speakersync.DiscoveryHandler;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.ntp.NtpServer;
 
@@ -32,6 +31,7 @@ public class AudioBroadcaster {
     public static final int STREAM_PORT_BASE = 55989;
     public static final int PORT_RANGE = 800;
     public static final int DISCOVERY_PORT = 55988;
+    public static final int DISCOVERY_PASSIVE_PORT = 55987;
     public static final String CONTROL_MUTLICAST_IP ="238.17.0.29";
 
     private final byte STREAM_PACKET_ID = 0;
@@ -39,7 +39,6 @@ public class AudioBroadcaster {
 
     //The port that the stream will broadcast on
     public int mPort;
-
 
     public int MAX_PACKET_SIZE = 2048;
 
@@ -62,13 +61,13 @@ public class AudioBroadcaster {
     private Map<Integer, DatagramPacket> packets;
 
     //The object that handles all reliability stuff
-    private ReliabilityHandler mReliabilityHandlder;
+    private MasterReliabilityHandler mReliabilityHandlder;
 
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte streamID;
 
     //Handles the network discovery
-    private DiscoveryHandler mDiscoveryHandler;
+    private MasterDiscoveryHandler mDiscoveryHandler;
 
 
 
@@ -86,7 +85,7 @@ public class AudioBroadcaster {
             //Start the socket for the actual stream
             mStreamSocket = new DatagramSocket(getPort() , mStreamIP);
 
-            mDiscoveryHandler = new DiscoveryHandler(this);
+            mDiscoveryHandler = new MasterDiscoveryHandler(this);
 
 
             //Start the NTP server for syncing the playback
@@ -150,18 +149,24 @@ public class AudioBroadcaster {
 
 
     //Returns the broadcast IP address for the current network
-    //TODO: Figure out if actually works.
-    public static InetAddress getBroadcastAddress() throws SocketException , UnknownHostException{
-        System.setProperty("java.net.preferIPv4Stack", "true");
-        for (Enumeration<NetworkInterface> niEnum = NetworkInterface.getNetworkInterfaces(); niEnum.hasMoreElements();) {
-            NetworkInterface ni = niEnum.nextElement();
-            if (!ni.isLoopback()) {
-                for (InterfaceAddress interfaceAddress : ni.getInterfaceAddresses()) {
-                    if(interfaceAddress.getBroadcast() != null) {
-                        return Inet4Address.getByName(interfaceAddress.getBroadcast().toString().substring(1));
+    //TODO: Implement exception handling
+    public static InetAddress getBroadcastAddress(){
+        try {
+            System.setProperty("java.net.preferIPv4Stack", "true");
+            for (Enumeration<NetworkInterface> niEnum = NetworkInterface.getNetworkInterfaces(); niEnum.hasMoreElements(); ) {
+                NetworkInterface ni = niEnum.nextElement();
+                if (!ni.isLoopback()) {
+                    for (InterfaceAddress interfaceAddress : ni.getInterfaceAddresses()) {
+                        if (interfaceAddress.getBroadcast() != null) {
+                            return Inet4Address.getByName(interfaceAddress.getBroadcast().toString().substring(1));
+                        }
                     }
                 }
             }
+        } catch (SocketException e){
+            Log.e("ezturner" , e.toString());
+        } catch(UnknownHostException e){
+            Log.e("ezturner" , e.toString());
         }
         return null;
     }

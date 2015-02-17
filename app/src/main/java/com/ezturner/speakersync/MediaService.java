@@ -12,8 +12,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.network.AudioBroadcaster;
-import com.ezturner.speakersync.network.AudioListener;
+import com.ezturner.speakersync.network.master.AudioBroadcaster;
+import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
+import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.Master;
 
 /**
@@ -27,7 +28,7 @@ public class MediaService extends Service{
     private AudioBroadcaster mBroadcaster;
     private AudioTrackManager mAudioTrackManager;
 
-    private DiscoveryHandler mDiscovery;
+    private MasterDiscoveryHandler mDiscovery;
 
     //Objects for enabling multicast
     private static WifiManager wifiManager;
@@ -56,13 +57,7 @@ public class MediaService extends Service{
         };
 
         //Register the broadcast reciever
-        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
-
-        if(broadcastManager == null){
-            Log.d("ezturner" , "Broadcast manager is null");
-        }
-
-        broadcastManager.registerReceiver(mMessageReceiver,
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));
 
 
@@ -89,7 +84,7 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster();
-            mDiscovery = new DiscoveryHandler(mBroadcaster);
+            mDiscovery = new MasterDiscoveryHandler(mBroadcaster);
         }
     }
 

@@ -1,7 +1,6 @@
 package com.ezturner.speakersync.audio;
 
-import com.ezturner.speakersync.Decoder;
-import com.ezturner.speakersync.network.AudioBroadcaster;
+import com.ezturner.speakersync.network.master.AudioBroadcaster;
 
 import java.io.File;
 import java.io.IOException;

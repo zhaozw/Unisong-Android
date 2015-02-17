@@ -1,4 +1,6 @@
-package com.ezturner.speakersync.network;
+package com.ezturner.speakersync.network.master;
+
+import com.ezturner.speakersync.network.master.AudioBroadcaster;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -11,7 +13,7 @@ import java.util.ArrayList;
 /**
  * Created by Ethan on 2/11/2015.
  */
-public class ReliabilityHandler {
+public class MasterReliabilityHandler {
 
     public static final int PACKET_SENT_CODE = 55;
 
@@ -27,9 +29,9 @@ public class ReliabilityHandler {
     //The thread that'll listen to reliability packets
     private Thread mServerSocketThread;
 
+    //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
-
-    public ReliabilityHandler(AudioBroadcaster broadcaster){
+    public MasterReliabilityHandler(AudioBroadcaster broadcaster){
 
         mBroadcaster = broadcaster;
 
