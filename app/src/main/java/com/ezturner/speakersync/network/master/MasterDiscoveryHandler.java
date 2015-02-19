@@ -31,7 +31,6 @@ public class MasterDiscoveryHandler {
     //The AudioBroadcaster for when this is master side
     private AudioBroadcaster mParent;
 
-
     //Whether the master has been chosen and the class is now listening to it, or not.
     private boolean mListening;
 
@@ -44,8 +43,7 @@ public class MasterDiscoveryHandler {
     //The socket for listening for discovery packets
     private DatagramSocket mDiscoverySocket;
 
-    //The thread for active discovery for the save
-    private Thread mActiveDiscoveryThread;
+
 
     public MasterDiscoveryHandler(AudioBroadcaster parent){
 
@@ -69,7 +67,7 @@ public class MasterDiscoveryHandler {
     private Thread startPacketListener(){
         return new Thread(){
             public void run(){
-                while(mBroadcasterParent.isStreamRunning()){
+                while(mParent.isStreamRunning()){
                     listenForPacket();
                 }
             }
@@ -92,6 +90,30 @@ public class MasterDiscoveryHandler {
 
     }
 
+    //Takes in a packet, and sends back the port in use and
+    private void handlePacket(DatagramPacket packet){
+        InetAddress addr = packet.getAddress();
+
+
+        //Get port
+        byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
+
+        //Get phone number
+        byte[] number = MainActivity.getPhoneNumber().getBytes();
+
+        //combine the two arrays
+        data = AudioBroadcaster.combineArrays(data, number);
+
+        //Make the packet
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , addr , AudioBroadcaster.DISCOVERY_PORT);
+
+        //Send out packet
+        try {
+            mSocket.send(outPacket);
+        } catch(IOException e){
+            Log.e("ezturner", e.toString());
+        }
+    }
 
 
 }

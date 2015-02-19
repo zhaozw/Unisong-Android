@@ -44,9 +44,6 @@ public class AudioListener {
     //The ArrayList of received packets
     private ArrayList<DatagramPacket> mPackets;
 
-    //The activity context
-    private Context mContext;
-
     //The master that the listener is currently listening to
     private Master mMaster;
 
@@ -54,7 +51,6 @@ public class AudioListener {
     private InetAddress mAddress;
 
     private AudioTrackManager mAudioTrackManager;
-
 
     //The activity context
     private Context mContext;
@@ -70,8 +66,8 @@ public class AudioListener {
     }
 
     //Start playing from a master, start listening to the stream
-    public void playFromMaster(Master master , ArrayList<DatagramPacket> packets){
-        mSntpClient = new SntpClient(master.getIP().toString());
+    public void playFromMaster(Master master , ArrayList<DatagramPacket> packets, SntpClient client){
+        mSntpClient = client;
         mPackets = packets;
 
     }
@@ -95,6 +91,10 @@ public class AudioListener {
 
             }
         };
+    }
+
+    public long getNextFrameWriteTime(){
+        return 0;
     }
 
 

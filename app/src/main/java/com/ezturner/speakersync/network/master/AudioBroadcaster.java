@@ -1,6 +1,7 @@
 package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
+import android.os.Handler;
 
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.ntp.NtpServer;
@@ -69,7 +70,20 @@ public class AudioBroadcaster {
     //Handles the network discovery
     private MasterDiscoveryHandler mDiscoveryHandler;
 
+    //In microseconds , the length of a frame
+    private long mFrameLength;
 
+    //The time at which the next packet should be played
+    private long mNextFrameTime;
+
+    //The time at which the current song either has or will start
+    private long mSongStartTime;
+
+    private int mInterval = 5000; // 5 seconds by default, can be changed later
+    private Handler mHandler;
+
+    //The ID of the packet to be sent next
+    private int mNextPacketId;
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -78,9 +92,6 @@ public class AudioBroadcaster {
         mPort = STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
         //TODO: Listen for other streams and ensure that you don't use the same port
         try {
-
-
-
             mStreamIP = getBroadcastAddress();
             //Start the socket for the actual stream
             mStreamSocket = new DatagramSocket(getPort() , mStreamIP);
@@ -102,7 +113,28 @@ public class AudioBroadcaster {
         //Make the map of the packets
         packets = new TreeMap<Integer , DatagramPacket>();
 
+        //Makes the handler for broadcasting packets
+        mHandler = new Handler();
 
+        //Set the next packet to be sent to 1
+        mNextPacketId = 1;
+    }
+
+
+    Runnable mPacketSender = new Runnable() {
+        @Override
+        public void run() {
+            broadcastStreamPacket(mNextPacketId); //this function can change value of mInterval.
+            mHandler.postDelayed(mPacketSender, mInterval);
+        }
+    };
+
+    void startRepeatingTask() {
+        mPacketSender.run();
+    }
+
+    void stopRepeatingTask() {
+        mHandler.removeCallbacks(mPacketSender);
     }
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
@@ -113,6 +145,9 @@ public class AudioBroadcaster {
             //mReliabilityListener.stop();
         }
 
+        mSongStartTime = System.currentTimeMillis() * 1000 + 250000;
+        mNextFrameTime = mSongStartTime;
+
         if(streamID == 240){
             streamID = 0;
         } else {
@@ -120,6 +155,10 @@ public class AudioBroadcaster {
         }
 
         packets = new TreeMap<Integer, DatagramPacket>();
+
+    }
+
+    private void sendFirstPackets(){
 
     }
 
@@ -166,7 +205,7 @@ public class AudioBroadcaster {
         } catch (SocketException e){
             Log.e("ezturner" , e.toString());
         } catch(UnknownHostException e){
-            Log.e("ezturner" , e.toString());
+            Log.e("ezturner", e.toString());
         }
         return null;
     }
@@ -191,8 +230,7 @@ public class AudioBroadcaster {
         byte[] packetIDByte = ByteBuffer.allocate(4).putInt(frame.getID()).array();
 
         //Get the data for the time to play
-        //TODO: Replace this with the actual play-time code
-        byte[] playTime = ByteBuffer.allocate(4).putLong(System.currentTimeMillis() + 250).array();
+        byte[] playTime = ByteBuffer.allocate(4).putLong(frame.getPlayTime()).array();
 
         //Get the data for the MP3 frame
         byte[] data = frame.getData();
@@ -234,5 +272,18 @@ public class AudioBroadcaster {
         System.arraycopy(a, 0, c, 0, aLen);
         System.arraycopy(b, 0, c, aLen, bLen);
         return c;
+    }
+
+    // Returns the designated time for the next frame in microseconds and
+    // increases the time for the next one
+    public long getNextFrameWriteTime(){
+        long time = mSongStartTime;
+        mSongStartTime += mFrameLength;
+        return time;
+    }
+
+    //Set the frame length in microseconds
+    public void setFrameLength(long frameLength){
+        mFrameLength = frameLength;
     }
 }

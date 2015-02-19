@@ -29,12 +29,8 @@ public class AudioTrackManager {
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
-        int bufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
 
         mFrames = new TreeMap<Integer , AudioFrame>();
-
-        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_IN_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
 
         mIsPlaying = false;
     }
@@ -65,6 +61,16 @@ public class AudioTrackManager {
         mIsPlaying = false;
 
     }
+
+    public void createAudioTrack(int sampleRate){
+
+        int bufferSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+
+        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+    }
+
+
 
 
 }

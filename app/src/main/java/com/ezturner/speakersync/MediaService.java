@@ -99,11 +99,6 @@ public class MediaService extends Service{
         }
     }
 
-    public void playFromMaster(Master master){
-        mListener.playFromMaster(master);
-    }
-
-
     public IBinder onBind(Intent arg0) {
         return mBinder;
     }

@@ -23,16 +23,39 @@ import java.util.ArrayList;
  */
 public class SlaveDiscoveryHandler {
 
+    //The active listening socket
+    private DatagramSocket mSocket;
+
+    //The passive listening socket
+    private DatagramSocket mPassiveSocket;
+
+    //The thread for active discovery for the save
+    private Thread mActiveDiscoveryThread;
+
+    //The thread for active discovery for the save
+    private Thread mPassiveDiscoveryThread;
+
     //The ArrayLists for when there are two clients and you want to buffer for both of them
     private ArrayList<SntpClient> mTempClients;
     private ArrayList<DatagramSocket> mTempSockets;
     private ArrayList<ArrayList<DatagramPacket>> mTempPacketStorage;
     private ArrayList<Master> mTempMasters;
 
+    //The application context
+    private Context mContext;
+
+    //Whether
+
+    private boolean mIsDeciding;
+
+    private boolean mListening;
+
+    //The AudioListener parent
+    private AudioListener mParent;
 
     public SlaveDiscoveryHandler(AudioListener parent, Context context){
         mContext = context;
-        mListenerParent = parent;
+        mParent = parent;
 
         mTempClients = new ArrayList<SntpClient>();
 
@@ -43,46 +66,26 @@ public class SlaveDiscoveryHandler {
         mIsDeciding = false;
     }
 
-
-    //Takes in a packet, and sends back the port in use and
-    private void handlePacket(DatagramPacket packet){
-        InetAddress addr = packet.getAddress();
-
-
-        //Get port
-        byte[] data = ByteBuffer.allocate(4).putInt(mBroadcasterParent.getPort()).array();
-
-        //Get phone number
-        byte[] number = MainActivity.getPhoneNumber().getBytes();
-
-        //combine the two arrays
-        data = AudioBroadcaster.combineArrays(data, number);
-
-        //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , addr , AudioBroadcaster.DISCOVERY_PORT);
-
-        //Send out packet
-        try {
-            mSocket.send(outPacket);
-        } catch(IOException e){
-            Log.e("ezturner", e.toString());
-        }
-    }
-
     //Listen for a discovery packet, and if you get one start listening and modify the UI to ask the user
     //if they want to play the stream
-    private synchronized void slaveListenForResponse(){
+    private synchronized void listenForResponse(boolean active){
         while(mListening) {
             DatagramPacket packet = new DatagramPacket(new byte[256], 256);
 
-            try {
-                mSocket.setSoTimeout(750);
-            } catch (SocketException e) {
-                Log.e("ezturner-error", e.toString());
+            if(active) {
+                try {
+                    mSocket.setSoTimeout(750);
+                } catch (SocketException e) {
+                    Log.e("ezturner-error", e.toString());
+                }
             }
 
             try {
-                mSocket.receive(packet);
+                if(active) {
+                    mSocket.receive(packet);
+                } else  {
+                    mPassiveSocket.receive(packet);
+                }
             } catch (IOException e) {
                 Log.e("ezturner", e.toString());
             }
@@ -136,6 +139,11 @@ public class SlaveDiscoveryHandler {
         }
     }
 
+    public void findMasters(){
+        mActiveDiscoveryThread = getActiveDiscoveryThread();
+        mActiveDiscoveryThread.start();
+    }
+
     //Sends a request
     private synchronized void sendDiscoveryRequest(){
         DatagramPacket packet = null;
@@ -154,11 +162,9 @@ public class SlaveDiscoveryHandler {
             Log.e("ezturner","Line 127 : " + e.toString());
         }
 
-        mDiscoveryThread = getActiveDiscoveryThread();
-        mDiscoveryThread.start();
     }
 
-    private Thread getSlaveThread(){
+    private Thread getActiveDiscoveryThread(){
         return new Thread(){
             public void run(){
                 mIsDeciding = true;
@@ -205,7 +211,7 @@ public class SlaveDiscoveryHandler {
         //Tell the threads that we've made our choice
         mIsDeciding = false;
 
-        mListenerParent.playFromMaster(master, mTempPacketStorage.get(index), mTempClients.get(index));
+        mParent.playFromMaster(master, mTempPacketStorage.get(index), mTempClients.get(index));
 
         mTempPacketStorage = new ArrayList<ArrayList<DatagramPacket>>();
         mTempClients = new ArrayList<SntpClient>();
