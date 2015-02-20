@@ -62,7 +62,7 @@ public class AudioListener {
         mContext = context;
 
         mAddress = AudioBroadcaster.getBroadcastAddress();
-
+        findMasters();
     }
 
     //Start playing from a master, start listening to the stream

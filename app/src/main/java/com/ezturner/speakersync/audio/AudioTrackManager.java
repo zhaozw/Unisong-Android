@@ -22,10 +22,13 @@ public class AudioTrackManager {
     private Map<Integer , AudioFrame> mFrames;
 
     //the last frame ID that has been played
-    private int mLastIDPlayed;
+    private int mFrameToPlay;
 
     //boolean telling the Write thread to continue or not
     private boolean mIsPlaying;
+
+    //The thread that the writing will go on
+    private Thread mWriteThread;
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
@@ -33,6 +36,10 @@ public class AudioTrackManager {
         mFrames = new TreeMap<Integer , AudioFrame>();
 
         mIsPlaying = false;
+
+        mFrameToPlay = 1;
+
+        mWriteThread = getWriteThread();
     }
 
     public void addFrame(AudioFrame frame){
@@ -53,13 +60,25 @@ public class AudioTrackManager {
 
     private void writeToTrack(){
         while(mIsPlaying){
-
+            byte[] data = nextData();
+            mAudioTrack.write(data , 0 , data.length);
         }
+    }
+
+    private byte[] nextData(){
+        byte[] data = mFrames.get(mFrameToPlay).getData();
+        mFrameToPlay++;
+        return data;
     }
 
     public void stopPlaying(){
         mIsPlaying = false;
+    }
 
+    public void startPlaying(){
+        mAudioTrack.play();
+        mIsPlaying = true;
+        mWriteThread.start();
     }
 
     public void createAudioTrack(int sampleRate){
@@ -69,8 +88,5 @@ public class AudioTrackManager {
         mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
     }
-
-
-
 
 }

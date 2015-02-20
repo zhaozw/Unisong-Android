@@ -64,6 +64,11 @@ public class SlaveDiscoveryHandler {
         mTempPacketStorage = new ArrayList<ArrayList<DatagramPacket>>();
 
         mIsDeciding = false;
+        try {
+            mPassiveSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PASSIVE_PORT);
+        } catch(SocketException e){
+            e.printStackTrace();
+        }
     }
 
     //Listen for a discovery packet, and if you get one start listening and modify the UI to ask the user
