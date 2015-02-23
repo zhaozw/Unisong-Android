@@ -107,7 +107,7 @@ public class MainActivity extends ActionBarActivity {
 
             //TODO: Prompt user to choose which stream to play
 
-            mMediaService.playFromMaster(mMasters.get(0));
+
         }
     };
 
@@ -151,7 +151,11 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void togglePlay(View v){
-        mMediaService.togglePlay();
+        Intent intent = new Intent("service-interface");
+        // You can also include some extra data.
+        intent.putExtra("command" , "play");
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     public void listener(View v){

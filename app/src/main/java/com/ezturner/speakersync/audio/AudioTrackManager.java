@@ -30,6 +30,9 @@ public class AudioTrackManager {
     //The thread that the writing will go on
     private Thread mWriteThread;
 
+    //The current last frame
+    private int mLastFrameId;
+
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
 
@@ -37,13 +40,17 @@ public class AudioTrackManager {
 
         mIsPlaying = false;
 
-        mFrameToPlay = 1;
+        mFrameToPlay = 0;
 
         mWriteThread = getWriteThread();
+        mLastFrameId = 0;
     }
 
     public void addFrame(AudioFrame frame){
         mFrames.put(frame.getID() , frame);
+        if(frame.getID() > mLastFrameId){
+            mLastFrameId = frame.getID();
+        }
     }
 
     public AudioFrame getFrame(int ID){
@@ -60,14 +67,19 @@ public class AudioTrackManager {
 
     private void writeToTrack(){
         while(mIsPlaying){
+            if(mFrameToPlay == mLastFrameId) mIsPlaying = false;
             byte[] data = nextData();
-            mAudioTrack.write(data , 0 , data.length);
+            mAudioTrack.write(data, 0, data.length);
         }
     }
 
     private byte[] nextData(){
-        byte[] data = mFrames.get(mFrameToPlay).getData();
-        mFrameToPlay++;
+        byte[] data  = null;
+        AudioFrame frame = mFrames.get(mFrameToPlay);
+        if(frame != null) {
+            data = frame.getData();
+            mFrameToPlay++;
+        }
         return data;
     }
 
@@ -87,6 +99,18 @@ public class AudioTrackManager {
 
         mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+    }
+
+    public void setAudioTrack(AudioTrack track){
+        mAudioTrack = track;
+    }
+
+    public void release(){
+        if(mAudioTrack != null) {
+            mAudioTrack.flush();
+            mAudioTrack.release();
+            mAudioTrack = null;
+        }
     }
 
 }

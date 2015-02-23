@@ -4,6 +4,7 @@ import android.util.Log;
 import android.os.Handler;
 
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.ntp.NtpServer;
 
 import java.io.IOException;
@@ -85,9 +86,12 @@ public class AudioBroadcaster {
     //The ID of the packet to be sent next
     private int mNextPacketId;
 
+    //The AudioTrackManager that handles the playback of the audio data on this device
+    private AudioTrackManager mManager;
+
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
-    public AudioBroadcaster(){
+    public AudioBroadcaster(AudioTrackManager manager){
 
         mPort = STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
         //TODO: Listen for other streams and ensure that you don't use the same port
@@ -118,6 +122,8 @@ public class AudioBroadcaster {
 
         //Set the next packet to be sent to 1
         mNextPacketId = 1;
+
+        mManager = manager;
     }
 
 
