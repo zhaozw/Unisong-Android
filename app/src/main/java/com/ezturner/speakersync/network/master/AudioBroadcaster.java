@@ -31,7 +31,7 @@ public class AudioBroadcaster {
 
     //TODO: Find a good place to put this and the control multicast IP
     public static final int STREAM_PORT_BASE = 55989;
-    public static final int PORT_RANGE = 400;
+    public static final int PORT_RANGE = 800;
     public static final int DISCOVERY_PORT = 55988;
     public static final int DISCOVERY_PASSIVE_PORT = 55987;
     public static final String CONTROL_MUTLICAST_IP ="238.17.0.29";
@@ -102,6 +102,7 @@ public class AudioBroadcaster {
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
 
+
             //Start the NTP server for syncing the playback
             NtpServer.startNtpServer();
 
@@ -123,8 +124,6 @@ public class AudioBroadcaster {
         mNextPacketId = 1;
 
         mManager = manager;
-
-        mStreamRunning = true;
     }
 
 
@@ -260,8 +259,7 @@ public class AudioBroadcaster {
     }
 
     public boolean isStreamRunning(){
-        //TODO: Fix this, this is a test fix
-        return true;
+        return mStreamRunning;
     }
 
     public int getCurrentStreamID(){
@@ -294,5 +292,4 @@ public class AudioBroadcaster {
     public void setFrameLength(long frameLength){
         mFrameLength = frameLength;
     }
-    
 }

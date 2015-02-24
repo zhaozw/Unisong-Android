@@ -52,22 +52,17 @@ public class AudioListener {
 
     private AudioTrackManager mAudioTrackManager;
 
-    private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
-
     //The activity context
     private Context mContext;
 
 
     public AudioListener(Context context , AudioTrackManager atm){
 
-        Log.d("ezturner" , "Audio Listener Started");
         mAudioTrackManager = atm;
         mContext = context;
 
-        mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this , mContext);
-
         mAddress = AudioBroadcaster.getBroadcastAddress();
-
+        findMasters();
     }
 
     //Start playing from a master, start listening to the stream

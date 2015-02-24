@@ -192,12 +192,6 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onDestroy() {
-        Intent intent = new Intent("service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "destroy");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-
         // Unregister since the activity is about to be closed.
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         super.onDestroy();

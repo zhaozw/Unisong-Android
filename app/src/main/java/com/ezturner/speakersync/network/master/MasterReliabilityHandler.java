@@ -1,11 +1,11 @@
 package com.ezturner.speakersync.network.master;
 
+import com.ezturner.speakersync.network.master.AudioBroadcaster;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -113,19 +113,6 @@ public class MasterReliabilityHandler {
                 out.write(PACKET_SENT_CODE);
             }
         }
-    }
-
-    public void startNewConnection(DatagramPacket packet){
-        InetAddress addr = packet.getAddress();
-        Socket socket = null;
-        try {
-             socket = new Socket(addr, mBroadcaster.getPort());
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-
-
-
     }
 
 
