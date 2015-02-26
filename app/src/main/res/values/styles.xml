@@ -5,4 +5,9 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <color name="yellowGreen">#CFF09E</color>
+    <color name="green">#A8DBA8</color>
+    <color name="aqua">#79BD9A</color>
+    <color name="blueGreen">#3B8686</color>
+    <color name="teal">#0B486B</color>
 </resources>

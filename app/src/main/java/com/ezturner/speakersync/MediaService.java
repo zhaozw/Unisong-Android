@@ -13,11 +13,9 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.OpenMXPlayer;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.slave.AudioListener;
-import com.ezturner.speakersync.network.Master;
 
 import java.io.IOException;
 
@@ -91,11 +89,7 @@ public class MediaService extends Service{
 
 
 
-        if(MyApplication.isPlaying()){
-            //pause
-        } else{
-            //play
-        }
+
 
     }
 

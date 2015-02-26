@@ -1,22 +1,14 @@
 package com.ezturner.speakersync.network.master;
 
-import android.content.Context;
 import android.util.Log;
 
-import com.ezturner.speakersync.MainActivity;
-import com.ezturner.speakersync.network.slave.AudioListener;
-import com.ezturner.speakersync.network.Master;
-import com.ezturner.speakersync.network.ntp.SntpClient;
+import com.ezturner.speakersync.MyApplication;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 /**
  * Created by ezturner on 2/13/2015.
@@ -76,7 +68,7 @@ public class MasterDiscoveryHandler {
 
     //Listens for packets
     private void listenForPacket(){
-        byte[] data = new byte[512];
+        byte[] data = new byte[1024];
         DatagramPacket packet = new DatagramPacket(data , data.length);
 
         try {
@@ -99,7 +91,7 @@ public class MasterDiscoveryHandler {
         byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
 
         //Get phone number
-        byte[] number = MainActivity.getPhoneNumber().getBytes();
+        byte[] number = MyApplication.getPhoneNumber().getBytes();
 
         //combine the two arrays
         data = AudioBroadcaster.combineArrays(data, number);
