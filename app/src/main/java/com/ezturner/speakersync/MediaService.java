@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -39,8 +40,28 @@ public class MediaService extends Service{
 
     private static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
 
+    public PowerManager.WakeLock mWakeLock;
 
     public MediaService(){
+
+
+
+
+        //OpenMXPlayer player = new OpenMXPlayer();
+        //player.setDataSource(TEST_FILE_PATH);
+        //player.run();
+
+    }
+
+    public void startToListen(){
+        //TODO: uncomment after compile
+        //mListener = new AudioListener(this);
+    }
+
+    @Override
+    public void onCreate(){
+        super.onCreate();
+
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -54,9 +75,12 @@ public class MediaService extends Service{
                 } else if(command.equals("broadcaster")){
                     Log.d("ezturner" , "Broadcaster received!");
                     broadcaster();
-                }if(command.equals("play")){
+                }else if(command.equals("play")){
                     Log.d("ezturner" , "Play received!");
                     play();
+                } else if(command.equals("destroy")){
+                    Log.d("ezturner" , "Destroy received!");
+                    onDestroy();
                 }
 
             }
@@ -69,20 +93,14 @@ public class MediaService extends Service{
         mAudioTrackManager = new AudioTrackManager();
         mFileReader = new AudioFileReader(mAudioTrackManager);
         try {
-            mFileReader.extractorDecode();
+            mFileReader.readFile(this.TEST_FILE_PATH);
         } catch(IOException e){
             e.printStackTrace();
         }
 
-        //OpenMXPlayer player = new OpenMXPlayer();
-        //player.setDataSource(TEST_FILE_PATH);
-        //player.run();
-
-    }
-
-    public void startToListen(){
-        //TODO: uncomment after compile
-        //mListener = new AudioListener(this);
+        PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
+        mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");
+        mWakeLock.acquire();
     }
 
     public void togglePlay(){
@@ -96,19 +114,15 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager);
-            mDiscovery = new MasterDiscoveryHandler(mBroadcaster);
         }
     }
 
 
     public void listener(){
-        if(mAudioTrackManager == null) {
-            mAudioTrackManager = new AudioTrackManager();
 
-            mListener = new AudioListener(this, mAudioTrackManager);
+       mListener = new AudioListener(this, mAudioTrackManager);
 
-            mListener.findMasters();
-        }
+
     }
 
     public void play(){
@@ -132,5 +146,12 @@ public class MediaService extends Service{
 
 
     private BroadcastReceiver mMessageReceiver ;
+
+    @Override
+    public void onDestroy(){
+
+        super.onDestroy();
+        mWakeLock.release();
+    }
 
 }

@@ -10,10 +10,8 @@ import com.ezturner.speakersync.network.ntp.SntpClient;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -22,6 +20,7 @@ import java.util.ArrayList;
  */
 public class SlaveDiscoveryHandler {
 
+    private static final String LOG_TAG = "SlaveDiscoveryHandler";
     //The active listening socket
     private DatagramSocket mSocket;
 
@@ -56,6 +55,7 @@ public class SlaveDiscoveryHandler {
         mContext = context;
         mParent = parent;
 
+
         mTempClients = new ArrayList<SntpClient>();
 
         mTempSockets = new ArrayList<DatagramSocket>();
@@ -64,44 +64,45 @@ public class SlaveDiscoveryHandler {
 
         mIsDeciding = false;
         try {
-            mPassiveSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PASSIVE_PORT);
+            mPassiveSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PASSIVE_PORT , AudioBroadcaster.getBroadcastAddress());
+            mPassiveSocket.setBroadcast(true);
+            mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
+            mSocket.setBroadcast(true);
         } catch(SocketException e){
             e.printStackTrace();
         }
+        Log.d(LOG_TAG , "Slave Discovery Handler started");
+        findMasters();
     }
 
     //Listen for a discovery packet, and if you get one start listening and modify the UI to ask the user
     //if they want to play the stream
     private synchronized void listenForResponse(boolean active){
-        while(mListening) {
-            DatagramPacket packet = new DatagramPacket(new byte[256], 256);
-
-            if(active) {
-                try {
-                    mSocket.setSoTimeout(750);
-                } catch (SocketException e) {
-                    Log.e("ezturner-error", e.toString());
-                }
-            }
+        while(mListening){
+            DatagramPacket packet = new DatagramPacket(new byte[1024], 1024);
 
             try {
                 if(active) {
+                    Log.d(LOG_TAG , "Listening Started");
                     mSocket.receive(packet);
+                    Log.d(LOG_TAG , "Received");
                 } else  {
                     mPassiveSocket.receive(packet);
                 }
-            } catch (IOException e) {
-                Log.e("ezturner", e.toString());
+            } catch (IOException e){
+                e.printStackTrace();
             }
 
+            Log.d(LOG_TAG , "Packet received!");
             if(mSocket.isClosed()){
-                Log.d("ezturner" , "Socket closed");
+                Log.d(LOG_TAG , "Socket closed");
                 return;
             }
 
 
             byte[] data = packet.getData();
 
+            mIsDeciding = true;
             InetAddress addr = packet.getAddress();
 
             byte[] portArr = new byte[]{data[0], data[1], data[2], data[3]};
@@ -129,7 +130,7 @@ public class SlaveDiscoveryHandler {
                     thread.start();
 
                 } catch (SocketException e) {
-                    Log.e("ezturner", e.toString());
+                    e.printStackTrace();
                 }
 
 
@@ -150,29 +151,28 @@ public class SlaveDiscoveryHandler {
 
     //Sends a request
     private synchronized void sendDiscoveryRequest(){
-        DatagramPacket packet = null;
-        try {
-            packet = new DatagramPacket(new byte[512], 512, Inet4Address.getByName("192.168.1.255"), AudioBroadcaster.DISCOVERY_PORT);
-        } catch(UnknownHostException e){
-            e.printStackTrace();
-        }
-        //mDiscoverySocket.close();
 
-        Log.d("ezturner" , "huhhuhhuh");
+        //TODO: SET THIS TO AudioBroadcaster.getBroadcastAddress()
+        DatagramPacket packet = new DatagramPacket(new byte[512], 512 , AudioBroadcaster.getBroadcastAddress() , AudioBroadcaster.DISCOVERY_PORT);
+
+
+        Log.d(LOG_TAG , "huhhuhhuh");
         try {
             mSocket.send(packet);
-            Log.d("ezturner" , "Packet sent");
+            Log.d(LOG_TAG , "Packet sent");
         } catch(IOException e){
-            Log.e("ezturner","Line 127 : " + e.toString());
+            e.printStackTrace();
         }
+
+        listenForResponse(true);
 
     }
 
     private Thread getActiveDiscoveryThread(){
         return new Thread(){
             public void run(){
-                mIsDeciding = true;
-
+                mListening = true;
+                Log.d(LOG_TAG , "Active Discovery thread started");
                 sendDiscoveryRequest();
             }
         };
@@ -196,7 +196,7 @@ public class SlaveDiscoveryHandler {
             try {
                 socket.receive(packet);
             } catch(IOException e){
-                Log.e("ezturner" , e.toString());
+                Log.e(LOG_TAG , e.toString());
                 failed = true;
             }
             if(!failed) {
@@ -228,7 +228,7 @@ public class SlaveDiscoveryHandler {
         try {
             mSocket = new DatagramSocket(master.getPort());
         } catch(IOException e){
-            Log.e("ezturner" , e.toString());
+            Log.e(LOG_TAG , e.toString());
         }
 
     }
