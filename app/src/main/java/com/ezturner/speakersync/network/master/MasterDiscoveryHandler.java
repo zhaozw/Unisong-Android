@@ -2,13 +2,20 @@ package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 
+<<<<<<< HEAD
+import com.ezturner.speakersync.MyApplication;
+=======
 import com.ezturner.speakersync.MainActivity;
+>>>>>>> origin/master
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+<<<<<<< HEAD
+=======
 import java.net.SocketException;
+>>>>>>> origin/master
 import java.nio.ByteBuffer;
 
 /**
@@ -107,7 +114,7 @@ public class MasterDiscoveryHandler {
 
     //Listens for packets
     private void listenForPacket(){
-        byte[] data = new byte[512];
+        byte[] data = new byte[1024];
         DatagramPacket packet = new DatagramPacket(data , data.length);
 
         Log.d(LOG_TAG , "Starting to listen");
@@ -134,7 +141,7 @@ public class MasterDiscoveryHandler {
         byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
 
         //Get phone number
-        byte[] number = MainActivity.getPhoneNumber().getBytes();
+        byte[] number = MyApplication.getPhoneNumber().getBytes();
 
         //combine the two arrays
         data = AudioBroadcaster.combineArrays(data, number);
