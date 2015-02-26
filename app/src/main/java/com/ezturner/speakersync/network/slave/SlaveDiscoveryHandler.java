@@ -191,7 +191,7 @@ public class SlaveDiscoveryHandler {
     private void tempListen(DatagramSocket socket , int index){
         while(mIsDeciding){
             //TODO: Figure out the actual max packet size
-            DatagramPacket packet = new DatagramPacket(new byte[4096] , 4096);
+            DatagramPacket packet = new DatagramPacket(new byte[1024] , 1024);
             boolean failed = false;
             try {
                 socket.receive(packet);

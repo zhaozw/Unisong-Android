@@ -7,6 +7,20 @@ import android.app.Application;
  */
 public class MyApplication extends Application {
 
+    //The phone's phone number
+    private static String sPhoneNumber;
+
+    public static void setPhoneNumber(String number){
+        sPhoneNumber = number;
+    }
+
+    public static String getPhoneNumber(){
+        return sPhoneNumber;
+    }
+
+    private static boolean activityVisible;
+
+
     public static boolean isActivityVisible() {
         return activityVisible;
     }
@@ -19,18 +33,5 @@ public class MyApplication extends Application {
         activityVisible = false;
     }
 
-    private static boolean activityVisible;
-    private static boolean isPlaying;
 
-    public static boolean isPlaying(){
-        return isPlaying;
-    }
-
-    public static void play(){
-        isPlaying = true;
-    }
-
-    public static void stop(){
-        isPlaying = false;
-    }
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical" android:layout_width="fill_parent"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:background="@color/teal">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Button"
+            android:id="@+id/masterButton"
+            android:background="@null"
+            android:layout_centerInParent="true"
+            android:src="@drawable/master"
+            android:focusableInTouchMode="false" />
+    </RelativeLayout>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical" android:layout_width="fill_parent"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:background="@color/green">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Button"
+            android:id="@+id/slaveButton"
+            android:src="@drawable/slave"
+            android:layout_centerInParent="true"
+            android:background="@null"
+            android:layout_gravity="center_horizontal" />
+    </RelativeLayout>
+</LinearLayout>
+

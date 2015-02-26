@@ -1,4 +1,4 @@
-package com.ezturner.speakersync;
+package com.ezturner.speakersync.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -19,6 +19,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.MyApplication;
+import com.ezturner.speakersync.R;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.MediaService.MediaServiceBinder;
 
@@ -29,14 +32,8 @@ public class MainActivity extends ActionBarActivity {
     //The MediaService that does basically everything
     private MediaService mMediaService;
 
-    //A boolean so that we don't get an error from doing a bunch of startup stuff multiple times
-    //Since onCreate is called every time the screen orientation changes
-    private boolean hasStarted = false;
 
     private boolean mMasterReceived;
-
-    //The phone's phone number
-    private static String sPhoneNumber;
 
     //The list of master devices that can be connected to
     private ArrayList<Master> mMasters;
@@ -51,13 +48,19 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        //A boolean so that we don't get an error from doing a bunch of startup stuff multiple times
+        //Since onCreate is called every time the screen orientation changes
+
+        boolean hasStarted = false;
+
+
         //Get the phone number
         TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-        sPhoneNumber = tMgr.getLine1Number();
+        MyApplication.setPhoneNumber(tMgr.getLine1Number());
 
         //TODO: Set a placeholder number for when the above method doesn't work
-        if(sPhoneNumber == null){
-            sPhoneNumber = "";
+        if(MyApplication.getPhoneNumber() == null){
+            MyApplication.setPhoneNumber("");
         }
         //Create the activity and set the layout
         super.onCreate(savedInstanceState);
@@ -182,10 +185,12 @@ public class MainActivity extends ActionBarActivity {
             String message = intent.getStringExtra("message");
             Log.d("receiver", "Got message: " + message);
 
-            if(!MyApplication.isPlaying()) {
+            /*if(!MyApplication.isPlaying()) {
+
+
                 Master master = (Master) intent.getSerializableExtra("master");
                 mMasters.add(master);
-            }
+            }*/
 
         }
     };
@@ -215,9 +220,5 @@ public class MainActivity extends ActionBarActivity {
         MyApplication.activityPaused();
     }
 
-
-    public static String getPhoneNumber(){
-        return sPhoneNumber;
-    }
 
 }

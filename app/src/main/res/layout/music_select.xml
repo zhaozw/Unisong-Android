@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <!-- The layout at the top for the buttons  -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dip"
+        android:orientation="horizontal"
+        android:id="@+id/button_layout">
+
+
+        <ImageButton
+            android:layout_width="0dip"
+            android:layout_weight="0.25"
+            android:layout_height="match_parent"
+            android:background="@color/yellowGreen"
+            android:src="@drawable/btn_songs"/>
+
+        <ImageButton
+            android:layout_width="0dip"
+            android:layout_weight="0.25"
+            android:layout_height="match_parent"
+            android:background="@color/yellowGreen"
+            android:src="@drawable/btn_playlists"/>
+
+        <ImageButton
+            android:layout_width="0dip"
+            android:layout_weight="0.25"
+            android:layout_height="match_parent"
+            android:background="@color/yellowGreen"
+            android:src="@drawable/btn_albums"/>
+
+        <ImageButton
+            android:layout_width="0dip"
+            android:layout_weight="0.25"
+            android:layout_height="match_parent"
+            android:background="@color/yellowGreen"
+            android:src="@drawable/btn_artists"/>
+
+    </LinearLayout>
+
+    <!-- The Layout for the songs to be displayed -->
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:background="@color/aqua"
+        android:id="@+id/music_list"
+        android:layout_below="@id/button_layout" />
+
+
+</RelativeLayout>

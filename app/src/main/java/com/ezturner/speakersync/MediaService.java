@@ -107,11 +107,7 @@ public class MediaService extends Service{
 
 
 
-        if(MyApplication.isPlaying()){
-            //pause
-        } else{
-            //play
-        }
+
 
     }
 
