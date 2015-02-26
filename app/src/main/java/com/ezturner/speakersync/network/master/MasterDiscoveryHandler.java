@@ -3,11 +3,13 @@ package com.ezturner.speakersync.network.master;
 import android.util.Log;
 
 import com.ezturner.speakersync.MyApplication;
+import com.ezturner.speakersync.MainActivity;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 
 /**
@@ -15,8 +17,13 @@ import java.nio.ByteBuffer;
  */
 public class MasterDiscoveryHandler {
 
+    private final static String LOG_TAG = "MasterDiscoveryHandler";
 
+    //DatagramSocket for the active listeners out there
     private DatagramSocket mSocket;
+
+    //DatagramSocket for the passive listeners out there holla out
+    private DatagramSocket mPassiveSocket;
 
     private Thread mListenerThread;
     
@@ -43,10 +50,12 @@ public class MasterDiscoveryHandler {
         mParent = parent;
 
         try {
-            mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
+            mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT  ,parent.getBroadcastAddress());
             mSocket.setBroadcast(true);
+            mPassiveSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PASSIVE_PORT , parent.getBroadcastAddress());
+            mPassiveSocket.setBroadcast(true);
         } catch (Exception e) {
-            Log.e("ezturner", e.toString());
+            e.printStackTrace();
         }
 
         mListenerThread = startPacketListener();
@@ -55,11 +64,42 @@ public class MasterDiscoveryHandler {
     }
 
 
+    private void sendStartPacket(){
+        //Get port
+        byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
+
+        //Get phone number
+        byte[] number = MainActivity.getPhoneNumber().getBytes();
+
+        //combine the two arrays
+        data = AudioBroadcaster.combineArrays(data, number);
+
+        //Make the packet
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , mParent.getBroadcastAddress() , AudioBroadcaster.DISCOVERY_PORT + 1);
+
+        //Send out packet
+        try {
+            mSocket.send(outPacket);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
+        outPacket.setPort(AudioBroadcaster.DISCOVERY_PASSIVE_PORT);
+        try {
+            mPassiveSocket.send(outPacket);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
+    }
 
     private Thread startPacketListener(){
         return new Thread(){
             public void run(){
+                //sendStartPacket();
+                Log.d(LOG_TAG, "Packet Listener engaged , " + mParent.isStreamRunning());
                 while(mParent.isStreamRunning()){
+                    Log.d(LOG_TAG , "Starting to listen");
                     listenForPacket();
                 }
             }
@@ -71,12 +111,15 @@ public class MasterDiscoveryHandler {
         byte[] data = new byte[1024];
         DatagramPacket packet = new DatagramPacket(data , data.length);
 
+        Log.d(LOG_TAG , "Starting to listen");
         try {
             mSocket.receive(packet);
         } catch(IOException e){
-            Log.e("ezturner" , e.toString());
+            e.printStackTrace();
             return;
         }
+
+
         handlePacket(packet);
 
 
@@ -86,6 +129,7 @@ public class MasterDiscoveryHandler {
     private void handlePacket(DatagramPacket packet){
         InetAddress addr = packet.getAddress();
 
+        Log.d(LOG_TAG , "Packet received , from : " + addr.toString());
 
         //Get port
         byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
@@ -97,13 +141,15 @@ public class MasterDiscoveryHandler {
         data = AudioBroadcaster.combineArrays(data, number);
 
         //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , addr , AudioBroadcaster.DISCOVERY_PORT);
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , mParent.getBroadcastAddress() , AudioBroadcaster.DISCOVERY_PORT);
 
         //Send out packet
         try {
             mSocket.send(outPacket);
+        } catch(SocketException e){
+            e.printStackTrace();
         } catch(IOException e){
-            Log.e("ezturner", e.toString());
+            e.printStackTrace();
         }
     }
 
