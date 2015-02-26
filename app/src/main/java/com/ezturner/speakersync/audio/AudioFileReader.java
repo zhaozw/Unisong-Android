@@ -1,18 +1,15 @@
 package com.ezturner.speakersync.audio;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.MediaMetadataRetriever;
 import android.os.Handler;
 import android.util.Log;
 
-import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
@@ -32,9 +29,6 @@ public class AudioFileReader {
     //The current file that is being read from.
     private File mCurrentFile;
 
-    //The LAME decoder interface object
-    private Decoder mDecoder;
-
     //The object that broadcasts audio frames
     private AudioBroadcaster mBroadcaster;
 
@@ -46,9 +40,6 @@ public class AudioFileReader {
 
     //The current ID of the audio frame
     private int mCurrentId;
-
-    //Whether the decode thread should stop
-    private boolean mDoStop;
 
     //Whether this is the first run
     private boolean mFirstRun;
@@ -76,6 +67,8 @@ public class AudioFileReader {
 
     private PlayerStates mState;
 
+    private Thread mDecodeThread;
+
     //The constructor for broadcasting
     public AudioFileReader(AudioBroadcaster broadcaster , AudioTrackManager manager){
         this(manager);
@@ -90,7 +83,7 @@ public class AudioFileReader {
 
     public AudioFileReader(AudioTrackManager manager){
         mManager = manager;
-        mDoStop = false;
+        mStop = false;
         mSampleTime = -67;
         mCurrentId = 0;
         mEvents = new AudioFileReaderEvents();
@@ -99,70 +92,26 @@ public class AudioFileReader {
 
     public void readFile(String path) throws IOException{
         mCurrentFile = new File(path);
-        mDecoder = new Decoder(mCurrentFile);
-        try {
-            mDecoder.initialize();
-        } catch(IOException e){
-            e.printStackTrace();
-        }
+        mDecodeThread = getDecode();
     }
 
-    private Thread decode = new Thread(new Runnable()  {
-        public void run() {
-            try {
-                startDecode();
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
-    });
-
-    private void startDecode() throws IOException{
-
-
-        short[] data;
-
-        //MediaPlayer mp = new MediaPlayer();
-        //mp.setDataSource(this , Uri.fromFile(mCurrentFile));
-        //int duration = mp.getDuration();
-
-        boolean stopCode = false;
-        boolean notDone = true;
-        int counter = 0;
-        while(!mDecoder.streamIsEmpty() || !stopCode){
-            data = mDecoder.decodeOneFrame();
-            if(data.length == 0){
-                stopCode = true;
-            } else {
-                AudioFrame frame = null;//new AudioFrame(data , mCurrentId);
-                mCurrentId++;
-
-                if(mBroadcaster != null){
-                    mBroadcaster.addPacket(frame);
+    private Thread getDecode(){
+        return new Thread(new Runnable()  {
+            public void run() {
+                try {
+                    decode();
+                } catch (IOException e){
+                    e.printStackTrace();
                 }
-
-                mManager.addFrame(frame);
-                //mAudioTrack.write(data, 0, data.length); Write the data to wherever
-
             }
-
-            counter++;
-            if(counter >= 550){
-                System.gc();
-                counter = 0;
-            }
-
-        }
-
-        stopCode = false;
-
+        });
     }
 
     protected int inputBufIndex;
     protected int bufIndexCheck;
     protected int lastInputBufIndex;
 
-    public void extractorDecode() throws IOException {
+    public void decode() throws IOException {
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
@@ -171,7 +120,7 @@ public class AudioFileReader {
         // try to set the source, this might fail
         try {
             //TODO: Set the file path to dynamic
-            mExtractor.setDataSource(TEST_FILE_PATH);
+            mExtractor.setDataSource(mCurrentFile.getPath());
 
 
             /* This is the code for using internal app resources
@@ -181,7 +130,7 @@ public class AudioFileReader {
                 fd.close();
             }*/
         } catch (Exception e) {
-            Log.e(LOG_TAG, "exception:"+e.getMessage());
+            e.printStackTrace();
             //TODO : Handle this exception
             return;
         }
@@ -198,6 +147,7 @@ public class AudioFileReader {
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: "+e.getMessage());
+            e.printStackTrace();
             // don't exit, tolerate this error, we'll fail later if this is critical
         }
         Log.d(LOG_TAG, "Track info: mime:" + mime + " sampleRate:" + sampleRate + " channels:" + channels + " bitrate:" + bitrate + " duration:" + duration);
