@@ -32,6 +32,9 @@ public class MediaService extends Service{
     private AudioTrackManager mAudioTrackManager;
     private AudioFileReader mFileReader;
 
+
+    private BroadcastReceiver mMessageReceiver ;
+
     private MasterDiscoveryHandler mDiscovery;
 
     //Objects for enabling multicast
@@ -43,9 +46,6 @@ public class MediaService extends Service{
     public PowerManager.WakeLock mWakeLock;
 
     public MediaService(){
-
-
-
 
         //OpenMXPlayer player = new OpenMXPlayer();
         //player.setDataSource(TEST_FILE_PATH);
@@ -145,7 +145,6 @@ public class MediaService extends Service{
     }
 
 
-    private BroadcastReceiver mMessageReceiver ;
 
     @Override
     public void onDestroy(){
