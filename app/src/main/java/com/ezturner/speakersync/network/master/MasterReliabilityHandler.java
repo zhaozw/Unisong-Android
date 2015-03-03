@@ -95,23 +95,15 @@ public class MasterReliabilityHandler {
         BufferedReader in =
                 new BufferedReader(new InputStreamReader(socket.getInputStream()));
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
+        String inputLine;
         long startTime = System.currentTimeMillis();
-        while(mBroadcaster.isStreamRunning() && System.currentTimeMillis() - startTime <= 60 * 8 * 1000) {
-            if(in.ready()){
-                String data = in.readLine();
-                String[] dataArray = data.split("!");
+        while((inputLine = in.readLine()) != null) {
+            String data = in.readLine();
 
-                int packetID = Integer.valueOf(dataArray[0]);
+            int packetID = Integer.parseInt(inputLine);
 
-                int streamID = Integer.valueOf(dataArray[1]);
+            mBroadcaster.rebroadcastPacket(packetID);
 
-                if(streamID == mBroadcaster.getCurrentStreamID()){
-                    mBroadcaster.rebroadcastPacket(packetID);
-                }
-
-                out.write(PACKET_SENT_CODE);
-            }
         }
     }
 
