@@ -1,10 +1,12 @@
 package com.ezturner.speakersync.network.slave;
 
 import android.content.Context;
+import android.net.Network;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.Master;
-import com.ezturner.speakersync.network.master.AudioBroadcaster;
+import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 
 import java.io.IOException;
@@ -64,9 +66,9 @@ public class SlaveDiscoveryHandler {
 
         mIsDeciding = false;
         try {
-            mPassiveSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PASSIVE_PORT , AudioBroadcaster.getBroadcastAddress());
+            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PASSIVE_PORT , NetworkUtilities.getBroadcastAddress());
             mPassiveSocket.setBroadcast(true);
-            mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT , AudioBroadcaster.getBroadcastAddress());
+            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT , NetworkUtilities.getBroadcastAddress());
             mSocket.setBroadcast(true);
         } catch(SocketException e){
             e.printStackTrace();
@@ -152,8 +154,8 @@ public class SlaveDiscoveryHandler {
     //Sends a request
     private synchronized void sendDiscoveryRequest(){
 
-        //TODO: SET THIS TO AudioBroadcaster.getBroadcastAddress()
-        DatagramPacket packet = new DatagramPacket(new byte[512], 512 , AudioBroadcaster.getBroadcastAddress() , AudioBroadcaster.DISCOVERY_PORT);
+        //TODO: SET THIS TO CONSTANTS.getBroadcastAddress()
+        DatagramPacket packet = new DatagramPacket(new byte[512], 512 , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT);
 
 
         Log.d(LOG_TAG , "huhhuhhuh");

@@ -10,6 +10,7 @@ import android.media.MediaFormat;
 import android.os.Handler;
 import android.util.Log;
 
+import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
@@ -88,11 +89,15 @@ public class AudioFileReader {
         mCurrentId = 0;
         mEvents = new AudioFileReaderEvents();
         mState = new PlayerStates();
+
+
     }
 
     public void readFile(String path) throws IOException{
         mCurrentFile = new File(path);
         mDecodeThread = getDecode();
+        mDecodeThread.start();
+        Log.d(LOG_TAG , "Started Decoding");
     }
 
     private Thread getDecode(){
@@ -180,11 +185,10 @@ public class AudioFileReader {
         // configure AudioTrack
         int channelConfiguration = channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
         int minSize = AudioTrack.getMinBufferSize( sampleRate, channelConfiguration, AudioFormat.ENCODING_PCM_16BIT);
-        mManager.setAudioTrack(new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfiguration,
-                AudioFormat.ENCODING_PCM_16BIT, minSize, AudioTrack.MODE_STREAM));
+        mManager.createAudioTrack(sampleRate);
 
-        // start playing, we will feed the AudioTrack later
-        //audioTrack.play();
+        // TODO: DELETE THIS!!! This should not be handled here, it's just test code
+        mManager.startPlaying();
         mExtractor.selectTrack(0);
 
         // start decoding
@@ -198,6 +202,9 @@ public class AudioFileReader {
         mState.set(PlayerStates.PLAYING);
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
 
+            long playTime = -1;
+            long length = -1;
+
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
             if (!sawInputEOS) {
@@ -210,8 +217,11 @@ public class AudioFileReader {
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
+
+                        length = mExtractor.getSampleTime() -presentationTimeUs;
+                        playTime = mExtractor.getSampleTime();
+
                         presentationTimeUs = mExtractor.getSampleTime();
-                        Log.d(LOG_TAG , "Presentation Time : " + presentationTimeUs);
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
                         //if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onPlayUpdate(percent, presentationTimeUs / 1000, duration / 1000);  } });
                     }
@@ -238,7 +248,7 @@ public class AudioFileReader {
                 buf.get(chunk);
                 buf.clear();
                 if(chunk.length > 0){
-                    createFrame(chunk);
+                    createFrame(chunk , playTime , length);
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
             			state.set(PlayerStates.PLAYING);
@@ -292,18 +302,28 @@ public class AudioFileReader {
         long finishTime = System.currentTimeMillis();
 
         Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
-        //mManager.startPlaying();
+
     }
 
+    //The code to stop the decoding
+    public void stopDecode(){
+        mStop = true;
+    }
 
-    private void createFrame(byte[] data){
-        AudioFrame frame  = new AudioFrame(data , mCurrentId );;
+    private void createFrame(byte[] data , long playTime, long length){
+        AudioFrame frame;
+        if(playTime != -1 && length != -1) {
+            frame = new AudioFrame(data, mCurrentId, playTime, length);
+        } else {
+            frame = new AudioFrame(data , mCurrentId);
+        }
         if(mBroadcaster != null){
-            mBroadcaster.addPacket(frame);
+            mBroadcaster.handleFrame(frame);
         }
         mManager.addFrame(frame);
 
         mCurrentId++;
+
     }
 
 

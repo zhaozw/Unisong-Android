@@ -3,6 +3,7 @@ package com.ezturner.speakersync.audio;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,6 +67,11 @@ public class AudioTrackManager {
     }
 
     private void writeToTrack(){
+        try {
+            Thread.sleep(500);
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
         while(mIsPlaying){
             if(mFrameToPlay == mLastFrameId) mIsPlaying = false;
             byte[] data = nextData();
@@ -80,6 +86,7 @@ public class AudioTrackManager {
             data = frame.getData();
             mFrameToPlay++;
         }
+
         return data;
     }
 

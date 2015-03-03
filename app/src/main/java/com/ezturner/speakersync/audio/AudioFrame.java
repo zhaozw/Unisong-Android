@@ -21,7 +21,7 @@ public class AudioFrame {
     }
 
     //The constructor with a playtime
-    public AudioFrame(byte[] data, int ID, long playTime , long totalTime){
+    public AudioFrame(byte[] data, int ID, long playTime, long length){
         this(data, ID);
         mWriteTime = playTime;
     }

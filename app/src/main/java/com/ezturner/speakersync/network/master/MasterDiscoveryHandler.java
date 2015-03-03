@@ -1,9 +1,11 @@
 package com.ezturner.speakersync.network.master;
 
+import android.net.Network;
 import android.util.Log;
 
 import com.ezturner.speakersync.MyApplication;
-import com.ezturner.speakersync.MainActivity;
+import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -50,9 +52,9 @@ public class MasterDiscoveryHandler {
         mParent = parent;
 
         try {
-            mSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PORT  ,parent.getBroadcastAddress());
+            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT  , NetworkUtilities.getBroadcastAddress());
             mSocket.setBroadcast(true);
-            mPassiveSocket = new DatagramSocket(AudioBroadcaster.DISCOVERY_PASSIVE_PORT , parent.getBroadcastAddress());
+            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PASSIVE_PORT , NetworkUtilities.getBroadcastAddress());
             mPassiveSocket.setBroadcast(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,17 +67,20 @@ public class MasterDiscoveryHandler {
 
 
     private void sendStartPacket(){
+        //Set packet type
+        byte [] data = new byte[CONSTANTS.MASTER_START_PACKET];
+
         //Get port
-        byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
+        data = NetworkUtilities.combineArrays(data ,ByteBuffer.allocate(4).putInt(mParent.getPort()).array());
 
         //Get phone number
-        byte[] number = MainActivity.getPhoneNumber().getBytes();
+        byte[] number = MyApplication.getPhoneNumber().getBytes();
 
         //combine the two arrays
-        data = AudioBroadcaster.combineArrays(data, number);
+        data = NetworkUtilities.combineArrays(data, number);
 
         //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , mParent.getBroadcastAddress() , AudioBroadcaster.DISCOVERY_PORT + 1);
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT + 1);
 
         //Send out packet
         try {
@@ -84,7 +89,7 @@ public class MasterDiscoveryHandler {
             e.printStackTrace();
         }
 
-        outPacket.setPort(AudioBroadcaster.DISCOVERY_PASSIVE_PORT);
+        outPacket.setPort(CONSTANTS.DISCOVERY_PASSIVE_PORT);
         try {
             mPassiveSocket.send(outPacket);
         } catch(IOException e){
@@ -131,17 +136,20 @@ public class MasterDiscoveryHandler {
 
         Log.d(LOG_TAG , "Packet received , from : " + addr.toString());
 
+        //Set the packet type
+        byte[] data = new byte[CONSTANTS.MASTER_RESPONSE_PACKET];
+
         //Get port
-        byte[] data = ByteBuffer.allocate(4).putInt(mParent.getPort()).array();
+        data = NetworkUtilities.combineArrays( data , ByteBuffer.allocate(4).putInt(mParent.getPort()).array());
 
         //Get phone number
         byte[] number = MyApplication.getPhoneNumber().getBytes();
 
         //combine the two arrays
-        data = AudioBroadcaster.combineArrays(data, number);
+        data = NetworkUtilities.combineArrays(data, number);
 
         //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , mParent.getBroadcastAddress() , AudioBroadcaster.DISCOVERY_PORT);
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT);
 
         //Send out packet
         try {

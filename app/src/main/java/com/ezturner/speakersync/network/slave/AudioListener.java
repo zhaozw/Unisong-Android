@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.Master;
+import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 
@@ -19,12 +20,12 @@ import java.util.ArrayList;
 
 /**
  * Created by Ethan on 2/8/2015.
+ * This class handles listening to and audio stream. Its component discovery handler handles
+ * discovery, and the reliability handler handles reliability
+ *
  */
 public class AudioListener {
 
-    //TODO: Move Discovery code to DiscoveryHandler, and have that class handle both sides of Discovery
-
-    //TODO: Move reliability code to ReliabilityHandler, and have that class handle both sides of Reliability, master and slave
 
     //The boolean indicating whether the above objects are in use(a master has not been chosen yet)
     private boolean mIsDeciding;
@@ -50,12 +51,20 @@ public class AudioListener {
     //The broadcast address that will be used
     private InetAddress mAddress;
 
+    //The port that the stream will be on
+    private int mPort;
+
     private AudioTrackManager mAudioTrackManager;
 
+    //The discovery handler, which will handle finding and choosing the
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
+
+    //The Slave reliability handler which handles packet reliability
+    private SlaveReliabilityHandler mSlaveReliabilityHandler;
 
     //The activity context
     private Context mContext;
+
 
 
     public AudioListener(Context context , AudioTrackManager atm){
@@ -66,7 +75,7 @@ public class AudioListener {
 
         mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this , mContext);
 
-        mAddress = AudioBroadcaster.getBroadcastAddress();
+        mAddress = NetworkUtilities.getBroadcastAddress();
 
     }
 
@@ -74,20 +83,16 @@ public class AudioListener {
     public void playFromMaster(Master master , ArrayList<DatagramPacket> packets, SntpClient client){
         mSntpClient = client;
         mPackets = packets;
+        mMaster = master;
 
+        mPort = master.getPort();
+
+        mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP());
     }
 
     //Starts the process of finding masters
     public void findMasters() {
-
-    }
-
-    private void broadcastMasters(){
-        Log.d("sender", "Broadcasting message");
-        Intent intent = new Intent("master-discovered");
-        // You can also include some extra data.
-
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+        mSlaveDiscoveryHandler.findMasters();
     }
 
     private Thread startListeningForPackets(){
