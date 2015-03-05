@@ -8,6 +8,9 @@ import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.NtpServer;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.packets.FrameDataPacket;
+import com.ezturner.speakersync.network.packets.FrameInfoPacket;
+import com.ezturner.speakersync.network.packets.SongStartPacket;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -22,6 +25,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -84,11 +88,14 @@ public class AudioBroadcaster {
     //The ID of the next packet to be made
     private int mNextPacketId;
 
+    //The ID of the last packet in this stream
+    private int mLastPacketId;
+
     //The AudioTrackManager that handles the playback of the audio data on this device
     private AudioTrackManager mManager;
 
-    //The leftover bytes from a previous AudioFrame, since the packets need to be 1024 bytes
-    private byte[] mLeftoverBytes;
+    //The boolean that lets us know if we are still broadcasting
+    private boolean mIsBroadcasting;
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -115,7 +122,7 @@ public class AudioBroadcaster {
         mStreamID = 0;
 
         //Make the map of the packets
-        mPackets = new TreeMap<Integer , DatagramPacket>();
+        mPackets = new HashMap<Integer , DatagramPacket>();
 
         //Makes the handler for broadcasting packets
         mHandler = new Handler();
@@ -126,18 +133,23 @@ public class AudioBroadcaster {
         //Set the next packet to be created to be 0
         mNextPacketSendId = 0;
 
-        mLeftoverBytes = new byte[0];
+        mIsBroadcasting = false;
+
         mManager = manager;
 
         mStreamRunning = false;
+
+        mLastPacketId = -1;
     }
 
 
     Runnable mPacketSender = new Runnable() {
         @Override
         public void run() {
-            broadcastStreamPacket(mNextPacketId); //this function can change value of mInterval.
-            mHandler.postDelayed(mPacketSender, mInterval);
+            if(mIsBroadcasting) {
+                broadcastStreamPacket(mNextPacketId); //this function can change value of mInterval.
+                mHandler.postDelayed(mPacketSender, mInterval);
+            }
         }
     };
 
@@ -157,6 +169,7 @@ public class AudioBroadcaster {
             //mReliabilityListener.stop();
         }
 
+        //The start time in milliseconds
         mSongStartTime = System.currentTimeMillis() * 1000 + 250000;
         mNextFrameTime = mSongStartTime;
 
@@ -175,11 +188,17 @@ public class AudioBroadcaster {
     }
 
     //Broadcasts a streaming packet
-    private void broadcastStreamPacket(int packetID){
-        try {
-            mStreamSocket.send(mPackets.get(packetID));
-        } catch(IOException e){
-            e.printStackTrace();
+    private synchronized void broadcastStreamPacket(int packetID){
+        if(mPackets.containsKey(packetID)) {
+            try {
+                mStreamSocket.send(mPackets.get(packetID));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            if(packetID == mLastPacketId){
+                //Then switch to the next song
+            }
         }
     }
 
@@ -190,8 +209,7 @@ public class AudioBroadcaster {
     }
 
     public boolean isStreamRunning(){
-        //TODO: Fix this, this is a test fix
-        return true;
+        return mIsBroadcasting;
     }
 
     public int getCurrentStreamID(){
@@ -220,13 +238,9 @@ public class AudioBroadcaster {
     public void handleFrame(AudioFrame frame){
         byte[] data = frame.getData();
 
+        int frameID = frame.getID();
+
         ArrayList<byte[]> datas = new ArrayList<byte[]>();
-
-
-            //Combine the data with the leftover bytes if mLeftoverBytes has data
-            if(mLeftoverBytes.length != 0){
-                data = NetworkUtilities.combineArrays(mLeftoverBytes , data);
-            }
 
         int bytesLeft = data.length;
         //the position we are at in the data array
@@ -240,9 +254,11 @@ public class AudioBroadcaster {
                 for(int i = 0; i < 1024; i++){
                     frameData[i] = data[dataPos + i];
                 }
+                //Change the indexes
                 dataPos += 1024;
                 bytesLeft -= 1024;
 
+                //Add the data to the ArrayList of byte[]
                 datas.add(frameData);
             } else {
                 //Otherwise, just put it in mLeftoverBytes and save it for the next call
@@ -260,7 +276,7 @@ public class AudioBroadcaster {
         addFirstFramePacket(frame ,datas.size());
 
         for(byte[] packetData : datas){
-            addFrameDataPacket(packetData);
+            addFrameDataPacket(packetData , frameID);
         }
 
     }
@@ -268,29 +284,9 @@ public class AudioBroadcaster {
     //Adds the first packet for a frame, this one will just have the frame's information
     private void addFirstFramePacket(AudioFrame frame, int numPackets){
 
-        //turn packet type into a byte array for combination , and put the stream ID in there
-        byte[] packetType = new byte[]{CONSTANTS.FRAME_INFO_PACKET_ID , mStreamID};
+        FrameInfoPacket frameInfoPacket = new FrameInfoPacket(frame, numPackets , mStreamID , mSongStartTime , mNextPacketId, frame.getLength());
 
-        byte[] packetIdByte = ByteBuffer.allocate(4).putInt(mNextPacketId).array();
-
-        //Throw the frame Id in a byte array, and throw all the other data in byte
-        // arrays and combine them into the data that will go in the packet
-        byte[] frameId = ByteBuffer.allocate(4).putInt(frame.getID()).array();
-
-        byte[] playTime = ByteBuffer.allocate(8).putLong(frame.getPlayTime()).array();
-
-        byte[] numPacketsArr = ByteBuffer.allocate(4).putInt(numPackets).array();
-
-        byte[] data = NetworkUtilities.combineArrays(packetType , packetIdByte);
-
-        data = NetworkUtilities.combineArrays(data , frameId);
-
-        data = NetworkUtilities.combineArrays(data , playTime);
-
-        data = NetworkUtilities.combineArrays(data , numPacketsArr);
-
-        //Make the packet
-        DatagramPacket packet = new DatagramPacket(data, data.length, mStreamIP , getPort());
+        DatagramPacket packet = new DatagramPacket(frameInfoPacket.getData() , frameInfoPacket.getData().length , mStreamIP , getPort());
 
         //Put the packet in the array
         mPackets.put(mNextPacketId , packet);
@@ -298,19 +294,11 @@ public class AudioBroadcaster {
     }
 
     //Takes in data and makes a packet out of it
-    private void addFrameDataPacket(byte[] data){
+    private void addFrameDataPacket(byte[] frameData , int frameID){
 
-        //turn packet type into a byte array for combination , and put the stream ID in there
-        byte[] packetType = new byte[]{CONSTANTS.FRAME_DATA_PACKET_ID , mStreamID};
+        FrameDataPacket frameDataPacket = new FrameDataPacket(frameData , mStreamID , mNextPacketId, frameID);
 
-        //Convert the packet ID to byte for transmission.
-        //TODO: Decide :Should this just be a two-byte value?
-        byte[] packetIDByte = ByteBuffer.allocate(4).putInt(mNextPacketId).array();
-
-        //Combines the various byte arrays into
-        packetType = NetworkUtilities.combineArrays(packetType , packetIDByte);
-
-        data = NetworkUtilities.combineArrays(packetType , packetIDByte);
+        byte[] data = frameDataPacket.getData();
 
         //Make the packet
         DatagramPacket packet = new DatagramPacket(data, data.length, mStreamIP , getPort());
@@ -319,5 +307,21 @@ public class AudioBroadcaster {
         mPackets.put(mNextPacketId , packet);
         mNextPacketId++;
     }
+
+    private synchronized void sendStartSongPacket(){
+
+        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID);
+
+        byte[] data = songStartPacket.getData();
+
+        DatagramPacket packet = new DatagramPacket(data, data.length, mStreamIP , getPort());
+
+        try {
+            mStreamSocket.send(packet);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
     
 }

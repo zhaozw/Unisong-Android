@@ -20,9 +20,6 @@ public class CONSTANTS {
 
     public static final int RELIABILITY_PORT = 55989;
 
-    //The packet ID for streaming data packets
-    public static final byte FRAME_INFO_PACKET_ID= 0;
-
     //The packet ID for starting a new song
     public static final byte SONG_START_PACKET_ID = 1;
 
@@ -33,6 +30,10 @@ public class CONSTANTS {
     public static final byte MASTER_RESPONSE_PACKET = 3;
 
     //The packet ID for streaming data packets
-    public static final byte FRAME_DATA_PACKET_ID= 4;
+    public static final byte FRAME_INFO_PACKET_ID= 4;
+
+    //The packet ID for streaming data packets
+    public static final byte FRAME_DATA_PACKET_ID= 5;
+
 
 }

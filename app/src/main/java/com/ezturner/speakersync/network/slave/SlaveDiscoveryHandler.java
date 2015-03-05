@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -66,9 +68,9 @@ public class SlaveDiscoveryHandler {
 
         mIsDeciding = false;
         try {
-            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PASSIVE_PORT , NetworkUtilities.getBroadcastAddress());
+            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PASSIVE_PORT);
             mPassiveSocket.setBroadcast(true);
-            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT , NetworkUtilities.getBroadcastAddress());
+            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT);
             mSocket.setBroadcast(true);
         } catch(SocketException e){
             e.printStackTrace();
@@ -81,8 +83,12 @@ public class SlaveDiscoveryHandler {
     //if they want to play the stream
     private synchronized void listenForResponse(boolean active){
         while(mListening){
-            DatagramPacket packet = new DatagramPacket(new byte[1024], 1024);
-
+            DatagramPacket packet;
+            if(active) {
+                packet = new DatagramPacket(new byte[1024], 1024, NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT);
+            } else {
+                packet = new DatagramPacket(new byte[1024] , 1024 , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PASSIVE_PORT );
+            }
             try {
                 if(active) {
                     Log.d(LOG_TAG , "Listening Started");
@@ -109,6 +115,7 @@ public class SlaveDiscoveryHandler {
 
             byte[] portArr = new byte[]{data[0], data[1], data[2], data[3]};
 
+
             //Make a buffer wrapper to decode the port, then decode it
             ByteBuffer wrapped = ByteBuffer.wrap(portArr);
             int port = wrapped.getInt();
@@ -124,12 +131,13 @@ public class SlaveDiscoveryHandler {
                 //Creates an SntpClient
 
                 mTempClients.add(new SntpClient(addr.toString()));
-                try {
-                    DatagramSocket socket = new DatagramSocket(port);
-                    mTempSockets.add(socket);
+                    try {
+                        DatagramSocket socket = new DatagramSocket(port);
+                        mTempSockets.add(socket);
+                        master.setSocket(socket);
 
-                    Thread thread = tempListenThread(socket, mTempSockets.size() - 1);
-                    thread.start();
+                        Thread thread = tempListenThread(socket, mTempSockets.size() - 1);
+                        thread.start();
 
                 } catch (SocketException e) {
                     e.printStackTrace();
@@ -155,10 +163,9 @@ public class SlaveDiscoveryHandler {
     private synchronized void sendDiscoveryRequest(){
 
         //TODO: SET THIS TO CONSTANTS.getBroadcastAddress()
-        DatagramPacket packet = new DatagramPacket(new byte[512], 512 , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT);
+        DatagramPacket packet = new DatagramPacket(new byte[1024], 1024, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_PORT);
 
 
-        Log.d(LOG_TAG , "huhhuhhuh");
         try {
             mSocket.send(packet);
             Log.d(LOG_TAG , "Packet sent");
@@ -198,7 +205,7 @@ public class SlaveDiscoveryHandler {
             try {
                 socket.receive(packet);
             } catch(IOException e){
-                Log.e(LOG_TAG , e.toString());
+                e.printStackTrace();
                 failed = true;
             }
             if(!failed) {

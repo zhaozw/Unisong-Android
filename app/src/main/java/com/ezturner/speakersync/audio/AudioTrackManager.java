@@ -36,7 +36,6 @@ public class AudioTrackManager {
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
-
         mFrames = new TreeMap<Integer , AudioFrame>();
 
         mIsPlaying = false;
@@ -72,6 +71,7 @@ public class AudioTrackManager {
         } catch(InterruptedException e){
             e.printStackTrace();
         }
+
         while(mIsPlaying){
             if(mFrameToPlay == mLastFrameId) mIsPlaying = false;
             byte[] data = nextData();
@@ -101,7 +101,6 @@ public class AudioTrackManager {
     }
 
     public void createAudioTrack(int sampleRate){
-
         int bufferSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
 
         mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
@@ -119,5 +118,6 @@ public class AudioTrackManager {
             mAudioTrack = null;
         }
     }
+
 
 }

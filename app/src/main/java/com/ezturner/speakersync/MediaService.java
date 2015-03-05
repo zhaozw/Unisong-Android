@@ -92,11 +92,11 @@ public class MediaService extends Service{
 
         mAudioTrackManager = new AudioTrackManager();
         mFileReader = new AudioFileReader(mAudioTrackManager);
-        try {
+        /*try {
             mFileReader.readFile(this.TEST_FILE_PATH);
         } catch(IOException e){
             e.printStackTrace();
-        }
+        }*/
 
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
         mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");

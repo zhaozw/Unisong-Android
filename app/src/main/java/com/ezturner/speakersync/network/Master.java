@@ -1,6 +1,7 @@
 package com.ezturner.speakersync.network;
 
 import java.io.Serializable;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 /**
@@ -11,8 +12,9 @@ public class Master implements Serializable{
     private int mPort;
     private String mPhoneNumber;
     private InetAddress mIP;
+    private DatagramSocket mSocket;
 
-    public Master(int port, String number, InetAddress IP){
+    public Master(int port, String number, InetAddress IP ){
         mPort = port;
         mPhoneNumber = number;
         mIP = IP;
@@ -22,11 +24,19 @@ public class Master implements Serializable{
         return mPort;
     }
 
+    public void setSocket(DatagramSocket socket){
+        mSocket = socket;
+    }
+
     public String getPhoneNumber(){
         return mPhoneNumber;
     }
 
     public InetAddress getIP(){
         return mIP;
+    }
+
+    public DatagramSocket getSocket(){
+        return mSocket;
     }
 }

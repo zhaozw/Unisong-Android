@@ -187,8 +187,7 @@ public class AudioFileReader {
         int minSize = AudioTrack.getMinBufferSize( sampleRate, channelConfiguration, AudioFormat.ENCODING_PCM_16BIT);
         mManager.createAudioTrack(sampleRate);
 
-        // TODO: DELETE THIS!!! This should not be handled here, it's just test code
-        mManager.startPlaying();
+
         mExtractor.selectTrack(0);
 
         // start decoding
