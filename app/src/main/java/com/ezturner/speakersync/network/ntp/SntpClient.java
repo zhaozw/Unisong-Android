@@ -2,11 +2,15 @@ package com.ezturner.speakersync.network.ntp;
 
 import android.util.Log;
 
+import com.ezturner.speakersync.audio.AudioTrackManager;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -39,6 +43,9 @@ import java.util.ArrayList;
  */
 public class SntpClient
 {
+
+    private final String LOG_TAG = "SntpClient";
+
     //The current server IP
     private String mServerIP = "";
 
@@ -51,36 +58,53 @@ public class SntpClient
     //Set to check if the calculation is done.
     private int mNumberDone;
 
-    //
+    //The thread that all of the packets are sent/received on
+    private Thread mThread;
 
-    public SntpClient(String serverIP){
+    //The socket.
+    private DatagramSocket mSocket;
+
+    //The audio track manager that needs to get the clock offset
+    private AudioTrackManager mManager;
+
+    public SntpClient(String serverIP , AudioTrackManager manager){
         mServerIP = serverIP;
+        try {
+            // Send request
+            mSocket = new DatagramSocket(46232);
+        } catch(SocketException e){
+            e.printStackTrace();
+        }
 
-        startOffsetAcquisition();
+        mManager = manager;
+
+        mThread = getClientThread();
+        mThread.start();
 
     }
 
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.
-    public double calculateOffset(String serverIP) throws IOException{
+    public double calculateOffset() throws IOException{
 
         mNumberDone = 0;
 
         for(int i = 0; i < 4; i++){
-            startOffsetAcquisition();
+            getOneOffset();/*
             try {
                 wait(5);
             } catch(InterruptedException e){
                 e.printStackTrace();
-            }
+            }*/
         }
 
+        mSocket.close();/*
         while(mNumberDone < 4){
             try {
                 wait();
             } catch(InterruptedException e){
                 e.printStackTrace();
             }
-        }
+        }*/
 
         mNumberDone = 0;
 
@@ -102,11 +126,12 @@ public class SntpClient
         return mTimeOffset;
     }
 
-    private Thread startOffsetAcquisition(){
+    private Thread getClientThread(){
         return new Thread(){
             public void run(){
                 try {
-                    getOneOffset();
+                    mTimeOffset = calculateOffset();
+                    mManager.setOffset(mTimeOffset);
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -114,14 +139,14 @@ public class SntpClient
         };
     }
 
-
+    //Currently unused
     private Thread waitForRecheck(){
         return new Thread(){
             public void run(){
                 try {
                     Thread.sleep(15 * 60 * 1000);
                 } catch (InterruptedException e){
-                    Log.d("ezturner" , "NTP Re-Check wait interrupted!");
+                    Log.d(LOG_TAG , "NTP Re-Check wait interrupted!");
                 }
             }
         };
@@ -190,8 +215,9 @@ public class SntpClient
 
         list.add(localClockOffset * 1000);
         mNumberDone++;
-        notifyAll();
     }
+
+
 
 
 

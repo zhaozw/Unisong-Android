@@ -6,6 +6,7 @@ import android.util.Log;
 import com.ezturner.speakersync.MyApplication;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.packets.MasterResponsePacket;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -52,9 +53,9 @@ public class MasterDiscoveryHandler {
         mParent = parent;
 
         try {
-            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT  , NetworkUtilities.getBroadcastAddress());
+            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PORT);
             mSocket.setBroadcast(true);
-            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PASSIVE_PORT , NetworkUtilities.getBroadcastAddress());
+            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PASSIVE_PORT);
             mPassiveSocket.setBroadcast(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,7 +81,7 @@ public class MasterDiscoveryHandler {
         data = NetworkUtilities.combineArrays(data, number);
 
         //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT + 1);
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_SLAVE_PORT );
 
         //Send out packet
         try {
@@ -89,7 +90,7 @@ public class MasterDiscoveryHandler {
             e.printStackTrace();
         }
 
-        outPacket.setPort(CONSTANTS.DISCOVERY_PASSIVE_PORT);
+        outPacket.setPort(CONSTANTS.DISCOVERY_SLAVE_PASSIVE_PORT);
         try {
             mPassiveSocket.send(outPacket);
         } catch(IOException e){
@@ -103,7 +104,8 @@ public class MasterDiscoveryHandler {
             public void run(){
                 //sendStartPacket();
                 Log.d(LOG_TAG, "Packet Listener engaged , " + mParent.isStreamRunning());
-                while(mParent.isStreamRunning()){
+
+                 while(mParent.isStreamRunning()){
                     Log.d(LOG_TAG , "Starting to listen");
                     listenForPacket();
                 }
@@ -136,20 +138,12 @@ public class MasterDiscoveryHandler {
 
         Log.d(LOG_TAG , "Packet received , from : " + addr.toString());
 
-        //Set the packet type
-        byte[] data = new byte[CONSTANTS.MASTER_RESPONSE_PACKET];
+        MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
 
-        //Get port
-        data = NetworkUtilities.combineArrays( data , ByteBuffer.allocate(4).putInt(mParent.getPort()).array());
-
-        //Get phone number
-        byte[] number = MyApplication.getPhoneNumber().getBytes();
-
-        //combine the two arrays
-        data = NetworkUtilities.combineArrays(data, number);
+        byte[] data = resPacket.getData();
 
         //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT);
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_SLAVE_PORT);
 
         //Send out packet
         try {
@@ -160,6 +154,35 @@ public class MasterDiscoveryHandler {
             e.printStackTrace();
         }
     }
+
+    public void sendPassivePacket(){
+        new Thread(){
+            public void run(){
+                sendPassivePacketThreaded();
+            }
+        }.start();
+    }
+
+    private synchronized void sendPassivePacketThreaded(){
+        MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
+
+        byte[] data = resPacket.getData();
+
+        //Make the packet
+        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_SLAVE_PASSIVE_PORT);
+
+        //Send out packet
+        try {
+            mSocket.send(outPacket);
+        } catch(SocketException e){
+            e.printStackTrace();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+
+
 
 
 }

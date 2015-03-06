@@ -16,9 +16,9 @@ import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
+import com.ezturner.speakersync.network.ntp.NtpServer;
+import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
-
-import java.io.IOException;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -41,17 +41,10 @@ public class MediaService extends Service{
     private static WifiManager wifiManager;
     private static WifiManager.MulticastLock mCastLock;
 
-    private static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
+    public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
 
     public PowerManager.WakeLock mWakeLock;
 
-    public MediaService(){
-
-        //OpenMXPlayer player = new OpenMXPlayer();
-        //player.setDataSource(TEST_FILE_PATH);
-        //player.run();
-
-    }
 
     public void startToListen(){
         //TODO: uncomment after compile
@@ -92,6 +85,7 @@ public class MediaService extends Service{
 
         mAudioTrackManager = new AudioTrackManager();
         mFileReader = new AudioFileReader(mAudioTrackManager);
+
         /*try {
             mFileReader.readFile(this.TEST_FILE_PATH);
         } catch(IOException e){
@@ -112,15 +106,19 @@ public class MediaService extends Service{
     }
 
     public void broadcaster() {
-        if(mBroadcaster == null) {
-            mBroadcaster = new AudioBroadcaster(mAudioTrackManager);
+        NtpServer server = new NtpServer();
+        if(mBroadcaster != null) {
+            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
         }
     }
 
 
     public void listener(){
 
-       mListener = new AudioListener(this, mAudioTrackManager);
+        SntpClient client = new SntpClient("192.168.1.124" , mAudioTrackManager);
+
+
+        //mListener = new AudioListener(this, mAudioTrackManager);
 
 
     }

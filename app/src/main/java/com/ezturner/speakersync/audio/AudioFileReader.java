@@ -325,6 +325,10 @@ public class AudioFileReader {
 
     }
 
+    public void setBroadcaster(AudioBroadcaster broadcaster){
+        mBroadcaster = broadcaster;
+    }
+
 
 
 }

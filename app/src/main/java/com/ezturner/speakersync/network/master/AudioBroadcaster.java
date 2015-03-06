@@ -1,8 +1,11 @@
 package com.ezturner.speakersync.network.master;
 
+import android.provider.MediaStore;
 import android.util.Log;
 import android.os.Handler;
 
+import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -94,24 +97,31 @@ public class AudioBroadcaster {
     //The AudioTrackManager that handles the playback of the audio data on this device
     private AudioTrackManager mManager;
 
+    //The object that handles the reading and decoding of all of dem music
+    private AudioFileReader mReader;
+
     //The boolean that lets us know if we are still broadcasting
     private boolean mIsBroadcasting;
 
+
+
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
-    public AudioBroadcaster(AudioTrackManager manager){
+    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader){
 
+        //TODO: When not testing, get rid of this comment
         mPort = CONSTANTS.STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
         //TODO: Listen for other streams and ensure that you don't use the same port
         try {
             mStreamIP = NetworkUtilities.getBroadcastAddress();
             //Start the socket for the actual stream
-            mStreamSocket = new DatagramSocket(getPort() , mStreamIP);
+            mStreamSocket = new DatagramSocket(getPort());
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
 
             //Start the NTP server for syncing the playback
-            NtpServer.startNtpServer();
+            //TODO: Fix
+            //NtpServer.startNtpServer();
 
 
         } catch(IOException e){
@@ -137,9 +147,18 @@ public class AudioBroadcaster {
 
         mManager = manager;
 
+        mReader = reader;
+
+        mReader.setBroadcaster(this);
+
         mStreamRunning = false;
 
         mLastPacketId = -1;
+
+        mDiscoveryHandler.sendPassive();
+
+        //TODO: Delete this when the UI is integrated! this is just for test
+        startSongStream();
     }
 
 
@@ -150,6 +169,14 @@ public class AudioBroadcaster {
                 broadcastStreamPacket(mNextPacketId); //this function can change value of mInterval.
                 mHandler.postDelayed(mPacketSender, mInterval);
             }
+        }
+    };
+
+    Runnable mStartRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            mHandler.postDelayed(mPacketSender , 25);
         }
     };
 
@@ -170,7 +197,7 @@ public class AudioBroadcaster {
         }
 
         //The start time in milliseconds
-        mSongStartTime = System.currentTimeMillis() * 1000 + 250000;
+        mSongStartTime = System.currentTimeMillis() + 300;
         mNextFrameTime = mSongStartTime;
 
         if(mStreamID == 240){
@@ -180,11 +207,14 @@ public class AudioBroadcaster {
         }
 
         mPackets = new TreeMap<Integer, DatagramPacket>();
+        try {
+            mReader.readFile(MediaService.TEST_FILE_PATH);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
 
-    }
-
-    private void sendFirstPackets(){
-
+        mIsBroadcasting = true;
+        mHandler.postDelayed(mStartRunnable , 25);
     }
 
     //Broadcasts a streaming packet

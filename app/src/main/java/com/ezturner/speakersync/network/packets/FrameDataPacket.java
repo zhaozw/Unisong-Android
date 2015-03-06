@@ -71,12 +71,12 @@ public class FrameDataPacket implements NetworkPacket {
 
     }
 
-    public int getPacketId(){
+    public int getPacketID(){
         return mPacketID;
     }
 
     @Override
-    public byte getStreamId(){
+    public byte getStreamID(){
         return mStreamID;
     }
 

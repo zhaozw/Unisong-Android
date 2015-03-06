@@ -1,21 +1,20 @@
 package com.ezturner.speakersync.network.slave;
 
 import android.content.Context;
-import android.net.Network;
+import android.os.Handler;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.SntpClient;
+import com.ezturner.speakersync.network.packets.MasterResponsePacket;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -38,19 +37,17 @@ public class SlaveDiscoveryHandler {
     private Thread mPassiveDiscoveryThread;
 
     //The ArrayLists for when there are two clients and you want to buffer for both of them
-    private ArrayList<SntpClient> mTempClients;
-    private ArrayList<DatagramSocket> mTempSockets;
-    private ArrayList<ArrayList<DatagramPacket>> mTempPacketStorage;
     private ArrayList<Master> mTempMasters;
 
     //The application context
     private Context mContext;
 
-    //Whether
-
+    //Whether this is listening/deciding
     private boolean mIsDeciding;
-
     private boolean mListening;
+
+    //The handler for choosing a mster
+    private Handler mHandler;
 
     //The AudioListener parent
     private AudioListener mParent;
@@ -60,17 +57,16 @@ public class SlaveDiscoveryHandler {
         mParent = parent;
 
 
-        mTempClients = new ArrayList<SntpClient>();
+        mTempMasters = new ArrayList<Master>();
 
-        mTempSockets = new ArrayList<DatagramSocket>();
-
-        mTempPacketStorage = new ArrayList<ArrayList<DatagramPacket>>();
+        //Makes the handler for broadcasting packets
+        mHandler = new Handler();
 
         mIsDeciding = false;
         try {
-            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PASSIVE_PORT);
+            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PASSIVE_PORT);
             mPassiveSocket.setBroadcast(true);
-            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT);
+            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PORT);
             mSocket.setBroadcast(true);
         } catch(SocketException e){
             e.printStackTrace();
@@ -85,9 +81,9 @@ public class SlaveDiscoveryHandler {
         while(mListening){
             DatagramPacket packet;
             if(active) {
-                packet = new DatagramPacket(new byte[1024], 1024, NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PORT);
+                packet = new DatagramPacket(new byte[1024], 1024);
             } else {
-                packet = new DatagramPacket(new byte[1024] , 1024 , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_PASSIVE_PORT );
+                packet = new DatagramPacket(new byte[1024] , 1024);
             }
             try {
                 if(active) {
@@ -107,18 +103,13 @@ public class SlaveDiscoveryHandler {
                 return;
             }
 
+            MasterResponsePacket pack = new MasterResponsePacket(packet.getData());
+            int port = pack.getPort();
 
-            byte[] data = packet.getData();
-
+            Log.d(LOG_TAG , "Master Discovered! Port is: " + port);
             mIsDeciding = true;
             InetAddress addr = packet.getAddress();
 
-            byte[] portArr = new byte[]{data[0], data[1], data[2], data[3]};
-
-
-            //Make a buffer wrapper to decode the port, then decode it
-            ByteBuffer wrapped = ByteBuffer.wrap(portArr);
-            int port = wrapped.getInt();
 
             //TODO: Get phone number from this. Needs to be tested with a real phone to see what the format of the phone number
             //TODO: string is and how long it is, and more importantly how many bytes it takes up
@@ -130,13 +121,12 @@ public class SlaveDiscoveryHandler {
             if (!mTempMasters.contains(master)) {
                 //Creates an SntpClient
 
-                mTempClients.add(new SntpClient(addr.toString()));
+                //master.addClient(new SntpClient(addr.toString()));
                     try {
                         DatagramSocket socket = new DatagramSocket(port);
-                        mTempSockets.add(socket);
                         master.setSocket(socket);
 
-                        Thread thread = tempListenThread(socket, mTempSockets.size() - 1);
+                        Thread thread = tempListenThread(mTempMasters.size() - 1);
                         thread.start();
 
                 } catch (SocketException e) {
@@ -147,6 +137,9 @@ public class SlaveDiscoveryHandler {
                 if (!mIsDeciding) {
                     //Then start a timer to prompt the UI if multiple masters are detected
                     // or to just play from the one detected if otherwise
+                    //TODO: Prompt the UI if multiple are discovered
+                    mIsDeciding = true;
+                    mHandler.postDelayed(mWaitForMoreMasters , 25 );
                 }
 
                 mTempMasters.add(master);
@@ -154,16 +147,27 @@ public class SlaveDiscoveryHandler {
         }
     }
 
+    Runnable mWaitForMoreMasters = new Runnable() {
+        @Override
+        public void run() {
+            if(mTempMasters.size() == 1){
+                mParent.playFromMaster(mTempMasters.get(0));
+            }
+        }
+    };
+
     public void findMasters(){
         mActiveDiscoveryThread = getActiveDiscoveryThread();
         mActiveDiscoveryThread.start();
+
+        mPassiveDiscoveryThread = getPassiveDiscoveryThread();
+        mPassiveDiscoveryThread.start();
     }
 
     //Sends a request
     private synchronized void sendDiscoveryRequest(){
-
         //TODO: SET THIS TO CONSTANTS.getBroadcastAddress()
-        DatagramPacket packet = new DatagramPacket(new byte[1024], 1024, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_PORT);
+        DatagramPacket packet = new DatagramPacket(new byte[1024], 1024, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_MASTER_PORT);
 
 
         try {
@@ -186,31 +190,42 @@ public class SlaveDiscoveryHandler {
             }
         };
     }
-    private Thread tempListenThread(final DatagramSocket socket ,final int index){
+
+    private Thread getPassiveDiscoveryThread(){
+        return new Thread(){
+            public void run(){
+                mListening = true;
+                Log.d(LOG_TAG , "Passive Discovery thread started");
+                listenForResponse(false);
+            }
+        };
+    }
+
+    private Thread tempListenThread(final int index){
         Runnable run = new Runnable() {
             @Override
             public void run() {
-                tempListen(socket ,index);
+                tempListen(index);
             }
         };
 
         return new Thread(run);
     }
 
-    private void tempListen(DatagramSocket socket , int index){
+    private void tempListen( int index){
         while(mIsDeciding){
             //TODO: Figure out the actual max packet size
             DatagramPacket packet = new DatagramPacket(new byte[1024] , 1024);
             boolean failed = false;
             try {
-                socket.receive(packet);
+                mTempMasters.get(index).getSocket().receive(packet);
             } catch(IOException e){
                 e.printStackTrace();
                 failed = true;
             }
             if(!failed) {
-                synchronized (mTempPacketStorage) {
-                    mTempPacketStorage.get(index).add(packet);
+                synchronized (mTempMasters) {
+                    mTempMasters.get(index).addPacket(packet);
                 }
             }
         }
@@ -223,22 +238,19 @@ public class SlaveDiscoveryHandler {
 
         //Tell the threads that we've made our choice
         mIsDeciding = false;
+        mListening = false;
+        mSocket.close();
+        mPassiveSocket.close();
 
-        mParent.playFromMaster(master, mTempPacketStorage.get(index), mTempClients.get(index));
+        mParent.playFromMaster(master);
 
-        mTempPacketStorage = new ArrayList<ArrayList<DatagramPacket>>();
-        mTempClients = new ArrayList<SntpClient>();
+        for(int i = 0; i < mTempMasters.size(); i++){
+            if(i != index) {
+                mTempMasters.get(i).closeSocket();
+            }
+        }
+
         mTempMasters = new ArrayList<Master>();
-
-        for(int i = 0; i < mTempSockets.size(); i++){
-            mTempSockets.get(i).close();
-        }
-
-        try {
-            mSocket = new DatagramSocket(master.getPort());
-        } catch(IOException e){
-            Log.e(LOG_TAG , e.toString());
-        }
 
     }
 }

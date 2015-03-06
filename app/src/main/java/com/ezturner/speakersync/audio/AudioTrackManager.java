@@ -3,6 +3,7 @@ package com.ezturner.speakersync.audio;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.Handler;
 import android.util.Log;
 
 import java.io.IOException;
@@ -34,6 +35,12 @@ public class AudioTrackManager {
     //The current last frame
     private int mLastFrameId;
 
+    //The handler for scheduling resyncs and the song start
+    private Handler mHandler;
+
+    //The time difference between this and the master in milliseconds
+    private double mOffset;
+
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
         mFrames = new TreeMap<Integer , AudioFrame>();
@@ -44,7 +51,21 @@ public class AudioTrackManager {
 
         mWriteThread = getWriteThread();
         mLastFrameId = 0;
+
+        mHandler = new Handler();
     }
+
+    Runnable mStartSong = new Runnable() {
+        @Override
+        public void run() {
+                if(mIsPlaying){
+                    //TODO: Switch the song
+                } else {
+                    startPlaying();
+                }
+
+        }
+    };
 
     public void addFrame(AudioFrame frame){
         mFrames.put(frame.getID() , frame);
@@ -94,10 +115,19 @@ public class AudioTrackManager {
         mIsPlaying = false;
     }
 
+    public void startSong(long songStart){
+        double millisTillSongStart = System.currentTimeMillis() - (songStart + mOffset);
+        mHandler.postDelayed(mStartSong , (long)millisTillSongStart);
+    }
+
     public void startPlaying(){
         mAudioTrack.play();
         mIsPlaying = true;
         mWriteThread.start();
+    }
+
+    public boolean isPlaying(){
+        return mIsPlaying;
     }
 
     public void createAudioTrack(int sampleRate){
@@ -117,6 +147,10 @@ public class AudioTrackManager {
             mAudioTrack.release();
             mAudioTrack = null;
         }
+    }
+
+    public void setOffset(double offset){
+        mOffset = offset;
     }
 
 

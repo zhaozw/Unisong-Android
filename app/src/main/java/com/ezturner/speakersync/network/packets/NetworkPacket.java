@@ -9,5 +9,5 @@ public interface NetworkPacket {
 
     public byte[] getData();
 
-    public byte getStreamId();
+    public byte getStreamID();
 }

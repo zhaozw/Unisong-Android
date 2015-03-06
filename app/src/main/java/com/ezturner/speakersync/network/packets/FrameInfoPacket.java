@@ -15,13 +15,13 @@ public class FrameInfoPacket implements NetworkPacket{
 
     private byte[] mData;
     //The packet Id
-    private int mPacketId;
+    private int mPacketID;
 
     //The stream Id
-    private byte mStreamId;
+    private byte mStreamID;
 
     //The Id for the frame being reconstructed
-    private int mFrameId;
+    private int mFrameID;
 
     //The time at which the frame is played/written
     private long mPlayTime;
@@ -75,13 +75,13 @@ public class FrameInfoPacket implements NetworkPacket{
 
     private void decode(){
 
-        byte[] packetIdArr = Arrays.copyOfRange(mData, 2, 6);
+        byte[] packetIDArr = Arrays.copyOfRange(mData, 2, 6);
 
-        mPacketId = ByteBuffer.wrap(packetIdArr).getInt();
+        mPacketID = ByteBuffer.wrap(packetIDArr).getInt();
 
-        byte[] frameIdArr = Arrays.copyOfRange(mData, 6, 10);
+        byte[] frameIDArr = Arrays.copyOfRange(mData, 6, 10);
 
-        mFrameId = ByteBuffer.wrap(frameIdArr).getInt();
+        mFrameID = ByteBuffer.wrap(frameIDArr).getInt();
 
         byte[] playTimeArr = Arrays.copyOfRange(mData , 10 , 18);
 
@@ -98,12 +98,12 @@ public class FrameInfoPacket implements NetworkPacket{
     }
 
     @Override
-    public byte getStreamId(){
-        return mStreamId;
+    public byte getStreamID(){
+        return mStreamID;
     }
 
-    public int getPacketId(){
-        return mPacketId;
+    public int getPacketID(){
+        return mPacketID;
     }
 
     public long getPlayTime(){
@@ -115,7 +115,7 @@ public class FrameInfoPacket implements NetworkPacket{
     }
 
     public int getFrameId(){
-        return mFrameId;
+        return mFrameID;
     }
 
     public long getLength(){

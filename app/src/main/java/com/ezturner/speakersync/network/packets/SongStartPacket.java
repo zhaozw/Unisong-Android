@@ -15,7 +15,7 @@ public class SongStartPacket implements NetworkPacket {
 
     private byte[] mData;
 
-    private byte mStreamId;
+    private byte mStreamID;
 
     private long mStartTime;
 
@@ -25,8 +25,8 @@ public class SongStartPacket implements NetworkPacket {
     }
 
 
-    public SongStartPacket(long songStartTime , byte streamId){
-        byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamId};
+    public SongStartPacket(long songStartTime , byte streamID){
+        byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamID};
 
         byte[] startTime = ByteBuffer.allocate(8).putLong(songStartTime).array();
 
@@ -45,13 +45,17 @@ public class SongStartPacket implements NetworkPacket {
 
 
     @Override
-    public byte getStreamId(){
-        return mStreamId;
+    public byte getStreamID(){
+        return mStreamID;
+    }
+
+    public long getStartTime(){
+        return mStartTime;
     }
 
 
     private void decode(){
-        mStreamId = mData[1];
+        mStreamID = mData[1];
 
         byte[] packetIdArr = Arrays.copyOfRange(mData, 2, 6);
 

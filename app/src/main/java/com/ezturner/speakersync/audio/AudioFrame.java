@@ -51,7 +51,8 @@ public class AudioFrame {
     public AudioFrame(int ID, int numPackets , long playTime , long length , int packetId){
         mID = ID;
         mNumPackets = numPackets;
-        mPlayTime = playTime;
+        //Convert play time to milliseconds
+        mPlayTime = playTime / 1000;
         mLength = length;
         mData = new byte[0];
         mNumPacketsAdded = 0;

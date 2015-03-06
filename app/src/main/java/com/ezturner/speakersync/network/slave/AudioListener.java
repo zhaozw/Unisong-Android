@@ -1,8 +1,6 @@
 package com.ezturner.speakersync.network.slave;
 
 import android.content.Context;
-import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
@@ -10,7 +8,6 @@ import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
-import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.packets.FrameDataPacket;
 import com.ezturner.speakersync.network.packets.FrameInfoPacket;
@@ -22,9 +19,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -84,6 +79,11 @@ public class AudioListener {
     //The stream ID
     private byte mStreamId;
 
+    //The time that the song starts at
+    private long mStartTime;
+
+
+
 
     public AudioListener(Context context , AudioTrackManager atm){
 
@@ -98,12 +98,14 @@ public class AudioListener {
         mIsListening = false;
 
 
+
+
     }
 
     //Start playing from a master, start listening to the stream
-    public void playFromMaster(Master master , ArrayList<DatagramPacket> packets, SntpClient client){
-        mSntpClient = client;
-        mPackets = packets;
+    public void playFromMaster(Master master){
+        mSntpClient = master.getClient();
+        mPackets = master.getPackets();
         mMaster = master;
 
         mPort = master.getPort();
@@ -185,7 +187,14 @@ public class AudioListener {
     private void handleSongSwitch(DatagramPacket packet){
         SongStartPacket sp = new SongStartPacket(packet.getData());
 
-        mAudioTrackManager.release();
+        mStreamId = sp.getStreamId();
+
+        mStartTime = sp.getStartTime();
+
+        //TODO: Figure out the time synchronization and then
+        //Convert from microseconds to millis and use the Sntp offset
+
+        mAudioTrackManager.startSong(mStartTime);
     }
 
 }
