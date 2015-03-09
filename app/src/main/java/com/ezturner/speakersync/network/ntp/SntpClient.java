@@ -3,6 +3,7 @@ package com.ezturner.speakersync.network.ntp;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.slave.AudioListener;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -44,6 +45,8 @@ import java.util.ArrayList;
 public class SntpClient
 {
 
+    private final int NTP_PORT = 46232;
+
     private final String LOG_TAG = "SntpClient";
 
     //The current server IP
@@ -65,9 +68,9 @@ public class SntpClient
     private DatagramSocket mSocket;
 
     //The audio track manager that needs to get the clock offset
-    private AudioTrackManager mManager;
+    private AudioListener mParent;
 
-    public SntpClient(String serverIP , AudioTrackManager manager){
+    public SntpClient(String serverIP , AudioListener parent){
         mServerIP = serverIP;
         try {
             // Send request
@@ -76,7 +79,7 @@ public class SntpClient
             e.printStackTrace();
         }
 
-        mManager = manager;
+        mParent = parent;
 
         mThread = getClientThread();
         mThread.start();
@@ -131,7 +134,7 @@ public class SntpClient
             public void run(){
                 try {
                     mTimeOffset = calculateOffset();
-                    mManager.setOffset(mTimeOffset);
+                    mParent.setOffset(mTimeOffset);
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -156,10 +159,10 @@ public class SntpClient
 
         // Send request
         DatagramSocket socket = new DatagramSocket();
-        InetAddress address = InetAddress.getByName(mServerIP);
+        InetAddress address = InetAddress.getByName(mServerIP.substring(1));
         byte[] buf = new com.ezturner.speakersync.network.ntp.NtpMessage().toByteArray();
         DatagramPacket packet =
-                new DatagramPacket(buf, buf.length, address, 123);
+                new DatagramPacket(buf, buf.length, address, NTP_PORT);
 
         // Set the transmit timestamp *just* before sending the packet
         // ToDo: Does this actually improve performance or not?
@@ -170,7 +173,7 @@ public class SntpClient
 
 
         // Get response
-        Log.d("ezturner.ntp" , "NTP request sent, waiting for response...\n");
+        Log.d(LOG_TAG , "NTP request sent, waiting for response...\n");
         packet = new DatagramPacket(buf, buf.length);
         socket.setSoTimeout(100);
         try {
@@ -199,16 +202,16 @@ public class SntpClient
 
 
         // Display response
-        Log.d("ezturner.ntp" , "NTP server: " + mServerIP);
-        Log.d("ezturner.ntp" , msg.toString());
+        Log.d(LOG_TAG , "NTP server: " + mServerIP);
+        Log.d(LOG_TAG , msg.toString());
 
-        Log.d("ezturner.ntp" , "Dest. timestamp:     " +
+        Log.d(LOG_TAG , "Dest. timestamp:     " +
                 com.ezturner.speakersync.network.ntp.NtpMessage.timestampToString(destinationTimestamp));
 
-        Log.d("ezturner.ntp" , "Round-trip delay: " +
+        Log.d(LOG_TAG , "Round-trip delay: " +
                 new DecimalFormat("0.00").format(roundTripDelay*1000) + " ms");
 
-        Log.d("ezturner.ntp" , "Local clock offset: " +
+        Log.d(LOG_TAG , "Local clock offset: " +
                 new DecimalFormat("0.00").format(localClockOffset*1000) + " ms");
 
         socket.close();

@@ -1,5 +1,6 @@
 package com.ezturner.speakersync.network.master;
 
+import android.net.Network;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.os.Handler;
@@ -13,6 +14,7 @@ import com.ezturner.speakersync.network.ntp.NtpServer;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.FrameDataPacket;
 import com.ezturner.speakersync.network.packets.FrameInfoPacket;
+import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
 
 import java.io.IOException;
@@ -39,7 +41,7 @@ import java.util.TreeMap;
 public class AudioBroadcaster {
 
 
-    public static final String CONTROL_MUTLICAST_IP ="238.17.0.29";
+    public static final String LOG_TAG ="AudioBroadcaster";
 
     //The port that the stream will broadcast on
     public int mPort;
@@ -62,7 +64,7 @@ public class AudioBroadcaster {
     static private Random random = new Random();
 
     //Map of packet IDs and their audio data
-    private Map<Integer, DatagramPacket> mPackets;
+    private Map<Integer, NetworkPacket> mPackets;
 
     //The object that handles all reliability stuff
     private MasterReliabilityHandler mReliabilityHandlder;
@@ -86,13 +88,13 @@ public class AudioBroadcaster {
     private Handler mHandler;
 
     //The ID of the packet to be sent next
-    private int mNextPacketSendId;
+    private int mNextPacketSendID;
 
     //The ID of the next packet to be made
-    private int mNextPacketId;
+    private int mNextPacketID;
 
     //The ID of the last packet in this stream
-    private int mLastPacketId;
+    private int mLastPacketID;
 
     //The AudioTrackManager that handles the playback of the audio data on this device
     private AudioTrackManager mManager;
@@ -102,6 +104,9 @@ public class AudioBroadcaster {
 
     //The boolean that lets us know if we are still broadcasting
     private boolean mIsBroadcasting;
+
+    //The NTP server for time synchronization
+    private NtpServer mNtpServer;
 
 
 
@@ -121,7 +126,7 @@ public class AudioBroadcaster {
 
             //Start the NTP server for syncing the playback
             //TODO: Fix
-            //NtpServer.startNtpServer();
+            mNtpServer = new NtpServer();
 
 
         } catch(IOException e){
@@ -132,16 +137,16 @@ public class AudioBroadcaster {
         mStreamID = 0;
 
         //Make the map of the packets
-        mPackets = new HashMap<Integer , DatagramPacket>();
+        mPackets = new HashMap<Integer , NetworkPacket>();
 
         //Makes the handler for broadcasting packets
         mHandler = new Handler();
 
         //Set the next packet to be created to 0
-        mNextPacketId = 0;
+        mNextPacketID = 0;
 
         //Set the next packet to be created to be 0
-        mNextPacketSendId = 0;
+        mNextPacketSendID = 0;
 
         mIsBroadcasting = false;
 
@@ -151,32 +156,79 @@ public class AudioBroadcaster {
 
         mReader.setBroadcaster(this);
 
-        mStreamRunning = false;
+        //TODO: Switch to false, just for the test
+        mStreamRunning = true;
 
-        mLastPacketId = -1;
+        mLastPacketID = -1;
 
-        mDiscoveryHandler.sendPassive();
-
+        mHandler.postDelayed(mSongStreamStart, 5000);
         //TODO: Delete this when the UI is integrated! this is just for test
-        startSongStream();
+        //startSongStream();
+
+        //TODO: Delete this too
+        try {
+            mReader.readFile(MediaService.TEST_FILE_PATH);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
+    //TODO: put in some code that will ensure that we haven't gotten off track due to rounding errors or  something like that
 
     Runnable mPacketSender = new Runnable() {
         @Override
         public void run() {
             if(mIsBroadcasting) {
-                broadcastStreamPacket(mNextPacketId); //this function can change value of mInterval.
-                mHandler.postDelayed(mPacketSender, mInterval);
+                NetworkPacket packet = mPackets.get(mNextPacketSendID);
+
+                //Figure out what to do with the next packet
+                /*
+                if(packet instanceof SongStartPacket){
+                    //If the song is just starting, then broadcast the whole next frame and wait for the next frame to need to be sent
+                    Log.d(LOG_TAG, "SongStartPacket found");
+                    broadcastUntilNextFrame();
+                } else if(packet instanceof FrameDataPacket ){
+                    Log.d(LOG_TAG, "FrameDataPacket found");
+                    broadcastUntilNextFrame();
+                } else if(packet instanceof  FrameInfoPacket){
+                    Log.d(LOG_TAG, "SongStartPacket found");
+                    broadcastUntilNextFrame();
+                }*/
+
+                broadcastUntilNextFrame();
+
+
+
+                if(mNextPacketSendID != mLastPacketID) {
+                    Log.d(LOG_TAG , "mNextPacketSendID: " + mNextPacketSendID);
+                    FrameInfoPacket tempPacket = (FrameInfoPacket) mPackets.get(mNextPacketSendID);
+                    AudioFrame frame = tempPacket.getFrame();
+                    mInterval =(int) frame.getLength() / 1000;
+                    mHandler.postDelayed(mPacketSender, mInterval);
+                }
             }
         }
     };
 
-    Runnable mStartRunnable = new Runnable() {
+    private void broadcastUntilNextFrame(){
+        Log.d(LOG_TAG , "Broadcasting Packet #" + mNextPacketSendID);
+        broadcastStreamPacket(mNextPacketSendID);
+        mNextPacketSendID++;
+        //And keep broadcasting the frame until we hit the next one
+        while( !(mPackets.get(mNextPacketSendID) instanceof FrameInfoPacket && mNextPacketSendID != mLastPacketID) ){
+            broadcastStreamPacket(mNextPacketSendID);
+            mNextPacketSendID++;
+        }
+    }
+
+
+
+    Runnable mSongStreamStart = new Runnable() {
         @Override
         public void run() {
-
-            mHandler.postDelayed(mPacketSender , 25);
+            Log.d(LOG_TAG , "Stream starting!");
+            Log.d(LOG_TAG , "The number of packets is : " + mPackets.size());
+            startSongStream();
         }
     };
 
@@ -206,29 +258,44 @@ public class AudioBroadcaster {
             mStreamID++;
         }
 
-        mPackets = new TreeMap<Integer, DatagramPacket>();
+        mPackets = new HashMap<Integer, NetworkPacket>();
         try {
             mReader.readFile(MediaService.TEST_FILE_PATH);
         } catch(IOException e){
             e.printStackTrace();
         }
 
+        createStartSongPacket();
+
         mIsBroadcasting = true;
-        mHandler.postDelayed(mStartRunnable , 25);
+        mHandler.postDelayed(mPacketSender , 25);
     }
 
     //Broadcasts a streaming packet
     private synchronized void broadcastStreamPacket(int packetID){
         if(mPackets.containsKey(packetID)) {
             try {
-                mStreamSocket.send(mPackets.get(packetID));
+                Log.d(LOG_TAG , "Packet to be sent is: " + packetID);
+                mStreamSocket.send(mPackets.get(packetID).getPacket());
             } catch (IOException e) {
+                //TODO: if this failes, retry
                 e.printStackTrace();
             }
         } else {
-            if(packetID == mLastPacketId){
-                //Then switch to the next song
+            try {
+                Thread.sleep(20);
+            } catch(InterruptedException e) {
+                e.printStackTrace();
             }
+            if(mPackets.containsKey(packetID)){
+                try {
+                    mStreamSocket.send(mPackets.get(packetID).getPacket());
+                } catch (IOException e) {
+                    //TODO: if this failes, retry
+                    e.printStackTrace();
+                }
+            }
+
         }
     }
 
@@ -265,7 +332,7 @@ public class AudioBroadcaster {
 
     //Creates frames of 1024 bytes in length, and saves any leftover
     //data in mLeftoverBytes
-    public void handleFrame(AudioFrame frame){
+    public synchronized void handleFrame(AudioFrame frame){
         byte[] data = frame.getData();
 
         int frameID = frame.getID();
@@ -312,21 +379,21 @@ public class AudioBroadcaster {
     }
 
     //Adds the first packet for a frame, this one will just have the frame's information
-    private void addFirstFramePacket(AudioFrame frame, int numPackets){
+    private synchronized void addFirstFramePacket(AudioFrame frame, int numPackets){
 
-        FrameInfoPacket frameInfoPacket = new FrameInfoPacket(frame, numPackets , mStreamID , mSongStartTime , mNextPacketId, frame.getLength());
+        FrameInfoPacket frameInfoPacket = new FrameInfoPacket(frame, numPackets , mStreamID , mSongStartTime , mNextPacketID, frame.getLength());
 
-        DatagramPacket packet = new DatagramPacket(frameInfoPacket.getData() , frameInfoPacket.getData().length , mStreamIP , getPort());
+        frameInfoPacket.putPacket(new DatagramPacket(frameInfoPacket.getData() , frameInfoPacket.getData().length , mStreamIP , getPort()));
 
         //Put the packet in the array
-        mPackets.put(mNextPacketId , packet);
-        mNextPacketId++;
+        mPackets.put(mNextPacketID , frameInfoPacket);
+        mNextPacketID++;
     }
 
     //Takes in data and makes a packet out of it
-    private void addFrameDataPacket(byte[] frameData , int frameID){
+    private synchronized void addFrameDataPacket(byte[] frameData , int frameID){
 
-        FrameDataPacket frameDataPacket = new FrameDataPacket(frameData , mStreamID , mNextPacketId, frameID);
+        FrameDataPacket frameDataPacket = new FrameDataPacket(frameData , mStreamID , mNextPacketID, frameID);
 
         byte[] data = frameDataPacket.getData();
 
@@ -334,23 +401,23 @@ public class AudioBroadcaster {
         DatagramPacket packet = new DatagramPacket(data, data.length, mStreamIP , getPort());
 
         //Put the packet in the array
-        mPackets.put(mNextPacketId , packet);
-        mNextPacketId++;
+        mPackets.put(mNextPacketID , frameDataPacket);
+        mNextPacketID++;
     }
 
-    private synchronized void sendStartSongPacket(){
+    private synchronized void createStartSongPacket(){
 
-        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID);
+        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID , mNextPacketID);
 
         byte[] data = songStartPacket.getData();
 
         DatagramPacket packet = new DatagramPacket(data, data.length, mStreamIP , getPort());
-
-        try {
-            mStreamSocket.send(packet);
-        } catch(IOException e){
-            e.printStackTrace();
-        }
+        mPackets.put(mNextPacketID , songStartPacket);
+        mNextPacketID++;
+    }
+    
+    public void lastPacket(){
+        mLastPacketID = mNextPacketID;
     }
 
     

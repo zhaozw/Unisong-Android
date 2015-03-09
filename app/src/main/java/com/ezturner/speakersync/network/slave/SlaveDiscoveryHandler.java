@@ -25,16 +25,13 @@ public class SlaveDiscoveryHandler {
 
     private static final String LOG_TAG = "SlaveDiscoveryHandler";
     //The active listening socket
-    private DatagramSocket mSocket;
+    private DatagramSocket mSendSocket;
 
     //The passive listening socket
-    private DatagramSocket mPassiveSocket;
+    private DatagramSocket mReceiveSocket;
 
     //The thread for active discovery for the save
-    private Thread mActiveDiscoveryThread;
-
-    //The thread for active discovery for the save
-    private Thread mPassiveDiscoveryThread;
+    private Thread mDiscoveryThread;
 
     //The ArrayLists for when there are two clients and you want to buffer for both of them
     private ArrayList<Master> mTempMasters;
@@ -46,11 +43,13 @@ public class SlaveDiscoveryHandler {
     private boolean mIsDeciding;
     private boolean mListening;
 
-    //The handler for choosing a mster
+    //The handler for choosing a master
     private Handler mHandler;
 
     //The AudioListener parent
     private AudioListener mParent;
+
+
 
     public SlaveDiscoveryHandler(AudioListener parent, Context context){
         mContext = context;
@@ -64,10 +63,10 @@ public class SlaveDiscoveryHandler {
 
         mIsDeciding = false;
         try {
-            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PASSIVE_PORT);
-            mPassiveSocket.setBroadcast(true);
-            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PORT);
-            mSocket.setBroadcast(true);
+            mReceiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PORT);
+            mReceiveSocket.setBroadcast(true);
+            mSendSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PORT);
+            mSendSocket.setBroadcast(true);
         } catch(SocketException e){
             e.printStackTrace();
         }
@@ -77,28 +76,25 @@ public class SlaveDiscoveryHandler {
 
     //Listen for a discovery packet, and if you get one start listening and modify the UI to ask the user
     //if they want to play the stream
-    private synchronized void listenForResponse(boolean active){
+    private synchronized void listenForResponse(){
         while(mListening){
-            DatagramPacket packet;
-            if(active) {
-                packet = new DatagramPacket(new byte[1024], 1024);
-            } else {
-                packet = new DatagramPacket(new byte[1024] , 1024);
-            }
+
+            DatagramPacket packet = new DatagramPacket(new byte[1024], 1024);
+
             try {
-                if(active) {
-                    Log.d(LOG_TAG , "Listening Started");
-                    mSocket.receive(packet);
-                    Log.d(LOG_TAG , "Received");
-                } else  {
-                    mPassiveSocket.receive(packet);
+                Log.d(LOG_TAG , "Listening Started");
+                if(!mReceiveSocket.isClosed()) {
+                    mReceiveSocket.receive(packet);
+                } else {
+                    return;
                 }
+                Log.d(LOG_TAG , "Received");
             } catch (IOException e){
-                e.printStackTrace();
+                Log.d(LOG_TAG ,e.toString());
             }
 
             Log.d(LOG_TAG , "Packet received!");
-            if(mSocket.isClosed()){
+            if(mSendSocket.isClosed()){
                 Log.d(LOG_TAG , "Socket closed");
                 return;
             }
@@ -107,7 +103,6 @@ public class SlaveDiscoveryHandler {
             int port = pack.getPort();
 
             Log.d(LOG_TAG , "Master Discovered! Port is: " + port);
-            mIsDeciding = true;
             InetAddress addr = packet.getAddress();
 
 
@@ -116,33 +111,41 @@ public class SlaveDiscoveryHandler {
 
             Master master = new Master(port, "4252414577", addr);
 
+            boolean contains = false;
+
+            for(Master listMaster : mTempMasters){
+                if(master.getIP() == listMaster.getIP()){
+                    contains = true;
+                }
+            }
 
             //Checks to see if we've already recieved this master so we don't get duplicates
-            if (!mTempMasters.contains(master)) {
+            if (!contains) {
                 //Creates an SntpClient
+                mTempMasters.add(master);
 
-                //master.addClient(new SntpClient(addr.toString()));
+                master.addClient(new SntpClient(addr.toString() , mParent));
                     try {
                         DatagramSocket socket = new DatagramSocket(port);
                         master.setSocket(socket);
 
-                        Thread thread = tempListenThread(mTempMasters.size() - 1);
+                        Thread thread = tempListenThread(mTempMasters.indexOf(master));
                         thread.start();
 
                 } catch (SocketException e) {
                     e.printStackTrace();
                 }
 
-
+                Log.d(LOG_TAG , "mIsDeciding: "  + mIsDeciding);
                 if (!mIsDeciding) {
                     //Then start a timer to prompt the UI if multiple masters are detected
                     // or to just play from the one detected if otherwise
                     //TODO: Prompt the UI if multiple are discovered
                     mIsDeciding = true;
+                    Log.d(LOG_TAG , "Awaiting more masters");
                     mHandler.postDelayed(mWaitForMoreMasters , 25 );
                 }
 
-                mTempMasters.add(master);
             }
         }
     }
@@ -150,53 +153,55 @@ public class SlaveDiscoveryHandler {
     Runnable mWaitForMoreMasters = new Runnable() {
         @Override
         public void run() {
+            Log.d(LOG_TAG , "Wait is over");
+            mSendSocket.close();
+            mReceiveSocket.close();
+            mListening = false;
             if(mTempMasters.size() == 1){
+                Log.d(LOG_TAG , "Only one master detected, playing from" + mTempMasters.get(0).getIP() + ":" + mTempMasters.get(0).getPort());
                 mParent.playFromMaster(mTempMasters.get(0));
             }
         }
     };
 
     public void findMasters(){
-        mActiveDiscoveryThread = getActiveDiscoveryThread();
-        mActiveDiscoveryThread.start();
-
-        mPassiveDiscoveryThread = getPassiveDiscoveryThread();
-        mPassiveDiscoveryThread.start();
+        if(mSendSocket.isClosed() && mReceiveSocket.isClosed()) {
+            try {
+                mReceiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PORT);
+                mReceiveSocket.setBroadcast(true);
+                mSendSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PORT);
+                mSendSocket.setBroadcast(true);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+        }
+        mDiscoveryThread = getDiscoveryThread();
+        mDiscoveryThread.start();
     }
 
     //Sends a request
     private synchronized void sendDiscoveryRequest(){
-        //TODO: SET THIS TO CONSTANTS.getBroadcastAddress()
-        DatagramPacket packet = new DatagramPacket(new byte[1024], 1024, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_MASTER_PORT);
+
+        DatagramPacket packet = new DatagramPacket(new byte[8], 8, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_MASTER_PORT);
 
 
         try {
-            mSocket.send(packet);
+            mSendSocket.send(packet);
             Log.d(LOG_TAG , "Packet sent");
         } catch(IOException e){
             e.printStackTrace();
         }
 
-        listenForResponse(true);
+        listenForResponse();
 
     }
 
-    private Thread getActiveDiscoveryThread(){
+    private Thread getDiscoveryThread(){
         return new Thread(){
             public void run(){
                 mListening = true;
                 Log.d(LOG_TAG , "Active Discovery thread started");
                 sendDiscoveryRequest();
-            }
-        };
-    }
-
-    private Thread getPassiveDiscoveryThread(){
-        return new Thread(){
-            public void run(){
-                mListening = true;
-                Log.d(LOG_TAG , "Passive Discovery thread started");
-                listenForResponse(false);
             }
         };
     }
@@ -212,21 +217,20 @@ public class SlaveDiscoveryHandler {
         return new Thread(run);
     }
 
-    private void tempListen( int index){
+    private synchronized void tempListen( int index){
         while(mIsDeciding){
             //TODO: Figure out the actual max packet size
             DatagramPacket packet = new DatagramPacket(new byte[1024] , 1024);
             boolean failed = false;
             try {
+                Log.d(LOG_TAG , "Index is : " + index + " , and Temp Masters is :" + mTempMasters.size());
                 mTempMasters.get(index).getSocket().receive(packet);
             } catch(IOException e){
                 e.printStackTrace();
                 failed = true;
             }
             if(!failed) {
-                synchronized (mTempMasters) {
-                    mTempMasters.get(index).addPacket(packet);
-                }
+                mTempMasters.get(index).addPacket(packet);
             }
         }
     }
@@ -239,8 +243,8 @@ public class SlaveDiscoveryHandler {
         //Tell the threads that we've made our choice
         mIsDeciding = false;
         mListening = false;
-        mSocket.close();
-        mPassiveSocket.close();
+        mSendSocket.close();
+        mReceiveSocket.close();
 
         mParent.playFromMaster(master);
 

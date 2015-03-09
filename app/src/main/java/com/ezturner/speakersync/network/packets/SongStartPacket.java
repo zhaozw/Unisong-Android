@@ -19,22 +19,28 @@ public class SongStartPacket implements NetworkPacket {
 
     private long mStartTime;
 
+    private int mPacketID;
+
+    private DatagramPacket mPacket;
+
     public SongStartPacket(byte[] data){
         mData = data;
         decode();
     }
 
 
-    public SongStartPacket(long songStartTime , byte streamID){
+    public SongStartPacket(long songStartTime , byte streamID  , int packetID){
         byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamID};
+
+        byte[] packetIDArr = ByteBuffer.allocate(4).putInt(packetID).array();
 
         byte[] startTime = ByteBuffer.allocate(8).putLong(songStartTime).array();
 
         //TODO: implement metadata like sample rate, song name, and whatever else is needed
 
+        data = NetworkUtilities.combineArrays(data, packetIDArr);
+
         data = NetworkUtilities.combineArrays(data, startTime);
-
-
         mData = data;
     }
 
@@ -53,13 +59,31 @@ public class SongStartPacket implements NetworkPacket {
         return mStartTime;
     }
 
+    public int getPacketID(){
+        return mPacketID;
+    }
+
+    @Override
+    public DatagramPacket getPacket() {
+        return mPacket;
+    }
+
+    @Override
+    public void putPacket(DatagramPacket packet) {
+        mPacket = packet;
+    }
+
 
     private void decode(){
         mStreamID = mData[1];
 
         byte[] packetIdArr = Arrays.copyOfRange(mData, 2, 6);
 
-        mStartTime = ByteBuffer.wrap(packetIdArr).getInt();
+        mPacketID = ByteBuffer.wrap(packetIdArr).getInt();
+
+        byte[] playTimeArr = Arrays.copyOfRange(mData, 6, 14);
+
+        mStartTime = ByteBuffer.wrap(playTimeArr).getLong();
     }
 
 }

@@ -115,6 +115,7 @@ public class AudioFileReader {
     protected int inputBufIndex;
     protected int bufIndexCheck;
     protected int lastInputBufIndex;
+    private int mRuns = 0;
 
     public void decode() throws IOException {
         long startTime = System.currentTimeMillis();
@@ -201,6 +202,11 @@ public class AudioFileReader {
         mState.set(PlayerStates.PLAYING);
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
 
+            mRuns++;
+            if(mRuns >= 200){
+                System.gc();
+                mRuns = 0;
+            }
             long playTime = -1;
             long length = -1;
 
@@ -213,6 +219,7 @@ public class AudioFileReader {
                     int sampleSize = mExtractor.readSampleData(dstBuf, 0);
                     if (sampleSize < 0) {
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
+                        mBroadcaster.lastPacket();
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
@@ -230,7 +237,8 @@ public class AudioFileReader {
                     if (!sawInputEOS) mExtractor.advance();
 
                 } else {
-                    Log.e(LOG_TAG, "inputBufIndex " +inputBufIndex);
+                    //TODO: Investigate and reenable
+                    //Log.e(LOG_TAG, "inputBufIndex " +inputBufIndex);
                 }
             } // !sawInputEOS
 
@@ -254,7 +262,11 @@ public class AudioFileReader {
                 	}*/
 
                 }
-                mCodec.releaseOutputBuffer(outputBufIndex, false);
+                try {
+                    mCodec.releaseOutputBuffer(outputBufIndex, false);
+                } catch(IllegalStateException e){
+                    e.printStackTrace();
+                }
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     Log.d(LOG_TAG, "saw output EOS.");
                     sawOutputEOS = true;
@@ -266,7 +278,7 @@ public class AudioFileReader {
                 MediaFormat oformat = mCodec.getOutputFormat();
                 Log.d(LOG_TAG, "output format has changed to " + oformat);
             } else {
-                Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
+                //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
         }
 
@@ -279,6 +291,7 @@ public class AudioFileReader {
         }
 
 
+        Log.d(LOG_TAG ,"Hmmm");
 
         // clear source and the other globals
         //sourcePath = null;

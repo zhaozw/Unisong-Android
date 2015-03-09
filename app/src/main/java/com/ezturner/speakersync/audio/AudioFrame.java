@@ -84,6 +84,10 @@ public class AudioFrame {
         mPlayTime = time;
     }
 
+    public void setOffset(long offset){
+        mPlayTime += offset;
+    }
+
     public long getPlayTime(){
         return mPlayTime;
     }

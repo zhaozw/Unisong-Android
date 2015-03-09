@@ -17,6 +17,8 @@ import java.util.TreeMap;
  */
 public class AudioTrackManager {
 
+    private String LOG_TAG = "AudioTrackManager";
+
     //The AudioTrack used for playback
     private AudioTrack mAudioTrack;
 
@@ -86,6 +88,7 @@ public class AudioTrackManager {
         });
     }
 
+    private int mTest = 0;
     private void writeToTrack(){
         try {
             Thread.sleep(500);
@@ -96,6 +99,14 @@ public class AudioTrackManager {
         while(mIsPlaying){
             if(mFrameToPlay == mLastFrameId) mIsPlaying = false;
             byte[] data = nextData();
+
+            mTest++;
+
+            if(mTest >= 200){
+                AudioFrame frame = mFrames.get(mFrameToPlay - 1);
+                long difference = System.currentTimeMillis() - frame.getPlayTime();
+                Log.d(LOG_TAG , "Current time is :" + System.currentTimeMillis() + " , As opposed to a  write time of : " + frame.getPlayTime() + " , A difference of : " + difference);
+            }
             mAudioTrack.write(data, 0, data.length);
         }
     }

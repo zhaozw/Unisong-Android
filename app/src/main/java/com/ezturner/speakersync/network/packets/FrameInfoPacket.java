@@ -32,6 +32,13 @@ public class FrameInfoPacket implements NetworkPacket{
     //The length of this frame
     private long mLength;
 
+    //The datagram packet that was/will be sent through the network
+    private DatagramPacket mPacket;
+
+    //The AudioFrame this was made for
+    private AudioFrame mFrame;
+
+
 
     public FrameInfoPacket(byte[] data){
         mData = data;
@@ -40,7 +47,9 @@ public class FrameInfoPacket implements NetworkPacket{
 
     //A constructor that takes in all of the relevant parameters, then formats the data
     public FrameInfoPacket(AudioFrame frame, int numPackets , byte streamId , long songStartTime , int packetId , long length){
-    //turn packet type into a byte array for combination , and put the stream ID in there
+        mFrame = frame;
+
+        //turn packet type into a byte array for combination , and put the stream ID in there
         byte[] packetType = new byte[]{CONSTANTS.FRAME_INFO_PACKET_ID , streamId};
 
         byte[] packetIdByte = ByteBuffer.allocate(4).putInt(packetId).array();
@@ -114,11 +123,25 @@ public class FrameInfoPacket implements NetworkPacket{
         return mNumPackets;
     }
 
-    public int getFrameId(){
+    public int getFrameID(){
         return mFrameID;
     }
 
     public long getLength(){
         return mLength;
+    }
+
+    public AudioFrame getFrame(){
+        return mFrame;
+    }
+
+    @Override
+    public DatagramPacket getPacket() {
+        return mPacket;
+    }
+
+    @Override
+    public void putPacket(DatagramPacket packet) {
+        mPacket = packet;
     }
 }

@@ -23,10 +23,10 @@ public class MasterDiscoveryHandler {
     private final static String LOG_TAG = "MasterDiscoveryHandler";
 
     //DatagramSocket for the active listeners out there
-    private DatagramSocket mSocket;
+    private DatagramSocket mReceiveSocket;
 
     //DatagramSocket for the passive listeners out there holla out
-    private DatagramSocket mPassiveSocket;
+    private DatagramSocket mSendSocket;
 
     private Thread mListenerThread;
     
@@ -53,10 +53,10 @@ public class MasterDiscoveryHandler {
         mParent = parent;
 
         try {
-            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PORT);
-            mSocket.setBroadcast(true);
-            mPassiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PASSIVE_PORT);
-            mPassiveSocket.setBroadcast(true);
+            mReceiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PORT);
+            mReceiveSocket.setBroadcast(true);
+            mSendSocket = new DatagramSocket(CONSTANTS.DISCOVERY_SLAVE_PORT);
+            mSendSocket.setBroadcast(true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -85,14 +85,7 @@ public class MasterDiscoveryHandler {
 
         //Send out packet
         try {
-            mSocket.send(outPacket);
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-
-        outPacket.setPort(CONSTANTS.DISCOVERY_SLAVE_PASSIVE_PORT);
-        try {
-            mPassiveSocket.send(outPacket);
+            mSendSocket.send(outPacket);
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -105,8 +98,7 @@ public class MasterDiscoveryHandler {
                 //sendStartPacket();
                 Log.d(LOG_TAG, "Packet Listener engaged , " + mParent.isStreamRunning());
 
-                 while(mParent.isStreamRunning()){
-                    Log.d(LOG_TAG , "Starting to listen");
+                 while(mListening){
                     listenForPacket();
                 }
             }
@@ -120,7 +112,7 @@ public class MasterDiscoveryHandler {
 
         Log.d(LOG_TAG , "Starting to listen");
         try {
-            mSocket.receive(packet);
+            mReceiveSocket.receive(packet);
         } catch(IOException e){
             e.printStackTrace();
             return;
@@ -147,7 +139,7 @@ public class MasterDiscoveryHandler {
 
         //Send out packet
         try {
-            mSocket.send(outPacket);
+            mSendSocket.send(outPacket);
         } catch(SocketException e){
             e.printStackTrace();
         } catch(IOException e){
@@ -155,32 +147,14 @@ public class MasterDiscoveryHandler {
         }
     }
 
-    public void sendPassivePacket(){
-        new Thread(){
-            public void run(){
-                sendPassivePacketThreaded();
-            }
-        }.start();
+
+
+
+    public synchronized void release(){
+        mListening = false;
+        mReceiveSocket.close();
+        mSendSocket.close();
     }
-
-    private synchronized void sendPassivePacketThreaded(){
-        MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
-
-        byte[] data = resPacket.getData();
-
-        //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_SLAVE_PASSIVE_PORT);
-
-        //Send out packet
-        try {
-            mSocket.send(outPacket);
-        } catch(SocketException e){
-            e.printStackTrace();
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-    }
-
 
 
 

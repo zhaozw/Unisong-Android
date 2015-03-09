@@ -93,7 +93,7 @@ public class MediaService extends Service{
         }*/
 
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
-        mWakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");
+        mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
         mWakeLock.acquire();
     }
 
@@ -106,8 +106,7 @@ public class MediaService extends Service{
     }
 
     public void broadcaster() {
-        NtpServer server = new NtpServer();
-        if(mBroadcaster != null) {
+        if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
         }
     }
@@ -115,10 +114,7 @@ public class MediaService extends Service{
 
     public void listener(){
 
-        SntpClient client = new SntpClient("192.168.1.124" , mAudioTrackManager);
-
-
-        //mListener = new AudioListener(this, mAudioTrackManager);
+        mListener = new AudioListener(this, mAudioTrackManager);
 
 
     }

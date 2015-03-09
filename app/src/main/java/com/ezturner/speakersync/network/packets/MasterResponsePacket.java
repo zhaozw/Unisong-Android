@@ -1,9 +1,12 @@
 package com.ezturner.speakersync.network.packets;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.MyApplication;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 
+import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -15,7 +18,6 @@ public class MasterResponsePacket implements NetworkPacket {
     private byte[] mData;
 
     //The fields that will be populated when the packet is decoded
-    private int mPacketID;
     private byte[] mAudioFrameData;
 
     private int mFrameID;
@@ -23,6 +25,8 @@ public class MasterResponsePacket implements NetworkPacket {
     private byte mStreamID;
 
     private int mPort;
+
+    private DatagramPacket mPacket;
 
     //The constructor for when you want to decode an incoming packet
     public MasterResponsePacket(byte[] data){
@@ -32,17 +36,18 @@ public class MasterResponsePacket implements NetworkPacket {
 
     public MasterResponsePacket(int port){
         //Set the packet type
-        byte[] data = new byte[CONSTANTS.MASTER_RESPONSE_PACKET];
+        byte[] data = new byte[]{CONSTANTS.MASTER_RESPONSE_PACKET};
 
+        byte[] portArr =  ByteBuffer.allocate(4).putInt(port).array();
         //Get port
-        data = NetworkUtilities.combineArrays( data , ByteBuffer.allocate(4).putInt(port).array());
-
-        //Get phone number TODO: implement
+        data = NetworkUtilities.combineArrays( data , portArr);
+        //Get phone number TODO: implement phone number shit
         //byte[] number = MyApplication.getPhoneNumber().getBytes();
 
         //combine the two arrays
         mData = data;//NetworkUtilities.combineArrays(data);
     }
+
 
     @Override
     public byte[] getData(){
@@ -50,9 +55,9 @@ public class MasterResponsePacket implements NetworkPacket {
     }
 
     private void decode(){
-        byte[] playTimeArr = Arrays.copyOfRange(mData , 1 , 5);
+        byte[] portArr = Arrays.copyOfRange(mData , 1 , 5);
 
-        mPort = ByteBuffer.wrap(playTimeArr).getInt();
+        mPort = ByteBuffer.wrap(portArr).getInt();
     }
 
     @Override
@@ -62,5 +67,19 @@ public class MasterResponsePacket implements NetworkPacket {
 
     public int getPort(){
         return mPort;
+    }
+
+    public int getPacketID(){
+        return -1;
+    }
+
+    @Override
+    public DatagramPacket getPacket() {
+        return mPacket;
+    }
+
+    @Override
+    public void putPacket(DatagramPacket packet) {
+        mPacket = packet;
     }
 }

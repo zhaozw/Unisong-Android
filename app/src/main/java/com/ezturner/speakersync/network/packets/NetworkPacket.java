@@ -10,4 +10,10 @@ public interface NetworkPacket {
     public byte[] getData();
 
     public byte getStreamID();
+
+    public int getPacketID();
+
+    public DatagramPacket getPacket();
+
+    public void putPacket(DatagramPacket packet);
 }

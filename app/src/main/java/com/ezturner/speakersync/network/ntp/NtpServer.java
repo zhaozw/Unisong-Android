@@ -12,6 +12,7 @@ import java.net.InetAddress;
  */
 public class NtpServer {
 
+    private final int NTP_PORT = 46232;
 
     private static final String LOG_TAG = "NtpServer";
 

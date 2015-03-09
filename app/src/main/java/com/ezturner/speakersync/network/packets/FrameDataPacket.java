@@ -26,6 +26,8 @@ public class FrameDataPacket implements NetworkPacket {
 
     private int mFrameID;
 
+    private DatagramPacket mPacket;
+
     //The constructor for when you want to decode an incoming packet
     public FrameDataPacket(byte[] data){
         mData = data;
@@ -46,6 +48,8 @@ public class FrameDataPacket implements NetworkPacket {
         packetType = NetworkUtilities.combineArrays(packetType, packetIDByte);
 
         data = NetworkUtilities.combineArrays(packetType , packetIDByte);
+
+        mData = data;
     }
 
     @Override
@@ -76,6 +80,16 @@ public class FrameDataPacket implements NetworkPacket {
     }
 
     @Override
+    public DatagramPacket getPacket() {
+        return mPacket;
+    }
+
+    @Override
+    public void putPacket(DatagramPacket packet) {
+        mPacket = packet;
+    }
+
+    @Override
     public byte getStreamID(){
         return mStreamID;
     }
@@ -87,4 +101,6 @@ public class FrameDataPacket implements NetworkPacket {
     public int getFrameID(){
         return mFrameID;
     }
+
+
 }

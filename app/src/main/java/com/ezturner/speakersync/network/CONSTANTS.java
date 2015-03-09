@@ -18,11 +18,6 @@ public class CONSTANTS {
     //The port for active discovery
     public static final int DISCOVERY_MASTER_PORT = 55987;
 
-    //The port for packet discovery
-    public static final int DISCOVERY_SLAVE_PASSIVE_PORT = 55986;
-
-    //The port for packet discovery
-    public static final int DISCOVERY_MASTER_PASSIVE_PORT = 55985;
 
     public static final int RELIABILITY_PORT = 55989;
 
