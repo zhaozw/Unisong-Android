@@ -5,20 +5,20 @@ package com.ezturner.speakersync.activity.MusicSelect;
  */
 public class Song implements MusicData{
 
-    private long mId;
+    private long mID;
     private String mName;
     private String mArtist;
     private String mArt;
 
     //The class for storing song data
     public Song(long songID, String songTitle, String songArtist, String albumart) {
-        mId = songID;
+        mID = songID;
         mName = songTitle;
         mArtist = songArtist;
         mArt = albumart;
     }
 
-    public long getId () {return mId;}
+    public long getID () {return mID;}
 
     public String getName () {return mName;}
 

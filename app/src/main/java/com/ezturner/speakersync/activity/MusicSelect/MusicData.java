@@ -9,7 +9,7 @@ public interface MusicData {
 
     public String getSubText();
 
-    public long getId();
+    public long getID();
 
     public String getArt();
 

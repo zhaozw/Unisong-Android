@@ -5,17 +5,17 @@ package com.ezturner.speakersync.activity.MusicSelect;
  */
 public class Playlist implements MusicData{
 
-    private long mId;
+    private long mID;
     private String mTitle;
     private int mCount;
 
     //The class for storing playlist information
     public Playlist(long playlistID, String playlistName) {
-        mId = playlistID;
+        mID = playlistID;
         mTitle = playlistName;
     }
 
-    public long getId(){return mId;}
+    public long getID(){return mID;}
 
     //TODO: See what we can get from MediaStore for this
     public String getSubText(){return "";}

@@ -203,16 +203,16 @@ public class AudioListener {
     private NetworkPacket handleFrameDataPacket(DatagramPacket packet){
         FrameDataPacket fp = new FrameDataPacket(packet.getData());
 
-        if(mUnfinishedFrames.containsKey(fp.getFrameID())) {
+        if(mUnfinishedFrames.containsKey(fp.getFrameID())){
             AudioFrame frame = mUnfinishedFrames.get(fp.getFrameID());
 
             boolean frameFinished = frame.addData(fp.getFrameID(), fp.getAudioFrameData());
 
-            if (frameFinished && mTimeOffset != -1) {
+            if (frameFinished && mTimeOffset != -1){
                 frame.setOffset(mTimeOffset);
                 mAudioTrackManager.addFrame(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
-            } else if(frameFinished && mTimeOffset == -1){
+            } else if(frameFinished){
                 mUnOffsetedFrames.add(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
             }
