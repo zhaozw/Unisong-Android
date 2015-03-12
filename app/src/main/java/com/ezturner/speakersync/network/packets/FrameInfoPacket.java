@@ -42,7 +42,6 @@ public class FrameInfoPacket implements NetworkPacket{
 
     public FrameInfoPacket(byte[] data){
         mData = data;
-
     }
 
     //A constructor that takes in all of the relevant parameters, then formats the data

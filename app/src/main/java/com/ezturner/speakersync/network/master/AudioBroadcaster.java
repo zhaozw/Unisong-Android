@@ -154,8 +154,6 @@ public class AudioBroadcaster {
 
         mReader = reader;
 
-        mReader.setBroadcaster(this);
-
         //TODO: Switch to false, just for the test
         mStreamRunning = true;
 
@@ -272,8 +270,11 @@ public class AudioBroadcaster {
     }
 
     //Broadcasts a streaming packet
-    private synchronized void broadcastStreamPacket(int packetID){
-        if(mPackets.containsKey(packetID)) {
+    private void broadcastStreamPacket(int packetID){
+        synchronized(mPackets){
+            //TODO : doooooooooo
+        }
+        if() {
             try {
                 Log.d(LOG_TAG , "Packet to be sent is: " + packetID);
                 mStreamSocket.send(mPackets.get(packetID).getPacket());
@@ -332,7 +333,7 @@ public class AudioBroadcaster {
 
     //Creates frames of 1024 bytes in length, and saves any leftover
     //data in mLeftoverBytes
-    public synchronized void handleFrame(AudioFrame frame){
+    public void handleFrame(AudioFrame frame){
         byte[] data = frame.getData();
 
         int frameID = frame.getID();
@@ -420,5 +421,8 @@ public class AudioBroadcaster {
         mLastPacketID = mNextPacketID;
     }
 
-    
+    //This is called by ReaderBroadcasterBridge to push in the
+    public void pushFrames(ArrayList<AudioFrame> frames){
+
+    }
 }

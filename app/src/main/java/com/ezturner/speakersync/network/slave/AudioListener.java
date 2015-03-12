@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -67,7 +68,8 @@ public class AudioListener {
     //The port that the stream will be on
     private int mPort;
 
-    private AudioTrackManager mAudioTrackManager;
+    //The bridge between this and the AudioTrackManager
+    private TrackManagerBridge mTrackManagerBridge;
 
     //The discovery handler, which will handle finding and choosing the
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
@@ -92,10 +94,9 @@ public class AudioListener {
 
 
 
-    public AudioListener(Context context , AudioTrackManager atm){
+    public AudioListener(Context context ){
 
         Log.d(LOG_TAG , "Audio Listener Started");
-        mAudioTrackManager = atm;
         mContext = context;
 
         mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this , mContext);
@@ -107,6 +108,10 @@ public class AudioListener {
 
         mUnOffsetedFrames = new ArrayList<AudioFrame>();
 
+    }
+
+    public void setTrackBridge(TrackManagerBridge bridge){
+        mTrackManagerBridge = bridge;
     }
 
     //Start playing from a master, start listening to the stream
@@ -210,7 +215,7 @@ public class AudioListener {
 
             if (frameFinished && mTimeOffset != -1){
                 frame.setOffset(mTimeOffset);
-                mAudioTrackManager.addFrame(frame);
+                mTrackManagerBridge.addFrame(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
             } else if(frameFinished){
                 mUnOffsetedFrames.add(frame);
@@ -231,7 +236,7 @@ public class AudioListener {
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
-        mAudioTrackManager.startSong(mStartTime);
+        mTrackManagerBridge.startSong(mStartTime);
 
         return sp;
     }
@@ -243,7 +248,7 @@ public class AudioListener {
 
             frame.setOffset(mTimeOffset);
 
-            mAudioTrackManager.addFrame(frame);
+            mTrackManagerBridge.addFrame(frame);
         }
 
         mUnOffsetedFrames = new ArrayList<AudioFrame>();

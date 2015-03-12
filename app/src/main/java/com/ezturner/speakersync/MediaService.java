@@ -14,11 +14,15 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.audio.ReaderBroadcasterBridge;
+import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.NtpServer;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
+
+import java.io.IOException;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -84,13 +88,10 @@ public class MediaService extends Service{
                 new IntentFilter("service-interface"));
 
         mAudioTrackManager = new AudioTrackManager();
-        mFileReader = new AudioFileReader(mAudioTrackManager);
+        mFileReader = new AudioFileReader();
+        mFileReader.setTrackManagerBridge(new TrackManagerBridge(mAudioTrackManager));
 
-        /*try {
-            mFileReader.readFile(this.TEST_FILE_PATH);
-        } catch(IOException e){
-            e.printStackTrace();
-        }*/
+
 
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
         mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
@@ -108,14 +109,20 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
+            mFileReader.setBroadcasterBridge(new ReaderBroadcasterBridge(mBroadcaster));
+            try {
+                mFileReader.readFile(this.TEST_FILE_PATH);
+            } catch(IOException e){
+                e.printStackTrace();
+            }
         }
     }
 
 
     public void listener(){
 
-        mListener = new AudioListener(this, mAudioTrackManager);
-
+        mListener = new AudioListener(this);
+        mListener.setTrackBridge(new TrackManagerBridge(mAudioTrackManager));
 
     }
 

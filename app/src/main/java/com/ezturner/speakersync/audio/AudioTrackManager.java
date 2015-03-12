@@ -69,10 +69,12 @@ public class AudioTrackManager {
         }
     };
 
-    public void addFrame(AudioFrame frame){
-        mFrames.put(frame.getID() , frame);
-        if(frame.getID() > mLastFrameId){
-            mLastFrameId = frame.getID();
+    //Takes in some frames, then waits for mFrames to be open and writes it to it
+    public void addFrames(ArrayList<AudioFrame> frames){
+        synchronized (mFrames){
+            for(AudioFrame frame : frames){
+                mFrames.put(frame.getID() , frame);
+            }
         }
     }
 
@@ -113,7 +115,11 @@ public class AudioTrackManager {
 
     private byte[] nextData(){
         byte[] data  = null;
-        AudioFrame frame = mFrames.get(mFrameToPlay);
+        AudioFrame frame;
+        synchronized (mFrames) {
+           frame = mFrames.get(mFrameToPlay);
+        }
+
         if(frame != null) {
             data = frame.getData();
             mFrameToPlay++;

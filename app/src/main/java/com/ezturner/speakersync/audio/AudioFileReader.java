@@ -16,6 +16,7 @@ import com.ezturner.speakersync.network.slave.AudioListener;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 
 /**
@@ -30,11 +31,11 @@ public class AudioFileReader {
     //The current file that is being read from.
     private File mCurrentFile;
 
-    //The object that broadcasts audio frames
-    private AudioBroadcaster mBroadcaster;
+    //The bridge that handles communication to the broadcaster
+    private ReaderBroadcasterBridge mBroadcasterBridge;
 
     //The object that handles the playback of audio data
-    private AudioTrackManager mManager;
+    private TrackManagerBridge mTrackManagerBridge;
 
     //The listener that will sync the playback
     private AudioListener mListener;
@@ -70,27 +71,16 @@ public class AudioFileReader {
 
     private Thread mDecodeThread;
 
-    //The constructor for broadcasting
-    public AudioFileReader(AudioBroadcaster broadcaster , AudioTrackManager manager){
-        this(manager);
-        mBroadcaster = broadcaster;
-    }
-
-    //The constructor for listening
-    public AudioFileReader(AudioListener listener , AudioTrackManager manager){
-        this(manager);
-        mListener = listener;
-    }
-
-    public AudioFileReader(AudioTrackManager manager){
-        mManager = manager;
+    public AudioFileReader(){
         mStop = false;
         mSampleTime = -67;
         mCurrentId = 0;
         mEvents = new AudioFileReaderEvents();
         mState = new PlayerStates();
+    }
 
-
+    public void setBridge(ReaderBroadcasterBridge bridge){
+        mBroadcasterBridge = bridge;
     }
 
     public void readFile(String path) throws IOException{
@@ -186,7 +176,7 @@ public class AudioFileReader {
         // configure AudioTrack
         int channelConfiguration = channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
         int minSize = AudioTrack.getMinBufferSize( sampleRate, channelConfiguration, AudioFormat.ENCODING_PCM_16BIT);
-        mManager.createAudioTrack(sampleRate);
+        mTrackManagerBridge.createAudioTrack(sampleRate);
 
 
         mExtractor.selectTrack(0);
@@ -219,7 +209,7 @@ public class AudioFileReader {
                     int sampleSize = mExtractor.readSampleData(dstBuf, 0);
                     if (sampleSize < 0) {
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
-                        mBroadcaster.lastPacket();
+                        mBroadcasterBridge.lastPacket();
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
@@ -329,17 +319,19 @@ public class AudioFileReader {
         } else {
             frame = new AudioFrame(data , mCurrentId);
         }
-        if(mBroadcaster != null){
-            mBroadcaster.handleFrame(frame);
-        }
-        mManager.addFrame(frame);
+        mBroadcasterBridge.addFrame(frame);
+        mTrackManagerBridge.addFrame(frame);
 
         mCurrentId++;
 
     }
 
-    public void setBroadcaster(AudioBroadcaster broadcaster){
-        mBroadcaster = broadcaster;
+    public void setTrackManagerBridge(TrackManagerBridge bridge){
+        mTrackManagerBridge = bridge;
+    }
+
+    public void setBroadcasterBridge(ReaderBroadcasterBridge bridge){
+        mBroadcasterBridge = bridge;
     }
 
 
