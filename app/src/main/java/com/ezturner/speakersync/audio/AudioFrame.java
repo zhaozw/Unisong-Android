@@ -35,6 +35,8 @@ public class AudioFrame {
     //The packet ID of the frame info packet
     private int mPacketId;
 
+    //TODO: clean this class up and get rid of all of the unused stuff
+
     //The constructor without a play time
     public AudioFrame(byte[] data , int ID){
         mData = data;
@@ -44,7 +46,8 @@ public class AudioFrame {
     //The constructor with a playtime
     public AudioFrame(byte[] data, int ID, long playTime, long length){
         this(data, ID);
-        mPlayTime = playTime;
+        mPlayTime = playTime / 1000;
+        mLength = length;
     }
 
     //The constructor for the AudioListener class, so it can be rebuilt one portion at a time
@@ -102,5 +105,8 @@ public class AudioFrame {
 
     public long getLength(){
         return mLength;
+    }
+    public long getLengthMillis(){
+        return mLength / 1000;
     }
 }

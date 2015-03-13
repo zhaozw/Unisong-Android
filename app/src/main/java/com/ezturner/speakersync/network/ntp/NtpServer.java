@@ -40,6 +40,7 @@ public class NtpServer {
     private Thread startNtpListener(){
         return new Thread(){
             public void run(){
+                Log.d(LOG_TAG ,  "Starting to listen for NTP packets");
                 while(mListening){
                     listenForNtpPackets();
                 }

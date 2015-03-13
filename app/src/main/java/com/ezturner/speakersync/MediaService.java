@@ -21,6 +21,7 @@ import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.NtpServer;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
+import com.ezturner.speakersync.network.slave.ListenerTrackBridge;
 
 import java.io.IOException;
 
@@ -110,11 +111,6 @@ public class MediaService extends Service{
         if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
             mFileReader.setBroadcasterBridge(new ReaderBroadcasterBridge(mBroadcaster));
-            try {
-                mFileReader.readFile(this.TEST_FILE_PATH);
-            } catch(IOException e){
-                e.printStackTrace();
-            }
         }
     }
 
@@ -122,12 +118,12 @@ public class MediaService extends Service{
     public void listener(){
 
         mListener = new AudioListener(this);
-        mListener.setTrackBridge(new TrackManagerBridge(mAudioTrackManager));
+        mListener.setTrackBridge(new ListenerTrackBridge(mAudioTrackManager));
 
     }
 
     public void play(){
-        mAudioTrackManager.startPlaying();
+
     }
 
     public IBinder onBind(Intent arg0) {
@@ -149,7 +145,6 @@ public class MediaService extends Service{
 
     @Override
     public void onDestroy(){
-
         super.onDestroy();
         mWakeLock.release();
     }

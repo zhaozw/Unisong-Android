@@ -69,7 +69,7 @@ public class AudioListener {
     private int mPort;
 
     //The bridge between this and the AudioTrackManager
-    private TrackManagerBridge mTrackManagerBridge;
+    private ListenerTrackBridge mTrackManagerBridge;
 
     //The discovery handler, which will handle finding and choosing the
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
@@ -86,10 +86,12 @@ public class AudioListener {
     private ArrayList<AudioFrame> mUnOffsetedFrames;
 
     //The stream ID
-    private byte mStreamId;
+    private byte mStreamID;
 
     //The time that the song starts at
     private long mStartTime;
+
+    private Thread mListenThread;
 
 
 
@@ -110,9 +112,6 @@ public class AudioListener {
 
     }
 
-    public void setTrackBridge(TrackManagerBridge bridge){
-        mTrackManagerBridge = bridge;
-    }
 
     //Start playing from a master, start listening to the stream
     public void playFromMaster(Master master){
@@ -123,10 +122,15 @@ public class AudioListener {
         mMaster = master;
 
         mPort = master.getPort();
+        mIsListening = true;
 
         mSocket = master.getSocket();
 
         mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP());
+
+        mListenThread = startListeningForPackets();
+        mListenThread.start();
+
 
         mUnfinishedFrames = new HashMap<Integer , AudioFrame>();
     }
@@ -139,8 +143,9 @@ public class AudioListener {
     private Thread startListeningForPackets(){
         return new Thread(){
             public void run(){
+                Log.d(LOG_TAG, "DISPOSABLE : Listening started");
                 while(mIsListening){
-
+                    listenForPacket();
                 }
             }
         };
@@ -160,20 +165,22 @@ public class AudioListener {
 
     private void listenForPacket(){
         DatagramPacket packet = new DatagramPacket(new byte[1536] , 1536);
-
         try{
-            mSocket.receive(packet);
-            Log.d(LOG_TAG , "Packet Received");
+            synchronized (mSocket) {
+                mSocket.receive(packet);
+            }
         } catch(IOException e){
             e.printStackTrace();
         }
         NetworkPacket networkPacket = handlePacket(packet);
-        mPackets.put(networkPacket.getPacketID() , networkPacket);
-
+        if(networkPacket != null) {
+            mPackets.put(networkPacket.getPacketID(), networkPacket);
+        }
     }
 
     private NetworkPacket handlePacket(DatagramPacket packet){
-        if(packet.getData()[1] == mStreamId) {
+        //TODO: put stream ID back and implement all dat junk
+        //if(packet.getData()[1] == mStreamID) {
             switch (packet.getData()[0]) {
                 case CONSTANTS.FRAME_INFO_PACKET_ID:
                     return handleFrameInfoPacket(packet);
@@ -184,7 +191,7 @@ public class AudioListener {
                 case CONSTANTS.SONG_START_PACKET_ID:
                     return handleSongSwitch(packet);
             }
-        }
+        //}
         return null;
     }
 
@@ -215,6 +222,7 @@ public class AudioListener {
 
             if (frameFinished && mTimeOffset != -1){
                 frame.setOffset(mTimeOffset);
+                Log.d(LOG_TAG , "Frame reconstructed");
                 mTrackManagerBridge.addFrame(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
             } else if(frameFinished){
@@ -229,13 +237,14 @@ public class AudioListener {
     private NetworkPacket handleSongSwitch(DatagramPacket packet){
         SongStartPacket sp = new SongStartPacket(packet.getData());
 
-        mStreamId = sp.getStreamID();
+        mStreamID = sp.getStreamID();
 
         mStartTime = sp.getStartTime();
 
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
+        Log.d(LOG_TAG , "Song start packet received! Starting song");
         mTrackManagerBridge.startSong(mStartTime);
 
         return sp;
@@ -252,6 +261,10 @@ public class AudioListener {
         }
 
         mUnOffsetedFrames = new ArrayList<AudioFrame>();
+    }
+
+    public void setTrackBridge(ListenerTrackBridge bridge){
+        mTrackManagerBridge = bridge;
     }
 
 }

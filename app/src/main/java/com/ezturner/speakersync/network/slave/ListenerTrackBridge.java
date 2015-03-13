@@ -1,19 +1,19 @@
-package com.ezturner.speakersync.audio;
+package com.ezturner.speakersync.network.slave;
+
+import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.audio.ReaderBridge;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 
 /**
- * Created by ezturner on 3/11/2015.
+ * Created by Ethan on 3/12/2015.
  */
-public class TrackManagerBridge extends ReaderBridge{
-
-
+public class ListenerTrackBridge extends ReaderBridge{
 
     private AudioTrackManager mManager;
 
-    public TrackManagerBridge(AudioTrackManager manager){
+    public ListenerTrackBridge(AudioTrackManager manager){
         super();
         mManager = manager;
     }

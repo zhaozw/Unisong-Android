@@ -51,6 +51,7 @@ public class SlaveDiscoveryHandler {
 
 
 
+    //TODO: ensure that this works with multiple masters
     public SlaveDiscoveryHandler(AudioListener parent, Context context){
         mContext = context;
         mParent = parent;
@@ -125,6 +126,7 @@ public class SlaveDiscoveryHandler {
                 mTempMasters.add(master);
 
                 master.addClient(new SntpClient(addr.toString() , mParent));
+
                     try {
                         DatagramSocket socket = new DatagramSocket(port);
                         master.setSocket(socket);
@@ -156,6 +158,7 @@ public class SlaveDiscoveryHandler {
             Log.d(LOG_TAG , "Wait is over");
             mSendSocket.close();
             mReceiveSocket.close();
+            mIsDeciding = false;
             mListening = false;
             if(mTempMasters.size() == 1){
                 Log.d(LOG_TAG , "Only one master detected, playing from" + mTempMasters.get(0).getIP() + ":" + mTempMasters.get(0).getPort());
@@ -223,7 +226,6 @@ public class SlaveDiscoveryHandler {
             DatagramPacket packet = new DatagramPacket(new byte[1024] , 1024);
             boolean failed = false;
             try {
-                Log.d(LOG_TAG , "Index is : " + index + " , and Temp Masters is :" + mTempMasters.size());
                 mTempMasters.get(index).getSocket().receive(packet);
             } catch(IOException e){
                 e.printStackTrace();

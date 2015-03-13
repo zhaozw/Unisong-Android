@@ -74,7 +74,7 @@ public class SntpClient
         mServerIP = serverIP;
         try {
             // Send request
-            mSocket = new DatagramSocket(46232);
+            mSocket = new DatagramSocket(NTP_PORT);
         } catch(SocketException e){
             e.printStackTrace();
         }
@@ -120,6 +120,7 @@ public class SntpClient
         average = average / list.size();
 
         mTimeOffset = average;
+        mParent.setOffset(mTimeOffset);
         list = new ArrayList<Double>();
 
         return average;
@@ -158,27 +159,28 @@ public class SntpClient
     private void getOneOffset() throws IOException{
 
         // Send request
-        DatagramSocket socket = new DatagramSocket();
+
         InetAddress address = InetAddress.getByName(mServerIP.substring(1));
-        byte[] buf = new com.ezturner.speakersync.network.ntp.NtpMessage().toByteArray();
+        byte[] buf = new NtpMessage().toByteArray();
         DatagramPacket packet =
                 new DatagramPacket(buf, buf.length, address, NTP_PORT);
 
         // Set the transmit timestamp *just* before sending the packet
         // ToDo: Does this actually improve performance or not?
-        com.ezturner.speakersync.network.ntp.NtpMessage.encodeTimestamp(packet.getData(), 40,
+        NtpMessage.encodeTimestamp(packet.getData(), 40,
                 (System.currentTimeMillis() / 1000.0) + 2208988800.0);
 
-        socket.send(packet);
+        mSocket.send(packet);
 
 
         // Get response
-        Log.d(LOG_TAG , "NTP request sent, waiting for response...\n");
+        Log.d(LOG_TAG , "NTP request sent to : " + mServerIP.substring(1) +" , waiting for response...\n");
         packet = new DatagramPacket(buf, buf.length);
-        socket.setSoTimeout(100);
+        mSocket.setSoTimeout(100);
         try {
-            socket.receive(packet);
-        } catch (SocketTimeoutException e) {
+            mSocket.receive(packet);
+        } catch (SocketTimeoutException e){
+            e.printStackTrace();
             // resend
             mNumberDone++;
             return;
@@ -203,7 +205,7 @@ public class SntpClient
 
         // Display response
         Log.d(LOG_TAG , "NTP server: " + mServerIP);
-        Log.d(LOG_TAG , msg.toString());
+        //Log.d(LOG_TAG , msg.toString());
 
         Log.d(LOG_TAG , "Dest. timestamp:     " +
                 com.ezturner.speakersync.network.ntp.NtpMessage.timestampToString(destinationTimestamp));
@@ -213,8 +215,6 @@ public class SntpClient
 
         Log.d(LOG_TAG , "Local clock offset: " +
                 new DecimalFormat("0.00").format(localClockOffset*1000) + " ms");
-
-        socket.close();
 
         list.add(localClockOffset * 1000);
         mNumberDone++;

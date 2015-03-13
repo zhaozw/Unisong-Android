@@ -106,6 +106,7 @@ public class AudioFileReader {
     protected int bufIndexCheck;
     protected int lastInputBufIndex;
     private int mRuns = 0;
+    private boolean isRunning = false;
 
     public void decode() throws IOException {
         long startTime = System.currentTimeMillis();
@@ -115,9 +116,7 @@ public class AudioFileReader {
         mExtractor = new MediaExtractor();
         // try to set the source, this might fail
         try {
-            //TODO: Set the file path to dynamic
             mExtractor.setDataSource(mCurrentFile.getPath());
-
 
             /* This is the code for using internal app resources
             if (mSourceRawResId != -1) {
@@ -138,6 +137,7 @@ public class AudioFileReader {
             mime = format.getString(MediaFormat.KEY_MIME);
             sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
             channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            mTrackManagerBridge.createAudioTrack(sampleRate , channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO);
             // if duration is 0, we are probably playing a live stream
             duration = format.getLong(MediaFormat.KEY_DURATION);
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
@@ -173,12 +173,6 @@ public class AudioFileReader {
         ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
         ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
 
-        // configure AudioTrack
-        int channelConfiguration = channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
-        int minSize = AudioTrack.getMinBufferSize( sampleRate, channelConfiguration, AudioFormat.ENCODING_PCM_16BIT);
-        mTrackManagerBridge.createAudioTrack(sampleRate);
-
-
         mExtractor.selectTrack(0);
 
         // start decoding
@@ -210,6 +204,7 @@ public class AudioFileReader {
                     if (sampleSize < 0) {
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
                         mBroadcasterBridge.lastPacket();
+                        mTrackManagerBridge.lastPacket();
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
@@ -279,9 +274,6 @@ public class AudioFileReader {
             mCodec.release();
             mCodec = null;
         }
-
-
-        Log.d(LOG_TAG ,"Hmmm");
 
         // clear source and the other globals
         //sourcePath = null;

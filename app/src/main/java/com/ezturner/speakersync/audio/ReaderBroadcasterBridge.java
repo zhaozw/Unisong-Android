@@ -9,7 +9,7 @@ import java.util.Queue;
 /**
  * Created by ezturner on 3/11/2015.
  */
-public class ReaderBroadcasterBridge {
+public class ReaderBroadcasterBridge extends ReaderBridge{
 
     private Queue<AudioFrame> mInputFrames;
     private boolean mInputReady;
@@ -23,93 +23,9 @@ public class ReaderBroadcasterBridge {
     private AudioBroadcaster mBroadcaster;
 
     public ReaderBroadcasterBridge(AudioBroadcaster broadcaster){
-
+        super();
         mBroadcaster = broadcaster;
-
-        mIsRunning = true;
-
-        mInputFrames = new LinkedList<AudioFrame>();
-        mInputReady = false;
-
-        mOutputFrames = new LinkedList<AudioFrame>();
-        mOutputReady = false;
-
     }
-
-    public void addFrame(AudioFrame frame){
-        synchronized(mInputFrames){
-            mInputFrames.add(frame);
-        }
-        mInputReady = true;
-        notifyAll();
-    }
-
-    private void takeAllInputFrames(){
-        mInputReady = false;
-        ArrayList<AudioFrame> frames = new ArrayList<AudioFrame>();
-        synchronized (mInputFrames){
-            while(!mInputFrames.isEmpty()){
-                frames.add(mInputFrames.poll());
-            }
-        }
-
-        synchronized(mOutputFrames){
-            for(AudioFrame frame : frames){
-                mOutputFrames.add(frame);
-            }
-        }
-        mOutputReady = true;
-        notifyAll();
-
-    }
-
-    private Thread getInputThread(){
-        return new Thread(){
-            public void run(){
-                while(mIsRunning ){
-                    if(mInputReady) {
-                        takeAllInputFrames();
-                    }
-                    try {
-                        wait();
-                    } catch(InterruptedException e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
-    }
-
-    private Thread getOutputThread(){
-        return new Thread(){
-            public void run(){
-                while(mIsRunning ){
-                    if(mOutputReady){
-                        sendAllOutputFrames();
-                    }
-
-                    try {
-                        wait();
-                    } catch(InterruptedException e){
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        };
-    }
-
-    private void sendAllOutputFrames(){
-        mOutputReady = false;
-        ArrayList<AudioFrame> frames = new ArrayList<AudioFrame>();
-        synchronized (mOutputFrames){
-            while(!mOutputFrames.isEmpty()){
-                frames.add(mOutputFrames.poll());
-            }
-        }
-
-    }
-
 
     public void stopBridge(){
         mIsRunning = false;
@@ -119,6 +35,8 @@ public class ReaderBroadcasterBridge {
         mBroadcaster.lastPacket();
     }
 
-
-
+    @Override
+    protected void sendOutFrames(ArrayList<AudioFrame> frames){
+        mBroadcaster.addFrames(frames);
+    }
 }

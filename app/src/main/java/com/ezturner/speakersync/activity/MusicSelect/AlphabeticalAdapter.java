@@ -80,9 +80,9 @@ class AlphabeticalAdapter extends ArrayAdapter<MusicData> implements SectionInde
         subtextView.setText(musicData.getSubText());
 
         //Set the tag so we can know what resource to get
-        convertView.setTag(musicData.getId());
+        convertView.setTag(musicData.getID());
 
-        if(musicData.getId() == 0){
+        if(musicData.getID() == 0){
             //Set album art
         }
         // Return the completed view to render on screen
