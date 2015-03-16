@@ -39,4 +39,8 @@ public class ReaderBroadcasterBridge extends ReaderBridge{
     protected void sendOutFrames(ArrayList<AudioFrame> frames){
         mBroadcaster.addFrames(frames);
     }
+
+    public void setAudioTrackInfo(int sampleRate , int channels){
+        mBroadcaster.setAudioTrackInfo(sampleRate , channels);
+    }
 }

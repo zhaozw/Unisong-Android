@@ -35,6 +35,11 @@ public class FrameDataPacket implements NetworkPacket {
     }
 
     public FrameDataPacket(byte[] data , byte streamID , int packetID , int frameID){
+        mStreamID = streamID;
+        mPacketID = packetID;
+        mFrameID = frameID;
+        mData = data;
+
         //turn packet type into a byte array for combination , and put the stream ID in there
         byte[] packetType = new byte[]{CONSTANTS.FRAME_DATA_PACKET_ID , streamID};
 
@@ -42,14 +47,15 @@ public class FrameDataPacket implements NetworkPacket {
         //TODO: Decide :Should this just be a two-byte value?
         byte[] packetIDByte = ByteBuffer.allocate(4).putInt(packetID).array();
 
-        byte[] frameIdArr = ByteBuffer.allocate(4).putInt(frameID).array();
+        byte[] frameIDArr = ByteBuffer.allocate(4).putInt(frameID).array();
 
         //Combines the various byte arrays into
         packetType = NetworkUtilities.combineArrays(packetType, packetIDByte);
 
-        data = NetworkUtilities.combineArrays(packetType , packetIDByte);
+        mData = NetworkUtilities.combineArrays(packetType , frameIDArr);
 
-        mData = data;
+        mData = NetworkUtilities.combineArrays(mData , data);
+
     }
 
     @Override
@@ -65,11 +71,11 @@ public class FrameDataPacket implements NetworkPacket {
 
         mPacketID = ByteBuffer.wrap(packetIDArr).getInt();
 
-        byte[] frameIDArr = Arrays.copyOfRange(mData, 2, 6);
+        byte[] frameIDArr = Arrays.copyOfRange(mData, 6, 10);
 
         mFrameID = ByteBuffer.wrap(frameIDArr).getInt();
 
-        mAudioFrameData = Arrays.copyOfRange(mData, 6, mData.length);
+        mAudioFrameData = Arrays.copyOfRange(mData, 10, mData.length);
 
 
 

@@ -1,7 +1,10 @@
 package com.ezturner.speakersync.audio;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.network.NetworkUtilities;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +13,8 @@ import java.util.Map;
  * Created by Ethan on 2/12/2015.
  */
 public class AudioFrame {
+
+    private static final String LOG_TAG = "AudioFrame";
 
     private byte[] mData;
 
@@ -30,10 +35,10 @@ public class AudioFrame {
     private int mNumPacketsAdded;
 
     //The temporary data storage used for the data packets
-    private Map<Integer, byte[]> mDatas;
+    private ArrayList<byte[]> mDatas;
 
     //The packet ID of the frame info packet
-    private int mPacketId;
+    private int mPacketID;
 
     //TODO: clean this class up and get rid of all of the unused stuff
 
@@ -51,7 +56,7 @@ public class AudioFrame {
     }
 
     //The constructor for the AudioListener class, so it can be rebuilt one portion at a time
-    public AudioFrame(int ID, int numPackets , long playTime , long length , int packetId){
+    public AudioFrame(int ID, int numPackets , long playTime , long length , int packetID){
         mID = ID;
         mNumPackets = numPackets;
         //Convert play time to milliseconds
@@ -59,15 +64,18 @@ public class AudioFrame {
         mLength = length;
         mData = new byte[0];
         mNumPacketsAdded = 0;
-        mPacketId = packetId;
-        mDatas = new HashMap<Integer, byte[]>();
+        mPacketID = packetID;
+        mDatas = new ArrayList<byte[]>();
+        for(int i = 0; i < numPackets; i++){
+            mDatas.add(null);
+        }
     }
 
     //Adds some data to recreate the original data
-    public boolean addData( int packetId ,byte[] data ){
+    public boolean addData( int packetID ,byte[] data ){
         mNumPacketsAdded++;
 
-        mDatas.put(packetId , data);
+        mDatas.set(packetID - mPacketID - 1, data);
         if(mNumPackets == mNumPacketsAdded){
             compileData();
             return true;
@@ -77,8 +85,8 @@ public class AudioFrame {
     }
 
     private void compileData(){
-        for(int i = 1; i <= mNumPackets; i++){
-            mData = NetworkUtilities.combineArrays(mData , mDatas.get(mPacketId + i));
+        for(int i = 0; i < mDatas.size(); i++){
+            mData = NetworkUtilities.combineArrays(mData , mDatas.get(i));
         }
     }
 
@@ -106,6 +114,7 @@ public class AudioFrame {
     public long getLength(){
         return mLength;
     }
+
     public long getLengthMillis(){
         return mLength / 1000;
     }

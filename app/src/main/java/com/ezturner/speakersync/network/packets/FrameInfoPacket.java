@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -42,16 +44,21 @@ public class FrameInfoPacket implements NetworkPacket{
 
     public FrameInfoPacket(byte[] data){
         mData = data;
+        decode();
     }
 
     //A constructor that takes in all of the relevant parameters, then formats the data
-    public FrameInfoPacket(AudioFrame frame, int numPackets , byte streamId , long songStartTime , int packetId , long length){
+    public FrameInfoPacket(AudioFrame frame, int numPackets , byte streamID, long songStartTime , int packetID , long length){
         mFrame = frame;
+        mNumPackets = numPackets;
+        mStreamID = streamID;
+        mPacketID = packetID;
+        mLength = length;
 
         //turn packet type into a byte array for combination , and put the stream ID in there
-        byte[] packetType = new byte[]{CONSTANTS.FRAME_INFO_PACKET_ID , streamId};
+        byte[] packetType = new byte[]{CONSTANTS.FRAME_INFO_PACKET_ID , streamID};
 
-        byte[] packetIdByte = ByteBuffer.allocate(4).putInt(packetId).array();
+        byte[] packetIDByte = ByteBuffer.allocate(4).putInt(packetID).array();
 
         //Throw the frame Id in a byte array, and throw all the other data in byte
         // arrays and combine them into the data that will go in the packet
@@ -63,7 +70,7 @@ public class FrameInfoPacket implements NetworkPacket{
 
         byte[] lengthArr = ByteBuffer.allocate(8).putLong(length).array();
 
-        byte[] data = NetworkUtilities.combineArrays(packetType, packetIdByte);
+        byte[] data = NetworkUtilities.combineArrays(packetType, packetIDByte);
 
         data = NetworkUtilities.combineArrays(data , frameId);
 

@@ -180,7 +180,7 @@ public class SntpClient
         try {
             mSocket.receive(packet);
         } catch (SocketTimeoutException e){
-            e.printStackTrace();
+            Log.d(LOG_TAG , e.toString());
             // resend
             mNumberDone++;
             return;

@@ -85,6 +85,7 @@ public class AudioTrackManager {
                 frame = mFrames.get(mFrameToPlay);
             }
             mFrameToPlay++;
+            //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();
 
             mTest++;

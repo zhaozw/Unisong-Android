@@ -80,8 +80,7 @@ public class SlaveReliabilityHandler {
     public  void  packetReceived(int packetID){
         mPacketsReceived.add(packetID);
 
-        Thread requestThread = getRequestThread(packetID);
-        requestThread.start();
+        //TODO : implement a reliability listener
 
     }
 

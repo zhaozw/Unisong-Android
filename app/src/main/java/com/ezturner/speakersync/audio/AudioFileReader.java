@@ -67,16 +67,16 @@ public class AudioFileReader {
     int sampleRate = 0, channels = 0, bitrate = 0;
     long presentationTimeUs = 0, duration = 0;
 
-    private PlayerStates mState;
-
     private Thread mDecodeThread;
+
+    private boolean mRunning;
 
     public AudioFileReader(){
         mStop = false;
         mSampleTime = -67;
         mCurrentId = 0;
         mEvents = new AudioFileReaderEvents();
-        mState = new PlayerStates();
+        mRunning = false;
     }
 
     public void setBridge(ReaderBroadcasterBridge bridge){
@@ -108,10 +108,11 @@ public class AudioFileReader {
     private int mRuns = 0;
     private boolean isRunning = false;
 
-    public void decode() throws IOException {
+    private void decode() throws IOException {
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
+        mRunning = true;
         // mExtractor gets information about the stream
         mExtractor = new MediaExtractor();
         // try to set the source, this might fail
@@ -141,10 +142,13 @@ public class AudioFileReader {
             // if duration is 0, we are probably playing a live stream
             duration = format.getLong(MediaFormat.KEY_DURATION);
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+
+            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: "+e.getMessage());
             e.printStackTrace();
             // don't exit, tolerate this error, we'll fail later if this is critical
+            //TODO: figure out what to do with this error
         }
         Log.d(LOG_TAG, "Track info: mime:" + mime + " sampleRate:" + sampleRate + " channels:" + channels + " bitrate:" + bitrate + " duration:" + duration);
 
@@ -178,12 +182,12 @@ public class AudioFileReader {
         // start decoding
         final long kTimeOutUs = 1000;
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        Log.d(LOG_TAG , "Info size is : "  + info.size);
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
         int noOutputCounter = 0;
         int noOutputCounterLimit = 10;
 
-        mState.set(PlayerStates.PLAYING);
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
 
             mRuns++;
@@ -217,8 +221,9 @@ public class AudioFileReader {
                         //if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onPlayUpdate(percent, presentationTimeUs / 1000, duration / 1000);  } });
                     }
 
-                    mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
 
+
+                    mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
                     if (!sawInputEOS) mExtractor.advance();
 
                 } else {
@@ -240,6 +245,8 @@ public class AudioFileReader {
                 buf.get(chunk);
                 buf.clear();
                 if(chunk.length > 0){
+
+                    Log.d(LOG_TAG , "Post-decode size :" + chunk.length);
                     createFrame(chunk , playTime , length);
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
@@ -267,13 +274,10 @@ public class AudioFileReader {
             }
         }
 
+        mRunning = false;
         Log.d(LOG_TAG, "stopping...");
 
-        if(mCodec != null) {
-            mCodec.stop();
-            mCodec.release();
-            mCodec = null;
-        }
+        releaseCodec();
 
         // clear source and the other globals
         //sourcePath = null;
@@ -283,8 +287,6 @@ public class AudioFileReader {
         sampleRate = 0; channels = 0; bitrate = 0;
         presentationTimeUs = 0; duration = 0;
 
-
-        mState.set(PlayerStates.STOPPED);
         mStop = true;
 
         if(noOutputCounter >= noOutputCounterLimit) {
@@ -297,6 +299,207 @@ public class AudioFileReader {
 
         Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
 
+    }
+
+
+    public void decodeTest() throws IOException {
+        long startTime = System.currentTimeMillis();
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+
+        // mExtractor gets information about the stream
+        mExtractor = new MediaExtractor();
+        // try to set the source, this might fail
+        try {
+            mExtractor.setDataSource(mCurrentFile.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            //TODO : Handle this exception
+            //TODO: find out if this can fail with the MediaStore API
+            return;
+        }
+
+        // Read track header
+        MediaFormat format = getFormat();
+
+        Log.d(LOG_TAG, "Track info: mime:" + mime + " sampleRate:" + sampleRate + " channels:" + channels + " bitrate:" + bitrate + " duration:" + duration);
+
+        // check we have audio content we know
+        if (format == null || !mime.startsWith("audio/")) {
+            if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onError();  } });
+            return;
+        }
+        // create the actual decoder, using the mime to select
+        try {
+            mCodec = MediaCodec.createDecoderByType(mime);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
+        // check we have a valid codec instance
+        if (mCodec == null) {
+            if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onError();  } });
+            return;
+        }
+
+        if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onStart(mime, sampleRate, channels, duration);  } });
+
+        mCodec.configure(format, null, null, 0);
+        mCodec.start();
+        ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
+        ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
+
+        mExtractor.selectTrack(0);
+
+        // start decoding
+        final long kTimeOutUs = 1000;
+        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        boolean sawInputEOS = false;
+        boolean sawOutputEOS = false;
+        int noOutputCounter = 0;
+        int noOutputCounterLimit = 10;
+
+        //Make sure mStop is true
+        mStop = true;
+
+        //The while loop that
+        while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
+
+            checkGC();
+
+            long playTime = -1;
+            long length = -1;
+
+            noOutputCounter++;
+            // read a buffer before feeding it to the decoder
+            if (!sawInputEOS) {
+                int inputBufIndex = mCodec.dequeueInputBuffer(kTimeOutUs);
+                if (inputBufIndex >= 0) {
+                    ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
+                    int sampleSize = mExtractor.readSampleData(dstBuf, 0);
+                    if (sampleSize < 0) {
+                        Log.d(LOG_TAG, "saw input EOS. Stopping playback");
+                        mBroadcasterBridge.lastPacket();
+                        mTrackManagerBridge.lastPacket();
+                        sawInputEOS = true;
+                        sampleSize = 0;
+                    } else {
+
+                        length = mExtractor.getSampleTime() - presentationTimeUs;
+                        playTime = mExtractor.getSampleTime();
+
+                        presentationTimeUs = mExtractor.getSampleTime();
+                        final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
+                    }
+
+                    mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                    if (!sawInputEOS) mExtractor.advance();
+
+                } else {
+                    //TODO: Investigate and reenable
+                    //Log.e(LOG_TAG, "inputBufIndex " +inputBufIndex);
+                }
+            } // !sawInputEOS
+
+            // decode to PCM and push it to the AudioTrack player
+            int res = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
+
+            if (res >= 0) {
+                if (info.size > 0)  noOutputCounter = 0;
+
+                int outputBufIndex = res;
+                ByteBuffer buf = codecOutputBuffers[outputBufIndex];
+
+                final byte[] chunk = new byte[info.size];
+                buf.get(chunk);
+                buf.clear();
+                if(chunk.length > 0){
+
+                    Log.d(LOG_TAG , "Post-decode size :" + chunk.length);
+                    createFrame(chunk , playTime , length);
+
+                }
+                try {
+                    mCodec.releaseOutputBuffer(outputBufIndex, false);
+                } catch(IllegalStateException e){
+                    e.printStackTrace();
+                }
+                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    Log.d(LOG_TAG, "saw output EOS.");
+                    sawOutputEOS = true;
+                }
+            } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                codecOutputBuffers = mCodec.getOutputBuffers();
+                Log.d(LOG_TAG, "output buffers have changed.");
+            } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MediaFormat oformat = mCodec.getOutputFormat();
+                Log.d(LOG_TAG, "output format has changed to " + oformat);
+            } else {
+                //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
+            }
+        }
+
+        Log.d(LOG_TAG, "stopping...");
+
+        releaseCodec();
+
+        // clear source and the other globals
+        //sourcePath = null;
+        mSourceRawResId = -1;
+        duration = 0;
+        mime = null;
+        sampleRate = 0; channels = 0; bitrate = 0;
+        presentationTimeUs = 0; duration = 0;
+
+        if(noOutputCounter >= noOutputCounterLimit) {
+            if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onError();  } });
+        } else {
+            if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onStop();  } });
+        }
+
+        long finishTime = System.currentTimeMillis();
+
+        Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
+
+        mRunning = false;
+    }
+
+    private MediaFormat getFormat(){
+        MediaFormat format = null;
+        try {
+            format = mExtractor.getTrackFormat(0);
+            mime = format.getString(MediaFormat.KEY_MIME);
+            sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            mTrackManagerBridge.createAudioTrack(sampleRate , channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO);
+            // if duration is 0, we are probably playing a live stream
+            duration = format.getLong(MediaFormat.KEY_DURATION);
+            bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+
+            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels);
+        } catch (Exception e){
+            Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
+            e.printStackTrace();
+            // don't exit, tolerate this error, we'll fail later if this is critical
+            //TODO: figure out what to do with this error
+        }
+
+        return format;
+    }
+
+    private void releaseCodec(){
+        if(mCodec != null) {
+            mCodec.stop();
+            mCodec.release();
+            mCodec = null;
+        }
+    }
+
+    private void checkGC(){
+        mRuns++;
+        if(mRuns >= 200){
+            System.gc();
+            mRuns = 0;
+        }
     }
 
     //The code to stop the decoding

@@ -129,6 +129,7 @@ public class SlaveDiscoveryHandler {
 
                     try {
                         DatagramSocket socket = new DatagramSocket(port);
+                        socket.setBroadcast(true);
                         master.setSocket(socket);
 
                         Thread thread = tempListenThread(mTempMasters.indexOf(master));

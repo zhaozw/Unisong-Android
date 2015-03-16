@@ -37,7 +37,6 @@ public class MediaService extends Service{
     private AudioTrackManager mAudioTrackManager;
     private AudioFileReader mFileReader;
 
-
     private BroadcastReceiver mMessageReceiver ;
 
     private MasterDiscoveryHandler mDiscovery;

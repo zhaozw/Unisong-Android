@@ -24,7 +24,9 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 
 /**
@@ -91,7 +93,16 @@ public class AudioListener {
     //The time that the song starts at
     private long mStartTime;
 
+    //The boolean that tells the processing thread that the packets are ready
+    private boolean mPacketsReady;
+
+    //The thread where the socket listens for packets
     private Thread mListenThread;
+
+    //The thread that processes the packets
+    private Thread mProcessingThread;
+
+    private Queue<DatagramPacket> mProcessingQueue;
 
 
 
@@ -110,6 +121,7 @@ public class AudioListener {
 
         mUnOffsetedFrames = new ArrayList<AudioFrame>();
 
+        mProcessingQueue = new LinkedList<DatagramPacket>();
     }
 
 
@@ -128,8 +140,11 @@ public class AudioListener {
 
         mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP());
 
-        mListenThread = startListeningForPackets();
+        mListenThread = getListenThread();
         mListenThread.start();
+
+        mProcessingThread = getProcessingThread();
+        mProcessingThread.start();
 
 
         mUnfinishedFrames = new HashMap<Integer , AudioFrame>();
@@ -140,12 +155,51 @@ public class AudioListener {
         mSlaveDiscoveryHandler.findMasters();
     }
 
-    private Thread startListeningForPackets(){
+    private Thread getListenThread(){
         return new Thread(){
             public void run(){
                 Log.d(LOG_TAG, "DISPOSABLE : Listening started");
                 while(mIsListening){
                     listenForPacket();
+                }
+            }
+        };
+    }
+
+    private Thread getProcessingThread(){
+        return new Thread(){
+            public void run(){
+                while(mIsListening){
+
+                    //Check that we are the one being notified
+                    if(mProcessingQueue.size() > 0) {
+
+                        ArrayList<DatagramPacket> packets = new ArrayList<DatagramPacket>();
+                        //long beforeSynchronized = System.currentTimeMillis();
+                        synchronized (mProcessingQueue) {
+                            //long after = System.currentTimeMillis();
+                            //Log.d(LOG_TAG, "Time to synchronize: " + (after - beforeSynchronized));
+                            while(!mProcessingQueue.isEmpty()) {
+                                packets.add(mProcessingQueue.poll());
+                            }
+                        }
+                        //Log.d(LOG_TAG, "Total time to complete operation: " + (System.currentTimeMillis() - beforeSynchronized));
+
+
+                        for(int i = 0; i < packets.size(); i++){
+                            NetworkPacket networkPacket = handlePacket(packets.get(i));
+                            mLastPacket = networkPacket.getPacketID();
+                        }
+                    }
+
+                    try {
+                        synchronized (mProcessingThread) {
+                            mProcessingThread.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        //This is supposed to happen, nbd
+                    }
+
                 }
             }
         };
@@ -163,36 +217,84 @@ public class AudioListener {
         return networkPackets;
     }
 
+
+    private double mCounter = 0;
+    private double mLastPacket = 0;
+
+    private long finishTime = 0;
+    private long startTime = 0;
+
+
+
     private void listenForPacket(){
         DatagramPacket packet = new DatagramPacket(new byte[1536] , 1536);
         try{
-            synchronized (mSocket) {
-                mSocket.receive(packet);
-            }
+            //startTime = System.currentTimeMillis();
+            //Log.d(LOG_TAG , "Time difference is : " + (startTime - finishTime));
+            mSocket.receive(packet);
+                //finishTime = System.currentTimeMillis();
+
         } catch(IOException e){
             e.printStackTrace();
         }
-        NetworkPacket networkPacket = handlePacket(packet);
-        if(networkPacket != null) {
-            mPackets.put(networkPacket.getPacketID(), networkPacket);
+        mCounter++;
+
+        if(mCounter % 100 == 0){
+            Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + mLastPacket + " which is a loss rate of : " + ((mLastPacket - mCounter) / mLastPacket) );
         }
+
+
+
+        //long before = System.currentTimeMillis();
+        synchronized (mProcessingQueue){
+            mProcessingQueue.add(packet);
+        }
+        //mCountsProcessing++;
+        //mTotalProcessingDelay += System.currentTimeMillis() - before;
+
+        //before = System.currentTimeMillis();
+        synchronized (mProcessingThread){
+            mProcessingThread.notify();
+        }
+        /*
+        mNotifyCounts++;
+        mTotalNotifyDelay += System.currentTimeMillis() -  before;
+
+        if(mCountsProcessing % 100 == 0){
+            Log.d(LOG_TAG , "Average Delay for Counts is : " + (mTotalProcessingDelay / mCountsProcessing));
+        }
+
+        if(mNotifyCounts % 100 == 0){
+            Log.d(LOG_TAG , "Average Delay for Notify is : " + (mTotalNotifyDelay / mNotifyCounts));
+        }*/
     }
 
     private NetworkPacket handlePacket(DatagramPacket packet){
+
+        NetworkPacket networkPacket = null;
         //TODO: put stream ID back and implement all dat junk
         //if(packet.getData()[1] == mStreamID) {
-            switch (packet.getData()[0]) {
+        byte packetType = packet.getData()[0];
+
+            switch (packetType) {
                 case CONSTANTS.FRAME_INFO_PACKET_ID:
-                    return handleFrameInfoPacket(packet);
+                    networkPacket = handleFrameInfoPacket(packet);
+                    break;
 
                 case CONSTANTS.FRAME_DATA_PACKET_ID:
-                    return handleFrameDataPacket(packet);
+                    networkPacket = handleFrameDataPacket(packet);
+                    break;
 
                 case CONSTANTS.SONG_START_PACKET_ID:
-                    return handleSongSwitch(packet);
+                    networkPacket = handleStartSongPacket(packet);
+                    break;
             }
         //}
-        return null;
+        if(networkPacket != null) {
+            mSlaveReliabilityHandler.packetReceived(networkPacket.getPacketID());
+        }
+        Log.d("PacketLog" , "Packet #" + networkPacket.getPacketID() + " received");
+        return networkPacket;
     }
 
 
@@ -203,49 +305,60 @@ public class AudioListener {
     private NetworkPacket handleFrameInfoPacket(DatagramPacket packet){
         //TODO: Check for any data frames that have arrived before the info packet
         FrameInfoPacket fp = new FrameInfoPacket(packet.getData());
-        if(mPackets.containsKey(fp.getPacketID())){
-            AudioFrame frame = new AudioFrame(fp.getFrameID(), fp.getNumPackets(), fp.getPlayTime(), fp.getLength(), fp.getPacketID());
 
-            mSlaveReliabilityHandler.packetReceived(fp.getPacketID());
-            mUnfinishedFrames.put(frame.getID(), frame);
-        }
+        //.d(LOG_TAG , "Frame Info Packet for Frame " + fp.getFrameID());
+        AudioFrame frame = new AudioFrame(fp.getFrameID(), fp.getNumPackets(), fp.getPlayTime(), fp.getLength(), fp.getPacketID());
+
+        mSlaveReliabilityHandler.packetReceived(fp.getPacketID());
+        mUnfinishedFrames.put(frame.getID(), frame);
+
         return fp;
     }
 
     private NetworkPacket handleFrameDataPacket(DatagramPacket packet){
         FrameDataPacket fp = new FrameDataPacket(packet.getData());
 
+        //Log.d(LOG_TAG, "handling packet");
         if(mUnfinishedFrames.containsKey(fp.getFrameID())){
             AudioFrame frame = mUnfinishedFrames.get(fp.getFrameID());
 
-            boolean frameFinished = frame.addData(fp.getFrameID(), fp.getAudioFrameData());
+            boolean frameFinished = frame.addData(fp.getPacketID(), fp.getAudioFrameData());
 
+            //Log.d(LOG_TAG , "FrameDataPacket Received");
             if (frameFinished && mTimeOffset != -1){
                 frame.setOffset(mTimeOffset);
-                Log.d(LOG_TAG , "Frame reconstructed");
-                mTrackManagerBridge.addFrame(frame);
+                Log.d(LOG_TAG , "Frame # " + frame.getID() +" reconstructed");
+                //TODO : remove comment after testing
+                //mTrackManagerBridge.addFrame(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
             } else if(frameFinished){
+                Log.d(LOG_TAG , "Frame Finished, but offset not set");
                 mUnOffsetedFrames.add(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
             }
+        } else {
+            //Log.d(LOG_TAG , "Frame ID of " + fp.getFrameID() + " not found");
         }
 
         return fp;
     }
 
-    private NetworkPacket handleSongSwitch(DatagramPacket packet){
+    private NetworkPacket handleStartSongPacket(DatagramPacket packet){
         SongStartPacket sp = new SongStartPacket(packet.getData());
 
         mStreamID = sp.getStreamID();
 
         mStartTime = sp.getStartTime();
 
+        //TODO: this doesn't work, figure out why
+        //mTrackManagerBridge.createAudioTrack(sp.getSampleRate() , sp.getChannels());
+
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
         Log.d(LOG_TAG , "Song start packet received! Starting song");
-        mTrackManagerBridge.startSong(mStartTime);
+        //TODO: remove comment after test
+        //mTrackManagerBridge.startSong(mStartTime);
 
         return sp;
     }
