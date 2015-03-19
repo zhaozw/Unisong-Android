@@ -143,7 +143,7 @@ public class AudioFileReader {
             duration = format.getLong(MediaFormat.KEY_DURATION);
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
 
-            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels);
+            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels , mime , duration , bitrate);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: "+e.getMessage());
             e.printStackTrace();
@@ -187,6 +187,8 @@ public class AudioFileReader {
         boolean sawOutputEOS = false;
         int noOutputCounter = 0;
         int noOutputCounterLimit = 10;
+
+        mStop = false;
 
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
 
@@ -247,7 +249,7 @@ public class AudioFileReader {
                 if(chunk.length > 0){
 
                     Log.d(LOG_TAG , "Post-decode size :" + chunk.length);
-                    createFrame(chunk , playTime , length);
+                    createPCMFrame(chunk , playTime , length , true);
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
             			state.set(PlayerStates.PLAYING);
@@ -302,6 +304,8 @@ public class AudioFileReader {
     }
 
 
+    //The general idea with this one is that instead of sending the AudioBroadcaster
+    // the raw PCM/decoded data, we will send the mp3 data to decrease network load.
     public void decodeTest() throws IOException {
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -358,8 +362,8 @@ public class AudioFileReader {
         int noOutputCounter = 0;
         int noOutputCounterLimit = 10;
 
-        //Make sure mStop is true
-        mStop = true;
+        //Make sure mStop is false
+        mStop = false;
 
         //The while loop that
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
@@ -368,6 +372,7 @@ public class AudioFileReader {
 
             long playTime = -1;
             long length = -1;
+            byte[] inBuf = null;
 
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
@@ -392,6 +397,9 @@ public class AudioFileReader {
                     }
 
                     mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+
+                    //Assign the input data to a byte array
+                    inBuf = dstBuf.slice().array();
                     if (!sawInputEOS) mExtractor.advance();
 
                 } else {
@@ -415,7 +423,8 @@ public class AudioFileReader {
                 if(chunk.length > 0){
 
                     Log.d(LOG_TAG , "Post-decode size :" + chunk.length);
-                    createFrame(chunk , playTime , length);
+                    createPCMFrame(chunk , playTime , length, false);
+                    if(inBuf != null)   createMP3Frame(inBuf , playTime , length);
 
                 }
                 try {
@@ -475,7 +484,7 @@ public class AudioFileReader {
             duration = format.getLong(MediaFormat.KEY_DURATION);
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
 
-            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels);
+            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels , mime, duration , bitrate);
         } catch (Exception e){
             Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
             e.printStackTrace();
@@ -507,18 +516,31 @@ public class AudioFileReader {
         mStop = true;
     }
 
-    private void createFrame(byte[] data , long playTime, long length){
+    private void createPCMFrame(byte[] data , long playTime, long length, boolean broadcast){
         AudioFrame frame;
         if(playTime != -1 && length != -1) {
             frame = new AudioFrame(data, mCurrentId, playTime, length);
         } else {
             frame = new AudioFrame(data , mCurrentId);
         }
-        mBroadcasterBridge.addFrame(frame);
+        if(broadcast) {
+            mBroadcasterBridge.addFrame(frame);
+        }
         mTrackManagerBridge.addFrame(frame);
 
         mCurrentId++;
 
+    }
+
+    private void createMP3Frame(byte[] data, long playTime, long length){
+        AudioFrame frame;
+        if(playTime != -1 && length != -1) {
+            frame = new AudioFrame(data, mCurrentId, playTime, length);
+        } else {
+            frame = new AudioFrame(data , mCurrentId);
+        }
+
+        mBroadcasterBridge.addFrame(frame);
     }
 
     public void setTrackManagerBridge(TrackManagerBridge bridge){

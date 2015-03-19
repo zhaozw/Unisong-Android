@@ -5,6 +5,7 @@ import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
@@ -29,32 +30,49 @@ public class SongStartPacket implements NetworkPacket {
     //The sample rate for the AudioTrack
     private int mSampleRate;
 
+    private String mMime;
+
+    private long mDuration;
+
+    private int mBitrate;
+
     public SongStartPacket(byte[] data){
         mData = data;
         decode();
     }
 
 
-    public SongStartPacket(long songStartTime , byte streamID  , int packetID , int sampleRate , int channels){
+    public SongStartPacket(long songStartTime , byte streamID  , int packetID , int sampleRate , int channels ,String mime , long duration , int bitrate ){
         byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamID};
 
         byte[] packetIDArr = ByteBuffer.allocate(4).putInt(packetID).array();
 
-        byte[] startTime = ByteBuffer.allocate(8).putLong(songStartTime).array();
-
-        byte[] sampleRateArr = ByteBuffer.allocate(4).putInt(sampleRate).array();
-
-        byte[] channelsArr = ByteBuffer.allocate(4).putInt(channels).array();
-
-        //TODO: implement metadata like sample rate, song name, and whatever else is needed
-
         data = NetworkUtilities.combineArrays(data, packetIDArr);
+
+        byte[] startTime = ByteBuffer.allocate(8).putLong(songStartTime).array();
 
         data = NetworkUtilities.combineArrays(data, startTime);
 
+        byte[] sampleRateArr = ByteBuffer.allocate(4).putInt(sampleRate).array();
+
         data = NetworkUtilities.combineArrays(data, sampleRateArr);
 
+        byte[] channelsArr = ByteBuffer.allocate(4).putInt(channels).array();
+
         data = NetworkUtilities.combineArrays(data, channelsArr);
+
+        byte[] durationArr = ByteBuffer.allocate(8).putLong(duration).array();
+
+        data = NetworkUtilities.combineArrays(data, durationArr);
+
+        byte[] bitrateArr = ByteBuffer.allocate(4).putInt(bitrate).array();
+
+        data = NetworkUtilities.combineArrays(data, bitrateArr);
+
+        byte[] mimeArr = mime.getBytes(Charset.forName("UTF-8"));
+
+        data = NetworkUtilities.combineArrays(data, mimeArr);
+        //TODO: implement metadata like sample rate, song name, and whatever else is needed
 
         mData = data;
     }
@@ -107,6 +125,18 @@ public class SongStartPacket implements NetworkPacket {
         byte[] channelsArr = Arrays.copyOfRange(mData , 18, 22);
 
         mChannels = ByteBuffer.wrap(channelsArr).getInt();
+
+        byte[] durationArr = Arrays.copyOfRange(mData , 22, 26);
+
+        mDuration = ByteBuffer.wrap(channelsArr).getInt();
+
+        byte[] bitrateArr = Arrays.copyOfRange(mData , 26, 30);
+
+        mBitrate = ByteBuffer.wrap(channelsArr).getInt();
+
+        byte[] mimeArr = Arrays.copyOfRange(mData , 30, mData.length);
+
+        mMime = new String(mimeArr);
     }
 
 }

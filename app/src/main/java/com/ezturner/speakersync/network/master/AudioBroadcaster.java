@@ -131,6 +131,17 @@ public class AudioBroadcaster {
     //The packet that will be used as the song starter
     private SongStartPacket mSongStartPacket;
 
+    //The mime type
+    private String mMime;
+
+    //The bitrate of the current song
+    private int mBitrate;
+
+    //the duration
+    private long mDuration;
+
+
+
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -455,7 +466,7 @@ public class AudioBroadcaster {
 
     private SongStartPacket createStartSongPacket(){
 
-        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID , mNextPacketID , mSampleRate , mChannels);
+        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID , mNextPacketID , mSampleRate , mChannels , mMime , mDuration , mBitrate);
 
         songStartPacket.putPacket(new DatagramPacket(songStartPacket.getData() , songStartPacket.getData().length));
 
@@ -482,9 +493,12 @@ public class AudioBroadcaster {
         //Log.d(LOG_TAG , "Push Frames took : " + (afterMillis - millis) + " , for "+ frames.size() + " frames.");
     }
 
-    public void setAudioTrackInfo(int sampleRate , int channels){
+    public void setAudioTrackInfo(int sampleRate , int channels, String mime , long duration , int bitrate){
         mSampleRate = sampleRate;
         mChannels = channels;
+        mMime = mime;
+        mDuration = duration;
+        mBitrate = bitrate;
     }
 
 }

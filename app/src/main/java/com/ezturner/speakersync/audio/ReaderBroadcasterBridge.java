@@ -40,7 +40,7 @@ public class ReaderBroadcasterBridge extends ReaderBridge{
         mBroadcaster.addFrames(frames);
     }
 
-    public void setAudioTrackInfo(int sampleRate , int channels){
-        mBroadcaster.setAudioTrackInfo(sampleRate , channels);
+    public void setAudioTrackInfo(int sampleRate , int channels ,String mime , long duration ,int bitrate){
+        mBroadcaster.setAudioTrackInfo(sampleRate , channels, mime , duration, bitrate);
     }
 }
