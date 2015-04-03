@@ -69,8 +69,9 @@ public class AudioTrackManager {
                 if(mIsPlaying){
                     //TODO: Switch the song
                 } else {
-                    startPlaying();
-                    mHandler.post(mWriteRunnable);
+                    //TODO: uncomment these after test
+                    //startPlaying();
+                    //mHandler.post(mWriteRunnable);
                 }
         }
     };

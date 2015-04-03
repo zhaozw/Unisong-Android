@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.master;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -14,6 +16,8 @@ import java.util.ArrayList;
  * Created by Ethan on 2/11/2015.
  */
 public class MasterReliabilityHandler {
+
+    private String LOG_TAG = "MasterReliabilityHandler";
 
     public static final int PACKET_SENT_CODE = 55;
 
@@ -99,7 +103,7 @@ public class MasterReliabilityHandler {
         long startTime = System.currentTimeMillis();
         while((inputLine = in.readLine()) != null) {
             String data = in.readLine();
-
+            Log.d(LOG_TAG, "Data received: " + data);
             int packetID = Integer.parseInt(inputLine);
 
             mBroadcaster.rebroadcastPacket(packetID);

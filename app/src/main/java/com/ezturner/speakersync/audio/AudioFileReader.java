@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 /**
  * Created by Ethan on 2/12/2015.
@@ -41,7 +42,7 @@ public class AudioFileReader {
     private AudioListener mListener;
 
     //The current ID of the audio frame
-    private int mCurrentId;
+    private int mCurrentID;
 
     //Whether this is the first run
     private boolean mFirstRun;
@@ -74,7 +75,7 @@ public class AudioFileReader {
     public AudioFileReader(){
         mStop = false;
         mSampleTime = -67;
-        mCurrentId = 0;
+        mCurrentID = 0;
         mEvents = new AudioFileReaderEvents();
         mRunning = false;
     }
@@ -94,7 +95,8 @@ public class AudioFileReader {
         return new Thread(new Runnable()  {
             public void run() {
                 try {
-                    decode();
+                    //decode();
+                    decodeTest();
                 } catch (IOException e){
                     e.printStackTrace();
                 }
@@ -393,13 +395,22 @@ public class AudioFileReader {
                         playTime = mExtractor.getSampleTime();
 
                         presentationTimeUs = mExtractor.getSampleTime();
+
+                        //TODO: make sure that this is actually the way to get the real MP3 data
+                        dstBuf.mark();
+                        byte[] mp3Data = new byte[sampleSize];
+                        dstBuf.get(mp3Data);
+                        dstBuf.reset();
+
+
+                        mCurrentID++;
+                        createMP3Frame(mp3Data ,playTime , length);
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
                     }
 
                     mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
 
-                    //Assign the input data to a byte array
-                    inBuf = dstBuf.slice().array();
+
                     if (!sawInputEOS) mExtractor.advance();
 
                 } else {
@@ -422,8 +433,7 @@ public class AudioFileReader {
                 buf.clear();
                 if(chunk.length > 0){
 
-                    Log.d(LOG_TAG , "Post-decode size :" + chunk.length);
-                    createPCMFrame(chunk , playTime , length, false);
+                    //createPCMFrame(chunk , playTime , length, false);
                     if(inBuf != null)   createMP3Frame(inBuf , playTime , length);
 
                 }
@@ -470,7 +480,11 @@ public class AudioFileReader {
         Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
 
         mRunning = false;
+
     }
+
+    private int mTotalBytes = 0;
+    private ArrayList<AudioFrame> mFrames= new ArrayList<AudioFrame>();
 
     private MediaFormat getFormat(){
         MediaFormat format = null;
@@ -519,25 +533,25 @@ public class AudioFileReader {
     private void createPCMFrame(byte[] data , long playTime, long length, boolean broadcast){
         AudioFrame frame;
         if(playTime != -1 && length != -1) {
-            frame = new AudioFrame(data, mCurrentId, playTime, length);
+            frame = new AudioFrame(data, mCurrentID, playTime, length);
         } else {
-            frame = new AudioFrame(data , mCurrentId);
+            frame = new AudioFrame(data , mCurrentID);
         }
         if(broadcast) {
             mBroadcasterBridge.addFrame(frame);
         }
         mTrackManagerBridge.addFrame(frame);
 
-        mCurrentId++;
+        mCurrentID++;
 
     }
 
     private void createMP3Frame(byte[] data, long playTime, long length){
         AudioFrame frame;
         if(playTime != -1 && length != -1) {
-            frame = new AudioFrame(data, mCurrentId, playTime, length);
+            frame = new AudioFrame(data, mCurrentID, playTime, length);
         } else {
-            frame = new AudioFrame(data , mCurrentId);
+            frame = new AudioFrame(data , mCurrentID);
         }
 
         mBroadcasterBridge.addFrame(frame);

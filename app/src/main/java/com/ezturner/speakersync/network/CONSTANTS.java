@@ -36,5 +36,7 @@ public class CONSTANTS {
     //The packet ID for streaming data packets
     public static final byte FRAME_DATA_PACKET_ID= 5;
 
+    public static final byte FRAME_PACKET_ID = 6;
+
 
 }

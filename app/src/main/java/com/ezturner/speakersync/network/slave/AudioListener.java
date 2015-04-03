@@ -14,6 +14,7 @@ import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.packets.FrameDataPacket;
 import com.ezturner.speakersync.network.packets.FrameInfoPacket;
+import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
 
@@ -175,6 +176,7 @@ public class AudioListener {
                     if(mProcessingQueue.size() > 0) {
 
                         ArrayList<DatagramPacket> packets = new ArrayList<DatagramPacket>();
+                        ArrayList<NetworkPacket> networkPackets = new ArrayList<>();
                         //long beforeSynchronized = System.currentTimeMillis();
                         synchronized (mProcessingQueue) {
                             //long after = System.currentTimeMillis();
@@ -188,15 +190,27 @@ public class AudioListener {
 
                         for(int i = 0; i < packets.size(); i++){
                             NetworkPacket networkPacket = handlePacket(packets.get(i));
-                            mLastPacket = networkPacket.getPacketID();
+                            if(networkPacket != null && mLastPacket < networkPacket.getPacketID()){
+                                mLastPacket = networkPacket.getPacketID();
+                            }
+                            networkPackets.add(networkPacket);
                         }
+
+                        //for(NetworkPacket pack : networkPackets){
+                        //    Log.d(LOG_TAG , "Packet ID: " + pack);
+                            //if(!mPackets.containsKey(pack.getPacketID())){
+                            //    Log.d(LOG_TAG , "adding");
+                            //    mPackets.put(pack.getPacketID() , pack);
+                            //}
+                        //}
+                        Log.d(LOG_TAG , "After");
                     }
 
                     try {
-                        synchronized (mProcessingThread) {
+                        synchronized (mProcessingThread){
                             mProcessingThread.wait();
                         }
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException e){
                         //This is supposed to happen, nbd
                     }
 
@@ -237,11 +251,6 @@ public class AudioListener {
         } catch(IOException e){
             e.printStackTrace();
         }
-        mCounter++;
-
-        if(mCounter % 100 == 0){
-            Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + mLastPacket + " which is a loss rate of : " + ((mLastPacket - mCounter) / mLastPacket) );
-        }
 
 
 
@@ -270,12 +279,10 @@ public class AudioListener {
     }
 
     private NetworkPacket handlePacket(DatagramPacket packet){
-
         NetworkPacket networkPacket = null;
         //TODO: put stream ID back and implement all dat junk
         //if(packet.getData()[1] == mStreamID) {
         byte packetType = packet.getData()[0];
-
             switch (packetType) {
                 case CONSTANTS.FRAME_INFO_PACKET_ID:
                     networkPacket = handleFrameInfoPacket(packet);
@@ -288,12 +295,22 @@ public class AudioListener {
                 case CONSTANTS.SONG_START_PACKET_ID:
                     networkPacket = handleStartSongPacket(packet);
                     break;
+                case CONSTANTS.FRAME_PACKET_ID:
+                    networkPacket = handleFramePacket(packet);
+                    break;
             }
         //}
         if(networkPacket != null) {
             mSlaveReliabilityHandler.packetReceived(networkPacket.getPacketID());
+            if(!mPackets.containsKey(networkPacket.getPacketID())){
+
+                mCounter++;
+
+                if(mCounter % 100 == 0){
+                    Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + mLastPacket + " which is a loss rate of : " + ((mLastPacket - mCounter) / mLastPacket) );
+                }
+            }
         }
-        Log.d("PacketLog" , "Packet #" + networkPacket.getPacketID() + " received");
         return networkPacket;
     }
 
@@ -309,9 +326,20 @@ public class AudioListener {
         //.d(LOG_TAG , "Frame Info Packet for Frame " + fp.getFrameID());
         AudioFrame frame = new AudioFrame(fp.getFrameID(), fp.getNumPackets(), fp.getPlayTime(), fp.getLength(), fp.getPacketID());
 
-        mSlaveReliabilityHandler.packetReceived(fp.getPacketID());
         mUnfinishedFrames.put(frame.getID(), frame);
 
+        return fp;
+    }
+
+    private NetworkPacket handleFramePacket(DatagramPacket packet){
+
+        FramePacket fp = new FramePacket(packet.getData());
+
+        AudioFrame frame = new AudioFrame(fp.getAudioData(), fp.getFrameID() , fp.getLength() , fp.getPlayTime());
+
+        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
+
+        mTrackManagerBridge.addFrame(frame);
         return fp;
     }
 

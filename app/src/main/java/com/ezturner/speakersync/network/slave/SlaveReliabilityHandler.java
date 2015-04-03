@@ -1,6 +1,9 @@
 package com.ezturner.speakersync.network.slave;
 
 
+import android.os.Handler;
+import android.util.Log;
+
 import com.ezturner.speakersync.network.CONSTANTS;
 
 import java.io.BufferedReader;
@@ -11,11 +14,15 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by ezturner on 2/16/2015.
  */
 public class SlaveReliabilityHandler {
+
+    private String LOG_TAG = "SlaveReliabilityHandler";
 
     //The address of the Master that we will connect to.
     private InetAddress mMasterAddress;
@@ -30,11 +37,19 @@ public class SlaveReliabilityHandler {
     private Thread mThread;
 
 
+    private Map<Integer , Long> mPacketsRecentlyRequested;
     private ArrayList<Integer> mPacketsReceived;
+
+    //The handler that checks if a packet that was asked for has been received
+    private Handler mHandler;
 
     public SlaveReliabilityHandler(InetAddress address){
         mMasterAddress = address;
+
         mPacketsReceived = new ArrayList<Integer>();
+        mPacketsRecentlyRequested = new HashMap<Integer, Long>();
+
+        mHandler = new Handler();
     }
 
     private Thread getThread(){
@@ -45,12 +60,16 @@ public class SlaveReliabilityHandler {
             }
         });
     }
+
     //Sends a request to resend a packet
-    public void requestPacket(int packetId){
-        try {
-            mOutStream.writeInt(packetId);
-        } catch(IOException e){
-            e.printStackTrace();
+    public void requestPacket(int packetID){
+        Log.d(LOG_TAG, "Requesting Packet #" + packetID);
+        synchronized (mOutStream) {
+            try {
+                mOutStream.writeInt(packetID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -77,10 +96,26 @@ public class SlaveReliabilityHandler {
         }
     }
 
-    public  void  packetReceived(int packetID){
+    public void packetReceived(int packetID){
+        Log.d(LOG_TAG , "Packet #" + packetID);
         mPacketsReceived.add(packetID);
+        ArrayList<Integer> packetsToRequest = new ArrayList<>();
 
-        //TODO : implement a reliability listener
+        int i = 5;
+        packetID-= 5;
+        while(i >= 0){
+            i--;
+            if(!mPacketsReceived.contains(packetID) && !mPacketsRecentlyRequested.containsKey(packetID) && packetID >=0){
+                packetsToRequest.add(packetID);
+                mPacketsRecentlyRequested.put(packetID, System.currentTimeMillis());
+                packetID--;
+                i=5;
+            }
+        }
+
+        for(Integer packetid : packetsToRequest){
+            requestPacket(packetid);
+        }
 
     }
 
