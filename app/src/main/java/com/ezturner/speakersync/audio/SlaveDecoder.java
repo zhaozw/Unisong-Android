@@ -27,14 +27,16 @@ public class SlaveDecoder {
 
     private Map<Integer , AudioFrame> mFrames;
     private int mCurrentFrame;
+    private boolean mDecoderWaiting;
 
-    public SlaveDecoder(String mime, int sampleRate , int channels , int bitrate){\
+    public SlaveDecoder(String mime, int sampleRate , int channels , int bitrate){
         mFormat = new MediaFormat();
         mFormat.setString(MediaFormat.KEY_MIME , mime);
         mFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
         mFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT , channels);
         mFormat.setInteger(MediaFormat.KEY_BIT_RATE , bitrate);
 
+        mDecoderWaiting = false;
         mDecoding = false;
 
         mCurrentFrame = 0;
@@ -52,6 +54,7 @@ public class SlaveDecoder {
 
     public void startDecode(){
         if(!mDecoding) {
+            mDecoding = true;
             mDecodeThread = getDecodeThread();
             mDecodeThread.start();
         }
@@ -72,6 +75,8 @@ public class SlaveDecoder {
         synchronized (mFrames) {
             mFrames.put(frame.getID(), frame);
         }
+
+
     }
 
     private void decode() throws IOException{

@@ -13,33 +13,6 @@
         android:id="@+id/button_layout">
 
 
-        <ImageButton
-            android:layout_width="0dip"
-            android:layout_weight="0.25"
-            android:layout_height="match_parent"
-            android:background="@color/yellowGreen"
-            android:src="@drawable/btn_songs"/>
-
-        <ImageButton
-            android:layout_width="0dip"
-            android:layout_weight="0.25"
-            android:layout_height="match_parent"
-            android:background="@color/yellowGreen"
-            android:src="@drawable/btn_playlists"/>
-
-        <ImageButton
-            android:layout_width="0dip"
-            android:layout_weight="0.25"
-            android:layout_height="match_parent"
-            android:background="@color/yellowGreen"
-            android:src="@drawable/btn_albums"/>
-
-        <ImageButton
-            android:layout_width="0dip"
-            android:layout_weight="0.25"
-            android:layout_height="match_parent"
-            android:background="@color/yellowGreen"
-            android:src="@drawable/btn_artists"/>
 
     </LinearLayout>
 
@@ -49,7 +22,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        android:background="@color/aqua"
         android:id="@+id/music_list"
         android:layout_below="@id/button_layout" />
 

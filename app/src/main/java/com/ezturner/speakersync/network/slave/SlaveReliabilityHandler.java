@@ -146,7 +146,7 @@ public class SlaveReliabilityHandler {
 
         synchronized (mPacketsToRequest) {
             if (packetID > mTopPacket) {
-                for (int i = mTopPacket; i < packetID; i++) {
+                for (int i = mTopPacket; i < packetID; i++){
                     if (!mPacketsReceived.contains(i)) {
                         mPacketsToRequest.put(i, System.currentTimeMillis());
                     }
@@ -155,7 +155,7 @@ public class SlaveReliabilityHandler {
                 mTopPacket = packetID;
             }
 
-            if (mPacketsToRequest.containsKey(packetID)) {
+            if (mPacketsToRequest.containsKey(packetID)){
                 mPacketsToRequest.remove(packetID);
             }
         }
