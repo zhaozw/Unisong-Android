@@ -38,18 +38,59 @@ public class SlaveReliabilityHandler {
 
 
     private Map<Integer , Long> mPacketsRecentlyRequested;
+
+    private int mTopPacket;
     private ArrayList<Integer> mPacketsReceived;
+    private Map<Integer , Long> mPacketsNotReceived;
+
+    private Map<Integer, Long> mPacketsToRequest;
 
     //The handler that checks if a packet that was asked for has been received
     private Handler mHandler;
 
+    private boolean mRequesting;
+
     public SlaveReliabilityHandler(InetAddress address){
         mMasterAddress = address;
 
+        mTopPacket = 0;
         mPacketsReceived = new ArrayList<Integer>();
         mPacketsRecentlyRequested = new HashMap<Integer, Long>();
+        mPacketsNotReceived = new HashMap<Integer , Long>();
+        mPacketsToRequest = new HashMap<Integer , Long>();
 
         mHandler = new Handler();
+
+        mHandler.postDelayed(mPacketRequester , 30);
+
+        mRequesting = true;
+    }
+
+    Runnable mPacketRequester = new Runnable() {
+        @Override
+        public void run() {
+
+            ArrayList<Integer> packetsSent = new ArrayList<Integer>();
+
+            for (Map.Entry<Integer, Long> entry : mPacketsToRequest.entrySet())
+            {
+                if(System.currentTimeMillis() - entry.getValue() >= 10){
+                    requestPacket(entry.getKey());
+                    packetsSent.add(entry.getKey());
+                }
+            }
+
+            for(Integer i : packetsSent){
+                mPacketsToRequest.remove(i);
+            }
+            if(mRequesting){
+                mHandler.postDelayed(mPacketRequester , 10);
+            }
+        }
+    };
+
+    private void stop(){
+        mRequesting = false;
     }
 
     private Thread getThread(){
@@ -71,6 +112,8 @@ public class SlaveReliabilityHandler {
                 e.printStackTrace();
             }
         }
+
+        mPacketsRecentlyRequested.put(packetID , System.currentTimeMillis());
     }
 
     public void closeSocket(){
@@ -91,32 +134,31 @@ public class SlaveReliabilityHandler {
             mSocket = new Socket(address , CONSTANTS.RELIABILITY_PORT);
             mOutStream = new DataOutputStream(mSocket.getOutputStream());
             mInStream = new DataInputStream(mSocket.getInputStream());
+
         } catch(IOException e){
             e.printStackTrace();
         }
     }
 
     public void packetReceived(int packetID){
-        Log.d(LOG_TAG , "Packet #" + packetID);
+        Log.d(LOG_TAG, "Packet #" + packetID);
         mPacketsReceived.add(packetID);
-        ArrayList<Integer> packetsToRequest = new ArrayList<>();
 
-        int i = 5;
-        packetID-= 5;
-        while(i >= 0){
-            i--;
-            if(!mPacketsReceived.contains(packetID) && !mPacketsRecentlyRequested.containsKey(packetID) && packetID >=0){
-                packetsToRequest.add(packetID);
-                mPacketsRecentlyRequested.put(packetID, System.currentTimeMillis());
-                packetID--;
-                i=5;
+        synchronized (mPacketsToRequest) {
+            if (packetID > mTopPacket) {
+                for (int i = mTopPacket; i < packetID; i++) {
+                    if (!mPacketsReceived.contains(i)) {
+                        mPacketsToRequest.put(i, System.currentTimeMillis());
+                    }
+                }
+
+                mTopPacket = packetID;
+            }
+
+            if (mPacketsToRequest.containsKey(packetID)) {
+                mPacketsToRequest.remove(packetID);
             }
         }
-
-        for(Integer packetid : packetsToRequest){
-            requestPacket(packetid);
-        }
-
     }
 
     private Thread getRequestThread(final int packetID){

@@ -390,7 +390,6 @@ public class AudioFileReader {
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
-
                         length = mExtractor.getSampleTime() - presentationTimeUs;
                         playTime = mExtractor.getSampleTime();
 
