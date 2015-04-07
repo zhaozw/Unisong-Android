@@ -5,9 +5,12 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <color name="yellowGreen">#CFF09E</color>
-    <color name="green">#A8DBA8</color>
-    <color name="aqua">#79BD9A</color>
-    <color name="blueGreen">#3B8686</color>
-    <color name="teal">#0B486B</color>
+    <color name="primaryText">#212121</color>
+    <color name="secondaryText">#727272</color>
+    <color name="divider">#B6B6B6</color>
+    <color name="white">#FFFFFF</color>
+    <color name="darkIndigo">#303F9F</color>
+    <color name="indigo">#3F51B5</color>
+    <color name="lightIndigo">#C5CAE9</color>
+    <color name="cyan">#00BCD4</color>
 </resources>
