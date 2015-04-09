@@ -112,7 +112,10 @@ public class SlaveDecoder {
 
             synchronized (mFrames) {
                 AudioFrame currentFrame = mFrames.get(mCurrentFrame);
+                mCurrentFrame++;
             }
+
+
 
         }
     }

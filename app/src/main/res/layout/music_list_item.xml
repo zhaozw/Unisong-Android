@@ -20,7 +20,7 @@ android:orientation="horizontal">
             android:text="Song Name"/>
         <TextView
             android:id = "@+id/sub_text"
-            android:TextColor="@color/secondaryText"
+            android:textColor="@color/secondaryText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"/>

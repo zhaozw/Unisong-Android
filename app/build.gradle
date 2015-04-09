@@ -22,5 +22,10 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'com.android.support:appcompat-v7:22.0.0'
+    compile 'com.github.theDazzler:droidicon:0.1.8@aar'
+}
+
+repositories {
+    mavenCentral()
 }
