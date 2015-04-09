@@ -32,7 +32,7 @@ public class MusicPlayer extends ActionBarActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         actionBar.setDisplayShowTitleEnabled(false);
-
+/*
         //TODO: have the tab be saved by SavedInstanceState
         Tab tab = actionBar.newTab()
                 .setText(R.string.artist)
@@ -44,7 +44,7 @@ public class MusicPlayer extends ActionBarActivity {
                 .setText(R.string.album)
                 .setTabListener(new TabListener<AlbumFragment>(
                         this, "album", AlbumFragment.class));
-        actionBar.addTab(tab);
+        actionBar.addTab(tab);*/
     }
 
 
