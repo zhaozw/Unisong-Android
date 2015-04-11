@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.ezturner.speakersync.R;
+import com.ezturner.speakersync.activity.MusicPlayer.MusicPlayer;
 
 /**
  * Created by Ethan on 2/25/2015.

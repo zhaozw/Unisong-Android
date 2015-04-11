@@ -6,7 +6,7 @@
         android:orientation="vertical" android:layout_width="fill_parent"
         android:layout_weight="1"
         android:layout_height="match_parent"
-        android:background="@color/darkIndigo">
+        android:background="@color/primaryColorDark">
 
         <ImageButton
             android:layout_width="wrap_content"
@@ -22,7 +22,7 @@
         android:orientation="vertical" android:layout_width="fill_parent"
         android:layout_weight="1"
         android:layout_height="match_parent"
-        android:background="@color/cyan">
+        android:background="@color/accentColor">
 
         <ImageButton
             android:layout_width="wrap_content"

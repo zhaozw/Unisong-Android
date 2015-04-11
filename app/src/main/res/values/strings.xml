@@ -2,14 +2,33 @@
 <resources>
 
     <string name="app_name">SpeakerSync</string>
+
     <string name="hello_world">Hello world!</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_search">Search</string>
-    <string name="more_vert">Options</string>
+
     <string name="artist">Artists</string>
     <string name="album">Albums</string>
     <string name="song">Songs</string>
     <string name="playlist">Playlists</string>
     <string name="genre">Genres</string>
+
+
+    <string name="next">Next</string>
+    <string name="title_activity_music_playing">MusicPlaying</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="drawer_close">Drawer Close</string>
+    <string name="drawer_open">Drawer Open</string>
+
+    <string-array name="music_player_tabs">
+        <item>PLAYLISTS</item>
+        <item>ARTISTS</item>
+        <item>ALBUMS</item>
+        <item>SONGS</item>
+        <item>GENRES</item>
+    </string-array>
 
 </resources>
