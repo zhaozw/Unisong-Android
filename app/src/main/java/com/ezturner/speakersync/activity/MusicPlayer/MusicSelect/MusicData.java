@@ -5,9 +5,9 @@ package com.ezturner.speakersync.activity.MusicPlayer.MusicSelect;
  */
 public interface MusicData {
 
-    public String getName();
+    public String getPrimaryText();
 
-    public String getSubText();
+    public String getSecondaryText();
 
     public long getID();
 

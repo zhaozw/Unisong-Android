@@ -11,7 +11,7 @@ public class Album implements MusicData{
     private String mCoverArt;
     private String mArtist;
 
-    //The class for storing artist data
+    //The class for storing album data
     public Album(long albumID, String albumName , String albumArt , String artist) {
         mID = albumID;
         mName = albumName;
@@ -21,10 +21,10 @@ public class Album implements MusicData{
 
     public long getID() {return mID;}
 
-    public String getName() {return mName;}
+    public String getPrimaryText() {return mName;}
 
     public String getArt() {return mCoverArt;}
 
     //The string that will be below the name
-    public String getSubText(){ return "";};
+    public String getSecondaryText(){ return "";};
 }
