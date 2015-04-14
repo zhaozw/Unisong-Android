@@ -18,12 +18,8 @@ import com.ezturner.speakersync.audio.ReaderBroadcasterBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
-import com.ezturner.speakersync.network.ntp.NtpServer;
-import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
-import com.ezturner.speakersync.network.slave.ListenerTrackBridge;
-
-import java.io.IOException;
+import com.ezturner.speakersync.network.slave.ListenerBridge;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -117,7 +113,7 @@ public class MediaService extends Service{
     public void listener(){
 
         mListener = new AudioListener(this);
-        mListener.setTrackBridge(new ListenerTrackBridge(mAudioTrackManager));
+        mListener.setTrackBridge(new ListenerBridge(mAudioTrackManager));
 
     }
 

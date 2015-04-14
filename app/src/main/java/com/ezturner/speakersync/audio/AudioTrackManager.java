@@ -69,9 +69,8 @@ public class AudioTrackManager {
                 if(mIsPlaying){
                     //TODO: Switch the song
                 } else {
-                    //TODO: uncomment these after test
-                    //startPlaying();
-                    //mHandler.post(mWriteRunnable);
+                    startPlaying();
+                    mHandler.post(mWriteRunnable);
                 }
         }
     };
@@ -100,6 +99,9 @@ public class AudioTrackManager {
             mAudioTrack.write(data, 0, data.length);
             long millisTillNextWrite = (long)(mSongStartTime + mOffset + frame.getPlayTime()) - System.currentTimeMillis();
             mHandler.postDelayed(mWriteRunnable , millisTillNextWrite );
+            synchronized (mFrames){
+                mFrames.remove(frame.getID());
+            }
         }
     };
     //Takes in some frames, then waits for mFrames to be open and writes it to it
@@ -114,7 +116,9 @@ public class AudioTrackManager {
     }
 
     public AudioFrame getFrame(int ID){
-        return mFrames.get(ID);
+        synchronized (mFrames) {
+            return mFrames.get(ID);
+        }
     }
 
     private Thread getWriteThread(){

@@ -1,13 +1,9 @@
 package com.ezturner.speakersync.network.slave;
 
 import android.content.Context;
-import android.net.Network;
-import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
-import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -72,7 +68,7 @@ public class AudioListener {
     private int mPort;
 
     //The bridge between this and the AudioTrackManager
-    private ListenerTrackBridge mTrackManagerBridge;
+    private ListenerBridge mTrackManagerBridge;
 
     //The discovery handler, which will handle finding and choosing the
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
@@ -404,7 +400,7 @@ public class AudioListener {
         mUnOffsetedFrames = new ArrayList<AudioFrame>();
     }
 
-    public void setTrackBridge(ListenerTrackBridge bridge){
+    public void setTrackBridge(ListenerBridge bridge){
         mTrackManagerBridge = bridge;
     }
 
