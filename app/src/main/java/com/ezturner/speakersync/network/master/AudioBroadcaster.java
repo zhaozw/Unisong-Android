@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -141,7 +142,7 @@ public class AudioBroadcaster {
     //the duration
     private long mDuration;
 
-
+    private List<NetworkPacket> mPacketsToRebroadcast;
 
 
     //Makes an AudioBroadcaster object
@@ -180,6 +181,8 @@ public class AudioBroadcaster {
         //Set the next packet to be created to be 0
         mNextFrameID = 0;
         mLastFrameID = -1;
+
+        mPacketsToRebroadcast = new ArrayList<>();
 
         //TODO: fix and implement
         mIsBroadcasting = true;
@@ -238,6 +241,17 @@ public class AudioBroadcaster {
             //long delay = (long)(mPacketSendStartTime + packets.getInfoPacket().getFrame().getPlayTime()) - System.currentTimeMillis();
             long delay = packet.getLength() / 1000;
 
+            synchronized (mPacketsToRebroadcast){
+                for(NetworkPacket rebroadcast : mPacketsToRebroadcast) {
+                    try {
+                        mStreamSocket.send(rebroadcast.getPacket());
+                    } catch(IOException e){
+                        e.printStackTrace();
+                    }
+                }
+
+                mPacketsToRebroadcast = new ArrayList<>();
+            }
 
             /*
             synchronized(mStreamSocket){
@@ -339,6 +353,7 @@ public class AudioBroadcaster {
                 packet = mPackets.get(packetID);
             }
         }
+
         if(contains){
             try {
                 Log.d(LOG_TAG , "Packet to be sent is: " + packetID);
@@ -346,7 +361,7 @@ public class AudioBroadcaster {
                     mStreamSocket.send(mPackets.get(packetID).getPacket());
                 }
                 return true;
-            } catch (IOException e) {
+            } catch (IOException e){
                 e.printStackTrace();
                 return false;
             }
@@ -355,8 +370,14 @@ public class AudioBroadcaster {
         }
     }
 
-    public boolean rebroadcastPacket(int packetID){
-        return broadcastStreamPacket(packetID);
+    public void rebroadcastPacket(int packetID){
+        NetworkPacket packet = null;
+        synchronized (mPackets){
+            packet = mPackets.get(packetID);
+        }
+        synchronized (mPacketsToRebroadcast){
+            mPacketsToRebroadcast.add(packet);
+        }
     }
 
     public boolean isStreamRunning(){

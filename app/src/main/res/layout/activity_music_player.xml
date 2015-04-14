@@ -42,7 +42,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="start"
             app:layout="@layout/fragment_navigation_drawer"
-            android:name="com.ezturner.speakersync.NavigationDrawerFragment"
+            android:name="com.ezturner.speakersync.activity.NavigationDrawerFragment"
             tools:layout="@layout/fragment_navigation_drawer"/>
 
     </android.support.v4.widget.DrawerLayout>

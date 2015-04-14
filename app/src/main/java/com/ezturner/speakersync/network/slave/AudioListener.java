@@ -241,7 +241,7 @@ public class AudioListener {
 
 
     private void listenForPacket(){
-        DatagramPacket packet = new DatagramPacket(new byte[1536] , 1536);
+        DatagramPacket packet = new DatagramPacket(new byte[4096] , 4096);
         try{
             //startTime = System.currentTimeMillis();
             //Log.d(LOG_TAG , "Time difference is : " + (startTime - finishTime));
@@ -377,7 +377,7 @@ public class AudioListener {
         mStreamID = sp.getStreamID();
 
         mStartTime = sp.getStartTime();
-
+        
         //TODO: this doesn't work, figure out why
         //mTrackManagerBridge.createAudioTrack(sp.getSampleRate() , sp.getChannels());
 
@@ -386,7 +386,7 @@ public class AudioListener {
 
         Log.d(LOG_TAG , "Song start packet received! Starting song");
         //TODO: remove comment after test
-        //mTrackManagerBridge.startSong(mStartTime);
+        mTrackManagerBridge.startSong(mStartTime);
 
         return sp;
     }

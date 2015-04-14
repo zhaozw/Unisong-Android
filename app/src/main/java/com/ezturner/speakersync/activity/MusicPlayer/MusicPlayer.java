@@ -21,7 +21,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ezturner.speakersync.NavigationDrawerFragment;
+import com.ezturner.speakersync.activity.NavigationDrawerFragment;
 import com.ezturner.speakersync.R;
 import com.ezturner.speakersync.activity.MusicPlayer.Tabs.SlidingTabLayout;
 
