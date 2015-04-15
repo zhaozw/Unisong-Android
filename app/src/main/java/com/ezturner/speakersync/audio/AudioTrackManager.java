@@ -78,13 +78,21 @@ public class AudioTrackManager {
     Runnable mWriteRunnable = new Runnable() {
         @Override
         public void run() {
-            if(mFrameToPlay == mLastFrameID) mIsPlaying = false;
+            if(mFrameToPlay == mLastFrameID){
+                mIsPlaying = false;
+                return;
+            }
 
             AudioFrame frame;
             synchronized (mFrames) {
                 frame = mFrames.get(mFrameToPlay);
             }
+
+            if(frame == null){
+                Log.d(LOG_TAG , "Frame ID is: " + mFrameToPlay);
+            }
             mFrameToPlay++;
+
             //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();
 
@@ -106,6 +114,7 @@ public class AudioTrackManager {
     };
     //Takes in some frames, then waits for mFrames to be open and writes it to it
     public void addFrames(ArrayList<AudioFrame> frames){
+        Log.d(LOG_TAG , "Why isn't this being called?");
         synchronized (mFrames){
             for(AudioFrame frame : frames){
                 int ID = frame.getID();
@@ -113,6 +122,7 @@ public class AudioTrackManager {
                 mLastAddedFrameID = ID;
             }
         }
+        Log.d(LOG_TAG , "bruh");
     }
 
     public AudioFrame getFrame(int ID){

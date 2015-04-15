@@ -64,6 +64,8 @@ public class SntpClient
     //The thread that all of the packets are sent/received on
     private Thread mThread;
 
+    private boolean mHasOffset;
+
     //The socket.
     private DatagramSocket mSocket;
 
@@ -83,6 +85,8 @@ public class SntpClient
 
         mThread = getClientThread();
         mThread.start();
+
+        mHasOffset = false;
 
     }
 
@@ -122,6 +126,8 @@ public class SntpClient
         mTimeOffset = average;
         mParent.setOffset(mTimeOffset);
         list = new ArrayList<Double>();
+
+        mHasOffset = true;
 
         return average;
     }
@@ -218,6 +224,10 @@ public class SntpClient
 
         list.add(localClockOffset * 1000);
         mNumberDone++;
+    }
+
+    public boolean hasOffset(){
+        return mHasOffset;
     }
 
 

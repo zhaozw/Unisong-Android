@@ -9,13 +9,13 @@ import java.util.Queue;
  * Created by Ethan on 3/12/2015.
  */
 public abstract class ReaderBridge {
-    private Queue<AudioFrame> mInputFrames;
-    private Thread mInputThread;
-    private boolean mInputReady;
+    protected Queue<AudioFrame> mInputFrames;
+    protected Thread mInputThread;
+    protected boolean mInputReady;
 
-    private Queue<AudioFrame> mOutputFrames;
-    private Thread mOutputThread;
-    private boolean mOutputReady;
+    protected Queue<AudioFrame> mOutputFrames;
+    protected Thread mOutputThread;
+    protected boolean mOutputReady;
 
 
     private boolean mIsRunning;
@@ -109,7 +109,6 @@ public abstract class ReaderBridge {
                 frames.add(mOutputFrames.poll());
             }
         }
-
         sendOutFrames(frames);
 
     }

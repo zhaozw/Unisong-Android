@@ -14,6 +14,8 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.audio.Decoder;
+import com.ezturner.speakersync.audio.DecoderTrackManagerBridge;
 import com.ezturner.speakersync.audio.ReaderBroadcasterBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
@@ -35,6 +37,7 @@ public class MediaService extends Service{
 
     private BroadcastReceiver mMessageReceiver ;
 
+    private Decoder mDecoder;
     private MasterDiscoveryHandler mDiscovery;
 
     //Objects for enabling multicast
@@ -44,6 +47,7 @@ public class MediaService extends Service{
     public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
 
     public PowerManager.WakeLock mWakeLock;
+
 
 
     public void startToListen(){
@@ -112,8 +116,10 @@ public class MediaService extends Service{
 
     public void listener(){
 
+        mDecoder = new Decoder();
+        mDecoder.addBridge(new DecoderTrackManagerBridge(mAudioTrackManager));
         mListener = new AudioListener(this);
-        mListener.setTrackBridge(new ListenerBridge(mAudioTrackManager));
+        mListener.setTrackBridge(new ListenerBridge(mDecoder , mAudioTrackManager));
 
     }
 

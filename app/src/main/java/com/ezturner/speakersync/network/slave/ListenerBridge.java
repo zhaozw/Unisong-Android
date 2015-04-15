@@ -40,4 +40,13 @@ public class ListenerBridge extends ReaderBridge{
         mDecoder.lastPacket();
     }
 
+    public void setDecoderInfo(String mime, int sampleRate, int channels, int bitrate){
+        mDecoder.initializeDecoder(mime, sampleRate , channels , bitrate);
+    }
+
+    public void setOffset(long offset){
+        mManager.setOffset(offset);
+    }
+
+
 }

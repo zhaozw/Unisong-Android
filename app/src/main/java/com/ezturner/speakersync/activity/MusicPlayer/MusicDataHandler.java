@@ -57,14 +57,14 @@ public class MusicDataHandler {
         mListData = new ArrayList<MusicData>();
         //The for loop for turning our data into a generic List for the AlphabeticalAdapter list, so we can filter out Hangouts stuff
         for(int i = 0; i < mSongs.size(); i++){
-            String name = mSongs.get(i).getName();
+            String name = mSongs.get(i).getPrimaryText();
             if(!name.equals("Hangouts message") && !name.equals("Hangouts video call")){
                 mListData.add(mSongs.get(i));
             }
         }
     }
     //retrieve song info
-    private void getMusicInfo() {
+    private void getMusicInfo(){
         //Get the content resolver
 
         //TODO: Verify that EXTERNAL_CONTENT_URI gets all music, and that we don't need to use INTERNAL_CONTENT_URI

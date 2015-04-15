@@ -11,7 +11,7 @@ public class Song implements MusicData{
     private String mArt;
 
     //The class for storing song data
-    public Song(long songID, String songTitle, String songArtist, String albumart) {
+    public Song(long songID, String songTitle, String songArtist, String albumart){
         mID = songID;
         mName = songTitle;
         mArtist = songArtist;
@@ -20,10 +20,10 @@ public class Song implements MusicData{
 
     public long getID () {return mID;}
 
-    public String getName () {return mName;}
+    public String getPrimaryText () {return mName;}
 
     //The string that will show up below the name
-    public String getSubText() {return mArtist;}
+    public String getSecondaryText() {return mArtist;}
 
     public String getArtist () {return mArtist;}
 

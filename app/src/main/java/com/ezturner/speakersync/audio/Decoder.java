@@ -34,7 +34,11 @@ public class Decoder {
 
     private DecoderTrackManagerBridge mBridge;
 
-    public Decoder(String mime, int sampleRate, int channels, int bitrate){
+    public Decoder(){
+
+    }
+
+    public void initializeDecoder(String mime, int sampleRate, int channels, int bitrate){
         mFormat = new MediaFormat();
         mFormat.setString(MediaFormat.KEY_MIME , mime);
         mFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
@@ -56,7 +60,6 @@ public class Decoder {
         mCodec.start();
         mRuns = 0;
     }
-
     public void addBridge(DecoderTrackManagerBridge bridge){
         mBridge = bridge;
     }

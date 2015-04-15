@@ -15,6 +15,7 @@ import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.FrameDataPacket;
 import com.ezturner.speakersync.network.packets.FrameInfoPacket;
 import com.ezturner.speakersync.network.packets.FramePacket;
+import com.ezturner.speakersync.network.packets.MimePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
 
@@ -176,7 +177,7 @@ public class AudioBroadcaster {
         mHandler = new Handler();
 
         //Set the next packet to be created to 1, the song start packet is 0
-        mNextPacketID = 1;
+        mNextPacketID = 2;
 
         //Set the next packet to be created to be 0
         mNextFrameID = 0;
@@ -211,8 +212,10 @@ public class AudioBroadcaster {
 
             if(mNextFrameID == 0){
                 SongStartPacket songStartPacket = createStartSongPacket();
+                NetworkPacket mimePacket = mPackets.get(1);
                 try {
                     mStreamSocket.send(songStartPacket.getPacket());
+                    mStreamSocket.send(mimePacket.getPacket());
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -312,7 +315,7 @@ public class AudioBroadcaster {
         mManager.startSong(mSongStartTime);
         mNextFrameTime = mSongStartTime;
 
-        mNextPacketID = 1;
+        mNextPacketID = 2;
 
         mNextFrameID = 0;
         mLastPacketID = 0;
@@ -324,6 +327,8 @@ public class AudioBroadcaster {
         }
 
         mPackets = new ArrayList<NetworkPacket>();
+        mPackets.add(null);
+        mPackets.add(null);
         mFramePackets = new ArrayList<FramePackets>();
 
         try {
@@ -512,7 +517,7 @@ public class AudioBroadcaster {
 
         songStartPacket.putPacket(new DatagramPacket(songStartPacket.getData() , songStartPacket.getData().length));
 
-        mPackets.add(songStartPacket);
+        mPackets.add(0 , songStartPacket);
 
         return songStartPacket;
     }
@@ -541,6 +546,8 @@ public class AudioBroadcaster {
         mMime = mime;
         mDuration = duration;
         mBitrate = bitrate;
+        mPackets.add(1, new MimePacket(mMime , 1 , mStreamID));
+
     }
 
 }

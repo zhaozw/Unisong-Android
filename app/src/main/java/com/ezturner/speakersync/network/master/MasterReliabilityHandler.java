@@ -2,15 +2,20 @@ package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 
+import com.ezturner.speakersync.network.CONSTANTS;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Ethan on 2/11/2015.
@@ -33,6 +38,10 @@ public class MasterReliabilityHandler {
     //The thread that'll listen to reliability packets
     private Thread mServerSocketThread;
 
+    private List<Thread> mSocketThreads;
+
+    private boolean mRunning;
+
     //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
     public MasterReliabilityHandler(AudioBroadcaster broadcaster){
@@ -41,7 +50,7 @@ public class MasterReliabilityHandler {
 
         try {
             
-            mServerSocket = new ServerSocket(broadcaster.getPort());
+            mServerSocket = new ServerSocket(CONSTANTS.RELIABILITY_PORT);
 
         } catch(IOException e){
             e.printStackTrace();
@@ -51,6 +60,7 @@ public class MasterReliabilityHandler {
 
         mServerSocketThread = startReliabilityConnectionListener();
 
+        mRunning = true;
         mServerSocketThread.start();
     }
 
@@ -61,15 +71,21 @@ public class MasterReliabilityHandler {
                 while(mBroadcaster.isStreamRunning()){
                     Socket socket = null;
 
+                    Log.d(LOG_TAG , "Starting to listen for sockets");
                     try {
                         socket = mServerSocket.accept();
                     } catch(IOException e){
                         e.printStackTrace();
                     }
+                    Log.d(LOG_TAG , "Socket connected : " + socket.getInetAddress());
 
                     if(socket != null){
                         mSockets.add(socket);
                         startSocketListener(socket).start();
+
+                        Thread thread = startSocketListener(socket);
+                        mSocketThreads.add(thread);
+                        thread.start();
                     }
                 }
             }
@@ -96,16 +112,16 @@ public class MasterReliabilityHandler {
     //Handle new data coming in from a Reliability socket
     private void listenToReliabilitySocket(Socket socket) throws IOException{
         mSockets.add(socket);
-        BufferedReader in =
-                new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        String inputLine;
-        long startTime = System.currentTimeMillis();
-        while((inputLine = in.readLine()) != null) {
-            String data = in.readLine();
-            Log.d(LOG_TAG, "Data received: " + data);
-            int packetID = Integer.parseInt(inputLine);
+        InputStream is = socket.getInputStream();
 
+        byte[] inputArr = new byte[4];
+
+        while((is.read(inputArr , 0, 4)) != -1) {
+
+            Log.d(LOG_TAG, "Data received: " + is);
+            int packetID = ByteBuffer.wrap(inputArr).getInt();
+
+            Log.d(LOG_TAG, "ID is: " + packetID);
             mBroadcaster.rebroadcastPacket(packetID);
 
         }
@@ -115,7 +131,7 @@ public class MasterReliabilityHandler {
         InetAddress addr = packet.getAddress();
         Socket socket = null;
         try {
-             socket = new Socket(addr, mBroadcaster.getPort());
+             socket = new Socket(addr, CONSTANTS.RELIABILITY_PORT);
         } catch(IOException e){
             e.printStackTrace();
         }

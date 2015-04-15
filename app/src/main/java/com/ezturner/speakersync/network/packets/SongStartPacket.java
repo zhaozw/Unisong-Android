@@ -96,6 +96,8 @@ public class SongStartPacket implements NetworkPacket {
 
     public int getChannels(){return mChannels;}
 
+    public int getBitrate(){return mBitrate;}
+
     @Override
     public DatagramPacket getPacket() {
         return mPacket;

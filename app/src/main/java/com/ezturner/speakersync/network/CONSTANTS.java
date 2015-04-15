@@ -38,5 +38,7 @@ public class CONSTANTS {
 
     public static final byte FRAME_PACKET_ID = 6;
 
+    public static final byte MIME_PACKET_ID = 7;
+
 
 }

@@ -160,12 +160,7 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
         public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
             View layout = inflater.inflate(R.layout.music_display, container , false);
 
-            mTextView = (TextView) layout.findViewById(R.id.position);
-            Bundle bundle = getArguments();
 
-            if(bundle != null){
-                mTextView.setText("The position is: " + bundle.getInt(POSITION));
-            }
             return layout;
         }
     }

@@ -456,6 +456,7 @@ public class AudioFileReader {
             }
         }
 
+        Log.d(LOG_TAG , "mStop: " + mStop);
         Log.d(LOG_TAG, "stopping...");
 
         releaseCodec();

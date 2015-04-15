@@ -18,9 +18,9 @@ public class Playlist implements MusicData{
     public long getID(){return mID;}
 
     //TODO: See what we can get from MediaStore for this
-    public String getSubText(){return "";}
+    public String getSecondaryText(){return "";}
 
-    public String getName(){return mTitle;}
+    public String getPrimaryText(){return mTitle;}
 
     public int getType(){return 2;}
 

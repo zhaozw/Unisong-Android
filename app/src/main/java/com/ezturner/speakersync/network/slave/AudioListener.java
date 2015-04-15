@@ -11,6 +11,7 @@ import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.packets.FrameDataPacket;
 import com.ezturner.speakersync.network.packets.FrameInfoPacket;
 import com.ezturner.speakersync.network.packets.FramePacket;
+import com.ezturner.speakersync.network.packets.MimePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
 
@@ -68,7 +69,7 @@ public class AudioListener {
     private int mPort;
 
     //The bridge between this and the AudioTrackManager
-    private ListenerBridge mTrackManagerBridge;
+    private ListenerBridge mBridge;
 
     //The discovery handler, which will handle finding and choosing the
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
@@ -101,11 +102,16 @@ public class AudioListener {
 
     private Queue<DatagramPacket> mProcessingQueue;
 
+    private int mSampleRate = -1;
+    private int mChannels;
+    private String mMime;
+    private int mBitrate;
 
 
 
     public AudioListener(Context context ){
 
+        mTimeOffset = -9999;
         Log.d(LOG_TAG , "Audio Listener Started");
         mContext = context;
 
@@ -129,6 +135,11 @@ public class AudioListener {
         mSntpClient = master.getClient();
         mPackets = convertPackets(master.getPackets());
         mMaster = master;
+
+        if(mSntpClient.hasOffset()){
+            mTimeOffset = (long) mSntpClient.getOffset();
+            mBridge.setOffset(mTimeOffset);
+        }
 
         mPort = master.getPort();
         mIsListening = true;
@@ -294,6 +305,9 @@ public class AudioListener {
                 case CONSTANTS.FRAME_PACKET_ID:
                     networkPacket = handleFramePacket(packet);
                     break;
+                case CONSTANTS.MIME_PACKET_ID:
+                    networkPacket = handleMimePacket(packet);
+                    break;
             }
         //}
         if(networkPacket != null) {
@@ -333,9 +347,12 @@ public class AudioListener {
 
         AudioFrame frame = new AudioFrame(fp.getAudioData(), fp.getFrameID() , fp.getLength() , fp.getPlayTime());
 
+        if(mTimeOffset == -9999){
+
+        }
         Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
 
-        mTrackManagerBridge.addFrame(frame);
+        mBridge.addFrame(frame);
         return fp;
     }
 
@@ -353,7 +370,7 @@ public class AudioListener {
                 frame.setOffset(mTimeOffset);
                 Log.d(LOG_TAG , "Frame # " + frame.getID() +" reconstructed");
                 //TODO : remove comment after testing
-                //mTrackManagerBridge.addFrame(frame);
+                //mBridge.addFrame(frame);
                 mUnfinishedFrames.remove(fp.getFrameID());
             } else if(frameFinished){
                 Log.d(LOG_TAG , "Frame Finished, but offset not set");
@@ -375,16 +392,34 @@ public class AudioListener {
         mStartTime = sp.getStartTime();
         
         //TODO: this doesn't work, figure out why
-        //mTrackManagerBridge.createAudioTrack(sp.getSampleRate() , sp.getChannels());
+        mSampleRate = sp.getSampleRate();
+        mChannels = sp.getChannels();
+        mBitrate = sp.getBitrate();
+        mBridge.createAudioTrack(sp.getSampleRate() , sp.getChannels());
 
+        if(mMime != null){
+            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
+        }
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
         Log.d(LOG_TAG , "Song start packet received! Starting song");
         //TODO: remove comment after test
-        mTrackManagerBridge.startSong(mStartTime);
+        mBridge.startSong(mStartTime);
 
         return sp;
+    }
+
+    private NetworkPacket handleMimePacket(DatagramPacket packet){
+        MimePacket mp = new MimePacket(packet.getData());
+
+        mMime = mp.getMime();
+
+        if(mPackets.containsKey(0)){
+            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
+        }
+
+        return mp;
     }
 
     public void setOffset(double offset){
@@ -394,14 +429,15 @@ public class AudioListener {
 
             frame.setOffset(mTimeOffset);
 
-            mTrackManagerBridge.addFrame(frame);
+            mBridge.addFrame(frame);
         }
+        mBridge.setOffset(mTimeOffset);
 
         mUnOffsetedFrames = new ArrayList<AudioFrame>();
     }
 
     public void setTrackBridge(ListenerBridge bridge){
-        mTrackManagerBridge = bridge;
+        mBridge = bridge;
     }
 
 }
