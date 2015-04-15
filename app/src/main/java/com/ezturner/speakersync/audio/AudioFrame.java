@@ -40,6 +40,9 @@ public class AudioFrame {
     //The packet ID of the frame info packet
     private int mPacketID;
 
+    //The stream that this frame belongs to
+    private byte mStreamID;
+
     //TODO: clean this class up and get rid of all of the unused stuff
 
     //The constructor without a play time
@@ -117,5 +120,13 @@ public class AudioFrame {
 
     public long getLengthMillis(){
         return mLength / 1000;
+    }
+
+    public byte getStreamID(){
+        return mStreamID;
+    }
+
+    public void setStreamID(byte streamID){
+        mStreamID = streamID;
     }
 }

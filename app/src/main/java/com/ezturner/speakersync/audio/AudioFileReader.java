@@ -61,6 +61,7 @@ public class AudioFileReader {
     private int mSourceRawResId = -1;
     private Context mContext;
     private boolean mStop = false;
+    private byte mStreamID;
 
     Handler handler = new Handler();
 
@@ -85,6 +86,14 @@ public class AudioFileReader {
     }
 
     public void readFile(String path) throws IOException{
+        mStop = true;
+        synchronized (mDecodeThread){
+            try {
+                mDecodeThread.wait();
+            } catch(InterruptedException e){
+                e.printStackTrace();
+            }
+        }
         mCurrentFile = new File(path);
         mDecodeThread = getDecode();
         mDecodeThread.start();
@@ -113,6 +122,7 @@ public class AudioFileReader {
     private void decode() throws IOException {
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+        mStreamID = mBroadcasterBridge.getStreamID();
 
         mRunning = true;
         // mExtractor gets information about the stream
@@ -206,10 +216,10 @@ public class AudioFileReader {
             // read a buffer before feeding it to the decoder
             if (!sawInputEOS) {
                 int inputBufIndex = mCodec.dequeueInputBuffer(kTimeOutUs);
-                if (inputBufIndex >= 0) {
+                if (inputBufIndex >= 0){
                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
                     int sampleSize = mExtractor.readSampleData(dstBuf, 0);
-                    if (sampleSize < 0) {
+                    if (sampleSize < 0){
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
                         mBroadcasterBridge.lastPacket();
                         mTrackManagerBridge.lastPacket();
@@ -397,13 +407,10 @@ public class AudioFileReader {
 
                         //TODO: make sure that this is actually the way to get the real MP3 data
                         dstBuf.mark();
-                        byte[] mp3Data = new byte[sampleSize];
-                        dstBuf.get(mp3Data);
+                        inBuf = new byte[sampleSize];
+                        dstBuf.get(inBuf);
                         dstBuf.reset();
 
-
-                        mCurrentID++;
-                        createMP3Frame(mp3Data ,playTime , length);
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
                     }
 
@@ -432,8 +439,8 @@ public class AudioFileReader {
                 buf.clear();
                 if(chunk.length > 0){
 
-                    //createPCMFrame(chunk , playTime , length, false);
-                    if(inBuf != null)   createMP3Frame(inBuf , playTime , length);
+                    createPCMFrame(chunk , playTime , length, false);
+                    createMP3Frame(inBuf, playTime, length);
 
                 }
                 try {
@@ -457,6 +464,8 @@ public class AudioFileReader {
         }
 
         Log.d(LOG_TAG , "mStop: " + mStop);
+        Log.d(LOG_TAG , "sawOutputEOS : " + sawOutputEOS);
+        Log.d(LOG_TAG , "Should stop : " + (noOutputCounter < noOutputCounterLimit) );
         Log.d(LOG_TAG, "stopping...");
 
         releaseCodec();

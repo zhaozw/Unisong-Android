@@ -303,6 +303,8 @@ public class AudioBroadcaster {
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     public void startSongStream(){
+        //Stop the old handler
+        mHandler.removeCallbacks(mPacketSender);
         //If another stream is running,
         if(mStreamRunning){
             //TODO: fix this code so it works
@@ -521,7 +523,7 @@ public class AudioBroadcaster {
 
         return songStartPacket;
     }
-    
+
     public void lastPacket(){
         mLastPacketID = mNextPacketID;
         mLastFrameID = mFramePackets.size() - 1;
@@ -529,15 +531,12 @@ public class AudioBroadcaster {
 
     //This is called by ReaderBroadcasterBridge to push in the
     public void addFrames(ArrayList<AudioFrame> frames){
-        long millis = System.currentTimeMillis();
         synchronized(mPackets){
             for(AudioFrame frame : frames){
                 //TODO: Switch back after test
-                handleFrame(frame);
+                if(frame.getStreamID() == mStreamID)    handleFrame(frame);
             }
         }
-        long afterMillis = System.currentTimeMillis();
-        //Log.d(LOG_TAG , "Push Frames took : " + (afterMillis - millis) + " , for "+ frames.size() + " frames.");
     }
 
     public void setAudioTrackInfo(int sampleRate , int channels, String mime , long duration , int bitrate){
@@ -550,4 +549,7 @@ public class AudioBroadcaster {
 
     }
 
+    public byte getStreamID(){
+        return mStreamID;
+    }
 }

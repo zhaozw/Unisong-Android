@@ -95,6 +95,10 @@ public class Decoder {
             }
         }
 
+        synchronized (mDecodeThread){
+            mDecodeThread.notify();
+        }
+
 
     }
 
@@ -193,7 +197,7 @@ public class Decoder {
             }
 
 
-            if (mCurrentFrame == mLastFrame) {
+            if (mCurrentFrame == mLastFrame){
                 mDecoding = false;
             }
         }
