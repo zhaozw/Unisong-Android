@@ -82,4 +82,8 @@ public class MasterResponsePacket implements NetworkPacket {
     public void putPacket(DatagramPacket packet) {
         mPacket = packet;
     }
+
+    public String toString(){
+        return "MasterResponsePacket";
+    }
 }

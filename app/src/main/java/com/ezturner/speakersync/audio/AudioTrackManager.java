@@ -114,7 +114,6 @@ public class AudioTrackManager {
     };
     //Takes in some frames, then waits for mFrames to be open and writes it to it
     public void addFrames(ArrayList<AudioFrame> frames){
-        Log.d(LOG_TAG , "Why isn't this being called?");
         synchronized (mFrames){
             for(AudioFrame frame : frames){
                 int ID = frame.getID();
@@ -122,7 +121,6 @@ public class AudioTrackManager {
                 mLastAddedFrameID = ID;
             }
         }
-        Log.d(LOG_TAG , "bruh");
     }
 
     public AudioFrame getFrame(int ID){

@@ -89,7 +89,6 @@ public class SlaveDiscoveryHandler {
                 } else {
                     return;
                 }
-                Log.d(LOG_TAG , "Received");
             } catch (IOException e){
                 Log.d(LOG_TAG ,e.toString());
             }

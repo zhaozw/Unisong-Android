@@ -146,6 +146,8 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
+
+
         mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP());
 
         mListenThread = getListenThread();
@@ -166,7 +168,7 @@ public class AudioListener {
     private Thread getListenThread(){
         return new Thread(){
             public void run(){
-                Log.d(LOG_TAG, "DISPOSABLE : Listening started");
+                Log.d(LOG_TAG, "Listening started");
                 while(mIsListening){
                     listenForPacket();
                 }
@@ -210,7 +212,6 @@ public class AudioListener {
                             //    mPackets.put(pack.getPacketID() , pack);
                             //}
                         //}
-                        Log.d(LOG_TAG , "After");
                     }
 
                     try {
@@ -418,6 +419,7 @@ public class AudioListener {
         if(mPackets.containsKey(0)){
             mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
         }
+        Log.d(LOG_TAG  , "Mime Packet Received");
 
         return mp;
     }

@@ -7,6 +7,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -35,10 +36,11 @@ public class Decoder {
     private DecoderTrackManagerBridge mBridge;
 
     public Decoder(){
-
+        mFrames = new HashMap();
     }
 
     public void initializeDecoder(String mime, int sampleRate, int channels, int bitrate){
+        Log.d(LOG_TAG , "Initializing Decoding");
         mFormat = new MediaFormat();
         mFormat.setString(MediaFormat.KEY_MIME , mime);
         mFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
@@ -59,6 +61,8 @@ public class Decoder {
         mCodec.configure(mFormat, null, null, 0);
         mCodec.start();
         mRuns = 0;
+
+        startDecode();
     }
     public void addBridge(DecoderTrackManagerBridge bridge){
         mBridge = bridge;
@@ -95,8 +99,10 @@ public class Decoder {
             }
         }
 
-        synchronized (mDecodeThread){
-            mDecodeThread.notify();
+        if(mDecodeThread != null) {
+            synchronized (mDecodeThread) {
+                mDecodeThread.notify();
+            }
         }
 
 

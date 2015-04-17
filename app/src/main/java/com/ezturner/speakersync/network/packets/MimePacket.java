@@ -82,4 +82,8 @@ public class MimePacket implements NetworkPacket {
 
         mMime = new String(mimeArr);
     }
+
+    public String toString(){
+        return "MimePacket#" + mPacketID;
+    }
 }

@@ -141,4 +141,8 @@ public class SongStartPacket implements NetworkPacket {
         mMime = new String(mimeArr);
     }
 
+    public String toString(){
+        return "SongStartPacket for stream#" + mStreamID;
+    }
+
 }

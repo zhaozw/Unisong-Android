@@ -150,4 +150,8 @@ public class FrameInfoPacket implements NetworkPacket{
     public void putPacket(DatagramPacket packet) {
         mPacket = packet;
     }
+
+    public String toString(){
+        return "FrameInfoPacket#" + mPacketID;
+    }
 }

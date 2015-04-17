@@ -19,7 +19,7 @@ public class CONSTANTS {
     public static final int DISCOVERY_MASTER_PORT = 55987;
 
 
-    public static final int RELIABILITY_PORT = 55989;
+    public static final int RELIABILITY_PORT = 55990;
 
     //The packet ID for starting a new song
     public static final byte SONG_START_PACKET_ID = 1;

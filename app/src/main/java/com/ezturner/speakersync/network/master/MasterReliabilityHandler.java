@@ -57,6 +57,7 @@ public class MasterReliabilityHandler {
         }
 
         mSockets = new ArrayList<Socket>();
+        mSocketThreads = new ArrayList<>();
 
         mServerSocketThread = startReliabilityConnectionListener();
 
@@ -68,7 +69,7 @@ public class MasterReliabilityHandler {
     private Thread startReliabilityConnectionListener(){
         return new Thread(){
             public void run(){
-                while(mBroadcaster.isStreamRunning()){
+                while(mRunning){
                     Socket socket = null;
 
                     Log.d(LOG_TAG , "Starting to listen for sockets");

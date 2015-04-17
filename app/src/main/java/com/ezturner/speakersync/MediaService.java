@@ -23,6 +23,8 @@ import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.slave.ListenerBridge;
 
+import java.io.IOException;
+
 /**
  * Created by Ethan on 1/25/2015.
  */

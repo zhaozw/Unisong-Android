@@ -54,9 +54,9 @@ public class SlaveReliabilityHandler {
 
         mTopPacket = 0;
         mPacketsReceived = new ArrayList<Integer>();
-        mPacketsRecentlyRequested = new HashMap<Integer, Long>();
-        mPacketsNotReceived = new HashMap<Integer , Long>();
-        mPacketsToRequest = new HashMap<Integer , Long>();
+        mPacketsRecentlyRequested = new HashMap<>();
+        mPacketsNotReceived = new HashMap<>();
+        mPacketsToRequest = new HashMap<>();
 
         mHandler = new Handler();
 
@@ -108,15 +108,6 @@ public class SlaveReliabilityHandler {
     public void requestPacket(int packetID){
         Log.d(LOG_TAG, "Requesting Packet #" + packetID);
         synchronized (mOutStream) {
-            if(mPacketsRecentlyRequested.containsKey(packetID)){
-
-            long diff = System.currentTimeMillis() - mPacketsRecentlyRequested.get(packetID);
-            Log.d(LOG_TAG , "Packet #" + packetID + " received after " + diff + "ms");
-
-
-            mPacketsRecentlyRequested.remove(packetID);
-            mPacketsNotReceived.remove(packetID);
-            }
 
             try {
                 mOutStream.write(ByteBuffer.allocate(4).putInt(packetID).array(), 0, 4);
@@ -153,14 +144,14 @@ public class SlaveReliabilityHandler {
     }
 
     public void packetReceived(int packetID){
-        Log.d(LOG_TAG, "Packet #" + packetID);
+
         mPacketsReceived.add(packetID);
 
         synchronized (mPacketsRecentlyRequested) {
             if (mPacketsRecentlyRequested.containsKey(packetID)) {
 
                 long diff = System.currentTimeMillis() - mPacketsRecentlyRequested.get(packetID);
-                Log.d(LOG_TAG, "Packet #" + packetID + " received after " + diff + "ms");
+                Log.d(LOG_TAG, "Packet #" + packetID + " received after " + diff + "ms" + "");
 
 
                 synchronized (mPacketsNotReceived) {

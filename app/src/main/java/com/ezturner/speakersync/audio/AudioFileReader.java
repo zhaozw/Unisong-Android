@@ -86,12 +86,13 @@ public class AudioFileReader {
     }
 
     public void readFile(String path) throws IOException{
-        mStop = true;
-        synchronized (mDecodeThread){
-            try {
-                mDecodeThread.wait();
-            } catch(InterruptedException e){
-                e.printStackTrace();
+        if(mDecodeThread != null) {
+            synchronized (mDecodeThread) {
+                try {
+                    mDecodeThread.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         mCurrentFile = new File(path);
@@ -377,8 +378,9 @@ public class AudioFileReader {
         //Make sure mStop is false
         mStop = false;
 
+
         //The while loop that
-        while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
+        while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit) {
 
             checkGC();
 
@@ -407,10 +409,11 @@ public class AudioFileReader {
 
                         //TODO: make sure that this is actually the way to get the real MP3 data
                         dstBuf.mark();
-                        inBuf = new byte[sampleSize];
-                        dstBuf.get(inBuf);
+                        byte[] sample = new byte[sampleSize];
+                        dstBuf.get(sample);
                         dstBuf.reset();
 
+                        createMP3Frame(sample, playTime, length);
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
                     }
 
@@ -437,10 +440,9 @@ public class AudioFileReader {
                 final byte[] chunk = new byte[info.size];
                 buf.get(chunk);
                 buf.clear();
-                if(chunk.length > 0){
+                if (chunk.length > 0) {
 
                     createPCMFrame(chunk , playTime , length, false);
-                    createMP3Frame(inBuf, playTime, length);
 
                 }
                 try {

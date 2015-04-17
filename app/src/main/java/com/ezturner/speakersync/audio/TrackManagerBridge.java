@@ -23,7 +23,7 @@ public class TrackManagerBridge extends ReaderBridge{
 
     @Override
     public void addFrame(AudioFrame frame){
-        Log.d(LOG_TAG , "Frame added");
+//        Log.d(LOG_TAG , "Frame added");
         synchronized(mInputFrames){
             mInputFrames.add(frame);
         }
@@ -35,13 +35,13 @@ public class TrackManagerBridge extends ReaderBridge{
 
     @Override
     protected void sendOutFrames(ArrayList<AudioFrame> frames){
-        Log.d(LOG_TAG  , "wtf");
+//        Log.d(LOG_TAG  , "wtf");
         mManager.addFrames(frames);
     }
 
     @Override
     protected void sendAllOutputFrames(){
-        Log.d(LOG_TAG , "Sending output frames");
+//        Log.d(LOG_TAG , "Sending output frames");
         mOutputReady = false;
         ArrayList<AudioFrame> frames = new ArrayList<AudioFrame>();
         synchronized (mOutputFrames){

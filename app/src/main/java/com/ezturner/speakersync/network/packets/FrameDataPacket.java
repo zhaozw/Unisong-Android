@@ -108,5 +108,8 @@ public class FrameDataPacket implements NetworkPacket {
         return mFrameID;
     }
 
+    public String toString(){
+        return "FrameDataPacket#" + mPacketID;
+    }
 
 }
