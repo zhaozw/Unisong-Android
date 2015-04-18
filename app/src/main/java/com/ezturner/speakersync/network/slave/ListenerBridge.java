@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.slave;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.Decoder;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
  */
 public class ListenerBridge extends ReaderBridge{
 
+    private final String LOG_TAG = "ListenerBridge";
     private Decoder mDecoder;
     private AudioTrackManager mManager;
 

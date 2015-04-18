@@ -40,5 +40,7 @@ public class CONSTANTS {
 
     public static final byte MIME_PACKET_ID = 7;
 
+    public static final int DELAY = 500;
+
 
 }

@@ -22,6 +22,7 @@ public abstract class ReaderBridge {
 
     public ReaderBridge(){
 
+        //TODO: try with one thread
         mIsRunning = true;
 
         mInputFrames = new LinkedList<AudioFrame>();

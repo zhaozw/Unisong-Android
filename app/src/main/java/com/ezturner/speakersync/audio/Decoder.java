@@ -7,6 +7,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ import java.util.Map;
  */
 public class Decoder {
 
-    private String LOG_TAG = "SlaveDecoder";
+    private String LOG_TAG = "Decoder";
 
     //The format that the MediaCodec will use
     private MediaFormat mFormat;
@@ -42,7 +43,7 @@ public class Decoder {
     public void initializeDecoder(String mime, int sampleRate, int channels, int bitrate){
         Log.d(LOG_TAG , "Initializing Decoding");
         mFormat = new MediaFormat();
-        mFormat.setString(MediaFormat.KEY_MIME , mime);
+        mFormat.setString(MediaFormat.KEY_MIME, mime);
         mFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
         mFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT , channels);
         mFormat.setInteger(MediaFormat.KEY_BIT_RATE , bitrate);
@@ -112,6 +113,8 @@ public class Decoder {
         mLastFrame =mLastAddedFrame;
     }
 
+    private int mFrameWaitingFor;
+    private long mWaitForFrame;
     private void decode() throws IOException{
         mDecoding = true;
         ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
@@ -129,87 +132,102 @@ public class Decoder {
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && mDecoding ) {
 
             mRuns++;
-            if(mRuns >= 200){
+            if (mRuns >= 200) {
                 System.gc();
                 mRuns = 0;
             }
 
-            if(!mFrames.containsKey(mCurrentFrame)){
-                synchronized (mDecodeThread){
+            //TODO: Put in some code for skipping frames if necessary, and handling with slow/delayed frames
+            if (!mFrames.containsKey(mCurrentFrame)) {
+                synchronized (mDecodeThread) {
                     try {
                         mDecodeThread.wait();
-                    } catch(InterruptedException e){
+                    } catch (InterruptedException e) {
                         //This is called when .notify() is called
                     }
                 }
-            }
+            } else {
 
-            AudioFrame currentFrame = null;
-            synchronized (mFrames) {
-                currentFrame = mFrames.get(mCurrentFrame);
-                mCurrentFrame++;
-            }
+                Log.d(LOG_TAG, "Grabbing frame");
+                AudioFrame currentFrame = null;
+                synchronized (mFrames) {
+                    currentFrame = mFrames.get(mCurrentFrame);
+                    mCurrentFrame++;
+                }
+                Log.d(LOG_TAG, "Got frame #" + currentFrame.getID());
 
-            int inputBufIndex = mCodec.dequeueInputBuffer(kTimeOutUs);
-            if (inputBufIndex >= 0) {
-                ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
+                int inputBufIndex = mCodec.dequeueInputBuffer(kTimeOutUs);
+                if (inputBufIndex >= 0) {
+                    ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
 
-                byte[] sample= currentFrame.getData();
-                int sampleSize = sample.length;
+                    byte[] sample = currentFrame.getData();
+                    int sampleSize = sample.length;
 
-                dstBuf.put(currentFrame.getData());
-                mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, currentFrame.getPlayTime(), sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
 
-            }
+                    Log.d(LOG_TAG, "Sample Size is : " + sampleSize);
+                    dstBuf.put(currentFrame.getData());
+//                Log.d(LOG_TAG , "Data is : " + Arrays.toString(currentFrame.getData()));
 
-            int res = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
+                    mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, currentFrame.getPlayTime(), sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
 
-            if (res >= 0) {
-                if (info.size > 0)  noOutputCounter = 0;
+                }
 
-                int outputBufIndex = res;
-                ByteBuffer buf = codecOutputBuffers[outputBufIndex];
+                int res = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
 
-                final byte[] chunk = new byte[info.size];
-                buf.get(chunk);
-                buf.clear();
-                if(chunk.length > 0){
+                Log.d(LOG_TAG, "Output Buffer dequeued, res is : " + res);
+                if (res >= 0) {
+                    if (info.size > 0) noOutputCounter = 0;
 
-                    Log.d(LOG_TAG , "Post-decode size :" + chunk.length);
-                    createPCMFrame(chunk, currentFrame.getLength() , currentFrame.getPlayTime(), currentFrame.getID());
+                    int outputBufIndex = res;
+                    ByteBuffer buf = codecOutputBuffers[outputBufIndex];
+
+                    final byte[] chunk = new byte[info.size];
+                    buf.get(chunk);
+                    buf.clear();
+
+
+                    Log.d(LOG_TAG, "Chunk Set, is: " + chunk.length);
+                    if (chunk.length > 0) {
+
+                        createPCMFrame(chunk, currentFrame.getLength(), currentFrame.getPlayTime(), currentFrame.getID());
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
             			state.set(PlayerStates.PLAYING);
                 	}*/
 
+                    }
+                    try {
+                        Log.d(LOG_TAG, "Trying to release output buffer");
+                        mCodec.releaseOutputBuffer(outputBufIndex, false);
+                        Log.d(LOG_TAG, "Output Buffer Released");
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+                    if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                        Log.d(LOG_TAG, "saw output EOS.");
+                        sawOutputEOS = true;
+                    }
+                } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                    codecOutputBuffers = mCodec.getOutputBuffers();
+                    Log.d(LOG_TAG, "output buffers have changed.");
+                } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    MediaFormat oformat = mCodec.getOutputFormat();
+                    Log.d(LOG_TAG, "output format has changed to " + oformat);
+                } else {
+                    //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
                 }
-                try {
-                    mCodec.releaseOutputBuffer(outputBufIndex, false);
-                } catch(IllegalStateException e){
-                    e.printStackTrace();
-                }
-                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    Log.d(LOG_TAG, "saw output EOS.");
-                    sawOutputEOS = true;
-                }
-            } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-                codecOutputBuffers = mCodec.getOutputBuffers();
-                Log.d(LOG_TAG, "output buffers have changed.");
-            } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                MediaFormat oformat = mCodec.getOutputFormat();
-                Log.d(LOG_TAG, "output format has changed to " + oformat);
-            } else {
-                //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
-            }
 
 
-            if (mCurrentFrame == mLastFrame){
-                mDecoding = false;
+                Log.d(LOG_TAG, "End of loop");
+                if (mCurrentFrame == mLastFrame) {
+                    mDecoding = false;
+                }
             }
         }
     }
 
     private void createPCMFrame(byte[] chunk, long length, long playTime, int ID){
         AudioFrame frame = new AudioFrame(chunk , ID , length, playTime);
+        Log.d(LOG_TAG , "PCM Frame created, of length: " + chunk.length);
     }
 }

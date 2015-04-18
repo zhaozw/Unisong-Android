@@ -46,6 +46,8 @@ public class MasterResponsePacket implements NetworkPacket {
 
         //combine the two arrays
         mData = data;//NetworkUtilities.combineArrays(data);
+
+        mPacket = new DatagramPacket(mData , mData.length);
     }
 
 
@@ -76,11 +78,6 @@ public class MasterResponsePacket implements NetworkPacket {
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
-    }
-
-    @Override
-    public void putPacket(DatagramPacket packet) {
-        mPacket = packet;
     }
 
     public String toString(){

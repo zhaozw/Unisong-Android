@@ -130,6 +130,7 @@ public class AudioListener {
 
     //Start playing from a master, start listening to the stream
     public void playFromMaster(Master master){
+        mStartSongReceived = false;
 
         Log.d(LOG_TAG , "Listening from master: " + master.getIP().toString().substring(1) + ":"  + master.getPort());
         mSntpClient = master.getClient();
@@ -249,7 +250,7 @@ public class AudioListener {
 
 
     private void listenForPacket(){
-        DatagramPacket packet = new DatagramPacket(new byte[4096] , 4096);
+        DatagramPacket packet = new DatagramPacket(new byte[3048] , 3048);
         try{
             //startTime = System.currentTimeMillis();
             //Log.d(LOG_TAG , "Time difference is : " + (startTime - finishTime));
@@ -385,7 +386,9 @@ public class AudioListener {
         return fp;
     }
 
+    private boolean mStartSongReceived = false;
     private NetworkPacket handleStartSongPacket(DatagramPacket packet){
+        mStartSongReceived = true;
         SongStartPacket sp = new SongStartPacket(packet.getData());
 
         mStreamID = sp.getStreamID();
@@ -400,12 +403,13 @@ public class AudioListener {
 
         if(mMime != null){
             mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
+            Log.d(LOG_TAG, "Decoder Info Set");
         }
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
         Log.d(LOG_TAG , "Song start packet received! Starting song");
-        //TODO: remove comment after test
+        //TODO: remove comment after its safe
         mBridge.startSong(mStartTime);
 
         return sp;
@@ -415,9 +419,11 @@ public class AudioListener {
         MimePacket mp = new MimePacket(packet.getData());
 
         mMime = mp.getMime();
+        Log.d(LOG_TAG , "Mime type : " + mMime);
 
-        if(mPackets.containsKey(0)){
+        if(mStartSongReceived){
             mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
+            Log.d(LOG_TAG , "Decoder Info Set");
         }
         Log.d(LOG_TAG  , "Mime Packet Received");
 

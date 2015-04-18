@@ -15,5 +15,4 @@ public interface NetworkPacket {
 
     public DatagramPacket getPacket();
 
-    public void putPacket(DatagramPacket packet);
 }

@@ -2,21 +2,16 @@ package com.ezturner.speakersync.audio;
 
 import android.content.Context;
 import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Handler;
 import android.util.Log;
 
-import com.ezturner.speakersync.network.NetworkUtilities;
-import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -335,6 +330,9 @@ public class AudioFileReader {
             return;
         }
 
+        mMP3FrameID = 0;
+        mCurrentID = 0;
+
         // Read track header
         MediaFormat format = getFormat();
 
@@ -370,6 +368,7 @@ public class AudioFileReader {
         // start decoding
         final long kTimeOutUs = 1000;
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        Log.d(LOG_TAG, "Info size is : " + info.size);
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
         int noOutputCounter = 0;
@@ -502,6 +501,7 @@ public class AudioFileReader {
         try {
             format = mExtractor.getTrackFormat(0);
             mime = format.getString(MediaFormat.KEY_MIME);
+            Log.d(LOG_TAG , "Mime type is: " + mime);
             sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
             channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             mTrackManagerBridge.createAudioTrack(sampleRate , channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO);
@@ -509,7 +509,7 @@ public class AudioFileReader {
             duration = format.getLong(MediaFormat.KEY_DURATION);
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
 
-            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels , mime, duration , bitrate);
+            mBroadcasterBridge.setAudioTrackInfo(sampleRate , channels , mime, duration , bitrate );
         } catch (Exception e){
             Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
             e.printStackTrace();
@@ -557,14 +557,16 @@ public class AudioFileReader {
 
     }
 
+    private int mMP3FrameID;
     private void createMP3Frame(byte[] data, long playTime, long length){
         AudioFrame frame;
         if(playTime != -1 && length != -1) {
-            frame = new AudioFrame(data, mCurrentID, playTime, length);
+            frame = new AudioFrame(data, mMP3FrameID, playTime, length);
         } else {
-            frame = new AudioFrame(data , mCurrentID);
+            frame = new AudioFrame(data , mMP3FrameID);
         }
 
+        mMP3FrameID++;
         mBroadcasterBridge.addFrame(frame);
     }
 

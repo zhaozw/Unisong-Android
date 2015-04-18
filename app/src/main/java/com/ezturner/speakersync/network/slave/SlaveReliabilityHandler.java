@@ -48,6 +48,7 @@ public class SlaveReliabilityHandler {
 
     private boolean mRequesting;
     private Thread mThread;
+    private ArrayList<Integer> mPacketsReRequested;
 
     public SlaveReliabilityHandler(InetAddress address){
         mMasterAddress = address;
@@ -58,6 +59,7 @@ public class SlaveReliabilityHandler {
         mPacketsNotReceived = new HashMap<>();
         mPacketsToRequest = new HashMap<>();
 
+        mPacketsReRequested = new ArrayList<>();
         mHandler = new Handler();
 
         mHandler.postDelayed(mPacketRequester , 30);
@@ -68,18 +70,36 @@ public class SlaveReliabilityHandler {
         mThread.start();
     }
 
-    Runnable mPacketRequester = new Runnable() {
+    Runnable mPacketRequester = new Runnable(){
         @Override
         public void run() {
 
-            ArrayList<Integer> packetsSent = new ArrayList<Integer>();
-            synchronized (mPacketsToRequest) {
+            ArrayList<Integer> packetsSent = new ArrayList<>();
+            synchronized (mPacketsToRequest){
                 for (Map.Entry<Integer, Long> entry : mPacketsToRequest.entrySet()) {
                     if (System.currentTimeMillis() - entry.getValue() >= 10) {
                         requestPacket(entry.getKey());
                         packetsSent.add(entry.getKey());
                     }
                 }
+            }
+
+
+            ArrayList<Integer> packetsToRemove = new ArrayList<>();
+            synchronized (mPacketsRecentlyRequested){
+                for (Map.Entry<Integer, Long> entry : mPacketsRecentlyRequested.entrySet()) {
+                    long timeSince = System.currentTimeMillis() - entry.getValue();
+                    if (timeSince >= 200 && !mPacketsReRequested.contains(entry.getKey()) &&  timeSince <= 350) {
+                        mPacketsReRequested.add(entry.getKey());
+                        requestPacket(entry.getKey());
+                    } else if(timeSince > 350){
+                        packetsToRemove.add(entry.getKey());
+                    }
+                }
+            }
+
+            for(Integer i: packetsToRemove){
+                mPacketsRecentlyRequested.remove(i);
             }
 
             for(Integer i : packetsSent){
@@ -106,7 +126,12 @@ public class SlaveReliabilityHandler {
 
     //Sends a request to resend a packet
     public void requestPacket(int packetID){
-        Log.d(LOG_TAG, "Requesting Packet #" + packetID);
+        String append ="";
+        if(mPacketsReRequested.contains(packetID)){
+            append += " once more";
+        }
+
+        Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
         synchronized (mOutStream) {
 
             try {
@@ -116,9 +141,12 @@ public class SlaveReliabilityHandler {
             }
         }
 
-        mPacketsRecentlyRequested.put(packetID , System.currentTimeMillis());
+        if(!mPacketsRecentlyRequested.containsKey(packetID)) {
+            mPacketsRecentlyRequested.put(packetID, System.currentTimeMillis());
+        }
     }
 
+    //The function to close the socket
     public void closeSocket(){
         try {
             mSocket.close();
@@ -128,6 +156,7 @@ public class SlaveReliabilityHandler {
         }
     }
 
+    //A function to connect to a Master phone,
     public void connectToHost(InetAddress address){
         try{
             if(mSocket != null){
@@ -157,6 +186,7 @@ public class SlaveReliabilityHandler {
                 synchronized (mPacketsNotReceived) {
                     mPacketsNotReceived.remove(packetID);
                 }
+                mPacketsRecentlyRequested.remove(packetID);
             }
         }
 

@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 
@@ -13,6 +15,7 @@ import java.util.Arrays;
  */
 public class MimePacket implements NetworkPacket {
 
+    private final String LOG_TAG = "MimePacket";
     private byte[] mData;
     private byte mStreamID;
     private int mPacketID;
@@ -25,7 +28,7 @@ public class MimePacket implements NetworkPacket {
         decode();
     }
 
-    public MimePacket(String mime, int packetID, byte streamID){
+    public MimePacket(String mime, int packetID, byte streamID ){
         mPacketID = packetID;
         mMime = mime;
         byte[] data = new byte[]{CONSTANTS.MIME_PACKET_ID , streamID};
@@ -34,7 +37,12 @@ public class MimePacket implements NetworkPacket {
 
         byte[] mimeArr = mime.getBytes(Charset.forName("UTF-8"));
 
+        byte[] mimeSizeArr = ByteBuffer.allocate(4).putInt(10 + mimeArr.length).array();
+
+
         data = NetworkUtilities.combineArrays(data , packetIDarr);
+
+        data = NetworkUtilities.combineArrays(data, mimeSizeArr);
 
         mData = NetworkUtilities.combineArrays(data , mimeArr);
 
@@ -66,11 +74,6 @@ public class MimePacket implements NetworkPacket {
         return mMime;
     }
 
-    @Override
-    public void putPacket(DatagramPacket packet) {
-        mPacket = packet;
-    }
-
     private void decode(){
         mStreamID = mData[1];
 
@@ -78,7 +81,11 @@ public class MimePacket implements NetworkPacket {
 
         mPacketID = ByteBuffer.wrap(packetIDArr).getInt();
 
-        byte[] mimeArr = Arrays.copyOfRange(mData , 6 , mData.length);
+        byte[] mimeSizeArr = Arrays.copyOfRange(mData , 6, 10);
+
+        int mimeEndIndex = ByteBuffer.wrap(mimeSizeArr).getInt();
+
+        byte[] mimeArr = Arrays.copyOfRange(mData , 10 , mimeEndIndex);
 
         mMime = new String(mimeArr);
     }

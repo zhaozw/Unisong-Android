@@ -43,6 +43,8 @@ public class SongStartPacket implements NetworkPacket {
 
 
     public SongStartPacket(long songStartTime , byte streamID  , int packetID , int sampleRate , int channels ,String mime , long duration , int bitrate ){
+        mStreamID = streamID;
+
         byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamID};
 
         byte[] packetIDArr = ByteBuffer.allocate(4).putInt(packetID).array();
@@ -75,6 +77,8 @@ public class SongStartPacket implements NetworkPacket {
         //TODO: implement metadata like sample rate, song name, and whatever else is needed
 
         mData = data;
+
+        mPacket = new DatagramPacket(mData , mData.length);
     }
 
     @Override
@@ -101,11 +105,6 @@ public class SongStartPacket implements NetworkPacket {
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
-    }
-
-    @Override
-    public void putPacket(DatagramPacket packet) {
-        mPacket = packet;
     }
 
 
@@ -142,7 +141,7 @@ public class SongStartPacket implements NetworkPacket {
     }
 
     public String toString(){
-        return "SongStartPacket for stream#" + mStreamID;
+        return "SongStartPacket#"+ mPacketID +" for stream#" + mStreamID;
     }
 
 }

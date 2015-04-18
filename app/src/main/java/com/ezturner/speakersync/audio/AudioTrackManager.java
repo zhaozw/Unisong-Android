@@ -69,6 +69,7 @@ public class AudioTrackManager {
                 if(mIsPlaying){
                     //TODO: Switch the song
                 } else {
+                    //TODO: uncomment these after it's safe
                     startPlaying();
                     mHandler.post(mWriteRunnable);
                 }
@@ -90,6 +91,14 @@ public class AudioTrackManager {
 
             if(frame == null){
                 Log.d(LOG_TAG , "Frame ID is: " + mFrameToPlay);
+                synchronized (mWriteRunnable){
+                    try {
+                        wait();
+                    } catch(InterruptedException e){
+
+                    }
+                }
+                frame = mFrames.get(mFrameToPlay);
             }
             mFrameToPlay++;
 
@@ -120,6 +129,10 @@ public class AudioTrackManager {
                 mFrames.put( ID , frame);
                 mLastAddedFrameID = ID;
             }
+        }
+
+        synchronized (mWriteRunnable){
+            mWriteRunnable.notify();
         }
     }
 

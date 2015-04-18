@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -12,6 +14,9 @@ import java.util.Arrays;
  * Created by Ethan on 4/2/2015.
  */
 public class FramePacket implements NetworkPacket{
+
+    private final String LOG_TAG = "FramePacket";
+
     private byte[] mData;
     //The packet Id
     private int mPacketID;
@@ -66,6 +71,8 @@ public class FramePacket implements NetworkPacket{
 
         byte[] lengthArr = ByteBuffer.allocate(8).putLong(length).array();
 
+        byte[] dataSizeArr = ByteBuffer.allocate(4).putInt(frame.getData().length).array();
+
         byte[] data = NetworkUtilities.combineArrays(packetType, packetIDByte);
 
         data = NetworkUtilities.combineArrays(data , frameId);
@@ -74,7 +81,11 @@ public class FramePacket implements NetworkPacket{
 
         data = NetworkUtilities.combineArrays(data , lengthArr);
 
+        data = NetworkUtilities.combineArrays(data , dataSizeArr);
+
         mData = NetworkUtilities.combineArrays(data , frame.getData());
+
+        mPacket = new DatagramPacket(mData, mData.length);
     }
 
     @Override
@@ -98,13 +109,22 @@ public class FramePacket implements NetworkPacket{
 
         mPlayTime = ByteBuffer.wrap(playTimeArr).getLong();
 
-        byte[] lengthArr = Arrays.copyOfRange(mData , 18 , 22);
+        byte[] lengthArr = Arrays.copyOfRange(mData , 18 , 26);
 
         mLength = ByteBuffer.wrap(lengthArr).getInt();
 
-        mFrameData = Arrays.copyOfRange(mData , 22 , mData.length);
+        byte[] dataLengthArr = Arrays.copyOfRange(mData , 26, 30);
+
+        int dataLength = ByteBuffer.wrap(dataLengthArr).getInt();
+
+//        Log.d(LOG_TAG , "Data Length is is : " + dataEnd + " so end position is: " + (dataEnd + 30) + "for frame #" + mFrameID);
+
+        mFrameData = Arrays.copyOfRange(mData , 30 ,dataLength + 30);
+
+        mData = null;
 
     }
+
 
     @Override
     public byte getStreamID(){
@@ -138,11 +158,6 @@ public class FramePacket implements NetworkPacket{
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
-    }
-
-    @Override
-    public void putPacket(DatagramPacket packet) {
-        mPacket = packet;
     }
 
     public String toString(){

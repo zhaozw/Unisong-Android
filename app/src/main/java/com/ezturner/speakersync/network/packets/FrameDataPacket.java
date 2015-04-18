@@ -56,6 +56,8 @@ public class FrameDataPacket implements NetworkPacket {
 
         mData = NetworkUtilities.combineArrays(mData , data);
 
+        mPacket = new DatagramPacket(mData , mData.length);
+
     }
 
     @Override
@@ -88,11 +90,6 @@ public class FrameDataPacket implements NetworkPacket {
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
-    }
-
-    @Override
-    public void putPacket(DatagramPacket packet) {
-        mPacket = packet;
     }
 
     @Override
