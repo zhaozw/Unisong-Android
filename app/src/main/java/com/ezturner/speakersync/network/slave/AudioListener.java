@@ -402,7 +402,7 @@ public class AudioListener {
         mBridge.createAudioTrack(sp.getSampleRate() , sp.getChannels());
 
         if(mMime != null){
-            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
+//            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
             Log.d(LOG_TAG, "Decoder Info Set");
         }
         //TODO: Figure out the time synchronization and then
@@ -410,7 +410,7 @@ public class AudioListener {
 
         Log.d(LOG_TAG , "Song start packet received! Starting song");
         //TODO: remove comment after its safe
-        mBridge.startSong(mStartTime);
+//        mBridge.startSong(mStartTime);
 
         return sp;
     }
@@ -422,7 +422,7 @@ public class AudioListener {
         Log.d(LOG_TAG , "Mime type : " + mMime);
 
         if(mStartSongReceived){
-            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
+//            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
             Log.d(LOG_TAG , "Decoder Info Set");
         }
         Log.d(LOG_TAG  , "Mime Packet Received");

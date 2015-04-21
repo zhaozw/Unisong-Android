@@ -14,7 +14,7 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.Decoder;
+import com.ezturner.speakersync.audio.SlaveDecoder;
 import com.ezturner.speakersync.audio.DecoderTrackManagerBridge;
 import com.ezturner.speakersync.audio.ReaderBroadcasterBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
@@ -22,8 +22,6 @@ import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.slave.ListenerBridge;
-
-import java.io.IOException;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -39,7 +37,7 @@ public class MediaService extends Service{
 
     private BroadcastReceiver mMessageReceiver ;
 
-    private Decoder mDecoder;
+    private SlaveDecoder mSlaveDecoder;
     private MasterDiscoveryHandler mDiscovery;
 
     //Objects for enabling multicast
@@ -118,10 +116,10 @@ public class MediaService extends Service{
 
     public void listener(){
 
-        mDecoder = new Decoder();
-        mDecoder.addBridge(new DecoderTrackManagerBridge(mAudioTrackManager));
+        mSlaveDecoder = new SlaveDecoder();
+        mSlaveDecoder.addBridge(new DecoderTrackManagerBridge(mAudioTrackManager));
         mListener = new AudioListener(this);
-        mListener.setTrackBridge(new ListenerBridge(mDecoder , mAudioTrackManager));
+        mListener.setTrackBridge(new ListenerBridge(mSlaveDecoder, mAudioTrackManager));
 
     }
 

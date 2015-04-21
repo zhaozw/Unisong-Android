@@ -1,10 +1,8 @@
 package com.ezturner.speakersync.network.slave;
 
-import android.util.Log;
-
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.Decoder;
+import com.ezturner.speakersync.audio.SlaveDecoder;
 import com.ezturner.speakersync.audio.ReaderBridge;
 
 import java.util.ArrayList;
@@ -15,19 +13,19 @@ import java.util.ArrayList;
 public class ListenerBridge extends ReaderBridge{
 
     private final String LOG_TAG = "ListenerBridge";
-    private Decoder mDecoder;
+    private SlaveDecoder mSlaveDecoder;
     private AudioTrackManager mManager;
 
-    public ListenerBridge(Decoder decoder, AudioTrackManager manager){
+    public ListenerBridge(SlaveDecoder slaveDecoder, AudioTrackManager manager){
         super();
-        mDecoder = decoder;
+        mSlaveDecoder = slaveDecoder;
         mManager = manager;
     }
 
 
 
     protected void sendOutFrames(ArrayList<AudioFrame> frames){
-        mDecoder.addFrames(frames);
+        mSlaveDecoder.addFrames(frames);
     }
 
     public void createAudioTrack(int sampleRate , int channels){
@@ -40,11 +38,11 @@ public class ListenerBridge extends ReaderBridge{
 
     public void lastPacket(){
         mManager.lastPacket();
-        mDecoder.lastPacket();
+        mSlaveDecoder.lastPacket();
     }
 
     public void setDecoderInfo(String mime, int sampleRate, int channels, int bitrate){
-        mDecoder.initializeDecoder(mime, sampleRate , channels , bitrate);
+        mSlaveDecoder.initializeDecoder(mime, sampleRate , channels , bitrate);
     }
 
     public void setOffset(long offset){

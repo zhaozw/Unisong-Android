@@ -176,6 +176,7 @@ public class SlaveReliabilityHandler {
 
         mPacketsReceived.add(packetID);
 
+
         synchronized (mPacketsRecentlyRequested) {
             if (mPacketsRecentlyRequested.containsKey(packetID)) {
 
