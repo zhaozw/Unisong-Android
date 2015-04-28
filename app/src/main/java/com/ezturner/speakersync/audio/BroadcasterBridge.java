@@ -12,11 +12,16 @@ public class BroadcasterBridge extends ReaderBridge {
     private AudioBroadcaster mBroadcaster;
 
     public BroadcasterBridge(AudioBroadcaster broadcaster){
+        super();
         mBroadcaster = broadcaster;
     }
 
     @Override
     protected void sendOutFrames(ArrayList<AudioFrame> frames) {
         mBroadcaster.addFrames(frames);
+    }
+
+    public void setAudioInfo(int channels){
+        mBroadcaster.setAudioInfo(channels);
     }
 }

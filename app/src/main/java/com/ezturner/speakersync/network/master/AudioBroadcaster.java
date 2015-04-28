@@ -214,10 +214,9 @@ public class AudioBroadcaster {
         @Override
         public void run() {
 
-            Log.d(LOG_TAG , "Packet sender started");
 
             if (mNextFrameID == 0){
-               synchronized (mPackets) {
+               synchronized (mPackets){
 
                    insertStartPackets();
                    NetworkPacket songStartPacket = mPackets.get(mNextFrameID);
@@ -225,10 +224,12 @@ public class AudioBroadcaster {
                    mNextFrameID++;
                    mPacketsSentCount++;
 
-                   try {
-                       mStreamSocket.send(songStartPacket.getPacket());
-                   } catch (IOException e){
-                       e.printStackTrace();
+                   synchronized (mStreamSocket){
+                       try {
+                           mStreamSocket.send(songStartPacket.getPacket());
+                       } catch (IOException e) {
+                           e.printStackTrace();
+                       }
                    }
                 }
             }
@@ -241,46 +242,89 @@ public class AudioBroadcaster {
             }
 
 
+
             synchronized (mStreamSocket){
                 try {
+                    int len = packet.getPacket().getLength();
                     mStreamSocket.send(packet.getPacket());
+                    /*
+                    try{
+                        synchronized (this){
+                            this.wait(10);
+                        }
+                    }catch (InterruptedException e){
+
+                    }
+                    mStreamSocket.send(new DatagramPacket(new byte[len] , len));*/
                     mPacketsSentCount++;
                 } catch (IOException e){
                     e.printStackTrace();
                 }
             }
 
+
             //TODO: figure out a way to set delay properly
             //long delay = (long)(mPacketSendStartTime + packets.getInfoPacket().getFrame().getPlayTime()) - System.currentTimeMillis();
-            long delay = 26;
+            long delay = 20;
+
 
             if(mPacketsToRebroadcast.size() > 0) {
-                synchronized (mPacketsToRebroadcast) {
-                    ArrayList<NetworkPacket> rebroadcastPackets = new ArrayList<>();
-                    synchronized (mPackets) {
-                        for (int i = 0; i < mPacketsToRebroadcast.size(); i++) {
-                            int id = mPacketsToRebroadcast.get(i);
-                            rebroadcastPackets.add(mPackets.get(id));
-                        }
+                delay -= 10;
+                try{
+                    synchronized (this){
+                        this.wait(10);
                     }
+                }catch (InterruptedException e){
 
-                    int numSent = 0;
-                    for (int i = 0; i < 4 && i < mPacketsToRebroadcast.size(); i++) {
-                        numSent++;
+                }
+
+                synchronized (mPacketsToRebroadcast) {
+                    synchronized (mPackets) {
+                        NetworkPacket packetl = mPackets.get(mPacketsToRebroadcast.get(0));
+                        Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
+                        mPacketsToRebroadcast.remove(0);
                         try {
-                            NetworkPacket packetl = mPackets.get(mPacketsToRebroadcast.get(i));
-                            Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
                             mStreamSocket.send(packetl.getPacket());
                         } catch (IOException e){
                             e.printStackTrace();
                         }
                     }
+                }
+                /*
+                //The number of packets to be re broadcast at any one time
+                int numToRebroadcast = 2;
 
-                    for(int i = 0; i < numSent; i++) {
+                Log.d(LOG_TAG , "Starting Re-Broadcast");
+                ArrayList<NetworkPacket> rebroadcastPackets = new ArrayList<>();
+                synchronized (mPacketsToRebroadcast) {
+                    synchronized (mPackets) {
+                        for (int i = 0; i < numToRebroadcast && i < mPacketsToRebroadcast.size(); i++) {
+                            int id = mPacketsToRebroadcast.get(i);
+                            rebroadcastPackets.add(mPackets.get(id));
+                        }
+                    }
+                    Log.d(LOG_TAG , "Packets acquired, now removing");
+                    for(int i = 0; i < numToRebroadcast; i++) {
                         mPacketsToRebroadcast.remove(0);
+                        if(mPacketsToRebroadcast.size() == 0)   break;
                     }
                 }
+
+                Log.d(LOG_TAG , "Packets removed, sending now");
+
+                for (int i = 0; i < rebroadcastPackets.size(); i++){
+                    try {
+                        NetworkPacket packetl = rebroadcastPackets.get(i);
+                        Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
+                        mStreamSocket.send(packetl.getPacket());
+                    } catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }*/
+
+
             }
+
 
             Log.d(LOG_TAG , "mPacketsSentCount :" + mPacketsSentCount + " , delay is : " + delay);
 
@@ -315,7 +359,7 @@ public class AudioBroadcaster {
 
         //The start time in milliseconds
         //TODO: Recalculate this!
-        mSongStartTime = System.currentTimeMillis() + 1000;
+        mSongStartTime = System.currentTimeMillis() + 2000;
         mManager.startSong(mSongStartTime);
         mNextFrameTime = mSongStartTime;
 
@@ -334,6 +378,7 @@ public class AudioBroadcaster {
         //Add an empty entry to be removed and replaced with the SongStartPacket
         mPackets.add(null);
 
+
         try{
             mReader.readFile(MediaService.TEST_FILE_PATH);
         } catch(IOException e){
@@ -341,9 +386,8 @@ public class AudioBroadcaster {
         }
 
         mIsBroadcasting = true;
-        Log.d(LOG_TAG , "Schedule task time!");
+        Log.d(LOG_TAG, "Schedule task time!");
         mWorker.schedule(mPacketSender, 500, TimeUnit.MILLISECONDS);
-        mPacketSendStartTime = System.currentTimeMillis() + 500;
     }
 
     //Broadcasts a streaming packet
@@ -424,7 +468,7 @@ public class AudioBroadcaster {
     //Makes the song Start packet, currently only has the songs's start time but will soon have more
     private SongStartPacket createStartSongPacket(){
 
-        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID , 0);
+        SongStartPacket songStartPacket = new SongStartPacket(mSongStartTime , mStreamID , 0 , mChannels);
 
         synchronized (mPackets){
             mPackets.remove(0);
@@ -452,5 +496,9 @@ public class AudioBroadcaster {
                 createFramePacket(frame);
             }
         }
+    }
+
+    public void setAudioInfo(int channels){
+        mChannels = channels;
     }
 }

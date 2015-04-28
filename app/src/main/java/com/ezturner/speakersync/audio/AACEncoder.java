@@ -292,8 +292,8 @@ public class AACEncoder {
 
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
-        long length = data.length / sampleRate;
-        long playTime = mSamplesProcessed / sampleRate;
+        long length = (data.length * 1000) / sampleRate;
+        long playTime = (mSamplesProcessed * 1000) / sampleRate;
 
         AudioFrame frame = new AudioFrame(data, mCurrentID , length ,playTime);
         mCurrentID++;

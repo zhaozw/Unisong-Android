@@ -18,6 +18,7 @@ public abstract class ReaderBridge {
     private boolean mIsRunning;
 
     public ReaderBridge(){
+        mIsRunning = true;
         mFrames = new LinkedList<AudioFrame>();
         mThread = getThread();
         mThread.start();

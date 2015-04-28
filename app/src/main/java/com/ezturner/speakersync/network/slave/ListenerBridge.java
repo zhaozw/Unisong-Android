@@ -24,10 +24,19 @@ public class ListenerBridge extends ReaderBridge{
 
 
 
-    protected void sendOutFrames(ArrayList<AudioFrame> frames){
-//        mSlaveDecoder.addFrames(frames);
+    public AudioTrackManager getManager(){
+        return mManager;
     }
 
+    protected void sendOutFrames(ArrayList<AudioFrame> frames){
+        if(mSlaveDecoder != null) {
+            mSlaveDecoder.addFrames(frames);
+        }
+    }
+
+    public void setDecoder(SlaveDecoder decoder){
+        mSlaveDecoder = decoder;
+    }
     public void startSong(long startTime){
         mManager.startSong(startTime);
     }

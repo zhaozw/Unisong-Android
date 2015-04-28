@@ -42,8 +42,9 @@ public class SongStartPacket implements NetworkPacket {
     }
 
 
-    public SongStartPacket(long songStartTime , byte streamID  , int packetID){
+    public SongStartPacket(long songStartTime , byte streamID  , int packetID, int channels){
         mStreamID = streamID;
+        mChannels = channels;
 
         byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamID};
 
@@ -54,6 +55,10 @@ public class SongStartPacket implements NetworkPacket {
         byte[] startTime = ByteBuffer.allocate(8).putLong(songStartTime).array();
 
         data = NetworkUtilities.combineArrays(data, startTime);
+
+        byte[] channelsArr = ByteBuffer.allocate(4).putInt(mChannels).array();
+
+        data = NetworkUtilities.combineArrays(data, channelsArr);
         //TODO: implement metadata like song name and whatever else is needed
 
         mData = data;
@@ -76,6 +81,10 @@ public class SongStartPacket implements NetworkPacket {
 
     public int getPacketID(){return mPacketID;}
 
+    public int getChannels(){
+        return mChannels;
+    }
+
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
@@ -85,13 +94,17 @@ public class SongStartPacket implements NetworkPacket {
     private void decode(){
         mStreamID = mData[1];
 
-        byte[] packetIdArr = Arrays.copyOfRange(mData, 2, 6);
+        byte[] packetIDArr = Arrays.copyOfRange(mData, 2, 6);
 
-        mPacketID = ByteBuffer.wrap(packetIdArr).getInt();
+        mPacketID = ByteBuffer.wrap(packetIDArr).getInt();
 
         byte[] playTimeArr = Arrays.copyOfRange(mData, 6, 14);
 
         mStartTime = ByteBuffer.wrap(playTimeArr).getLong();
+
+        byte[] channelsArr = Arrays.copyOfRange(mData, 14, 18);
+
+        mChannels = ByteBuffer.wrap(channelsArr).getInt();
 
     }
 
@@ -99,4 +112,7 @@ public class SongStartPacket implements NetworkPacket {
         return "SongStartPacket#"+ mPacketID +" for stream#" + mStreamID;
     }
 
+    public void setOffset(long offset){
+        mStartTime += offset;
+    }
 }

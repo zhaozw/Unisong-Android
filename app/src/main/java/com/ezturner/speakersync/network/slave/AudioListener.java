@@ -3,12 +3,15 @@ package com.ezturner.speakersync.network.slave;
 import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.SlaveDecoder;
+import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.packets.AudioDataPacket;
+import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
 import java.io.IOException;
@@ -19,6 +22,7 @@ import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -109,14 +113,11 @@ public class AudioListener {
     //The next packet to be writted to the inputStream
     private int mPacketToWrite;
 
-
     private SlaveDecoder mSlaveDecoder;
 
-    public AudioListener(Context context , NetworkInputStream inputStream , SlaveDecoder slaveDecoder){
+    public AudioListener(Context context ,  ListenerBridge bridge){
 
-        mSlaveDecoder = slaveDecoder;
-
-        mInputStream = inputStream;
+        mBridge = bridge;
 
         mTimeOffset = -9999;
         Log.d(LOG_TAG , "Audio Listener Started");
@@ -147,8 +148,12 @@ public class AudioListener {
         mMaster = master;
 
         if(mSntpClient.hasOffset()){
+            Log.d(LOG_TAG , "Offset is available!");
             mTimeOffset = (long) mSntpClient.getOffset();
-            mBridge.setOffset(mTimeOffset);
+            //TODO: consider whether to uncomment and remove the code applying it below
+//            mBridge.setOffset(mTimeOffset);
+        } else {
+            Log.e(LOG_TAG , "ERROR: NO OFFSET");
         }
 
         mPort = master.getPort();
@@ -193,7 +198,6 @@ public class AudioListener {
                     if(mProcessingQueue.size() > 0) {
 
                         ArrayList<DatagramPacket> packets = new ArrayList<DatagramPacket>();
-                        ArrayList<NetworkPacket> networkPackets = new ArrayList<>();
                         //long beforeSynchronized = System.currentTimeMillis();
                         synchronized (mProcessingQueue) {
                             //long after = System.currentTimeMillis();
@@ -210,7 +214,6 @@ public class AudioListener {
                             if(networkPacket != null && mLastPacket < networkPacket.getPacketID()){
                                 mLastPacket = networkPacket.getPacketID();
                             }
-                            networkPackets.add(networkPacket);
                         }
 
                         //for(NetworkPacket pack : networkPackets){
@@ -300,8 +303,8 @@ public class AudioListener {
         //if(packet.getData()[1] == mStreamID) {
         byte packetType = packet.getData()[0];
             switch (packetType) {
-                case CONSTANTS.AUDIO_DATA_PACKET_ID:
-                    networkPacket = handleAudioDataPacket(packet);
+                case CONSTANTS.FRAME_PACKET_ID:
+                    networkPacket = handleFramePacket(packet);
                     break;
                 case CONSTANTS.SONG_START_PACKET_ID:
                     networkPacket = handleStartSongPacket(packet);
@@ -309,7 +312,7 @@ public class AudioListener {
             }
         //}
         if(networkPacket != null) {
-            Log.d(LOG_TAG , "Packet #" + networkPacket.getPacketID() + " received ");
+//            Log.d(LOG_TAG , networkPacket.toString());
             mSlaveReliabilityHandler.packetReceived(networkPacket.getPacketID());
             if(!mPackets.containsKey(networkPacket.getPacketID())){
 
@@ -319,8 +322,9 @@ public class AudioListener {
                     Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + mLastPacket + " which is a loss rate of : " + ((mLastPacket - mCounter) / mLastPacket) );
                 }
             }
+
+            mPackets.put(networkPacket.getPacketID() , networkPacket);
         }
-        mPackets.put(networkPacket.getPacketID() , networkPacket);
         return networkPacket;
     }
 
@@ -334,25 +338,38 @@ public class AudioListener {
     //The last write to the InputStream time, so that we can figure out if we've missed one. 200ms is the current limit
     private long mLastWriteTime;
 
-    //TODO : rewrite this whole thing, doesn't work at all
-    private NetworkPacket handleAudioDataPacket(DatagramPacket packet){
-        AudioDataPacket ap = new AudioDataPacket(packet.getData());
+    private NetworkPacket handleFramePacket(DatagramPacket packet){
 
-        if(ap.getPacketID() >= 30 && !mSlaveDecoder.isRunning()){
-            mSlaveDecoder.startDecode();
+        FramePacket fp = new FramePacket(packet.getData());
+
+        fp.setOffset(mTimeOffset);
+
+        AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID() , fp.getLength() , fp.getPlayTime());
+
+        if(mTimeOffset == -9999){
+
         }
-        mInputStream.write(ap.getPacketID() , ap.getAudioData());
-        return ap;
+        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
+
+        mBridge.addFrame(frame);
+        return fp;
     }
+
 
     private boolean mStartSongReceived = false;
     private NetworkPacket handleStartSongPacket(DatagramPacket packet){
         mStartSongReceived = true;
         SongStartPacket sp = new SongStartPacket(packet.getData());
+        sp.setOffset(mTimeOffset);
 
         mStreamID = sp.getStreamID();
 
         mStartTime = sp.getStartTime();
+
+        mChannels = sp.getChannels();
+
+        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mBridge.getManager()) , mChannels);
+        mBridge.setDecoder(mSlaveDecoder);
         
         //TODO: this doesn't work, figure out why
 
@@ -364,8 +381,8 @@ public class AudioListener {
         //Convert from microseconds to millis and use the Sntp offset
 
         Log.d(LOG_TAG , "Song start packet received! Starting song");
-        //TODO: remove comment after its safe
-//        mBridge.startSong(mStartTime);
+
+        mBridge.startSong(mStartTime);
 
         return sp;
     }

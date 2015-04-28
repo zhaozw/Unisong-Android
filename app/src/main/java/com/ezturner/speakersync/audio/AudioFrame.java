@@ -47,28 +47,24 @@ public class AudioFrame {
 
     //TODO: clean this class up and get rid of all of the unused stuff
 
-    //The constructor without a play time
-    public AudioFrame(byte[] data , int ID){
+    //The constructor, sets all of the data
+    public AudioFrame(byte[] data, int ID, long playTime, long length){
         mData = data;
         mID = ID;
-    }
-
-    //The constructor with a playtime
-    public AudioFrame(byte[] data, int ID, long playTime, long length){
-        this(data, ID);
         mPlayTime = playTime / 1000;
         mLength = length;
     }
 
+    /*
     //The constructor with a playtime
     public AudioFrame(short[] data, int ID, long playTime, long length){
         mAudioData = data;
         mID = ID;
         mPlayTime = playTime / 1000;
         mLength = length;
-    }
+    }*/
 
-    //The constructor for the AudioListener class, so it can be rebuilt one portion at a time
+    /*//The constructor for the AudioListener class, so it can be rebuilt one portion at a time
     public AudioFrame(int ID, int numPackets , long playTime , long length , int packetID){
         mID = ID;
         mNumPackets = numPackets;
@@ -82,7 +78,7 @@ public class AudioFrame {
         for(int i = 0; i < numPackets; i++){
             mDatas.add(null);
         }
-    }
+    }*/
 
     //Adds some data to recreate the original data
     public boolean addData( int packetID ,byte[] data ){

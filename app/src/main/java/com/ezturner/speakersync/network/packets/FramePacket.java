@@ -95,8 +95,6 @@ public class FramePacket implements NetworkPacket{
         return mData;
     }
 
-    public byte[] getAudioData() {return mFrameData;}
-
     private void decode(){
 
         byte[] packetIDArr = Arrays.copyOfRange(mData, 2, 6);
@@ -121,9 +119,8 @@ public class FramePacket implements NetworkPacket{
 
 //        Log.d(LOG_TAG , "Data Length is is : " + dataEnd + " so end position is: " + (dataEnd + 30) + "for frame #" + mFrameID);
 
-        mFrameData = Arrays.copyOfRange(mData , 30 ,dataLength + 30);
+        mData = Arrays.copyOfRange(mData , 30 ,dataLength + 30);
 
-        mData = null;
 
     }
 
@@ -164,5 +161,9 @@ public class FramePacket implements NetworkPacket{
 
     public String toString(){
         return "FramePacket#" + mPacketID;
+    }
+
+    public void setOffset(long offset){
+        mPlayTime += offset;
     }
 }

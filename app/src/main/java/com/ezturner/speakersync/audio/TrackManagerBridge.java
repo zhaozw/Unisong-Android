@@ -21,11 +21,8 @@ public class TrackManagerBridge extends ReaderBridge{
         mManager = manager;
     }
 
-
-
     @Override
     protected void sendOutFrames(ArrayList<AudioFrame> frames){
-//        Log.d(LOG_TAG  , "wtf");
         mManager.addFrames(frames);
     }
 

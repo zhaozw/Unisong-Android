@@ -118,16 +118,14 @@ public class MediaService extends Service{
         if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
-            mBroadcaster.startSongStream();
         }
     }
 
 
     public void listener(){
 
-        NetworkInputStream inputStream = new NetworkInputStream();
-        mListener = new AudioListener(this,inputStream, mSlaveDecoder);
-        mListener.setTrackBridge(new ListenerBridge(mSlaveDecoder, mAudioTrackManager));
+        ListenerBridge bridge = new ListenerBridge(null , mAudioTrackManager );
+        mListener = new AudioListener(this,bridge);
 
 
     }

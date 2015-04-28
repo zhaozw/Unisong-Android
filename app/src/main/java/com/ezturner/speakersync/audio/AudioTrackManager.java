@@ -71,69 +71,81 @@ public class AudioTrackManager {
                 } else {
                     //TODO: uncomment these after it's safe
                     startPlaying();
-                    mHandler.post(mWriteRunnable);
                 }
         }
     };
 
-    Runnable mWriteRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if(mFrameToPlay == mLastFrameID){
+    private void writeToTrack(){
+        while(isPlaying()) {
+            if (mFrameToPlay == mLastFrameID) {
                 mIsPlaying = false;
                 return;
             }
 
+
+
             AudioFrame frame;
             synchronized (mFrames) {
-                if(!mFrames.containsKey(mFrameToPlay)){
-                    mFrameToPlay++;
-                    int oldFrameToPlay = mFrameToPlay;
-
-                    boolean stop = false;
-                    while(!mFrames.containsKey(mFrameToPlay) && !stop){
-                        mFrameToPlay++;
-                        if(mFrameToPlay - oldFrameToPlay >= 30){
-                            stop = true;
-                            mFrameToPlay = oldFrameToPlay;
-                        }
-                    }
-                }
                 frame = mFrames.get(mFrameToPlay);
             }
 
-            if(frame == null){
-                Log.d(LOG_TAG , "Frame ID is: " + mFrameToPlay);
-                synchronized (mWriteRunnable){
-                    try {
-                        wait();
-                    } catch(InterruptedException e){
+            if (frame == null) {
+                Log.d(LOG_TAG, "Frame ID is: " + mFrameToPlay + " , waiting");
+                synchronized (this) {
+                    while (!mFrames.containsKey(mFrameToPlay)) {
+                        try {
+                            this.wait(1);
+                        } catch (InterruptedException e) {
 
+                        }
                     }
                 }
                 frame = mFrames.get(mFrameToPlay);
             }
             mFrameToPlay++;
 
+
+            long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);/*
+            TODO: investigate this as a cause for the stuttering/fail issue
+            if(difference >= 10){
+                synchronized (this) {
+                    try {
+                        this.wait(difference);
+                    } catch (InterruptedException e) {
+
+                    }
+                }
+            } else {
+                int index = mFrameToPlay;
+                while (difference <= -30) {
+                    AudioFrame nextFrame = null;
+                    synchronized (mFrames) {
+                        nextFrame = mFrames.get(index);
+                    }
+                    if (nextFrame != null) {
+                        difference = System.currentTimeMillis() - (nextFrame.getPlayTime() + mSongStartTime + (long) mOffset);
+                    }
+                }
+            }*/
+
             //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();
 
             mTest++;
 
-            if(mTest >= 200){
+            if (mTest >= 200) {
                 mTest = 0;
-                long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long)mOffset);
+                difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);
                 //TODO : track down bug where difference is crazy huge
-                Log.d(LOG_TAG , "Time difference is : " + difference);
+                Log.d(LOG_TAG, "Time difference is : " + difference);
             }
             mAudioTrack.write(data, 0, data.length);
-            long millisTillNextWrite = (long)(mSongStartTime + mOffset + frame.getPlayTime()) - System.currentTimeMillis();
-            mHandler.postDelayed(mWriteRunnable , millisTillNextWrite );
-            synchronized (mFrames){
+            long millisTillNextWrite = (long) (mSongStartTime + mOffset + frame.getPlayTime()) - System.currentTimeMillis();
+            synchronized (mFrames) {
                 mFrames.remove(frame.getID());
             }
         }
-    };
+    }
     //Takes in some frames, then waits for mFrames to be open and writes it to it
     public void addFrames(ArrayList<AudioFrame> frames){
         synchronized (mFrames){
@@ -142,10 +154,6 @@ public class AudioTrackManager {
                 mFrames.put( ID , frame);
                 mLastAddedFrameID = ID;
             }
-        }
-
-        synchronized (mWriteRunnable){
-            mWriteRunnable.notify();
         }
     }
 
@@ -164,13 +172,6 @@ public class AudioTrackManager {
     }
 
     private int mTest = 0;
-    private void writeToTrack(){
-
-        Log.d(LOG_TAG , "Writing Started!");
-        while(mIsPlaying){
-
-        }
-    }
 
 
 
@@ -187,8 +188,11 @@ public class AudioTrackManager {
 
     private void startPlaying(){
         Log.d(LOG_TAG , "Write Started");
+        createAudioTrack(44100 , 2);
         mAudioTrack.play();
         mIsPlaying = true;
+        mWriteThread = getWriteThread();
+        mWriteThread.start();
     }
 
     public boolean isPlaying(){
@@ -196,6 +200,7 @@ public class AudioTrackManager {
     }
 
     public void createAudioTrack(int sampleRate , int channels){
+        Log.d(LOG_TAG , "Creating Audio Track");
         int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
 
         mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
