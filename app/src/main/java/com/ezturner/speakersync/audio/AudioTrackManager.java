@@ -86,6 +86,19 @@ public class AudioTrackManager {
 
             AudioFrame frame;
             synchronized (mFrames) {
+                if(!mFrames.containsKey(mFrameToPlay)){
+                    mFrameToPlay++;
+                    int oldFrameToPlay = mFrameToPlay;
+
+                    boolean stop = false;
+                    while(!mFrames.containsKey(mFrameToPlay) && !stop){
+                        mFrameToPlay++;
+                        if(mFrameToPlay - oldFrameToPlay >= 30){
+                            stop = true;
+                            mFrameToPlay = oldFrameToPlay;
+                        }
+                    }
+                }
                 frame = mFrames.get(mFrameToPlay);
             }
 

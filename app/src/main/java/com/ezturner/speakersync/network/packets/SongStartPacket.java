@@ -42,7 +42,7 @@ public class SongStartPacket implements NetworkPacket {
     }
 
 
-    public SongStartPacket(long songStartTime , byte streamID  , int packetID , int sampleRate , int channels ,String mime , long duration , int bitrate ){
+    public SongStartPacket(long songStartTime , byte streamID  , int packetID){
         mStreamID = streamID;
 
         byte[] data = new byte[]{CONSTANTS.SONG_START_PACKET_ID , streamID};
@@ -54,27 +54,7 @@ public class SongStartPacket implements NetworkPacket {
         byte[] startTime = ByteBuffer.allocate(8).putLong(songStartTime).array();
 
         data = NetworkUtilities.combineArrays(data, startTime);
-
-        byte[] sampleRateArr = ByteBuffer.allocate(4).putInt(sampleRate).array();
-
-        data = NetworkUtilities.combineArrays(data, sampleRateArr);
-
-        byte[] channelsArr = ByteBuffer.allocate(4).putInt(channels).array();
-
-        data = NetworkUtilities.combineArrays(data, channelsArr);
-
-        byte[] durationArr = ByteBuffer.allocate(8).putLong(duration).array();
-
-        data = NetworkUtilities.combineArrays(data, durationArr);
-
-        byte[] bitrateArr = ByteBuffer.allocate(4).putInt(bitrate).array();
-
-        data = NetworkUtilities.combineArrays(data, bitrateArr);
-
-        byte[] mimeArr = mime.getBytes(Charset.forName("UTF-8"));
-
-        data = NetworkUtilities.combineArrays(data, mimeArr);
-        //TODO: implement metadata like sample rate, song name, and whatever else is needed
+        //TODO: implement metadata like song name and whatever else is needed
 
         mData = data;
 
@@ -96,12 +76,6 @@ public class SongStartPacket implements NetworkPacket {
 
     public int getPacketID(){return mPacketID;}
 
-    public int getSampleRate(){return mSampleRate;}
-
-    public int getChannels(){return mChannels;}
-
-    public int getBitrate(){return mBitrate;}
-
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
@@ -119,25 +93,6 @@ public class SongStartPacket implements NetworkPacket {
 
         mStartTime = ByteBuffer.wrap(playTimeArr).getLong();
 
-        byte[] sampleTimeArr = Arrays.copyOfRange(mData , 14, 18);
-
-        mSampleRate = ByteBuffer.wrap(sampleTimeArr).getInt();
-
-        byte[] channelsArr = Arrays.copyOfRange(mData , 18, 22);
-
-        mChannels = ByteBuffer.wrap(channelsArr).getInt();
-
-        byte[] durationArr = Arrays.copyOfRange(mData , 22, 26);
-
-        mDuration = ByteBuffer.wrap(channelsArr).getInt();
-
-        byte[] bitrateArr = Arrays.copyOfRange(mData , 26, 30);
-
-        mBitrate = ByteBuffer.wrap(channelsArr).getInt();
-
-        byte[] mimeArr = Arrays.copyOfRange(mData , 30, mData.length);
-
-        mMime = new String(mimeArr);
     }
 
     public String toString(){

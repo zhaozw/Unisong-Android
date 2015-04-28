@@ -2,12 +2,17 @@ package com.ezturner.speakersync.audio;
 
 import android.util.Log;
 
+import com.ezturner.speakersync.Lame;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
 public class Decoder {
+
+    static final String LOG_TAG = Decoder.class.getSimpleName();
+
     private static final int DEFAULT_FRAME_SIZE = 1152;
     private static final int INPUT_STREAM_BUFFER = 8192;
     private static final int MP3_SAMPLE_DELAY = 528;
@@ -18,14 +23,27 @@ public class Decoder {
 
     private BufferedInputStream in;
 
+    private Thread mDecodeThread;
+
     public Decoder(File inFile) {
         this.inFile = inFile;
+        try {
+            initialize();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        mDecodeThread = getThread();
+        mDecodeThread.start();
+
     }
 
     public void initialize() throws IOException {
         in = new BufferedInputStream(new FileInputStream(inFile),
                 INPUT_STREAM_BUFFER);
         lameInitialize(in);
+
+
 
     }
 
@@ -34,6 +52,19 @@ public class Decoder {
         ret = Lame.initializeDecoder();
         ret = Lame.configureDecoder(in);
         return ret;
+    }
+
+    private Thread getThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    decode();
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
 
@@ -56,7 +87,7 @@ public class Decoder {
 
             short[] result = new short[0];
 
-            if (delay > -1 || padding > -1) {
+            if (delay > -1 || padding > -1){
                 if (delay > -1) {
                     skip_start = delay + (MP3_SAMPLE_DELAY + 1);
                 }
@@ -82,7 +113,6 @@ public class Decoder {
 
                     if (Lame.getDecoderChannels() == 2) {
                         short[] combined = merge(leftBuffer, rightBuffer);
-
                         result = combineArrays(result, combined);
 
                         //waveWriter.write(leftBuffer, rightBuffer, offset, samplesRead);
@@ -90,6 +120,8 @@ public class Decoder {
                         result = combineArrays(result, leftBuffer);
                         //waveWriter.write(leftBuffer, offset, samplesRead);
                     }
+
+                    Log.d(LOG_TAG , "Result is out, " +  result.length + " bytes long");
 
                 } else {
                     break;

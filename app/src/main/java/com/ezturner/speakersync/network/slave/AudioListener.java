@@ -2,19 +2,15 @@ package com.ezturner.speakersync.network.slave;
 
 import android.content.Context;
 import android.util.Log;
-
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.SlaveDecoder;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.SntpClient;
-import com.ezturner.speakersync.network.packets.FrameDataPacket;
-import com.ezturner.speakersync.network.packets.FrameInfoPacket;
-import com.ezturner.speakersync.network.packets.FramePacket;
-import com.ezturner.speakersync.network.packets.MimePacket;
+import com.ezturner.speakersync.network.packets.AudioDataPacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -107,9 +103,20 @@ public class AudioListener {
     private String mMime;
     private int mBitrate;
 
+    //The InputStream used to write the mp3 data
+    private NetworkInputStream mInputStream;
+
+    //The next packet to be writted to the inputStream
+    private int mPacketToWrite;
 
 
-    public AudioListener(Context context ){
+    private SlaveDecoder mSlaveDecoder;
+
+    public AudioListener(Context context , NetworkInputStream inputStream , SlaveDecoder slaveDecoder){
+
+        mSlaveDecoder = slaveDecoder;
+
+        mInputStream = inputStream;
 
         mTimeOffset = -9999;
         Log.d(LOG_TAG , "Audio Listener Started");
@@ -131,6 +138,8 @@ public class AudioListener {
     //Start playing from a master, start listening to the stream
     public void playFromMaster(Master master){
         mStartSongReceived = false;
+        mPacketToWrite = 1;
+        mLastWriteTime = System.currentTimeMillis();
 
         Log.d(LOG_TAG , "Listening from master: " + master.getIP().toString().substring(1) + ":"  + master.getPort());
         mSntpClient = master.getClient();
@@ -146,8 +155,6 @@ public class AudioListener {
         mIsListening = true;
 
         mSocket = master.getSocket();
-
-
 
         mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP());
 
@@ -293,26 +300,16 @@ public class AudioListener {
         //if(packet.getData()[1] == mStreamID) {
         byte packetType = packet.getData()[0];
             switch (packetType) {
-                case CONSTANTS.FRAME_INFO_PACKET_ID:
-                    networkPacket = handleFrameInfoPacket(packet);
+                case CONSTANTS.AUDIO_DATA_PACKET_ID:
+                    networkPacket = handleAudioDataPacket(packet);
                     break;
-
-                case CONSTANTS.FRAME_DATA_PACKET_ID:
-                    networkPacket = handleFrameDataPacket(packet);
-                    break;
-
                 case CONSTANTS.SONG_START_PACKET_ID:
                     networkPacket = handleStartSongPacket(packet);
-                    break;
-                case CONSTANTS.FRAME_PACKET_ID:
-                    networkPacket = handleFramePacket(packet);
-                    break;
-                case CONSTANTS.MIME_PACKET_ID:
-                    networkPacket = handleMimePacket(packet);
                     break;
             }
         //}
         if(networkPacket != null) {
+            Log.d(LOG_TAG , "Packet #" + networkPacket.getPacketID() + " received ");
             mSlaveReliabilityHandler.packetReceived(networkPacket.getPacketID());
             if(!mPackets.containsKey(networkPacket.getPacketID())){
 
@@ -323,6 +320,7 @@ public class AudioListener {
                 }
             }
         }
+        mPackets.put(networkPacket.getPacketID() , networkPacket);
         return networkPacket;
     }
 
@@ -331,59 +329,20 @@ public class AudioListener {
         return 0;
     }
 
-    private NetworkPacket handleFrameInfoPacket(DatagramPacket packet){
-        //TODO: Check for any data frames that have arrived before the info packet
-        FrameInfoPacket fp = new FrameInfoPacket(packet.getData());
 
-        //.d(LOG_TAG , "Frame Info Packet for Frame " + fp.getFrameID());
-        AudioFrame frame = new AudioFrame(fp.getFrameID(), fp.getNumPackets(), fp.getPlayTime(), fp.getLength(), fp.getPacketID());
 
-        mUnfinishedFrames.put(frame.getID(), frame);
+    //The last write to the InputStream time, so that we can figure out if we've missed one. 200ms is the current limit
+    private long mLastWriteTime;
 
-        return fp;
-    }
+    //TODO : rewrite this whole thing, doesn't work at all
+    private NetworkPacket handleAudioDataPacket(DatagramPacket packet){
+        AudioDataPacket ap = new AudioDataPacket(packet.getData());
 
-    private NetworkPacket handleFramePacket(DatagramPacket packet){
-
-        FramePacket fp = new FramePacket(packet.getData());
-
-        AudioFrame frame = new AudioFrame(fp.getAudioData(), fp.getFrameID() , fp.getLength() , fp.getPlayTime());
-
-        if(mTimeOffset == -9999){
-
+        if(ap.getPacketID() >= 30 && !mSlaveDecoder.isRunning()){
+            mSlaveDecoder.startDecode();
         }
-        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
-
-        mBridge.addFrame(frame);
-        return fp;
-    }
-
-    private NetworkPacket handleFrameDataPacket(DatagramPacket packet){
-        FrameDataPacket fp = new FrameDataPacket(packet.getData());
-
-        //Log.d(LOG_TAG, "handling packet");
-        if(mUnfinishedFrames.containsKey(fp.getFrameID())){
-            AudioFrame frame = mUnfinishedFrames.get(fp.getFrameID());
-
-            boolean frameFinished = frame.addData(fp.getPacketID(), fp.getAudioFrameData());
-
-            //Log.d(LOG_TAG , "FrameDataPacket Received");
-            if (frameFinished && mTimeOffset != -1){
-                frame.setOffset(mTimeOffset);
-                Log.d(LOG_TAG , "Frame # " + frame.getID() +" reconstructed");
-                //TODO : remove comment after testing
-                //mBridge.addFrame(frame);
-                mUnfinishedFrames.remove(fp.getFrameID());
-            } else if(frameFinished){
-                Log.d(LOG_TAG , "Frame Finished, but offset not set");
-                mUnOffsetedFrames.add(frame);
-                mUnfinishedFrames.remove(fp.getFrameID());
-            }
-        } else {
-            //Log.d(LOG_TAG , "Frame ID of " + fp.getFrameID() + " not found");
-        }
-
-        return fp;
+        mInputStream.write(ap.getPacketID() , ap.getAudioData());
+        return ap;
     }
 
     private boolean mStartSongReceived = false;
@@ -396,10 +355,6 @@ public class AudioListener {
         mStartTime = sp.getStartTime();
         
         //TODO: this doesn't work, figure out why
-        mSampleRate = sp.getSampleRate();
-        mChannels = sp.getChannels();
-        mBitrate = sp.getBitrate();
-        mBridge.createAudioTrack(sp.getSampleRate() , sp.getChannels());
 
         if(mMime != null){
 //            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
@@ -415,20 +370,7 @@ public class AudioListener {
         return sp;
     }
 
-    private NetworkPacket handleMimePacket(DatagramPacket packet){
-        MimePacket mp = new MimePacket(packet.getData());
 
-        mMime = mp.getMime();
-        Log.d(LOG_TAG , "Mime type : " + mMime);
-
-        if(mStartSongReceived){
-//            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
-            Log.d(LOG_TAG , "Decoder Info Set");
-        }
-        Log.d(LOG_TAG  , "Mime Packet Received");
-
-        return mp;
-    }
 
     public void setOffset(double offset){
         mTimeOffset = (long) offset;

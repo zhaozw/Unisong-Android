@@ -14,19 +14,23 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.SlaveDecoder;
-import com.ezturner.speakersync.audio.DecoderTrackManagerBridge;
-import com.ezturner.speakersync.audio.ReaderBroadcasterBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.slave.ListenerBridge;
+import com.ezturner.speakersync.network.slave.NetworkInputStream;
+
+import java.io.IOException;
 
 /**
  * Created by Ethan on 1/25/2015.
  */
 public class MediaService extends Service{
+
+    static final String LOG_TAG = MediaService.class.getSimpleName();
 
     private IBinder mBinder = new MediaServiceBinder();
 
@@ -88,15 +92,19 @@ public class MediaService extends Service{
                 new IntentFilter("service-interface"));
 
         mAudioTrackManager = new AudioTrackManager();
-        mFileReader = new AudioFileReader();
-        mFileReader.setTrackManagerBridge(new TrackManagerBridge(mAudioTrackManager));
+
+        mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
 
 
 
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
         mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
         mWakeLock.acquire();
+
+
     }
+
+
 
     public void togglePlay(){
 
@@ -109,17 +117,18 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
-            mFileReader.setBroadcasterBridge(new ReaderBroadcasterBridge(mBroadcaster));
+            mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
+            mBroadcaster.startSongStream();
         }
     }
 
 
     public void listener(){
 
-        mSlaveDecoder = new SlaveDecoder();
-        mSlaveDecoder.addBridge(new DecoderTrackManagerBridge(mAudioTrackManager));
-        mListener = new AudioListener(this);
+        NetworkInputStream inputStream = new NetworkInputStream();
+        mListener = new AudioListener(this,inputStream, mSlaveDecoder);
         mListener.setTrackBridge(new ListenerBridge(mSlaveDecoder, mAudioTrackManager));
+
 
     }
 
@@ -127,7 +136,7 @@ public class MediaService extends Service{
 
     }
 
-    public IBinder onBind(Intent arg0) {
+    public IBinder onBind(Intent arg0){
         return mBinder;
     }
 

@@ -43,6 +43,8 @@ public class AudioFrame {
     //The stream that this frame belongs to
     private byte mStreamID;
 
+    private short[] mAudioData;
+
     //TODO: clean this class up and get rid of all of the unused stuff
 
     //The constructor without a play time
@@ -54,6 +56,14 @@ public class AudioFrame {
     //The constructor with a playtime
     public AudioFrame(byte[] data, int ID, long playTime, long length){
         this(data, ID);
+        mPlayTime = playTime / 1000;
+        mLength = length;
+    }
+
+    //The constructor with a playtime
+    public AudioFrame(short[] data, int ID, long playTime, long length){
+        mAudioData = data;
+        mID = ID;
         mPlayTime = playTime / 1000;
         mLength = length;
     }
@@ -93,6 +103,9 @@ public class AudioFrame {
         }
     }
 
+    public short[] getAudioData(){
+        return mAudioData;
+    }
     //Getters and setters
     public void setPlayTime(long time){
         mPlayTime = time;

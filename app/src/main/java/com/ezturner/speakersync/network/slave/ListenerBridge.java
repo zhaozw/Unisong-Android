@@ -25,11 +25,7 @@ public class ListenerBridge extends ReaderBridge{
 
 
     protected void sendOutFrames(ArrayList<AudioFrame> frames){
-        mSlaveDecoder.addFrames(frames);
-    }
-
-    public void createAudioTrack(int sampleRate , int channels){
-        mManager.createAudioTrack(sampleRate, channels);
+//        mSlaveDecoder.addFrames(frames);
     }
 
     public void startSong(long startTime){
@@ -38,11 +34,10 @@ public class ListenerBridge extends ReaderBridge{
 
     public void lastPacket(){
         mManager.lastPacket();
-        mSlaveDecoder.lastPacket();
     }
 
     public void setDecoderInfo(String mime, int sampleRate, int channels, int bitrate){
-        mSlaveDecoder.initializeDecoder(mime, sampleRate , channels , bitrate);
+//        mSlaveDecoder.initializeDecoder(mime, sampleRate , channels , bitrate);
     }
 
     public void setOffset(long offset){

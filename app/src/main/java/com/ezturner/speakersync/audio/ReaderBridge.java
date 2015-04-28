@@ -9,90 +9,37 @@ import java.util.Queue;
  * Created by Ethan on 3/12/2015.
  */
 public abstract class ReaderBridge {
-    protected Queue<AudioFrame> mInputFrames;
-    protected Thread mInputThread;
-    protected boolean mInputReady;
 
-    protected Queue<AudioFrame> mOutputFrames;
-    protected Thread mOutputThread;
-    protected boolean mOutputReady;
+    protected Queue<AudioFrame> mFrames;
+    protected Thread mThread;
+
 
 
     private boolean mIsRunning;
 
     public ReaderBridge(){
+        mFrames = new LinkedList<AudioFrame>();
+        mThread = getThread();
+        mThread.start();
 
-        //TODO: try with one thread
-        mIsRunning = true;
-
-        mInputFrames = new LinkedList<AudioFrame>();
-        mInputThread = getInputThread();
-        mInputThread.start();
-        mInputReady = false;
-
-        mOutputFrames = new LinkedList<AudioFrame>();
-        mOutputThread = getOutputThread();
-        mOutputThread.start();
-        mOutputReady = false;
     }
 
     public void addFrame(AudioFrame frame){
-        synchronized(mInputFrames){
-            mInputFrames.add(frame);
-        }
-        mInputReady = true;
-        synchronized(mInputThread) {
-            mInputThread.notify();
+        synchronized(mFrames){
+            mFrames.add(frame);
         }
     }
 
-    protected void takeAllInputFrames(){
-        mInputReady = false;
-        ArrayList<AudioFrame> frames = new ArrayList<AudioFrame>();
-        synchronized (mInputFrames){
-            while(!mInputFrames.isEmpty()){
-                frames.add(mInputFrames.poll());
-            }
-        }
-
-        synchronized(mOutputFrames){
-            for(AudioFrame frame : frames){
-                mOutputFrames.add(frame);
-            }
-        }
-        mOutputReady = true;
-        synchronized(mOutputThread) {
-            mOutputThread.notify();
-        }
-    }
-
-    protected Thread getInputThread(){
+    protected Thread getThread(){
         return new Thread(){
             public void run(){
                 while(mIsRunning ){
-                    if(mInputReady) {
-                        takeAllInputFrames();
-                    }
-                    try {
-                        Thread.sleep(200);
-                    } catch(InterruptedException e){
-
-                    }
-                }
-            }
-        };
-    }
-
-    protected Thread getOutputThread(){
-        return new Thread(){
-            public void run(){
-                while(mIsRunning ){
-                    if(mOutputReady){
+                    if(mFrames.size() != 0){
                         sendAllOutputFrames();
                     }
 
                     try {
-                        Thread.sleep(200);
+                        Thread.sleep(5);
                     } catch(InterruptedException e){
 
                     }
@@ -103,22 +50,16 @@ public abstract class ReaderBridge {
     }
 
     protected void sendAllOutputFrames(){
-        mOutputReady = false;
         ArrayList<AudioFrame> frames = new ArrayList<AudioFrame>();
-        synchronized (mOutputFrames){
-            while(!mOutputFrames.isEmpty()){
-                frames.add(mOutputFrames.poll());
+        synchronized (mFrames){
+            while(!mFrames.isEmpty()){
+                frames.add(mFrames.poll());
             }
         }
         sendOutFrames(frames);
-
     }
 
     //This will be overriden in the subclass
     protected abstract  void sendOutFrames(ArrayList<AudioFrame> frames);
 
-
-    public void stopBridge(){
-        mIsRunning = false;
-    }
 }

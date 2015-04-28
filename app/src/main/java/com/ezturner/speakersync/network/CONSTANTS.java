@@ -18,7 +18,6 @@ public class CONSTANTS {
     //The port for active discovery
     public static final int DISCOVERY_MASTER_PORT = 55987;
 
-
     public static final int RELIABILITY_PORT = 55990;
 
     //The packet ID for starting a new song
@@ -39,6 +38,12 @@ public class CONSTANTS {
     public static final byte FRAME_PACKET_ID = 6;
 
     public static final byte MIME_PACKET_ID = 7;
+
+    public static final byte AUDIO_DATA_PACKET_ID = 8;
+
+    public static final int AUDIO_CHUNK_SIZE = 1024;
+
+    public static final int MAX_PACKET_SIZE = 1030;
 
     public static final int DELAY = 500;
 

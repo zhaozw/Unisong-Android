@@ -52,11 +52,13 @@ public class FramePacket implements NetworkPacket{
     }
 
     //A constructor that takes in all of the relevant parameters, then formats the data
-    public FramePacket(AudioFrame frame, byte streamID, long songStartTime , int packetID , long length){
+    //The song's start time is passed so we can calculate the direct playtime with the frame
+    public FramePacket(AudioFrame frame, byte streamID, int packetID){
         mFrame = frame;
         mStreamID = streamID;
         mPacketID = packetID;
-        mLength = length;
+        mLength = frame.getLength();
+        mPlayTime = frame.getPlayTime();
 
         //turn packet type into a byte array for combination , and put the stream ID in there
         byte[] packetType = new byte[]{CONSTANTS.FRAME_PACKET_ID , streamID};
@@ -67,9 +69,9 @@ public class FramePacket implements NetworkPacket{
         // arrays and combine them into the data that will go in the packet
         byte[] frameId = ByteBuffer.allocate(4).putInt(frame.getID()).array();
 
-        byte[] playTime = ByteBuffer.allocate(8).putLong(frame.getPlayTime() + songStartTime).array();
+        byte[] playTime = ByteBuffer.allocate(8).putLong(frame.getPlayTime()).array();
 
-        byte[] lengthArr = ByteBuffer.allocate(8).putLong(length).array();
+        byte[] lengthArr = ByteBuffer.allocate(8).putLong(mPlayTime).array();
 
         byte[] dataSizeArr = ByteBuffer.allocate(4).putInt(frame.getData().length).array();
 
