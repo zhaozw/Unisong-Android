@@ -36,8 +36,9 @@ public class SongStartPacket implements NetworkPacket {
 
     private int mBitrate;
 
-    public SongStartPacket(byte[] data){
-        mData = data;
+    public SongStartPacket(DatagramPacket packet){
+        mPacket = packet;
+        mData = packet.getData();
         decode();
     }
 
@@ -115,4 +116,5 @@ public class SongStartPacket implements NetworkPacket {
     public void setOffset(long offset){
         mStartTime += offset;
     }
+
 }

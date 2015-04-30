@@ -11,11 +11,16 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,11 +55,30 @@ public class SlaveReliabilityHandler {
     private Thread mThread;
     private ArrayList<Integer> mPacketsReRequested;
 
-    public SlaveReliabilityHandler(InetAddress address){
+    //The socket for retransmitting packets that need to be sent over the network
+    private DatagramSocket mDatagramSocket;
+
+    //The parent AudioListener object, used to get packets to be retransmitted
+    private AudioListener mListener;
+
+    //The list of packets that need to be retransmit
+    private List<Integer> mPacketsToRetransmit;
+
+
+    public SlaveReliabilityHandler(InetAddress address, int broadcastPort , AudioListener listener){
         mMasterAddress = address;
 
+        mListener = listener;
+        try{
+            mDatagramSocket = new DatagramSocket(broadcastPort);
+            mDatagramSocket.setBroadcast(true);
+        } catch (SocketException e){
+            e.printStackTrace();
+        }
+
         mTopPacket = 0;
-        mPacketsReceived = new ArrayList<Integer>();
+        mPacketsReceived = new ArrayList<>();
+        mPacketsToRetransmit = new ArrayList<>();
         mPacketsRecentlyRequested = new HashMap<>();
         mPacketsNotReceived = new HashMap<>();
         mPacketsToRequest = new HashMap<>();
@@ -87,13 +111,16 @@ public class SlaveReliabilityHandler {
 
             ArrayList<Integer> packetsToRemove = new ArrayList<>();
             synchronized (mPacketsRecentlyRequested){
-                for (Map.Entry<Integer, Long> entry : mPacketsRecentlyRequested.entrySet()) {
+                for (Map.Entry<Integer, Long> entry : mPacketsRecentlyRequested.entrySet()){
                     long timeSince = System.currentTimeMillis() - entry.getValue();
-                    if (timeSince >= 200 && !mPacketsReRequested.contains(entry.getKey()) &&  timeSince <= 350) {
+                    if (timeSince >= 250 && !mPacketsReRequested.contains(entry.getKey()) &&  timeSince <= 400) {
                         mPacketsReRequested.add(entry.getKey());
                         requestPacket(entry.getKey());
-                    } else if(timeSince > 350){
-                        packetsToRemove.add(entry.getKey());
+                    } else if(timeSince > 400){
+                        //TODO: test this and make sure it works.
+                        requestPacket(entry.getKey());
+                        mPacketsRecentlyRequested.remove(entry.getKey());
+                        mPacketsRecentlyRequested.put(entry.getKey() , System.currentTimeMillis());
                     }
                 }
             }
@@ -135,6 +162,7 @@ public class SlaveReliabilityHandler {
         synchronized (mOutStream) {
 
             try {
+                mOutStream.write(CONSTANTS.TCP_REQUEST_ID);
                 mOutStream.write(ByteBuffer.allocate(4).putInt(packetID).array(), 0, 4);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -157,7 +185,7 @@ public class SlaveReliabilityHandler {
     }
 
     //A function to connect to a Master phone,
-    public void connectToHost(InetAddress address){
+    private void connectToHost(InetAddress address){
         try{
             if(mSocket != null){
                 mSocket.close();
@@ -170,12 +198,47 @@ public class SlaveReliabilityHandler {
         } catch(IOException e){
             e.printStackTrace();
         }
+
+        listenForCommands();
+    }
+
+    private void listenForCommands(){
+
+        byte[] data = new byte[5];
+        try {
+            while (mInStream.read(data) != 0){
+                switch (data[0]){
+                    case CONSTANTS.TCP_COMMAND_RETRANSMIT:
+                        int ID = ByteBuffer.wrap(Arrays.copyOfRange(data , 1, 5)).getInt();
+                        retransmitPacket(ID);
+                        break;
+
+                }
+
+            }
+
+        } catch (IOException e){
+            //TODO: figure out when this is called and how to deal with it
+            e.printStackTrace();
+        }
+    }
+
+    private void retransmitPacket(int packetID){
+        DatagramPacket packet = mListener.getPacket(packetID);
+        synchronized (mDatagramSocket){
+            try {
+                mDatagramSocket.send(packet);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
 
     public void packetReceived(int packetID){
 
         mPacketsReceived.add(packetID);
 
+        acknowledgePacket(packetID);
 
         synchronized (mPacketsRecentlyRequested) {
             if (mPacketsRecentlyRequested.containsKey(packetID)) {
@@ -208,25 +271,15 @@ public class SlaveReliabilityHandler {
         }
     }
 
-    private Thread getRequestThread(final int packetID){
-        return new Thread(new Runnable() {
-            @Override
-            public synchronized void run() {
-                if(packetID != 0 && !mPacketsReceived.contains(packetID -1)){
-                    requestPacket(packetID);
-                    boolean requesting = true;
-                    int id = packetID - 2;
-                    while(id > 0 && requesting){
-                        if(mPacketsReceived.contains(id)){
-                            requestPacket(id);
-                        } else {
-                            requesting = false;
-                        }
-                        id--;
-                    }
-                }
+    private void acknowledgePacket(int packetID){
+        synchronized (mOutStream){
+            try {
+                mOutStream.write(CONSTANTS.TCP_ACK_ID);
+                mOutStream.write(ByteBuffer.allocate(4).putInt(packetID).array(), 0, 4);
+            } catch (IOException e){
+                e.printStackTrace();
             }
-        });
+        }
     }
 
 

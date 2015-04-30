@@ -15,7 +15,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Created by Ethan on 2/11/2015.
@@ -24,13 +27,11 @@ public class MasterReliabilityHandler {
 
     private String LOG_TAG = "MasterReliabilityHandler";
 
-    public static final int PACKET_SENT_CODE = 55;
-
     //The listener for when a client joins the session and starts a TCP handshake
     private ServerSocket mServerSocket;
 
     //The list of all of the TCP control sockets that are listening for reliability packets
-    private ArrayList<Socket> mSockets;
+    private Map<Slave ,Socket> mSockets;
 
     //The AudioBroadcaster that this class interfaces with
     private AudioBroadcaster mBroadcaster;
@@ -42,11 +43,15 @@ public class MasterReliabilityHandler {
 
     private boolean mRunning;
 
+    //The random number generator for choosing which slave to have as a rebroadcaster
+    private Random mRandom;
     //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
     public MasterReliabilityHandler(AudioBroadcaster broadcaster){
 
         mBroadcaster = broadcaster;
+
+        mRandom = new Random();
 
         try {
             
@@ -56,7 +61,7 @@ public class MasterReliabilityHandler {
             e.printStackTrace();
         }
 
-        mSockets = new ArrayList<Socket>();
+        mSockets = new HashMap<Slave, Socket>();
         mSocketThreads = new ArrayList<>();
 
         mServerSocketThread = startReliabilityConnectionListener();
@@ -81,7 +86,6 @@ public class MasterReliabilityHandler {
                     Log.d(LOG_TAG , "Socket connected : " + socket.getInetAddress());
 
                     if(socket != null){
-                        mSockets.add(socket);
                         startSocketListener(socket).start();
 
                         Thread thread = startSocketListener(socket);
@@ -112,20 +116,67 @@ public class MasterReliabilityHandler {
 
     //Handle new data coming in from a Reliability socket
     private void listenToReliabilitySocket(Socket socket) throws IOException{
-        mSockets.add(socket);
+        //TODO: see if we need to get rid of the port for this to work
+        Slave slave = new Slave(socket.getRemoteSocketAddress().toString());
+        mBroadcaster.addSlave(slave);
+        mSockets.put(slave, socket);
         InputStream is = socket.getInputStream();
 
-        byte[] inputArr = new byte[4];
+        byte[] inputArr = new byte[5];
 
-        while((is.read(inputArr , 0, 4)) != -1) {
+        while((is.read(inputArr , 0, 5)) != -1) {
 
-            Log.d(LOG_TAG, "Data received: " + is);
-            int packetID = ByteBuffer.wrap(inputArr).getInt();
-
-            Log.d(LOG_TAG, "ID is: " + packetID);
-            mBroadcaster.rebroadcastPacket(packetID);
+            handleDataReceived(inputArr, slave);
 
         }
+
+        if(socket.isClosed()){
+            mBroadcaster.removeSlave(slave);
+        }
+    }
+
+    private void handleDataReceived(byte[] data , Slave slave){
+        switch (data[0]){
+            case CONSTANTS.TCP_REQUEST_ID:
+                int packetID = ByteBuffer.wrap(new byte[]{data[1] , data[2] , data[3] , data[4]}).getInt();
+                if(!checkSlaves(packetID))  mBroadcaster.rebroadcastPacket(packetID);
+                break;
+            case CONSTANTS.TCP_ACK_ID:
+                int ID = ByteBuffer.wrap(new byte[]{data[1] , data[2] , data[3] , data[4]}).getInt();
+                slave.packetReceived(ID);
+                break;
+        }
+    }
+
+    //Checks to see if any of the slaves have the packet in question.
+    private boolean checkSlaves(int packetID){
+        List<Slave> slaves = mBroadcaster.getSlaves();
+        //The list of slaves that have the packet in question
+        List<Slave> havePacket = new ArrayList<>();
+
+        synchronized (slaves){
+            for(Slave slave : slaves) {
+                if(slave.hasPacket(packetID)) {
+                    havePacket.add(slave);
+                }
+            }
+        }
+        if(havePacket.size() == 0){
+            return false;
+        }
+
+        int index = mRandom.nextInt(havePacket.size());
+
+        Socket socket = mSockets.get(havePacket.get(index));
+        byte[] idArr = ByteBuffer.allocate(4).putInt(packetID).array();
+
+        byte[] data = new byte[] {CONSTANTS.TCP_COMMAND_RETRANSMIT , idArr[0] , idArr[1] , idArr[2] , idArr[3]};
+        try {
+            socket.getOutputStream().write(data);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        return true;
     }
 
     public void startNewConnection(DatagramPacket packet){

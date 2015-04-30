@@ -47,5 +47,11 @@ public class CONSTANTS {
 
     public static final int DELAY = 500;
 
+    public static final byte TCP_ACK_ID = 1;
+
+    public static final byte TCP_REQUEST_ID = 2;
+
+    public static final byte TCP_COMMAND_RETRANSMIT = 3;
+
 
 }

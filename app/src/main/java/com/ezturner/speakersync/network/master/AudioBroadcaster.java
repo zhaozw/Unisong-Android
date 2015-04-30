@@ -146,10 +146,14 @@ public class AudioBroadcaster {
     //The thread that will read in the file to be broadcast.
     private Thread mReadThread;
 
+    private List<Slave> mSlaves;
+
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
     public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader){
+
+        mSlaves = new ArrayList<>();
 
         //TODO: When not testing, get rid of this comment
         mPort = CONSTANTS.STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
@@ -500,5 +504,20 @@ public class AudioBroadcaster {
 
     public void setAudioInfo(int channels){
         mChannels = channels;
+    }
+
+    public List<Slave> getSlaves(){
+        return mSlaves;
+    }
+
+    //The functions for adding and removing slaves
+    public void addSlave(Slave slave){
+        mSlaves.add(slave);
+    }
+
+    public void removeSlave(Slave slave){
+        if(mSlaves.contains(slave)){
+            mSlaves.remove(slave);
+        }
     }
 }

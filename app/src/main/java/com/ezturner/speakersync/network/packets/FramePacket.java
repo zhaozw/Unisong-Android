@@ -46,8 +46,9 @@ public class FramePacket implements NetworkPacket{
     private byte[] mFrameData;
 
 
-    public FramePacket(byte[] data){
-        mData = data;
+    public FramePacket(DatagramPacket packet){
+        mPacket = packet;
+        mData = packet.getData();
         decode();
     }
 

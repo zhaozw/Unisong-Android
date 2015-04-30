@@ -161,7 +161,7 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
-        mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP());
+        mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP() , master.getPort() , this);
 
         mListenThread = getListenThread();
         mListenThread.start();
@@ -325,6 +325,7 @@ public class AudioListener {
 
             mPackets.put(networkPacket.getPacketID() , networkPacket);
         }
+        //TODO: get rid of old packets that we don't need anymore
         return networkPacket;
     }
 
@@ -340,7 +341,7 @@ public class AudioListener {
 
     private NetworkPacket handleFramePacket(DatagramPacket packet){
 
-        FramePacket fp = new FramePacket(packet.getData());
+        FramePacket fp = new FramePacket(packet);
 
         fp.setOffset(mTimeOffset);
 
@@ -359,7 +360,7 @@ public class AudioListener {
     private boolean mStartSongReceived = false;
     private NetworkPacket handleStartSongPacket(DatagramPacket packet){
         mStartSongReceived = true;
-        SongStartPacket sp = new SongStartPacket(packet.getData());
+        SongStartPacket sp = new SongStartPacket(packet);
         sp.setOffset(mTimeOffset);
 
         mStreamID = sp.getStreamID();
@@ -405,6 +406,12 @@ public class AudioListener {
 
     public void setTrackBridge(ListenerBridge bridge){
         mBridge = bridge;
+    }
+
+    public DatagramPacket getPacket(int ID){
+        synchronized (mPackets){
+            return mPackets.get(ID).getPacket();
+        }
     }
 
 }

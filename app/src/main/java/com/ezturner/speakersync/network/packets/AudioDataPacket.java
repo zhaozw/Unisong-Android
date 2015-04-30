@@ -21,13 +21,14 @@ public class AudioDataPacket implements NetworkPacket {
     private int mPacketID;
     private byte mStreamID;
 
-    public AudioDataPacket(byte[] data){
-        mData = data;
+    public AudioDataPacket(DatagramPacket packet){
+        mPacket = packet;
+        mData = packet.getData();
         decode();
 
     }
 
-    public AudioDataPacket(byte[] data , byte streamID ,int packetID ){
+    public AudioDataPacket(byte[] data , byte streamID ,int packetID){
         mPacketID = packetID;
         mStreamID = streamID;
 

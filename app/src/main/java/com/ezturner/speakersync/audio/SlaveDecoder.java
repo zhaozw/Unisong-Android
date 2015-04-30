@@ -141,34 +141,43 @@ public class SlaveDecoder {
 
 
         boolean firstOutputChange = true;
+        long lastPlayTime = System.currentTimeMillis();
 
         //TODO: deal with no data/end of stream
         while(!mStop){
 
 
-            long checkTime = System.currentTimeMillis();
-            boolean increased = false;
-            long wait = 10;
-            int originalFrame = mCurrentFrame;
-            while(!mFrames.containsKey(mCurrentFrame)){
-                try{
-                    synchronized (this){
-                        this.wait(wait);
-                    }
-                } catch (InterruptedException e){
 
-                }
-                long timeDiff = System.currentTimeMillis() - checkTime;
-                if (timeDiff >= 100){
-                    mCurrentFrame = originalFrame;
-                } else if(timeDiff >= 50){
-                    wait = 1;
+            //TODO: test/check this out
+            while(!mFrames.containsKey(mCurrentFrame)){
+                if(System.currentTimeMillis() - lastPlayTime <= 150 && mCurrentFrame != 0){
+                    if(info.size > 0) {
+                        createFrame(new byte[info.size]);
+                    }
                     mCurrentFrame++;
+                    if(!mFrames.containsKey(mCurrentFrame)){
+                        synchronized (this){
+                            try{
+                                this.wait(50);
+                            } catch (InterruptedException e){
+
+                            }
+                        }
+                    }
+                } else {
+                    synchronized (this){
+                        try{
+                            this.wait(20);
+                        } catch (InterruptedException e){
+
+                        }
+                    }
                 }
             }
             AudioFrame frame;
             synchronized (mFrames){
                 frame = mFrames.get(mCurrentFrame);
+                lastPlayTime = frame.getPlayTime();
             }
 //            Log.d(LOG_TAG , "Time difference is: " + (System.currentTimeMillis() - frame.getPlayTime() + ));
             long playTime = -1;
@@ -207,6 +216,7 @@ public class SlaveDecoder {
                 buf.get(chunk);
                 buf.clear();
                 if(chunk.length > 0){
+                    Log.d(LOG_TAG , "Chunk Size is : " + chunk.length);
                     createFrame(chunk);
                 }
 
