@@ -216,7 +216,6 @@ public class SlaveDecoder {
                 buf.get(chunk);
                 buf.clear();
                 if(chunk.length > 0){
-                    Log.d(LOG_TAG , "Chunk Size is : " + chunk.length);
                     createFrame(chunk);
                 }
 

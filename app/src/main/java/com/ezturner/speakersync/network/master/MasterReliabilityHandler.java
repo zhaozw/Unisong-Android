@@ -102,7 +102,7 @@ public class MasterReliabilityHandler {
         class SocketRunnable implements Runnable {
             Socket socket;
             SocketRunnable(Socket s) { socket = s; }
-            public void run() {
+            public void run(){
                 try {
                     listenToReliabilitySocket(socket);
                 } catch(IOException e){
@@ -124,10 +124,8 @@ public class MasterReliabilityHandler {
 
         byte[] inputArr = new byte[5];
 
-        while((is.read(inputArr , 0, 5)) != -1) {
-
+        while((is.read(inputArr , 0, 5)) != -1){
             handleDataReceived(inputArr, slave);
-
         }
 
         if(socket.isClosed()){
@@ -164,6 +162,7 @@ public class MasterReliabilityHandler {
         if(havePacket.size() == 0){
             return false;
         }
+
 
         int index = mRandom.nextInt(havePacket.size());
 

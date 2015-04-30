@@ -22,7 +22,7 @@ public class Slave {
 
     public Slave(String ip){
         try {
-            mAddress = Inet4Address.getByName(ip);
+            mAddress = Inet4Address.getByName(ip.split(":")[0].substring(1));
         } catch (UnknownHostException e){
             e.printStackTrace();
             Log.e(LOG_TAG, "Unknown host address when creating slave : " + ip);

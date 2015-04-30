@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -70,11 +71,13 @@ public class SlaveReliabilityHandler {
 
         mListener = listener;
         try{
-            mDatagramSocket = new DatagramSocket(broadcastPort);
+            mDatagramSocket = new DatagramSocket();
             mDatagramSocket.setBroadcast(true);
         } catch (SocketException e){
             e.printStackTrace();
         }
+
+        Log.d(LOG_TAG , mDatagramSocket.toString());
 
         mTopPacket = 0;
         mPacketsReceived = new ArrayList<>();
@@ -117,10 +120,7 @@ public class SlaveReliabilityHandler {
                         mPacketsReRequested.add(entry.getKey());
                         requestPacket(entry.getKey());
                     } else if(timeSince > 400){
-                        //TODO: test this and make sure it works.
-                        requestPacket(entry.getKey());
-                        mPacketsRecentlyRequested.remove(entry.getKey());
-                        mPacketsRecentlyRequested.put(entry.getKey() , System.currentTimeMillis());
+                        packetsSent.add(entry.getKey());
                     }
                 }
             }
@@ -159,11 +159,11 @@ public class SlaveReliabilityHandler {
         }
 
         Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
-        synchronized (mOutStream) {
+        synchronized (mOutStream){
 
             try {
-                mOutStream.write(CONSTANTS.TCP_REQUEST_ID);
-                mOutStream.write(ByteBuffer.allocate(4).putInt(packetID).array(), 0, 4);
+                byte[] data = NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_REQUEST_ID} , ByteBuffer.allocate(4).putInt(packetID).array());
+                mOutStream.write(data , 0 , 5);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -274,8 +274,7 @@ public class SlaveReliabilityHandler {
     private void acknowledgePacket(int packetID){
         synchronized (mOutStream){
             try {
-                mOutStream.write(CONSTANTS.TCP_ACK_ID);
-                mOutStream.write(ByteBuffer.allocate(4).putInt(packetID).array(), 0, 4);
+                mOutStream.write(NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_ACK_ID} , ByteBuffer.allocate(4).putInt(packetID).array()) , 0 , 5);
             } catch (IOException e){
                 e.printStackTrace();
             }
