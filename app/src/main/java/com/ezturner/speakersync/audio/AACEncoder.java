@@ -60,7 +60,7 @@ public class AACEncoder {
 
     private Thread getDecode(){
         return new Thread(new Runnable()  {
-            public void run() {
+            public void run(){
                 try {
                     decode();
                 } catch (IOException e){
@@ -76,6 +76,7 @@ public class AACEncoder {
     private int mRuns = 0;
     private boolean isRunning = false;
 
+    private int mOutputBitrate;
     private int mDataIndex = 0;
 
 
@@ -98,6 +99,7 @@ public class AACEncoder {
             return;
         }
 
+        mOutputBitrate = 1536000;
 
         channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         sampleRate = mInputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
@@ -203,8 +205,8 @@ public class AACEncoder {
                 codecOutputBuffers = mCodec.getOutputBuffers();
                 Log.d(LOG_TAG, "output buffers have changed.");
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                MediaFormat oformat = mCodec.getOutputFormat();
-                Log.d(LOG_TAG, "output format has changed to " + oformat);
+                MediaFormat outFormat = mCodec.getOutputFormat();
+                Log.d(LOG_TAG, "output format has changed to " + outFormat);
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
@@ -292,6 +294,7 @@ public class AACEncoder {
 
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
+        //TODO: get rid of these and remove from the packets
         long length = (data.length * 1000) / sampleRate;
         long playTime = (mSamplesProcessed * 1000) / sampleRate;
 

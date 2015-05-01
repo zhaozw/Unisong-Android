@@ -138,9 +138,10 @@ public class AudioListener {
 
     //Start playing from a master, start listening to the stream
     public void playFromMaster(Master master){
+        mTimeOffset = -9999;
+        mStartTime = -1;
         mStartSongReceived = false;
         mPacketToWrite = 1;
-        mLastWriteTime = System.currentTimeMillis();
 
         Log.d(LOG_TAG , "Listening from master: " + master.getIP().toString().substring(1) + ":"  + master.getPort());
         mSntpClient = master.getClient();
@@ -151,7 +152,7 @@ public class AudioListener {
             Log.d(LOG_TAG , "Offset is available!");
             mTimeOffset = (long) mSntpClient.getOffset();
             //TODO: consider whether to uncomment and remove the code applying it below
-//            mBridge.setOffset(mTimeOffset);
+            mBridge.setOffset(mTimeOffset);
         } else {
             Log.e(LOG_TAG , "ERROR: NO OFFSET");
         }
@@ -211,9 +212,6 @@ public class AudioListener {
 
                         for(int i = 0; i < packets.size(); i++){
                             NetworkPacket networkPacket = handlePacket(packets.get(i));
-                            if(networkPacket != null && mLastPacket < networkPacket.getPacketID()){
-                                mLastPacket = networkPacket.getPacketID();
-                            }
                         }
 
                         //for(NetworkPacket pack : networkPackets){
@@ -318,8 +316,10 @@ public class AudioListener {
 
                 mCounter++;
 
+                mLastPacket = networkPacket.getPacketID();
                 if(mCounter % 100 == 0){
-                    Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + mLastPacket + " which is a loss rate of : " + ((mLastPacket - mCounter) / mLastPacket) );
+                    double packetLoss = (mLastPacket - mCounter) / mLastPacket;
+                    Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + networkPacket.getPacketID() + " which is a loss rate of : " + packetLoss);
                 }
             }
 
@@ -330,20 +330,9 @@ public class AudioListener {
     }
 
 
-    public long getNextFrameWriteTime(){
-        return 0;
-    }
-
-
-
-    //The last write to the InputStream time, so that we can figure out if we've missed one. 200ms is the current limit
-    private long mLastWriteTime;
-
     private NetworkPacket handleFramePacket(DatagramPacket packet){
 
         FramePacket fp = new FramePacket(packet);
-
-        fp.setOffset(mTimeOffset);
 
         AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID() , fp.getLength() , fp.getPlayTime());
 
@@ -361,7 +350,6 @@ public class AudioListener {
     private NetworkPacket handleStartSongPacket(DatagramPacket packet){
         mStartSongReceived = true;
         SongStartPacket sp = new SongStartPacket(packet);
-        sp.setOffset(mTimeOffset);
 
         mStreamID = sp.getStreamID();
 
@@ -381,9 +369,11 @@ public class AudioListener {
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
-        Log.d(LOG_TAG , "Song start packet received! Starting song");
+        Log.d(LOG_TAG, "Song start packet received! Starting song");
 
-        mBridge.startSong(mStartTime);
+        if(mTimeOffset != -9999) {
+            mBridge.startSong(mStartTime);
+        }
 
         return sp;
     }
@@ -391,17 +381,15 @@ public class AudioListener {
 
 
     public void setOffset(double offset){
+        Log.d(LOG_TAG , "Offset is : " + offset);
         mTimeOffset = (long) offset;
-        for(int i = 0; i < mUnOffsetedFrames.size(); i++){
-            AudioFrame frame = mUnOffsetedFrames.get(i);
 
-            frame.setOffset(mTimeOffset);
-
-            mBridge.addFrame(frame);
-        }
         mBridge.setOffset(mTimeOffset);
 
-        mUnOffsetedFrames = new ArrayList<AudioFrame>();
+        if(mStartTime != -1){
+            mBridge.startSong(mStartTime);
+        }
+
     }
 
     public void setTrackBridge(ListenerBridge bridge){

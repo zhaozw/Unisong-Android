@@ -329,8 +329,10 @@ public class AudioBroadcaster {
 
             }
 
+            if(mPacketsSentCount % 100 == 0) {
 
-            Log.d(LOG_TAG , "mPacketsSentCount :" + mPacketsSentCount + " , delay is : " + delay);
+                Log.d(LOG_TAG, "mPacketsSentCount :" + mPacketsSentCount + " , delay is : " + delay);
+            }
 
 
             if(mNextFrameID != mLastFrameID) {

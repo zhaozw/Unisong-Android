@@ -105,42 +105,50 @@ public class AudioTrackManager {
             mFrameToPlay++;
 
 
-            long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);/*
-            TODO: investigate this as a cause for the stuttering/fail issue
-            if(difference >= 10){
+            long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);
+
+//            Log.d(LOG_TAG, "Current time is : " + System.currentTimeMillis() + " and play time is : " + frame.getPlayTime() + " and Song Start time is : " + mSongStartTime);
+
+
+            if(difference <= -10){
+                long before = System.currentTimeMillis();
                 synchronized (this) {
                     try {
-                        this.wait(difference);
+                        this.wait(Math.abs(difference - 2));
                     } catch (InterruptedException e) {
 
                     }
                 }
             } else {
                 int index = mFrameToPlay;
-                while (difference <= -30) {
+//                Log.d(LOG_TAG , "Starting to adjust");
+                while (difference >= 30) {
                     AudioFrame nextFrame = null;
                     synchronized (mFrames) {
                         nextFrame = mFrames.get(index);
                     }
                     if (nextFrame != null) {
                         difference = System.currentTimeMillis() - (nextFrame.getPlayTime() + mSongStartTime + (long) mOffset);
+                        index++;
+//                        Log.d(LOG_TAG , "Difference v2 is : " + difference);
+                    } else if(nextFrame == null){
+                        //TODO: handle
                     }
                 }
-            }*/
+                mFrameToPlay = index;
+            }
 
             //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();
 
             mTest++;
 
-            if (mTest >= 200) {
+            if (mTest >= 100) {
                 mTest = 0;
                 difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);
-                //TODO : track down bug where difference is crazy huge
                 Log.d(LOG_TAG, "Time difference is : " + difference);
             }
             mAudioTrack.write(data, 0, data.length);
-            long millisTillNextWrite = (long) (mSongStartTime + mOffset + frame.getPlayTime()) - System.currentTimeMillis();
             synchronized (mFrames) {
                 mFrames.remove(frame.getID());
             }
@@ -182,13 +190,15 @@ public class AudioTrackManager {
     public void startSong(long songStart){
         mSongStartTime = songStart;
         double millisTillSongStart =  (songStart + mOffset) - System.currentTimeMillis();
-        Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart);
-        mHandler.postDelayed(mStartSong , (long)millisTillSongStart);
+        Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mOffset is :" + mOffset);
+        mHandler.postDelayed(mStartSong, (long) millisTillSongStart);
     }
 
     private void startPlaying(){
-        Log.d(LOG_TAG , "Write Started");
-        createAudioTrack(44100 , 2);
+        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mSongStartTime + mOffset))+ " mOffset is : " + mOffset);
+        if(mAudioTrack == null){
+            createAudioTrack(44100 , 2);
+        }
         mAudioTrack.play();
         mIsPlaying = true;
         mWriteThread = getWriteThread();
@@ -200,7 +210,7 @@ public class AudioTrackManager {
     }
 
     public void createAudioTrack(int sampleRate , int channels){
-        Log.d(LOG_TAG , "Creating Audio Track");
+        Log.d(LOG_TAG , "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
         int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
 
         mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,

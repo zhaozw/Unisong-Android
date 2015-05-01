@@ -72,6 +72,8 @@ public class AudioFileReader {
 
     private boolean mRunning;
 
+    private int mOutputBitrate;
+
     //The encoder that turns the PCM data into AAC for transmit
     private AACEncoder mEncoder;
 
@@ -161,7 +163,6 @@ public class AudioFileReader {
             mime = format.getString(MediaFormat.KEY_MIME);
             sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
             channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-            mTrackManagerBridge.createAudioTrack(sampleRate , channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO);
             // if duration is 0, we are probably playing a live stream
             duration = format.getLong(MediaFormat.KEY_DURATION);
             bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
@@ -200,6 +201,8 @@ public class AudioFileReader {
         int noOutputCounter = 0;
         int noOutputCounterLimit = 10;
 
+        mOutputBitrate = 1441200;
+
         mStop = false;
 
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
@@ -221,6 +224,7 @@ public class AudioFileReader {
 
                         mLength = mExtractor.getSampleTime() -presentationTimeUs;
                         mPlayTime = mExtractor.getSampleTime();
+//                        Log.d(LOG_TAG , "PlayTime is : " + mPlayTime);
 
                         presentationTimeUs = mExtractor.getSampleTime();
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
@@ -254,7 +258,7 @@ public class AudioFileReader {
 
                     mSize += chunk.length;
 
-                    createPCMFrame(chunk , mPlayTime , mLength);
+                    createPCMFrame(chunk);
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
             			state.set(PlayerStates.PLAYING);
@@ -277,10 +281,20 @@ public class AudioFileReader {
                 MediaFormat oformat = mCodec.getOutputFormat();
                 Log.d(LOG_TAG, "output format has changed to " + oformat);
                 if (mFirstOutputChange){
-                    mBroadcasterBridge.setAudioInfo(mCodec.getOutputFormat().getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+                    MediaFormat outFormat = mCodec.getOutputFormat();
+                    int outputChannels = outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+                    int outputSampleRate = outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+
                     mFirstOutputChange = false;
                     Log.d(LOG_TAG , "Starting AAC Encoder now");
-                    mEncoder.encode(mCodec.getOutputFormat());
+
+
+                    mBroadcasterBridge.setAudioInfo(outputChannels);
+                    Log.d(LOG_TAG , "Output channels are : " + outputChannels);
+                    mTrackManagerBridge.createAudioTrack(outputSampleRate , outputChannels);
+
+                    mOutputBitrate = outputChannels * outputSampleRate * 16;
+                    mEncoder.encode(format);
                 }
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
@@ -345,7 +359,11 @@ public class AudioFileReader {
     }
 
     private long mSamples =0;
-    private void createPCMFrame(byte[] data , long playTime, long length) {
+    private void createPCMFrame(byte[] data ){
+        long playTime = (mSamples * 8000) / mOutputBitrate;
+        long length = (data.length * 8000) / mOutputBitrate;
+//        if()
+//        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime, length);
 
         mTrackManagerBridge.addFrame(frame);

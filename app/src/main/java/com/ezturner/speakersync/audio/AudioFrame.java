@@ -48,10 +48,16 @@ public class AudioFrame {
     //TODO: clean this class up and get rid of all of the unused stuff
 
     //The constructor, sets all of the data
+    public AudioFrame(byte[] data, int ID, long playTime){
+        mData = data;
+        mID = ID;
+        mPlayTime = playTime;
+    }
+
     public AudioFrame(byte[] data, int ID, long playTime, long length){
         mData = data;
         mID = ID;
-        mPlayTime = playTime / 1000;
+        mPlayTime = playTime;
         mLength = length;
     }
 

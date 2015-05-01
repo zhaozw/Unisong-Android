@@ -116,11 +116,12 @@ public class SlaveReliabilityHandler {
             synchronized (mPacketsRecentlyRequested){
                 for (Map.Entry<Integer, Long> entry : mPacketsRecentlyRequested.entrySet()){
                     long timeSince = System.currentTimeMillis() - entry.getValue();
-                    if (timeSince >= 250 && !mPacketsReRequested.contains(entry.getKey()) &&  timeSince <= 400) {
-                        mPacketsReRequested.add(entry.getKey());
+                    if(timeSince >= 250){
                         requestPacket(entry.getKey());
-                    } else if(timeSince > 400){
-                        packetsSent.add(entry.getKey());
+
+                        if(!mPacketsReRequested.contains(entry.getKey())){
+                            mPacketsReRequested.add(entry.getKey());
+                        }
                     }
                 }
             }
@@ -160,11 +161,10 @@ public class SlaveReliabilityHandler {
 
         Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
         synchronized (mOutStream){
-
             try {
                 byte[] data = NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_REQUEST_ID} , ByteBuffer.allocate(4).putInt(packetID).array());
                 mOutStream.write(data , 0 , 5);
-            } catch (IOException e) {
+            } catch (IOException e){
                 e.printStackTrace();
             }
         }
@@ -172,6 +172,7 @@ public class SlaveReliabilityHandler {
         if(!mPacketsRecentlyRequested.containsKey(packetID)) {
             mPacketsRecentlyRequested.put(packetID, System.currentTimeMillis());
         }
+
     }
 
     //The function to close the socket

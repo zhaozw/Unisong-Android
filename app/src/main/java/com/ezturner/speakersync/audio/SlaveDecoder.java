@@ -89,6 +89,7 @@ public class SlaveDecoder {
     private int mRuns = 0;
     private boolean isRunning = false;
 
+    private int mOutputBitrate;
     private int mDataIndex = 0;
 
 
@@ -232,15 +233,9 @@ public class SlaveDecoder {
                 codecOutputBuffers = mCodec.getOutputBuffers();
                 Log.d(LOG_TAG, "output buffers have changed.");
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                MediaFormat oformat = mCodec.getOutputFormat();
-                Log.d(LOG_TAG, "output format has changed to " + oformat);
-                /*TODO: see if this needs to be uncommented and if the sampleRate isn't always 44100/the channels 2
-                if(firstOutputChange){
-                    firstOutputChange = false;
-                    MediaFormat outFormat = mCodec.getOutputFormat();
-                    mTrackManagerBridge.createAudioTrack(outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                            , outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-                }*/
+                MediaFormat outFormat = mCodec.getOutputFormat();
+                Log.d(LOG_TAG, "output format has changed to " + outFormat);
+                mOutputBitrate = outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) * outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) * 16 ;
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
@@ -324,18 +319,18 @@ public class SlaveDecoder {
     }
 
     //The number of AAC samples processed so far. Used to calculate play time.
-    private int mSamplesProcessed = 0;
+    private long mSamples = 0;
 
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
-        long length = data.length / sampleRate;
-        long playTime = mSamplesProcessed / sampleRate;
+        long bitsProcessed = mSamples * 8000;
+        long playTime = bitsProcessed  / mOutputBitrate;
 
-        AudioFrame frame = new AudioFrame(data, mCurrentID , length ,playTime);
+        AudioFrame frame = new AudioFrame(data, mCurrentID , playTime);
         mCurrentID++;
 
         mTrackManagerBridge.addFrame(frame);
-        mSamplesProcessed += data.length;
+        mSamples += data.length;
 
     }
 
