@@ -2,7 +2,7 @@ package com.ezturner.speakersync.network.ntp;
 
 import android.util.Log;
 
-import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
 import java.io.IOException;
@@ -11,7 +11,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -72,16 +71,40 @@ public class SntpClient
     //The audio track manager that needs to get the clock offset
     private AudioListener mParent;
 
+    private AudioBroadcaster mBroadcaster;
+
+    //TODO: use dns to look up this IP
     public SntpClient(String serverIP , AudioListener parent){
         mServerIP = serverIP;
+        mServerIP = "pool.ntp.org";
         try {
             // Send request
-            mSocket = new DatagramSocket(NTP_PORT);
+            mSocket = new DatagramSocket();
         } catch(SocketException e){
             e.printStackTrace();
         }
 
         mParent = parent;
+
+        mThread = getClientThread();
+        mThread.start();
+
+        mHasOffset = false;
+
+    }
+
+    //TODO: use dns to look up this IP
+    public SntpClient(String serverIP , AudioBroadcaster parent){
+        mServerIP = serverIP;
+        mServerIP = "pool.ntp.org";
+        try {
+            // Send request
+            mSocket = new DatagramSocket();
+        } catch(SocketException e){
+            e.printStackTrace();
+        }
+
+        mBroadcaster = parent;
 
         mThread = getClientThread();
         mThread.start();
@@ -124,7 +147,6 @@ public class SntpClient
         average = average / list.size();
 
         mTimeOffset = average;
-        mParent.setOffset(mTimeOffset);
         list = new ArrayList<Double>();
 
         mHasOffset = true;
@@ -141,7 +163,11 @@ public class SntpClient
             public void run(){
                 try {
                     mTimeOffset = calculateOffset();
-                    mParent.setOffset(mTimeOffset);
+                    if(mParent != null) {
+                        mParent.setOffset(mTimeOffset);
+                    } else {
+                        mBroadcaster.setOffset(mTimeOffset);
+                    }
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -163,13 +189,13 @@ public class SntpClient
     }
 
     private void getOneOffset() throws IOException{
-
         // Send request
 
-        InetAddress address = InetAddress.getByName(mServerIP.substring(1));
+        InetAddress address = InetAddress.getByName(mServerIP);
         byte[] buf = new NtpMessage().toByteArray();
+        //TODO: change this to NTP_PORT
         DatagramPacket packet =
-                new DatagramPacket(buf, buf.length, address, NTP_PORT);
+                new DatagramPacket(buf, buf.length, address, 123);
 
         // Set the transmit timestamp *just* before sending the packet
         // ToDo: Does this actually improve performance or not?

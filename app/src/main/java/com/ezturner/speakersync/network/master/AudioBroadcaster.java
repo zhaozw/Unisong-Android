@@ -1,42 +1,29 @@
 package com.ezturner.speakersync.network.master;
 
-import android.net.Network;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.os.Handler;
+import android.util.Log;
 
 import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.audio.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.NtpServer;
-import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.packets.AudioDataPacket;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
 import java.net.MulticastSocket;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -148,6 +135,8 @@ public class AudioBroadcaster {
 
     private List<Slave> mSlaves;
 
+    private SntpClient mSntpClient;
+
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -168,6 +157,8 @@ public class AudioBroadcaster {
 
             //Start the NTP server for syncing the playback
             mNtpServer = new NtpServer();
+
+            mSntpClient = new SntpClient("bruh", this);
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -498,7 +489,7 @@ public class AudioBroadcaster {
 
     public void addFrames(ArrayList<AudioFrame> frames){
         synchronized (mPackets){
-            for(AudioFrame frame : frames) {
+            for(AudioFrame frame : frames){
                 createFramePacket(frame);
             }
         }
@@ -521,5 +512,10 @@ public class AudioBroadcaster {
         if(mSlaves.contains(slave)){
             mSlaves.remove(slave);
         }
+    }
+
+    public void setOffset(double offset){
+        Log.d(LOG_TAG , "Offset is : " + offset );
+        mManager.setOffset(offset);
     }
 }

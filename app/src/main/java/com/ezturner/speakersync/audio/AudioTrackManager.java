@@ -6,9 +6,7 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.util.Log;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -108,6 +106,7 @@ public class AudioTrackManager {
             long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);
 
 //            Log.d(LOG_TAG, "Current time is : " + System.currentTimeMillis() + " and play time is : " + frame.getPlayTime() + " and Song Start time is : " + mSongStartTime);
+
 
 
             if(difference <= -10){

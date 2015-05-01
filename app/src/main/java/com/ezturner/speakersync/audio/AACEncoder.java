@@ -99,7 +99,7 @@ public class AACEncoder {
             return;
         }
 
-        mOutputBitrate = 1536000;
+        mOutputBitrate = 1441200;
 
         channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         sampleRate = mInputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
