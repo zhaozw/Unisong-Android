@@ -53,5 +53,7 @@ public class CONSTANTS {
 
     public static final byte TCP_COMMAND_RETRANSMIT = 3;
 
+    public static final byte TCP_SONG_START = 4;
+
 
 }

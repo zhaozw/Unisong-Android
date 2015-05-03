@@ -82,10 +82,10 @@ public class AudioBroadcaster {
     private Handler mHandler;
 
     //The ID of the packet to be sent next
-    private int mNextFrameID;
+    private int mNextPacketSendID;
 
     //The ID of the next packet to be made
-    private int mNextPacketID;
+    private int mNextPacketCreateID;
 
     //The ID of the last packet in this stream
     private int mLastPacketID;
@@ -179,10 +179,10 @@ public class AudioBroadcaster {
         mHandler = new Handler();
 
         //Set the next packet to be created to 1, the song start packet is 0
-        mNextPacketID = 0;
+        mNextPacketCreateID = 0;
 
         //Set the next packet to be created to be 0
-        mNextFrameID = 0;
+        mNextPacketSendID = 0;
         mLastFrameID = -1;
 
         mPacketsToRebroadcast = new ArrayList<>();
@@ -212,31 +212,11 @@ public class AudioBroadcaster {
         @Override
         public void run() {
 
-
-            if (mNextFrameID == 0){
-               synchronized (mPackets){
-
-                   insertStartPackets();
-                   NetworkPacket songStartPacket = mPackets.get(mNextFrameID);
-                   Log.d(LOG_TAG , songStartPacket.toString());
-                   mNextFrameID++;
-                   mPacketsSentCount++;
-
-                   synchronized (mStreamSocket){
-                       try {
-                           mStreamSocket.send(songStartPacket.getPacket());
-                       } catch (IOException e) {
-                           e.printStackTrace();
-                       }
-                   }
-                }
-            }
-
             NetworkPacket packet;
             synchronized (mPackets){
-                packet = mPackets.get(mNextFrameID);
+                packet = mPackets.get(mNextPacketSendID);
                 //Log.d(LOG_TAG , packet.toString());
-                mNextFrameID++;
+                mNextPacketSendID++;
             }
 
 
@@ -329,7 +309,7 @@ public class AudioBroadcaster {
             }
 
 
-            if(mNextFrameID != mLastFrameID) {
+            if(mNextPacketSendID != mLastFrameID) {
                 mWorker.schedule(mPacketSender , delay , TimeUnit.MILLISECONDS);
             }
         }
@@ -363,9 +343,9 @@ public class AudioBroadcaster {
         mManager.startSong(mSongStartTime);
         mNextFrameTime = mSongStartTime;
 
-        mNextPacketID = 1;
+        mNextPacketCreateID= 0;
 
-        mNextFrameID = 0;
+        mNextPacketSendID = 0;
         mLastPacketID = 0;
 
         if(mStreamID == 240){
@@ -454,14 +434,14 @@ public class AudioBroadcaster {
 
 
     private void addAudioDataPacket(byte[] data){
-        AudioDataPacket ap = new AudioDataPacket(data, mStreamID , mNextPacketID);
+        AudioDataPacket ap = new AudioDataPacket(data, mStreamID , mNextPacketCreateID);
         mPackets.add(ap);
-        mNextPacketID++;
+        mNextPacketCreateID++;
     }
 
     private void createFramePacket(AudioFrame frame){
-        FramePacket fp = new FramePacket(frame ,getStreamID() ,mNextPacketID);
-        mNextPacketID++;
+        FramePacket fp = new FramePacket(frame ,getStreamID() , mNextPacketCreateID);
+        mNextPacketCreateID++;
         mPackets.add(fp);
     }
 
@@ -479,7 +459,7 @@ public class AudioBroadcaster {
     }
 
     public void lastPacket(){
-        mLastPacketID = mNextPacketID;
+        mLastPacketID = mNextPacketCreateID;
     }
 
     public void insertStartPackets(){
@@ -521,5 +501,9 @@ public class AudioBroadcaster {
         Log.d(LOG_TAG , "Offset is : " + offset );
         mManager.setOffset(offset);
         mOffset = (long) offset;
+    }
+
+    public int getNextPacketSendID(){
+        return mNextPacketSendID;
     }
 }
