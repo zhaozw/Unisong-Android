@@ -103,7 +103,7 @@ public class AudioTrackManager {
             mFrameToPlay++;
 
 
-            long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);
+            long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - (long) mOffset);
 
 //            Log.d(LOG_TAG, "Current time is : " + System.currentTimeMillis() + " and play time is : " + frame.getPlayTime() + " and Song Start time is : " + mSongStartTime);
 
@@ -127,7 +127,7 @@ public class AudioTrackManager {
                         nextFrame = mFrames.get(index);
                     }
                     if (nextFrame != null) {
-                        difference = System.currentTimeMillis() - (nextFrame.getPlayTime() + mSongStartTime + (long) mOffset);
+                        difference = System.currentTimeMillis() - (nextFrame.getPlayTime() + mSongStartTime - (long) mOffset);
                         index++;
 //                        Log.d(LOG_TAG , "Difference v2 is : " + difference);
                     } else if(nextFrame == null){
@@ -144,7 +144,7 @@ public class AudioTrackManager {
 
             if (mTest >= 100) {
                 mTest = 0;
-                difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime + (long) mOffset);
+                difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - (long) mOffset);
                 Log.d(LOG_TAG, "Time difference is : " + difference);
             }
             mAudioTrack.write(data, 0, data.length);
@@ -188,13 +188,13 @@ public class AudioTrackManager {
 
     public void startSong(long songStart){
         mSongStartTime = songStart;
-        double millisTillSongStart =  (songStart + mOffset) - System.currentTimeMillis();
+        double millisTillSongStart =  (songStart - mOffset) - System.currentTimeMillis();
         Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mOffset is :" + mOffset);
         mHandler.postDelayed(mStartSong, (long) millisTillSongStart);
     }
 
     private void startPlaying(){
-        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mSongStartTime + mOffset))+ " mOffset is : " + mOffset);
+        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mSongStartTime - mOffset))+ " mOffset is : " + mOffset);
         if(mAudioTrack == null){
             createAudioTrack(44100 , 2);
         }
