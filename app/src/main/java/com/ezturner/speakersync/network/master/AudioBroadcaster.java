@@ -137,6 +137,9 @@ public class AudioBroadcaster {
 
     private SntpClient mSntpClient;
 
+    //The time offset as calculated by SntpClient from pool.ntp.org
+    private long mOffset;
+
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -356,7 +359,7 @@ public class AudioBroadcaster {
 
         //The start time in milliseconds
         //TODO: Recalculate this!
-        mSongStartTime = System.currentTimeMillis() + 2000;
+        mSongStartTime = System.currentTimeMillis() + 2000 + mOffset;
         mManager.startSong(mSongStartTime);
         mNextFrameTime = mSongStartTime;
 
@@ -517,5 +520,6 @@ public class AudioBroadcaster {
     public void setOffset(double offset){
         Log.d(LOG_TAG , "Offset is : " + offset );
         mManager.setOffset(offset);
+        mOffset = (long) offset;
     }
 }
