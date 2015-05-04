@@ -19,6 +19,7 @@ import com.ezturner.speakersync.audio.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
+import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.slave.ListenerBridge;
 import com.ezturner.speakersync.network.slave.NetworkInputStream;
@@ -48,6 +49,8 @@ public class MediaService extends Service{
     private static WifiManager wifiManager;
     private static WifiManager.MulticastLock mCastLock;
 
+    private SntpClient mSntpClient;
+
     public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
 
     public PowerManager.WakeLock mWakeLock;
@@ -63,6 +66,7 @@ public class MediaService extends Service{
     public void onCreate(){
         super.onCreate();
 
+        mSntpClient = new SntpClient();
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -116,7 +120,7 @@ public class MediaService extends Service{
 
     public void broadcaster() {
         if(mBroadcaster == null) {
-            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader);
+            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mSntpClient);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
         }
     }
@@ -125,7 +129,7 @@ public class MediaService extends Service{
     public void listener(){
 
         ListenerBridge bridge = new ListenerBridge(null , mAudioTrackManager );
-        mListener = new AudioListener(this,bridge);
+        mListener = new AudioListener(this , bridge , mSntpClient);
 
 
     }

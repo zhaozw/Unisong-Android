@@ -3,12 +3,14 @@ package com.ezturner.speakersync.network.master;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -88,6 +90,9 @@ public class MasterReliabilityHandler {
                     if(socket != null){
                         startSocketListener(socket).start();
 
+                        if(mBroadcaster.isStreamRunning()) {
+                            sendSongInProgress(socket);
+                        }
                         Thread thread = startSocketListener(socket);
                         mSocketThreads.add(thread);
                         thread.start();
@@ -124,8 +129,9 @@ public class MasterReliabilityHandler {
 
         byte[] inputArr = new byte[5];
 
-        while((is.read(inputArr , 0, 5)) != -1){
-            handleDataReceived(inputArr, slave);
+        int identifier = -2;
+        while((identifier = is.read()) != -1){
+            handleDataReceived(identifier, slave , is);
         }
 
         if(socket.isClosed()){
@@ -133,17 +139,32 @@ public class MasterReliabilityHandler {
         }
     }
 
-    private void handleDataReceived(byte[] data , Slave slave){
-        switch (data[0]){
+    private void handleDataReceived(int identifier , Slave slave , InputStream inputStream){
+        switch (identifier){
             case CONSTANTS.TCP_REQUEST_ID:
-                int packetID = ByteBuffer.wrap(new byte[]{data[1] , data[2] , data[3] , data[4]}).getInt();
-                if(!checkSlaves(packetID))  mBroadcaster.rebroadcastPacket(packetID);
+                int packetID = getInt(inputStream);
+                if(packetID != -1 || !checkSlaves(packetID))  mBroadcaster.rebroadcastPacket(packetID);
                 break;
             case CONSTANTS.TCP_ACK_ID:
-                int ID = ByteBuffer.wrap(new byte[]{data[1] , data[2] , data[3] , data[4]}).getInt();
-                slave.packetReceived(ID);
+                int ID = getInt(inputStream);
+                if(ID != -1)    slave.packetReceived(ID);
                 break;
         }
+    }
+
+    private int getInt(InputStream inputStream){
+        byte[] data = new byte[4];
+
+        try {
+            synchronized (inputStream) {
+                inputStream.read(data);
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+            return -1;
+        }
+
+        return ByteBuffer.wrap(data).getInt();
     }
 
     //Checks to see if any of the slaves have the packet in question.
@@ -169,9 +190,12 @@ public class MasterReliabilityHandler {
         Socket socket = mSockets.get(havePacket.get(index));
         byte[] idArr = ByteBuffer.allocate(4).putInt(packetID).array();
 
-        byte[] data = new byte[] {CONSTANTS.TCP_COMMAND_RETRANSMIT , idArr[0] , idArr[1] , idArr[2] , idArr[3]};
         try {
-            socket.getOutputStream().write(data);
+            OutputStream stream = socket.getOutputStream();
+            synchronized (stream) {
+                stream.write(CONSTANTS.TCP_COMMAND_RETRANSMIT);
+                stream.write(idArr);
+            }
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -191,25 +215,56 @@ public class MasterReliabilityHandler {
 
     }
 
+    public void startSong(long songStart, int channels ,byte streamID ){
 
-        /* Not used atm, UDP code for reliability
-    private void handleReliabilityPacket(DatagramPacket packet){
-        //Get data
-        byte[] data = packet.getData();
 
-        //Feed the data into a Bytebuffer
-        ByteBuffer wrapped = ByteBuffer.wrap(data);
+        byte[] startTime = ByteBuffer.allocate(8).putLong(songStart).array();
 
-        //get stream ID and check it against current
-        byte requestedStreamID = wrapped.get();
+        byte[] channelsArr = ByteBuffer.allocate(4).putInt(channels).array();
 
-        if(requestedStreamID != streamID){
-            return;
+        startTime= NetworkUtilities.combineArrays(startTime, channelsArr);
+
+        byte[] data = new byte[]{ streamID};
+
+        data = NetworkUtilities.combineArrays(startTime, data);
+
+        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+            Socket socket = entry.getValue();
+            synchronized (socket){
+                try {
+                    OutputStream outputStream = socket.getOutputStream();
+                    outputStream.write(data);
+
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+
         }
+    }
 
-        //Convert data to an int
-        int packetID = wrapped.getInt();
+    private void sendSongInProgress(Socket socket){
+        try{
+            OutputStream stream = socket.getOutputStream();
 
-        broadcastStreamPacket(packetID);
-    }*/
+            byte[] startTime = ByteBuffer.allocate(8).putLong(mBroadcaster.getSongStartTime()).array();
+
+            byte[] channelsArr = ByteBuffer.allocate(4).putInt(mBroadcaster.getChannels()).array();
+
+            startTime= NetworkUtilities.combineArrays(startTime, channelsArr);
+
+            byte[] currentPacketArr = ByteBuffer.allocate(4).putInt(mBroadcaster.getNextPacketSendID()).array();
+
+            byte[] data = new byte[]{mBroadcaster.getStreamID()};
+
+            startTime = NetworkUtilities.combineArrays(startTime, currentPacketArr);
+            data = NetworkUtilities.combineArrays(startTime, data);
+
+            stream.write(data);
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
 }

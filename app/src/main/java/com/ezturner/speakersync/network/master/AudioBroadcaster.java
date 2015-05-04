@@ -143,9 +143,16 @@ public class AudioBroadcaster {
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
-    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader){
+    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader , SntpClient client){
 
         mSlaves = new ArrayList<>();
+        mSntpClient = client;
+
+        if(mSntpClient.hasOffset()){
+            mOffset = (long) mSntpClient.getOffset();
+        }
+
+        mSntpClient.setBroadcaster(this);
 
         //TODO: When not testing, get rid of this comment
         mPort = CONSTANTS.STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
@@ -161,7 +168,6 @@ public class AudioBroadcaster {
             //Start the NTP server for syncing the playback
             mNtpServer = new NtpServer();
 
-            mSntpClient = new SntpClient("bruh", this);
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -212,6 +218,10 @@ public class AudioBroadcaster {
         @Override
         public void run() {
 
+
+            if(mNextPacketSendID == 0){
+                mReliabilityHandlder.startSong(mSongStartTime, mChannels , mStreamID);
+            }
             NetworkPacket packet;
             synchronized (mPackets){
                 packet = mPackets.get(mNextPacketSendID);
@@ -505,5 +515,13 @@ public class AudioBroadcaster {
 
     public int getNextPacketSendID(){
         return mNextPacketSendID;
+    }
+
+    public int getChannels(){
+        return mChannels;
+    }
+
+    public long getSongStartTime(){
+        return mSongStartTime;
     }
 }

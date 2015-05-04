@@ -290,19 +290,19 @@ public class AACEncoder {
     }
 
     //The number of AAC samples processed so far. Used to calculate play time.
-    private int mSamplesProcessed = 0;
+    private long mLastTime = 0;
 
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
         //TODO: get rid of these and remove from the packets
-        long length = (data.length * 1000) / sampleRate;
-        long playTime = (mSamplesProcessed * 1000) / sampleRate;
+        long length = (long)((1024.0 / 44100.0) * 1000);
+        long playTime = mLastTime;
 
         AudioFrame frame = new AudioFrame(data, mCurrentID , length ,playTime);
         mCurrentID++;
 
         mBroadcasterBridge.addFrame(frame);
-        mSamplesProcessed += data.length;
+        mLastTime += (long)((1024.0 / 44100.0) * 1000);
 
     }
 

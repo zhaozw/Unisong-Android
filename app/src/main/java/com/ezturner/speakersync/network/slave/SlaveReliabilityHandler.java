@@ -65,6 +65,9 @@ public class SlaveReliabilityHandler {
     //The list of packets that need to be retransmit
     private List<Integer> mPacketsToRetransmit;
 
+    //Whether we can request packets. Is false until
+    private boolean mCanRequest;
+
 
     public SlaveReliabilityHandler(InetAddress address, int broadcastPort , AudioListener listener){
         mMasterAddress = address;
@@ -88,6 +91,8 @@ public class SlaveReliabilityHandler {
 
         mPacketsReRequested = new ArrayList<>();
         mHandler = new Handler();
+
+        mCanRequest = false;
 
         mHandler.postDelayed(mPacketRequester , 30);
 
@@ -204,14 +209,24 @@ public class SlaveReliabilityHandler {
     }
 
     private void listenForCommands(){
-
-        byte[] data = new byte[5];
+        byte type = -1;
         try {
-            while (mInStream.read(data) != 0){
-                switch (data[0]){
+
+            type = mInStream.readByte();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        try {
+            while (type != 0){
+                switch (type){
                     case CONSTANTS.TCP_COMMAND_RETRANSMIT:
-                        int ID = ByteBuffer.wrap(Arrays.copyOfRange(data , 1, 5)).getInt();
-                        retransmitPacket(ID);
+                        listenRetransmit();
+                        break;
+                    case CONSTANTS.TCP_SONG_START:
+                        listenSongStart();
+                        break;
+                    case CONSTANTS.TCP_SONG_IN_PROGRESS:
+                        listenSongInProgress();
                         break;
 
                 }
@@ -222,6 +237,65 @@ public class SlaveReliabilityHandler {
             //TODO: figure out when this is called and how to deal with it
             e.printStackTrace();
         }
+    }
+
+    //Listens for the retransmit data/packet ID
+    private void listenRetransmit() throws IOException {
+        byte[] data = new byte[4];
+        if(mInStream.read(data) != -1) {
+            int ID = ByteBuffer.wrap(data).getInt();
+            retransmitPacket(ID);
+        }
+    }
+
+    //Listens for the song start data.
+    private void listenSongStart() throws IOException{
+        byte[] data = new byte[9];
+
+        mCanRequest = true;
+        try{
+            mInStream.read(data);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 4);
+
+        long startTime = ByteBuffer.wrap(playTimeArr).getLong();
+
+        byte[] channelsArr = Arrays.copyOfRange(data, 4, 8);
+
+        int channels = ByteBuffer.wrap(channelsArr).getInt();
+
+        mListener.startSong(startTime , channels, data[8] , 0);
+    }
+
+    private void listenSongInProgress() throws IOException{
+        byte[] data = new byte[9];
+
+        mCanRequest = true;
+        try{
+            mInStream.read(data);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 4);
+
+        long startTime = ByteBuffer.wrap(playTimeArr).getLong();
+
+        byte[] channelsArr = Arrays.copyOfRange(data, 4, 8);
+
+        int channels = ByteBuffer.wrap(channelsArr).getInt();
+
+
+        byte[] currentPacketArr = Arrays.copyOfRange(data, 8, 12);
+
+        int currentPacket = ByteBuffer.wrap(channelsArr).getInt();
+
+        mListener.startSong(startTime , channels, data[12] , currentPacket);
+
+        mTopPacket = currentPacket;
+
     }
 
     private void retransmitPacket(int packetID){
@@ -256,9 +330,9 @@ public class SlaveReliabilityHandler {
         }
 
         synchronized (mPacketsToRequest) {
-            if (packetID > mTopPacket) {
+            if (packetID > mTopPacket && mCanRequest) {
                 for (int i = mTopPacket; i < packetID; i++){
-                    if (!mPacketsReceived.contains(i)) {
+                    if (!mPacketsReceived.contains(i)){
                         mPacketsToRequest.put(i, System.currentTimeMillis());
                     }
                 }

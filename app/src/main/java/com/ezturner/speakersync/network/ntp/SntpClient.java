@@ -113,12 +113,37 @@ public class SntpClient
 
     }
 
+    public SntpClient(){
+        mServerIP = "pool.ntp.org";
+
+        try {
+            // Send request
+            mSocket = new DatagramSocket();
+        } catch(SocketException e){
+            e.printStackTrace();
+        }
+
+
+        mThread = getClientThread();
+        mThread.start();
+
+        mHasOffset = false;
+    }
+
+    public void setListener(AudioListener listener){
+        mParent = listener;
+    }
+
+    public void setBroadcaster(AudioBroadcaster broadcaster){
+        mBroadcaster = broadcaster;
+    }
+
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.
     public double calculateOffset() throws IOException{
 
         mNumberDone = 0;
 
-        for(int i = 0; i < 6; i++){
+        for(int i = 0; i < 10; i++){
             getOneOffset();/*
             try {
                 wait(5);
@@ -165,7 +190,7 @@ public class SntpClient
                     mTimeOffset = calculateOffset();
                     if(mParent != null) {
                         mParent.setOffset(mTimeOffset);
-                    } else {
+                    } else if(mBroadcaster != null) {
                         mBroadcaster.setOffset(mTimeOffset);
                     }
                 } catch(IOException e){

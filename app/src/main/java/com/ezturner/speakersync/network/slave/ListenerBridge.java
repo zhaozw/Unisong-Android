@@ -38,7 +38,9 @@ public class ListenerBridge extends ReaderBridge{
         mSlaveDecoder = decoder;
     }
 
-    public void startSong(long startTime){
+    public void startSong(long startTime , int currentPacket){
+        mSlaveDecoder.setCurrentFrame(currentPacket);
+        mSlaveDecoder.encode();
         mManager.startSong(startTime);
     }
 

@@ -115,8 +115,16 @@ public class AudioListener {
 
     private SlaveDecoder mSlaveDecoder;
 
-    public AudioListener(Context context ,  ListenerBridge bridge){
+    private int mFirstFrame;
 
+    public AudioListener(Context context ,  ListenerBridge bridge , SntpClient client){
+
+        if(client.hasOffset()){
+            mTimeOffset = (long)client.getOffset();
+        }
+
+        mSntpClient = client;
+        client.setListener(this);
         mBridge = bridge;
 
         mTimeOffset = -9999;
@@ -346,7 +354,27 @@ public class AudioListener {
     }
 
 
+    public void startSong(long startTime , int channels , byte streamID , int currentPacket){
+        mStartSongReceived = true;
+        mStreamID = streamID;
+        mStartTime = startTime;
+        mChannels = channels;
+
+        mStartSongReceived = true;
+
+        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mBridge.getManager()) , mChannels);
+        mBridge.setDecoder(mSlaveDecoder);
+
+        mFirstFrame = currentPacket;
+
+        if(mTimeOffset != -9999){
+            mBridge.startSong(mStartTime , currentPacket);
+        }
+    }
+
+
     private boolean mStartSongReceived = false;
+
     private NetworkPacket handleStartSongPacket(DatagramPacket packet){
         mStartSongReceived = true;
         SongStartPacket sp = new SongStartPacket(packet);
@@ -357,22 +385,19 @@ public class AudioListener {
 
         mChannels = sp.getChannels();
 
+        mFirstFrame = 0;
         mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mBridge.getManager()) , mChannels);
         mBridge.setDecoder(mSlaveDecoder);
         
         //TODO: this doesn't work, figure out why
 
-        if(mMime != null){
-//            mBridge.setDecoderInfo(mMime , mSampleRate , mChannels, mBitrate);
-            Log.d(LOG_TAG, "Decoder Info Set");
-        }
         //TODO: Figure out the time synchronization and then
         //Convert from microseconds to millis and use the Sntp offset
 
         Log.d(LOG_TAG, "Song start packet received! Starting song");
 
         if(mTimeOffset != -9999) {
-            mBridge.startSong(mStartTime);
+            mBridge.startSong(mStartTime , mFirstFrame);
         }
 
         return sp;
@@ -387,7 +412,7 @@ public class AudioListener {
         mBridge.setOffset(mTimeOffset);
 
         if(mStartTime != -1){
-            mBridge.startSong(mStartTime);
+            mBridge.startSong(mStartTime, mFirstFrame);
         }
 
     }

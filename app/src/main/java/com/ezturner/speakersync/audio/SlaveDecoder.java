@@ -62,7 +62,6 @@ public class SlaveDecoder {
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
         sampleRate = 44100;
-        encode();
     }
 
     public void encode(){
@@ -258,6 +257,12 @@ public class SlaveDecoder {
 
         Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
 
+    }
+
+    public void setCurrentFrame(int currentFrame){
+        if(currentFrame > mCurrentFrame){
+            mCurrentFrame = currentFrame;
+        }
     }
 
     private int count = 0;

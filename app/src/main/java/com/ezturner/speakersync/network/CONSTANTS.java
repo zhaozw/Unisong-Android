@@ -55,5 +55,7 @@ public class CONSTANTS {
 
     public static final byte TCP_SONG_START = 4;
 
+    public static final byte TCP_SONG_IN_PROGRESS = 5;
+
 
 }
