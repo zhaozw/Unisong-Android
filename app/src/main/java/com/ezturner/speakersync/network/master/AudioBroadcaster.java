@@ -267,7 +267,7 @@ public class AudioBroadcaster {
 
                 }
 
-                synchronized (mPacketsToRebroadcast) {
+                synchronized (mPacketsToRebroadcast){
                     NetworkPacket packetl= null;
                     synchronized (mPackets) {
                         packetl = mPackets.get(mPacketsToRebroadcast.get(0));

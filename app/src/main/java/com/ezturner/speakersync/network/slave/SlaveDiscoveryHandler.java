@@ -190,6 +190,7 @@ public class SlaveDiscoveryHandler {
 
         try {
             mSendSocket.send(packet);
+            mSendSocket.send(packet);
             Log.d(LOG_TAG , "Packet sent");
         } catch(IOException e){
             e.printStackTrace();
@@ -251,7 +252,7 @@ public class SlaveDiscoveryHandler {
         mParent.playFromMaster(master);
 
         for(int i = 0; i < mTempMasters.size(); i++){
-            if(i != index) {
+            if(i != index){
                 mTempMasters.get(i).closeSocket();
             }
         }

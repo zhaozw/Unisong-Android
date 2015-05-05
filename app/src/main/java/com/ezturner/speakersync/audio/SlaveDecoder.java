@@ -53,6 +53,8 @@ public class SlaveDecoder {
 
     private int mLastFrame;
 
+    private long mTimeAdjust = 0;
+
     public SlaveDecoder(TrackManagerBridge bridge , int channels){
         mTrackManagerBridge = bridge;
         mCurrentID = 0;
@@ -261,9 +263,8 @@ public class SlaveDecoder {
     }
 
     public void setCurrentFrame(int currentFrame){
-        if(currentFrame > mCurrentFrame){
-            mCurrentFrame = currentFrame;
-        }
+        mCurrentFrame = currentFrame;
+        mTimeAdjust = (long) (mCurrentFrame * (1024.0 / 44100.0) * 1000);
     }
 
     private int count = 0;
@@ -330,7 +331,7 @@ public class SlaveDecoder {
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
         long bitsProcessed = mSamples * 8000;
-        long playTime = bitsProcessed  / mOutputBitrate;
+        long playTime = bitsProcessed  / mOutputBitrate + mTimeAdjust;
 
 
 

@@ -6,6 +6,8 @@ import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -254,52 +256,37 @@ public class SlaveReliabilityHandler {
     //Listens for the song start data.
     private void listenSongStart() throws IOException{
         Log.d(LOG_TAG , "Song Start identifier started");
-        byte[] data = new byte[13];
+
+        TCPSongStartPacket packet = null;
 
         mCanRequest = true;
         try{
-            mInStream.read(data);
+            packet = new TCPSongStartPacket(mInStream);
         } catch (IOException e){
             e.printStackTrace();
         }
-        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 
-        long startTime = ByteBuffer.wrap(playTimeArr).getLong();
 
-        byte[] channelsArr = Arrays.copyOfRange(data, 8, 12);
-
-        int channels = ByteBuffer.wrap(channelsArr).getInt();
-
-        mListener.startSong(startTime , channels, data[12] , 0);
-        Log.d(LOG_TAG , "Song Starting!");
+        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , 0);
+        Log.d(LOG_TAG, "Song Starting!");
     }
 
     private void listenSongInProgress() throws IOException{
         Log.d(LOG_TAG , "Song in progress");
-        byte[] data = new byte[17];
 
+        TCPSongInProgressPacket packet = null;
         mCanRequest = true;
         try{
-            mInStream.read(data);
+            packet = new TCPSongInProgressPacket(mInStream);
         } catch (IOException e){
             e.printStackTrace();
         }
 
-        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 
-        long startTime = ByteBuffer.wrap(playTimeArr).getLong();
 
-        byte[] channelsArr = Arrays.copyOfRange(data, 8, 12);
+        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , packet.getCurrentPacket());
 
-        int channels = ByteBuffer.wrap(channelsArr).getInt();
-
-        byte[] currentPacketArr = Arrays.copyOfRange(data, 12, 16);
-
-        int currentPacket = ByteBuffer.wrap(channelsArr).getInt();
-
-        mListener.startSong(startTime , channels, data[16] , currentPacket);
-
-        mTopPacket = currentPacket;
+        mTopPacket = packet.getCurrentPacket();
 
     }
 

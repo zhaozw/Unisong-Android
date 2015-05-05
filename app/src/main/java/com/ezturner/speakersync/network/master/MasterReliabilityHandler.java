@@ -4,6 +4,8 @@ import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -240,25 +242,14 @@ public class MasterReliabilityHandler {
     }
 
     private void notifyOfSongStart(){
-        byte[] startTime = ByteBuffer.allocate(8).putLong(mSongStart).array();
-
-        byte[] channelsArr = ByteBuffer.allocate(4).putInt(mChannels).array();
-
-        startTime= NetworkUtilities.combineArrays(startTime, channelsArr);
-
-        byte[] data = new byte[]{ mStreamID};
-
-        data = NetworkUtilities.combineArrays(startTime, data);
-
-
         for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
             Log.d(LOG_TAG , "Starting song for slave : " + entry.getKey() );
             Socket socket = entry.getValue();
             synchronized (socket){
                 try {
                     OutputStream outputStream = socket.getOutputStream();
-                    outputStream.write(CONSTANTS.TCP_SONG_START);
-                    outputStream.write(data);
+                    TCPSongStartPacket.send(outputStream, mBroadcaster.getSongStartTime() ,
+                            mBroadcaster.getChannels() , mBroadcaster.getStreamID());
 
                 } catch (IOException e){
                     e.printStackTrace();
@@ -272,21 +263,9 @@ public class MasterReliabilityHandler {
         try{
             OutputStream stream = socket.getOutputStream();
 
-            byte[] startTime = ByteBuffer.allocate(8).putLong(mBroadcaster.getSongStartTime()).array();
-
-            byte[] channelsArr = ByteBuffer.allocate(4).putInt(mBroadcaster.getChannels()).array();
-
-            startTime= NetworkUtilities.combineArrays(startTime, channelsArr);
-
-            byte[] currentPacketArr = ByteBuffer.allocate(4).putInt(mBroadcaster.getNextPacketSendID()).array();
-
-            byte[] data = new byte[]{mBroadcaster.getStreamID()};
-
-            startTime = NetworkUtilities.combineArrays(startTime, currentPacketArr);
-            data = NetworkUtilities.combineArrays(startTime, data);
-
-            stream.write(CONSTANTS.TCP_SONG_IN_PROGRESS);
-            stream.write(data);
+            //Send out the Song In Progress TCP packet.
+            TCPSongInProgressPacket.send(stream, mBroadcaster.getSongStartTime() , mBroadcaster.getChannels(),
+                    mBroadcaster.getNextPacketSendID() , mBroadcaster.getStreamID());
 
         } catch (IOException e){
             e.printStackTrace();
