@@ -2,6 +2,7 @@ package com.ezturner.speakersync.network.ntp;
 
 import android.util.Log;
 
+import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
@@ -73,6 +74,8 @@ public class SntpClient
 
     private AudioBroadcaster mBroadcaster;
 
+    private AudioTrackManager mManager;
+
     //TODO: use dns to look up this IP
     public SntpClient(String serverIP , AudioListener parent){
         mServerIP = serverIP;
@@ -113,7 +116,7 @@ public class SntpClient
 
     }
 
-    public SntpClient(){
+    public SntpClient(AudioTrackManager manager){
         mServerIP = "pool.ntp.org";
 
         try {
@@ -123,6 +126,8 @@ public class SntpClient
             e.printStackTrace();
         }
 
+
+        mManager = manager;
 
         mThread = getClientThread();
         mThread.start();
@@ -188,10 +193,9 @@ public class SntpClient
             public void run(){
                 try {
                     mTimeOffset = calculateOffset();
-                    if(mParent != null) {
-                        mParent.setOffset(mTimeOffset);
-                    } else if(mBroadcaster != null) {
-                        mBroadcaster.setOffset(mTimeOffset);
+
+                    if(mManager != null){
+                        mManager.setOffset(mTimeOffset);
                     }
                 } catch(IOException e){
                     e.printStackTrace();
@@ -231,9 +235,9 @@ public class SntpClient
 
 
         // Get response
-        Log.d(LOG_TAG , "NTP request sent to : " + mServerIP.substring(1) +" , waiting for response...\n");
+        Log.d(LOG_TAG , "NTP request sent to : " + mServerIP +" , waiting for response...\n");
         packet = new DatagramPacket(buf, buf.length);
-        mSocket.setSoTimeout(100);
+        mSocket.setSoTimeout(200);
         try {
             mSocket.receive(packet);
         } catch (SocketTimeoutException e){

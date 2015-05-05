@@ -66,7 +66,6 @@ public class MediaService extends Service{
     public void onCreate(){
         super.onCreate();
 
-        mSntpClient = new SntpClient();
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -96,6 +95,7 @@ public class MediaService extends Service{
                 new IntentFilter("service-interface"));
 
         mAudioTrackManager = new AudioTrackManager();
+        mSntpClient = new SntpClient(mAudioTrackManager);
 
         mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
 

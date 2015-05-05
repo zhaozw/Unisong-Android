@@ -80,7 +80,6 @@ public class SlaveReliabilityHandler {
             e.printStackTrace();
         }
 
-        Log.d(LOG_TAG , mDatagramSocket.toString());
 
         mTopPacket = 0;
         mPacketsReceived = new ArrayList<>();
@@ -167,8 +166,9 @@ public class SlaveReliabilityHandler {
         Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
         synchronized (mOutStream){
             try {
-                byte[] data = NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_REQUEST_ID} , ByteBuffer.allocate(4).putInt(packetID).array());
-                mOutStream.write(data , 0 , 5);
+                mOutStream.write(CONSTANTS.TCP_REQUEST_ID);
+                byte[] data = ByteBuffer.allocate(4).putInt(packetID).array();
+                mOutStream.write(data , 0 , 4);
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -216,8 +216,10 @@ public class SlaveReliabilityHandler {
         } catch (IOException e){
             e.printStackTrace();
         }
+
         try {
-            while (type != 0){
+            while (type != -1){
+                Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
                 switch (type){
                     case CONSTANTS.TCP_COMMAND_RETRANSMIT:
                         listenRetransmit();
@@ -241,6 +243,7 @@ public class SlaveReliabilityHandler {
 
     //Listens for the retransmit data/packet ID
     private void listenRetransmit() throws IOException {
+        Log.d(LOG_TAG , "Listening for Retransmit");
         byte[] data = new byte[4];
         if(mInStream.read(data) != -1) {
             int ID = ByteBuffer.wrap(data).getInt();
@@ -250,7 +253,8 @@ public class SlaveReliabilityHandler {
 
     //Listens for the song start data.
     private void listenSongStart() throws IOException{
-        byte[] data = new byte[9];
+        Log.d(LOG_TAG , "Song Start identifier started");
+        byte[] data = new byte[13];
 
         mCanRequest = true;
         try{
@@ -258,19 +262,21 @@ public class SlaveReliabilityHandler {
         } catch (IOException e){
             e.printStackTrace();
         }
-        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 4);
+        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 
         long startTime = ByteBuffer.wrap(playTimeArr).getLong();
 
-        byte[] channelsArr = Arrays.copyOfRange(data, 4, 8);
+        byte[] channelsArr = Arrays.copyOfRange(data, 8, 12);
 
         int channels = ByteBuffer.wrap(channelsArr).getInt();
 
-        mListener.startSong(startTime , channels, data[8] , 0);
+        mListener.startSong(startTime , channels, data[12] , 0);
+        Log.d(LOG_TAG , "Song Starting!");
     }
 
     private void listenSongInProgress() throws IOException{
-        byte[] data = new byte[9];
+        Log.d(LOG_TAG , "Song in progress");
+        byte[] data = new byte[17];
 
         mCanRequest = true;
         try{
@@ -279,20 +285,19 @@ public class SlaveReliabilityHandler {
             e.printStackTrace();
         }
 
-        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 4);
+        byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 
         long startTime = ByteBuffer.wrap(playTimeArr).getLong();
 
-        byte[] channelsArr = Arrays.copyOfRange(data, 4, 8);
+        byte[] channelsArr = Arrays.copyOfRange(data, 8, 12);
 
         int channels = ByteBuffer.wrap(channelsArr).getInt();
 
-
-        byte[] currentPacketArr = Arrays.copyOfRange(data, 8, 12);
+        byte[] currentPacketArr = Arrays.copyOfRange(data, 12, 16);
 
         int currentPacket = ByteBuffer.wrap(channelsArr).getInt();
 
-        mListener.startSong(startTime , channels, data[12] , currentPacket);
+        mListener.startSong(startTime , channels, data[16] , currentPacket);
 
         mTopPacket = currentPacket;
 

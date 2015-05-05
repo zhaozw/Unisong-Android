@@ -88,7 +88,6 @@ public class MasterReliabilityHandler {
                     Log.d(LOG_TAG , "Socket connected : " + socket.getInetAddress());
 
                     if(socket != null){
-                        startSocketListener(socket).start();
 
                         if(mBroadcaster.isStreamRunning()) {
                             sendSongInProgress(socket);
@@ -139,6 +138,8 @@ public class MasterReliabilityHandler {
         }
     }
 
+
+    //Hanldes the identifying byte and redirects it to the right method
     private void handleDataReceived(int identifier , Slave slave , InputStream inputStream){
         switch (identifier){
             case CONSTANTS.TCP_REQUEST_ID:
@@ -168,7 +169,7 @@ public class MasterReliabilityHandler {
     }
 
     //Checks to see if any of the slaves have the packet in question.
-    private boolean checkSlaves(int packetID){
+    public boolean checkSlaves(int packetID){
         List<Slave> slaves = mBroadcaster.getSlaves();
         //The list of slaves that have the packet in question
         List<Slave> havePacket = new ArrayList<>();
@@ -193,6 +194,7 @@ public class MasterReliabilityHandler {
         try {
             OutputStream stream = socket.getOutputStream();
             synchronized (stream) {
+                Log.d(LOG_TAG, "Instructing " + havePacket.get(index) + " ");
                 stream.write(CONSTANTS.TCP_COMMAND_RETRANSMIT);
                 stream.write(idArr);
             }
@@ -215,24 +217,47 @@ public class MasterReliabilityHandler {
 
     }
 
+    private long mSongStart;
+    private int mChannels;
+    private byte mStreamID;
     public void startSong(long songStart, int channels ,byte streamID ){
 
+        mSongStart = songStart;
+        mChannels = channels;
+        mStreamID = streamID;
 
-        byte[] startTime = ByteBuffer.allocate(8).putLong(songStart).array();
+        getStartThread().start();
 
-        byte[] channelsArr = ByteBuffer.allocate(4).putInt(channels).array();
+    }
+
+    private Thread getStartThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                notifyOfSongStart();
+            }
+        });
+    }
+
+    private void notifyOfSongStart(){
+        byte[] startTime = ByteBuffer.allocate(8).putLong(mSongStart).array();
+
+        byte[] channelsArr = ByteBuffer.allocate(4).putInt(mChannels).array();
 
         startTime= NetworkUtilities.combineArrays(startTime, channelsArr);
 
-        byte[] data = new byte[]{ streamID};
+        byte[] data = new byte[]{ mStreamID};
 
         data = NetworkUtilities.combineArrays(startTime, data);
 
+
         for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+            Log.d(LOG_TAG , "Starting song for slave : " + entry.getKey() );
             Socket socket = entry.getValue();
             synchronized (socket){
                 try {
                     OutputStream outputStream = socket.getOutputStream();
+                    outputStream.write(CONSTANTS.TCP_SONG_START);
                     outputStream.write(data);
 
                 } catch (IOException e){
@@ -260,6 +285,7 @@ public class MasterReliabilityHandler {
             startTime = NetworkUtilities.combineArrays(startTime, currentPacketArr);
             data = NetworkUtilities.combineArrays(startTime, data);
 
+            stream.write(CONSTANTS.TCP_SONG_IN_PROGRESS);
             stream.write(data);
 
         } catch (IOException e){

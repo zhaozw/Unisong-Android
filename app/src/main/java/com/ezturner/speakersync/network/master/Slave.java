@@ -7,7 +7,9 @@ import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ezturner on 4/29/2015.
@@ -19,6 +21,7 @@ public class Slave {
 
     //A list of all of the packets that this slave has received and has in memory.
     private List<Integer> mPacketsReceived;
+    private Map<Integer, Long> mPacketsRebroadcasted;
 
     public Slave(String ip){
         try {
@@ -28,17 +31,29 @@ public class Slave {
             Log.e(LOG_TAG, "Unknown host address when creating slave : " + ip);
         }
 
+        mPacketsRebroadcasted = new HashMap<>();
         mPacketsReceived = new ArrayList<>();
     }
 
     public void packetReceived(int ID){
         mPacketsReceived.add(ID);
+        if(mPacketsRebroadcasted.containsKey(ID)){
+            mPacketsRebroadcasted.remove(ID);
+        }
     }
 
     public boolean hasPacket(int ID){
         return mPacketsReceived.contains(ID);
     }
 
+    public void packetHasBeenRebroadcasted(int ID){
+        if(!mPacketsReceived.contains(ID)) {
+            mPacketsRebroadcasted.put(ID, System.currentTimeMillis());
+        }
+    }
 
+    public String toString(){
+        return "Slave, IP: " + mAddress.toString();
+    }
 
 }

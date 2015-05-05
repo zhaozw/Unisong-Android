@@ -180,8 +180,6 @@ public class AudioTrackManager {
 
     private int mTest = 0;
 
-
-
     public void stopPlaying(){
         mIsPlaying = false;
     }

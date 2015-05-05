@@ -62,9 +62,10 @@ public class SlaveDecoder {
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
         sampleRate = 44100;
+        decode();
     }
 
-    public void encode(){
+    public void decode(){
         mFrames = new HashMap<>();
         mEncodeThread = getDecode();
         mEncodeThread.start();
@@ -74,7 +75,7 @@ public class SlaveDecoder {
         return new Thread(new Runnable()  {
             public void run() {
                 try {
-                    decode();
+                    decodeMain();
                 } catch (IOException e){
                     e.printStackTrace();
                 }
@@ -92,7 +93,7 @@ public class SlaveDecoder {
     private int mDataIndex = 0;
 
 
-    private void decode() throws IOException {
+    private void decodeMain() throws IOException {
 
         long startTime = System.currentTimeMillis();
 
@@ -330,6 +331,8 @@ public class SlaveDecoder {
     private void createFrame(byte[] data){
         long bitsProcessed = mSamples * 8000;
         long playTime = bitsProcessed  / mOutputBitrate;
+
+
 
         AudioFrame frame = new AudioFrame(data, mCurrentID , playTime);
         mCurrentID++;

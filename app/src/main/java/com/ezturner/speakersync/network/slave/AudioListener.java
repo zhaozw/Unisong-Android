@@ -152,7 +152,7 @@ public class AudioListener {
         mPacketToWrite = 1;
 
         Log.d(LOG_TAG , "Listening from master: " + master.getIP().toString().substring(1) + ":"  + master.getPort());
-        mSntpClient = master.getClient();
+
         mPackets = convertPackets(master.getPackets());
         mMaster = master;
 
@@ -347,7 +347,7 @@ public class AudioListener {
         if(mTimeOffset == -9999){
 
         }
-        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
+//        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
 
         mBridge.addFrame(frame);
         return fp;
@@ -366,6 +366,7 @@ public class AudioListener {
         mBridge.setDecoder(mSlaveDecoder);
 
         mFirstFrame = currentPacket;
+
 
         if(mTimeOffset != -9999){
             mBridge.startSong(mStartTime , currentPacket);

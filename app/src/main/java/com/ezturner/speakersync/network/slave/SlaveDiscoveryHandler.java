@@ -124,7 +124,7 @@ public class SlaveDiscoveryHandler {
                 //Creates an SntpClient
                 mTempMasters.add(master);
 
-                master.addClient(new SntpClient(addr.toString() , mParent));
+
 
                     try {
                         DatagramSocket socket = new DatagramSocket(port);
