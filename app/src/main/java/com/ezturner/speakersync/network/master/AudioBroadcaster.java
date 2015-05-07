@@ -4,7 +4,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.ezturner.speakersync.MediaService;
-import com.ezturner.speakersync.audio.AudioFileReader;
+import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.CONSTANTS;
@@ -59,7 +59,7 @@ public class AudioBroadcaster {
     private ArrayList<NetworkPacket> mPackets;
 
     //The object that handles all reliability stuff
-    private MasterReliabilityHandler mReliabilityHandlder;
+    private MasterTCPHandler mReliabilityHandlder;
 
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte mStreamID;
@@ -163,7 +163,7 @@ public class AudioBroadcaster {
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
-            mReliabilityHandlder = new MasterReliabilityHandler(this);
+            mReliabilityHandlder = new MasterTCPHandler(this);
 
             //Start the NTP server for syncing the playback
             mNtpServer = new NtpServer();

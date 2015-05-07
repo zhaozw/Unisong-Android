@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.ezturner.speakersync.activity.MusicPlayer.Tabs.SlidingTabLayout
+            <com.ezturner.speakersync.activity.musicplayer.Tabs.SlidingTabLayout
                 android:id="@+id/player_tabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>

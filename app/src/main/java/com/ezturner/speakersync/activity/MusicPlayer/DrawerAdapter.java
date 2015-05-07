@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.MusicPlayer;
+package com.ezturner.speakersync.activity.musicplayer;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -9,9 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ezturner.speakersync.R;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by Work on 4/9/2015.

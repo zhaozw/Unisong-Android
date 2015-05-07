@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.MusicPlayer.MusicSelect;
+package com.ezturner.speakersync.activity.musicplayer.MusicSelect;
 
 /**
  * Created by Ethan on 2/26/2015.

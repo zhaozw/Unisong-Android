@@ -2,7 +2,7 @@ package com.ezturner.speakersync.network.slave;
 
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.SlaveDecoder;
+import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.ReaderBridge;
 
 import java.util.ArrayList;
@@ -39,7 +39,8 @@ public class ListenerBridge extends ReaderBridge{
     }
 
     public void startSong(long startTime , int currentPacket){
-        mSlaveDecoder.setCurrentFrame(currentPacket);
+        mSlaveDecoder.decode(currentPacket);
+        mSlaveDecoder.setSongStartTime(startTime);
         mManager.startSong(startTime);
     }
 
@@ -52,6 +53,7 @@ public class ListenerBridge extends ReaderBridge{
     }
 
     public void setOffset(long offset){
+        mSlaveDecoder.setOffset(offset);
         mManager.setOffset(offset);
     }
 

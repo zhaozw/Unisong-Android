@@ -3,15 +3,11 @@ package com.ezturner.speakersync.network.master;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
-import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -27,7 +23,7 @@ import java.util.Random;
 /**
  * Created by Ethan on 2/11/2015.
  */
-public class MasterReliabilityHandler {
+public class MasterTCPHandler {
 
     private String LOG_TAG = "MasterReliabilityHandler";
 
@@ -51,7 +47,7 @@ public class MasterReliabilityHandler {
     private Random mRandom;
     //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
-    public MasterReliabilityHandler(AudioBroadcaster broadcaster){
+    public MasterTCPHandler(AudioBroadcaster broadcaster){
 
         mBroadcaster = broadcaster;
 
@@ -144,11 +140,11 @@ public class MasterReliabilityHandler {
     //Hanldes the identifying byte and redirects it to the right method
     private void handleDataReceived(int identifier , Slave slave , InputStream inputStream){
         switch (identifier){
-            case CONSTANTS.TCP_REQUEST_ID:
+            case CONSTANTS.TCP_REQUEST:
                 int packetID = getInt(inputStream);
                 if(packetID != -1 || !checkSlaves(packetID))  mBroadcaster.rebroadcastPacket(packetID);
                 break;
-            case CONSTANTS.TCP_ACK_ID:
+            case CONSTANTS.TCP_ACK:
                 int ID = getInt(inputStream);
                 if(ID != -1)    slave.packetReceived(ID);
                 break;

@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.MusicPlayer;
+package com.ezturner.speakersync.activity.musicplayer;
 
 
 import android.content.Intent;
@@ -23,7 +23,7 @@ import android.widget.Toast;
 
 import com.ezturner.speakersync.activity.NavigationDrawerFragment;
 import com.ezturner.speakersync.R;
-import com.ezturner.speakersync.activity.MusicPlayer.Tabs.SlidingTabLayout;
+import com.ezturner.speakersync.activity.musicplayer.Tabs.SlidingTabLayout;
 
 /**
  * Created by ezturner on 4/8/2015.

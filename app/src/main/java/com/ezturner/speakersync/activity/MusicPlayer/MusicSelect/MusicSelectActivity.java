@@ -1,21 +1,11 @@
-package com.ezturner.speakersync.activity.MusicPlayer.MusicSelect;
+package com.ezturner.speakersync.activity.musicplayer.MusicSelect;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.ListView;
 
 import com.ezturner.speakersync.R;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Ethan on 2/26/2015.

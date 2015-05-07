@@ -47,9 +47,10 @@ public class CONSTANTS {
 
     public static final int DELAY = 500;
 
-    public static final byte TCP_ACK_ID = 1;
+    //The flag bytes for the TCP packets/communications
+    public static final byte TCP_ACK = 1;
 
-    public static final byte TCP_REQUEST_ID = 2;
+    public static final byte TCP_REQUEST = 2;
 
     public static final byte TCP_COMMAND_RETRANSMIT = 3;
 
@@ -57,7 +58,18 @@ public class CONSTANTS {
 
     public static final byte TCP_SONG_IN_PROGRESS = 5;
 
-    public static final byte TCP_PACKET_RETRANSMIT = 6;
+    public static final byte TCP_FRAME = 6;
+
+    public static final byte TCP_SWITCH_MASTER = 7;
+
+    public static final byte TCP_PAUSE = 8;
+
+    public static final byte TCP_SEEK = 9;
+
+    //The byte that will be sent to a new master
+    public static final byte TCP_ASSIGN_MASTER = 10;
+
+    public static final byte TCP_END_SESSION = 11;
 
 
 }

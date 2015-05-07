@@ -3,14 +3,12 @@ package com.ezturner.speakersync.network.slave;
 import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
-import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.SlaveDecoder;
+import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.ntp.SntpClient;
-import com.ezturner.speakersync.network.packets.AudioDataPacket;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import com.ezturner.speakersync.network.packets.SongStartPacket;
@@ -22,7 +20,6 @@ import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -75,7 +72,7 @@ public class AudioListener {
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
 
     //The Slave reliability handler which handles packet reliability
-    private SlaveReliabilityHandler mSlaveReliabilityHandler;
+    private SlaveTCPHandler mSlaveReliabilityHandler;
 
     //The activity context
     private Context mContext;
@@ -170,7 +167,7 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
-        mSlaveReliabilityHandler = new SlaveReliabilityHandler(master.getIP() , master.getPort() , this);
+        mSlaveReliabilityHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this);
 
         mListenThread = getListenThread();
         mListenThread.start();

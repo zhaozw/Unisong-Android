@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ezturner.speakersync.activity.MusicPlayer.Tabs;
+package com.ezturner.speakersync.activity.musicplayer.Tabs;
         import android.R;
         import android.content.Context;
         import android.graphics.Canvas;

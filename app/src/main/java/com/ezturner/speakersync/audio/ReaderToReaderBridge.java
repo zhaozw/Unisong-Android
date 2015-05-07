@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.audio;
 
+import com.ezturner.speakersync.audio.master.AACEncoder;
+
 import java.util.ArrayList;
 
 /**

@@ -9,11 +9,9 @@ import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -21,7 +19,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +26,7 @@ import java.util.Map;
 /**
  * Created by ezturner on 2/16/2015.
  */
-public class SlaveReliabilityHandler {
+public class SlaveTCPHandler {
 
     private String LOG_TAG = "SlaveReliabilityHandler";
 
@@ -71,7 +68,7 @@ public class SlaveReliabilityHandler {
     private boolean mCanRequest;
 
 
-    public SlaveReliabilityHandler(InetAddress address, int broadcastPort , AudioListener listener){
+    public SlaveTCPHandler(InetAddress address, int broadcastPort, AudioListener listener){
         mMasterAddress = address;
 
         mListener = listener;
@@ -168,7 +165,7 @@ public class SlaveReliabilityHandler {
         Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
         synchronized (mOutStream){
             try {
-                mOutStream.write(CONSTANTS.TCP_REQUEST_ID);
+                mOutStream.write(CONSTANTS.TCP_REQUEST);
                 byte[] data = ByteBuffer.allocate(4).putInt(packetID).array();
                 mOutStream.write(data , 0 , 4);
             } catch (IOException e){
@@ -219,74 +216,43 @@ public class SlaveReliabilityHandler {
             e.printStackTrace();
         }
 
-        try {
-            while (type != -1){
-                Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
-                switch (type){
-                    case CONSTANTS.TCP_COMMAND_RETRANSMIT:
-                        listenRetransmit();
-                        break;
-                    case CONSTANTS.TCP_SONG_START:
-                        listenSongStart();
-                        break;
-                    case CONSTANTS.TCP_SONG_IN_PROGRESS:
-                        listenSongInProgress();
-                        break;
 
-                }
+        while (type != -1){
+//            Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
+            switch (type){
+                case CONSTANTS.TCP_COMMAND_RETRANSMIT:
+                    listenRetransmit();
+                    break;
+                case CONSTANTS.TCP_SONG_START:
+                    listenSongStart();
+                    break;
+                case CONSTANTS.TCP_SONG_IN_PROGRESS:
+                    listenSongInProgress();
+                    break;
+                case CONSTANTS.TCP_FRAME:
+                    listenFrame();
+                    break;
+                case CONSTANTS.TCP_PAUSE:
+                    listenPause();
+                    break;
+                case CONSTANTS.TCP_END_SESSION:
+                    endSession();
+                    break;
+                //This Slave is now the session master.
+                case CONSTANTS.TCP_ASSIGN_MASTER:
+                    assignMaster();
+                    break;
+                case CONSTANTS.TCP_SEEK:
+                    listenSeek();
+                    break;
+                case CONSTANTS.TCP_SWITCH_MASTER:
+                    switchMaster();
+                    break;
+
 
             }
-
-        } catch (IOException e){
-            //TODO: figure out when this is called and how to deal with it
-            e.printStackTrace();
-        }
-    }
-
-    //Listens for the retransmit data/packet ID
-    private void listenRetransmit() throws IOException {
-        Log.d(LOG_TAG , "Listening for Retransmit");
-        byte[] data = new byte[4];
-        if(mInStream.read(data) != -1) {
-            int ID = ByteBuffer.wrap(data).getInt();
-            retransmitPacket(ID);
-        }
-    }
-
-    //Listens for the song start data.
-    private void listenSongStart() throws IOException{
-        Log.d(LOG_TAG , "Song Start identifier started");
-
-        TCPSongStartPacket packet = null;
-
-        mCanRequest = true;
-        try{
-            packet = new TCPSongStartPacket(mInStream);
-        } catch (IOException e){
-            e.printStackTrace();
         }
 
-
-        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , 0);
-        Log.d(LOG_TAG, "Song Starting!");
-    }
-
-    private void listenSongInProgress() throws IOException{
-        Log.d(LOG_TAG , "Song in progress");
-
-        TCPSongInProgressPacket packet = null;
-        mCanRequest = true;
-        try{
-            packet = new TCPSongInProgressPacket(mInStream);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
-
-
-        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , packet.getCurrentPacket());
-
-        mTopPacket = packet.getCurrentPacket();
 
     }
 
@@ -322,7 +288,7 @@ public class SlaveReliabilityHandler {
         }
 
         synchronized (mPacketsToRequest) {
-            if (packetID > mTopPacket && mCanRequest) {
+            if (packetID > mTopPacket && mCanRequest && packetID < mTopPacket + 100) {
                 for (int i = mTopPacket; i < packetID; i++){
                     if (!mPacketsReceived.contains(i)){
                         mPacketsToRequest.put(i, System.currentTimeMillis());
@@ -341,12 +307,87 @@ public class SlaveReliabilityHandler {
     private void acknowledgePacket(int packetID){
         synchronized (mOutStream){
             try {
-                mOutStream.write(NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_ACK_ID} , ByteBuffer.allocate(4).putInt(packetID).array()) , 0 , 5);
+                mOutStream.write(NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_ACK} , ByteBuffer.allocate(4).putInt(packetID).array()) , 0 , 5);
             } catch (IOException e){
                 e.printStackTrace();
             }
         }
     }
 
+    //Listens for the Seek command for the song
+    private void listenSeek(){
+
+    }
+    //Listens for the retransmit data/packet ID
+    private void listenRetransmit(){
+        Log.d(LOG_TAG , "Listening for Retransmit");
+        byte[] data = new byte[4];
+        try {
+            if (mInStream.read(data) != -1) {
+                int ID = ByteBuffer.wrap(data).getInt();
+                retransmitPacket(ID);
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    //Listens for the song start data.
+    private void listenSongStart(){
+        Log.d(LOG_TAG, "Song Start identifier started");
+
+        TCPSongStartPacket packet = null;
+
+        mCanRequest = true;
+        try{
+            packet = new TCPSongStartPacket(mInStream);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+
+        mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID(), 0);
+        Log.d(LOG_TAG, "Song Starting!");
+    }
+
+    private void listenSongInProgress(){
+        Log.d(LOG_TAG , "Song in progress");
+
+        TCPSongInProgressPacket packet = null;
+        mCanRequest = true;
+        try{
+            packet = new TCPSongInProgressPacket(mInStream);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+
+
+        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , packet.getCurrentPacket());
+
+        mTopPacket = packet.getCurrentPacket();
+
+    }
+
+    private void listenFrame(){
+
+    }
+
+    private void listenPause(){
+
+    }
+
+    private void switchMaster(){
+
+    }
+
+    //Sets this as the master
+    private void assignMaster(){
+
+    }
+
+    private void endSession(){
+
+    }
 
 }

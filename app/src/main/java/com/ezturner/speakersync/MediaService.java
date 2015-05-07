@@ -12,19 +12,16 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.ezturner.speakersync.audio.AudioFileReader;
+import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
-import com.ezturner.speakersync.audio.SlaveDecoder;
+import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.slave.ListenerBridge;
-import com.ezturner.speakersync.network.slave.NetworkInputStream;
-
-import java.io.IOException;
 
 /**
  * Created by Ethan on 1/25/2015.
