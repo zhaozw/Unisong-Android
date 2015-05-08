@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.musicplayer.MusicSelect;
+package com.ezturner.speakersync.activity.MusicPlayer.MusicSelect;
 
 import android.app.Activity;
 import android.content.Intent;

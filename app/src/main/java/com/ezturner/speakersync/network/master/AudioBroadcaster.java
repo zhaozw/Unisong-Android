@@ -220,9 +220,6 @@ public class AudioBroadcaster {
 
 
             long begin = System.currentTimeMillis();
-            if(mNextPacketSendID == 0){
-                mReliabilityHandlder.startSong(mSongStartTime, mChannels , mStreamID);
-            }
 
             NetworkPacket packet;
             synchronized (mPackets){
@@ -364,6 +361,7 @@ public class AudioBroadcaster {
             e.printStackTrace();
         }
 
+        mReliabilityHandlder.startSong(mSongStartTime, mChannels , mStreamID);
         mIsBroadcasting = true;
         Log.d(LOG_TAG, "Schedule task time!");
         mWorker.schedule(mPacketSender, 500, TimeUnit.MILLISECONDS);

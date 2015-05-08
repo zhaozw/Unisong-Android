@@ -114,7 +114,7 @@ public class AudioListener {
 
     private int mFirstFrame;
 
-    public AudioListener(Context context ,  ListenerBridge bridge , SntpClient client){
+    public AudioListener(Context context ,  ListenerBridge bridge , SntpClient client, SlaveDecoder decoder){
 
         if(client.hasOffset()){
             mTimeOffset = (long)client.getOffset();
@@ -134,6 +134,7 @@ public class AudioListener {
 
         mIsListening = false;
 
+        mSlaveDecoder = decoder;
 
         mUnOffsetedFrames = new ArrayList<AudioFrame>();
 
@@ -174,6 +175,7 @@ public class AudioListener {
 
         mProcessingThread = getProcessingThread();
         mProcessingThread.start();
+
 
 
         mUnfinishedFrames = new HashMap<Integer , AudioFrame>();
@@ -359,8 +361,6 @@ public class AudioListener {
 
         mStartSongReceived = true;
 
-        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mBridge.getManager()) , mChannels);
-        mBridge.setDecoder(mSlaveDecoder);
 
         mFirstFrame = currentPacket;
 

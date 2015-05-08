@@ -12,6 +12,7 @@ import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.ReaderToReaderBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.audio.master.AACEncoder;
+import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.slave.AudioListener;
 import com.ezturner.speakersync.network.slave.NetworkInputStream;
 
@@ -72,8 +73,6 @@ public class AudioFileReader {
     private Thread mDecodeThread;
 
     private boolean mRunning;
-
-    private int mOutputBitrate;
 
     //The encoder that turns the PCM data into AAC for transmit
     private AACEncoder mEncoder;
@@ -202,8 +201,6 @@ public class AudioFileReader {
         int noOutputCounter = 0;
         int noOutputCounterLimit = 10;
 
-        mOutputBitrate = 1441200;
-
         mStop = false;
 
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
@@ -287,14 +284,14 @@ public class AudioFileReader {
                     int outputSampleRate = outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
 
                     mFirstOutputChange = false;
-                    Log.d(LOG_TAG , "Starting AAC Encoder now");
+                    Log.d(LOG_TAG, "Starting AAC Encoder now");
 
 
                     mBroadcasterBridge.setAudioInfo(outputChannels);
-                    Log.d(LOG_TAG , "Output channels are : " + outputChannels);
+                    Log.d(LOG_TAG, "Output channels are : " + outputChannels);
                     mTrackManagerBridge.createAudioTrack(outputSampleRate , outputChannels);
 
-                    mOutputBitrate = outputChannels * outputSampleRate * 16;
+                    //TODO: Ensure that the output format is always 2 channels and 44100 sample rate
                     mEncoder.encode(format);
                 }
             } else {
@@ -361,8 +358,8 @@ public class AudioFileReader {
 
     private long mSamples =0;
     private void createPCMFrame(byte[] data ){
-        long playTime = (mSamples * 8000) / mOutputBitrate;
-        long length = (data.length * 8000) / mOutputBitrate;
+        long playTime = (mSamples * 8000) / CONSTANTS.PCM_BITRATE;
+        long length = (data.length * 8000) / CONSTANTS.PCM_BITRATE;
 //        if()
 //        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime, length);

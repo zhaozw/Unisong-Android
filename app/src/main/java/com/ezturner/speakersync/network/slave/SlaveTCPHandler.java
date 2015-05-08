@@ -6,8 +6,15 @@ import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.master.Slave;
+import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPPausePacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPSwitchMasterPacket;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,7 +35,7 @@ import java.util.Map;
  */
 public class SlaveTCPHandler {
 
-    private String LOG_TAG = "SlaveReliabilityHandler";
+    private String LOG_TAG = SlaveTCPHandler.class.getSimpleName();
 
     //The address of the Master that we will connect to.
     private InetAddress mMasterAddress;
@@ -163,15 +170,8 @@ public class SlaveTCPHandler {
         }
 
         Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
-        synchronized (mOutStream){
-            try {
-                mOutStream.write(CONSTANTS.TCP_REQUEST);
-                byte[] data = ByteBuffer.allocate(4).putInt(packetID).array();
-                mOutStream.write(data , 0 , 4);
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
+
+        TCPRequestPacket.send(mOutStream, packetID);
 
         if(!mPacketsRecentlyRequested.containsKey(packetID)) {
             mPacketsRecentlyRequested.put(packetID, System.currentTimeMillis());
@@ -218,7 +218,7 @@ public class SlaveTCPHandler {
 
 
         while (type != -1){
-//            Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
+            Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
             switch (type){
                 case CONSTANTS.TCP_COMMAND_RETRANSMIT:
                     listenRetransmit();
@@ -248,8 +248,6 @@ public class SlaveTCPHandler {
                 case CONSTANTS.TCP_SWITCH_MASTER:
                     switchMaster();
                     break;
-
-
             }
         }
 
@@ -305,13 +303,7 @@ public class SlaveTCPHandler {
     }
 
     private void acknowledgePacket(int packetID){
-        synchronized (mOutStream){
-            try {
-                mOutStream.write(NetworkUtilities.combineArrays(new byte[]{CONSTANTS.TCP_ACK} , ByteBuffer.allocate(4).putInt(packetID).array()) , 0 , 5);
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
+        TCPAcknowledgePacket.send(mOutStream, packetID);
     }
 
     //Listens for the Seek command for the song
@@ -320,31 +312,19 @@ public class SlaveTCPHandler {
     }
     //Listens for the retransmit data/packet ID
     private void listenRetransmit(){
-        Log.d(LOG_TAG , "Listening for Retransmit");
-        byte[] data = new byte[4];
-        try {
-            if (mInStream.read(data) != -1) {
-                int ID = ByteBuffer.wrap(data).getInt();
-                retransmitPacket(ID);
-            }
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        Log.d(LOG_TAG, "Listening for Retransmit");
+
+        TCPRetransmitPacket packet = new TCPRetransmitPacket(mInStream);
+        retransmitPacket(packet.getPacketToRetransmit());
     }
 
     //Listens for the song start data.
     private void listenSongStart(){
-        Log.d(LOG_TAG, "Song Start identifier started");
+        Log.d(LOG_TAG, "Song Start identifier received");
 
-        TCPSongStartPacket packet = null;
+        TCPSongStartPacket packet = new TCPSongStartPacket(mInStream);
 
         mCanRequest = true;
-        try{
-            packet = new TCPSongStartPacket(mInStream);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
 
         mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID(), 0);
         Log.d(LOG_TAG, "Song Starting!");
@@ -353,14 +333,8 @@ public class SlaveTCPHandler {
     private void listenSongInProgress(){
         Log.d(LOG_TAG , "Song in progress");
 
-        TCPSongInProgressPacket packet = null;
+        TCPSongInProgressPacket packet = new TCPSongInProgressPacket(mInStream);
         mCanRequest = true;
-        try{
-            packet = new TCPSongInProgressPacket(mInStream);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
 
 
         mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , packet.getCurrentPacket());
@@ -370,14 +344,20 @@ public class SlaveTCPHandler {
     }
 
     private void listenFrame(){
+        TCPFramePacket packet = new TCPFramePacket(mInStream);
 
+        //TODO: handle frame here
     }
 
     private void listenPause(){
 
+        TCPPausePacket pausePacket = new TCPPausePacket(mInStream);
+
+        //TODO: handle pause
     }
 
     private void switchMaster(){
+        TCPSwitchMasterPacket switchMasterPacket = new TCPSwitchMasterPacket(mInStream);
 
     }
 

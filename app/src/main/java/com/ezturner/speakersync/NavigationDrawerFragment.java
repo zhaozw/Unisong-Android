@@ -15,7 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.ezturner.speakersync.activity.musicplayer.DrawerAdapter;
+import com.ezturner.speakersync.activity.MusicPlayer.DrawerAdapter;
 
 
 /**

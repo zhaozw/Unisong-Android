@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.musicplayer;
+package com.ezturner.speakersync.activity.MusicPlayer;
 
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;

@@ -3,6 +3,8 @@ package com.ezturner.speakersync.network.master;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
@@ -25,7 +27,7 @@ import java.util.Random;
  */
 public class MasterTCPHandler {
 
-    private String LOG_TAG = "MasterReliabilityHandler";
+    private String LOG_TAG = MasterTCPHandler.class.getSimpleName();
 
     //The listener for when a client joins the session and starts a TCP handshake
     private ServerSocket mServerSocket;
@@ -124,9 +126,8 @@ public class MasterTCPHandler {
         mSockets.put(slave, socket);
         InputStream is = socket.getInputStream();
 
-        byte[] inputArr = new byte[5];
 
-        int identifier = -2;
+        int identifier = -1;
         while((identifier = is.read()) != -1){
             handleDataReceived(identifier, slave , is);
         }
@@ -141,7 +142,7 @@ public class MasterTCPHandler {
     private void handleDataReceived(int identifier , Slave slave , InputStream inputStream){
         switch (identifier){
             case CONSTANTS.TCP_REQUEST:
-                int packetID = getInt(inputStream);
+                int packetID = new TCPRequestPacket(inputStream).getPacketRequested();
                 if(packetID != -1 || !checkSlaves(packetID))  mBroadcaster.rebroadcastPacket(packetID);
                 break;
             case CONSTANTS.TCP_ACK:
@@ -178,24 +179,23 @@ public class MasterTCPHandler {
                     havePacket.add(slave);
                 }
             }
-        }
-        if(havePacket.size() == 0){
-            return false;
+
+            //If no slaves have the packet return false, but if they all have it return true.
+            if(havePacket.size() == 0){
+                return false;
+            } else if( havePacket.size() == slaves.size()){
+                return true;
+            }
         }
 
 
         int index = mRandom.nextInt(havePacket.size());
 
         Socket socket = mSockets.get(havePacket.get(index));
-        byte[] idArr = ByteBuffer.allocate(4).putInt(packetID).array();
 
         try {
             OutputStream stream = socket.getOutputStream();
-            synchronized (stream) {
-                Log.d(LOG_TAG, "Instructing " + havePacket.get(index) + " ");
-                stream.write(CONSTANTS.TCP_COMMAND_RETRANSMIT);
-                stream.write(idArr);
-            }
+            TCPRetransmitPacket.send(stream, packetID);
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -220,6 +220,7 @@ public class MasterTCPHandler {
     private byte mStreamID;
     public void startSong(long songStart, int channels ,byte streamID ){
 
+
         mSongStart = songStart;
         mChannels = channels;
         mStreamID = streamID;
@@ -241,16 +242,18 @@ public class MasterTCPHandler {
         for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
             Log.d(LOG_TAG , "Starting song for slave : " + entry.getKey() );
             Socket socket = entry.getValue();
-            synchronized (socket){
-                try {
-                    OutputStream outputStream = socket.getOutputStream();
-                    TCPSongStartPacket.send(outputStream, mBroadcaster.getSongStartTime() ,
-                            mBroadcaster.getChannels() , mBroadcaster.getStreamID());
 
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
+            try {
+                OutputStream outputStream = socket.getOutputStream();
+
+
+                TCPSongStartPacket.send(outputStream, mBroadcaster.getSongStartTime(),
+                        mBroadcaster.getChannels(), mBroadcaster.getStreamID());
+            } catch (IOException e){
+                e.printStackTrace();
             }
+
+
 
         }
     }

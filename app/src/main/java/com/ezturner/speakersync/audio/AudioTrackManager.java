@@ -109,18 +109,18 @@ public class AudioTrackManager {
 
 
 
-            if(difference <= -10){
+            if(difference <= -30){
                 long before = System.currentTimeMillis();
                 synchronized (this) {
                     try {
-                        this.wait(Math.abs(difference - 2));
+                        this.wait(Math.abs(difference));
                     } catch (InterruptedException e) {
 
                     }
                 }
             } else {
                 int index = mFrameToPlay;
-//                Log.d(LOG_TAG , "Starting to adjust");
+
                 while (difference >= 30) {
                     AudioFrame nextFrame = null;
                     synchronized (mFrames) {
@@ -136,6 +136,7 @@ public class AudioTrackManager {
                 }
                 mFrameToPlay = index;
             }
+
 
             //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();

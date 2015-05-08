@@ -8,36 +8,35 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
- * The packet for seeking from one time in a song to another
- * Created by ezturner on 5/5/2015.
+ * Created by Ethan on 5/7/2015.
  */
-public class TCPSeekPacket {
+public class TCPRequestPacket {
 
-    //The frame that the host will seek to
-    private int mFrameToDecodeNext;
+    //The packet that has been requested
+    private int mPacketID;
 
-    public TCPSeekPacket(InputStream stream){
+    public TCPRequestPacket(InputStream stream){
         receive(stream);
     }
 
-    public static void send(OutputStream stream, int frameToDecodeNext){
-        byte[] data = ByteBuffer.allocate(4).putInt(frameToDecodeNext).array();
+    public static void send(OutputStream stream , int packetID){
 
-        synchronized (stream) {
+        byte[] data = ByteBuffer.allocate(4).putInt(packetID).array();
+
+        synchronized (stream){
             try {
-                stream.write(CONSTANTS.TCP_SEEK);
+                stream.write(CONSTANTS.TCP_REQUEST);
                 stream.write(data);
             } catch (IOException e){
                 e.printStackTrace();
             }
         }
-
     }
 
     private void receive(InputStream stream){
         byte[] data = new byte[4];
 
-        synchronized (stream) {
+        synchronized (stream){
             try {
                 stream.read(data);
             } catch (IOException e){
@@ -45,11 +44,12 @@ public class TCPSeekPacket {
             }
         }
 
-        mFrameToDecodeNext = ByteBuffer.wrap(data).getInt();
+        mPacketID = ByteBuffer.wrap(data).getInt();
 
     }
 
-    public int getFrameToDecodeNext(){
-        return mFrameToDecodeNext;
+
+    public int getPacketRequested(){
+        return mPacketID;
     }
 }

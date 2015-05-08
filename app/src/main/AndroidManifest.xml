@@ -33,11 +33,11 @@
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name=".activity.musicplayer.MusicPlayer"
+            android:name=".activity.MusicPlayer.MusicPlayer"
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name=".activity.musicplayer.MusicSelect.MusicSelectActivity"
+            android:name=".activity.MusicPlayer.MusicSelect.MusicSelectActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>
@@ -45,9 +45,9 @@
         <service android:name=".MediaService" />
 
         <activity
-            android:name=".activity.musicplayer.MusicPlaying"
+            android:name=".activity.MusicPlayer.MusicPlaying"
             android:label="@string/title_activity_music_playing" >
-            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".activity.musicplayer.MusicPlayer" />
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".activity.MusicPlayer.MusicPlayer" />
         </activity>
     </application>
 

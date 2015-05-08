@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.musicplayer.MusicSelect;
+package com.ezturner.speakersync.activity.MusicPlayer.MusicSelect;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;

@@ -71,5 +71,8 @@ public class CONSTANTS {
 
     public static final byte TCP_END_SESSION = 11;
 
+    public static final byte TCP_LAST_FRAME = 12;
+
+    public static final int PCM_BITRATE = 1441200;
 
 }

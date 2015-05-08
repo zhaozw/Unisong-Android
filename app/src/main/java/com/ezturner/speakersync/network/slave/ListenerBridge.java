@@ -48,10 +48,6 @@ public class ListenerBridge extends ReaderBridge{
         mManager.lastPacket();
     }
 
-    public void setDecoderInfo(String mime, int sampleRate, int channels, int bitrate){
-//        mSlaveDecoder.initializeDecoder(mime, sampleRate , channels , bitrate);
-    }
-
     public void setOffset(long offset){
         mSlaveDecoder.setOffset(offset);
         mManager.setOffset(offset);

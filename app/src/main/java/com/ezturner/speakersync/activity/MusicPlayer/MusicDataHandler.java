@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.activity.musicplayer;
+package com.ezturner.speakersync.activity.MusicPlayer;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -6,11 +6,11 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import com.ezturner.speakersync.activity.musicplayer.MusicSelect.Album;
-import com.ezturner.speakersync.activity.musicplayer.MusicSelect.Artist;
-import com.ezturner.speakersync.activity.musicplayer.MusicSelect.MusicData;
-import com.ezturner.speakersync.activity.musicplayer.MusicSelect.Playlist;
-import com.ezturner.speakersync.activity.musicplayer.MusicSelect.Song;
+import com.ezturner.speakersync.activity.MusicPlayer.MusicSelect.Album;
+import com.ezturner.speakersync.activity.MusicPlayer.MusicSelect.Artist;
+import com.ezturner.speakersync.activity.MusicPlayer.MusicSelect.MusicData;
+import com.ezturner.speakersync.activity.MusicPlayer.MusicSelect.Playlist;
+import com.ezturner.speakersync.activity.MusicPlayer.MusicSelect.Song;
 
 import java.util.ArrayList;
 import java.util.HashMap;

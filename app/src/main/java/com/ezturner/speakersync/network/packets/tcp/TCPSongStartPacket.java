@@ -27,12 +27,12 @@ public class TCPSongStartPacket {
 
     //The constructor calls receive, which takes in data and populates the variables to be
     // returned with the getter methods.
-    public TCPSongStartPacket(InputStream stream) throws IOException{
+    public TCPSongStartPacket(InputStream stream){
         receive(stream);
     }
 
     //The send method is static as it is merely a place to be able to modify both sides of the code easily.
-    public static void send(OutputStream stream, long songStart, int channels , byte streamID) throws IOException{
+    public static void send(OutputStream stream, long songStart, int channels , byte streamID){
 
         byte[] songStartArr = ByteBuffer.allocate(8).putLong(songStart).array();
 
@@ -44,17 +44,29 @@ public class TCPSongStartPacket {
 
         data = NetworkUtilities.combineArrays(songStartArr, data);
 
-        stream.write(CONSTANTS.TCP_SONG_START);
-        stream.write(data);
+
+        synchronized (stream) {
+            try {
+                stream.write(CONSTANTS.TCP_SONG_START);
+                stream.write(data);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
 
 
-    private void receive(InputStream stream) throws IOException{
+    private void receive(InputStream stream){
         byte[] data = new byte[13];
 
         synchronized (stream){
-            stream.read(data);
+            try {
+                stream.read(data);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
         }
+
         byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 
         mSongStartTime = ByteBuffer.wrap(playTimeArr).getLong();

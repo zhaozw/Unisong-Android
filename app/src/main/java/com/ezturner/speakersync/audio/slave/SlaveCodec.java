@@ -130,11 +130,14 @@ public class SlaveCodec {
 
             //TODO: test/check this out
             while(!mFrames.containsKey(mCurrentFrame)){
-                if(System.currentTimeMillis() - lastPlayTime >= 150 && mCurrentFrame != 0){
-                    if(info.size > 0) {
-                        mDecoder.createFrame(new byte[info.size]);
-                    }
+                /*TODO: fix and reimplement
+                if(System.currentTimeMillis() - lastPlayTime >= 150 && mCurrentFrame != 0 && info.size > 0){
+
+                    Log.d(LOG_TAG , "Creating blank PCM frame");
+
+                    mDecoder.createFrame(new byte[info.size]);
                     mCurrentFrame++;
+
                     if(!mFrames.containsKey(mCurrentFrame)){
                         synchronized (this){
                             try{
@@ -144,7 +147,9 @@ public class SlaveCodec {
                             }
                         }
                     }
-                } else {
+
+
+                } else {*/
                     synchronized (this){
                         try{
                             this.wait(20);
@@ -152,16 +157,14 @@ public class SlaveCodec {
 
                         }
                     }
-                }
+//                }
             }
             AudioFrame frame;
             synchronized (mFrames){
                 frame = mFrames.get(mCurrentFrame);
                 lastPlayTime = frame.getPlayTime() - mDecoder.getOffset() + mDecoder.getSongStartTime();
             }
-//            Log.d(LOG_TAG , "Time difference is: " + (System.currentTimeMillis() - frame.getPlayTime() + ));
-            long playTime = -1;
-            long length = -1;
+
 
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
@@ -188,7 +191,6 @@ public class SlaveCodec {
 
                 ByteBuffer buf = codecOutputBuffers[outputBufIndex];
 
-//                Log.d(LOG_TAG , "Output Buffer limit is : " + buf.limit());
                 final byte[] chunk = new byte[info.size];
                 buf.get(chunk);
                 buf.clear();

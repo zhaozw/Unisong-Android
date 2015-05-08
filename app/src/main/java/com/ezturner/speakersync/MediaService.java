@@ -124,9 +124,9 @@ public class MediaService extends Service{
 
 
     public void listener(){
-
-        ListenerBridge bridge = new ListenerBridge(null , mAudioTrackManager );
-        mListener = new AudioListener(this , bridge , mSntpClient);
+        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2);
+        ListenerBridge bridge = new ListenerBridge(mSlaveDecoder , mAudioTrackManager );
+        mListener = new AudioListener(this , bridge , mSntpClient , mSlaveDecoder);
 
 
     }

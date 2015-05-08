@@ -28,12 +28,12 @@ public class TCPSongInProgressPacket {
 
     //The constructor calls receive, which takes in data and populates the variables to be
     // returned with the getter methods.
-    public TCPSongInProgressPacket(InputStream stream) throws IOException{
+    public TCPSongInProgressPacket(InputStream stream) {
         receive(stream);
     }
 
     //Writes the Song In Progress information and identifier byte
-    public static void send(OutputStream stream, Long startTime , int channels, int currentPacketID, byte streamID) throws IOException{
+    public static void send(OutputStream stream, Long startTime , int channels, int currentPacketID, byte streamID) {
         byte[] startTimeArr = ByteBuffer.allocate(8).putLong(startTime).array();
 
         byte[] channelsArr = ByteBuffer.allocate(4).putInt(channels).array();
@@ -48,15 +48,26 @@ public class TCPSongInProgressPacket {
 
         data = NetworkUtilities.combineArrays(startTimeArr, data);
 
-        stream.write(CONSTANTS.TCP_SONG_IN_PROGRESS);
-        stream.write(data);
+
+        synchronized (stream) {
+            try {
+                stream.write(CONSTANTS.TCP_SONG_IN_PROGRESS);
+                stream.write(data);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
 
-    private void receive(InputStream stream) throws IOException{
+    private void receive(InputStream stream) {
         byte[] data = new byte[17];
 
         synchronized (stream){
-            stream.read(data);
+            try {
+                stream.read(data);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
         }
         byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 

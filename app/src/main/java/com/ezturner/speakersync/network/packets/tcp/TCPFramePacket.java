@@ -18,11 +18,11 @@ public class TCPFramePacket {
 
     private AudioFrame mFrame;
 
-    public TCPFramePacket(InputStream stream)throws IOException{
+    public TCPFramePacket(InputStream stream){
         receive(stream);
     }
 
-    public static void send(OutputStream stream , long playTime , byte streamID , int frameID, byte[] aacData) throws  IOException{
+    public static void send(OutputStream stream , long playTime , byte streamID , int frameID, byte[] aacData){
 
         //Throw the frame Id in a byte array, and throw all the other data in byte
         // arrays and combine them into the data that will go in the packet
@@ -38,15 +38,28 @@ public class TCPFramePacket {
 
         byte[] streamIDArr = NetworkUtilities.combineArrays(data ,new byte[]{streamID} );
 
-        stream.write(data);
 
-        stream.write(aacData);
+        synchronized (stream) {
+            try {
+                stream.write(CONSTANTS.TCP_FRAME);
+                stream.write(data);
+                stream.write(aacData);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
 
-    private void receive(InputStream stream) throws IOException{
+    private void receive(InputStream stream){
         byte[] data = new byte[17];
 
-        stream.read(data);
+        synchronized (stream) {
+            try {
+                stream.read(data);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
 
         byte[] frameIDArr = Arrays.copyOfRange(data, 0, 4);
 
@@ -64,7 +77,13 @@ public class TCPFramePacket {
 
         byte[] aacData = new byte[dataSize];
 
-        stream.read(aacData);
+        synchronized (stream) {
+            try {
+                stream.read(aacData);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
 
         mFrame = new AudioFrame(aacData , ID , playTime);
     }

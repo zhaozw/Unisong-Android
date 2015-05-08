@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
+import com.ezturner.speakersync.network.CONSTANTS;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,11 +14,11 @@ public class TCPSwitchMasterPacket {
     //The new Master's IP address
     private String mIP;
 
-    public TCPSwitchMasterPacket(InputStream stream) throws IOException{
+    public TCPSwitchMasterPacket(InputStream stream){
         receive(stream);
     }
 
-    public static void send(OutputStream stream, String IP) throws IOException{
+    public static void send(OutputStream stream, String IP){
         if(IP.contains("/")){
             IP = IP.substring(1);
         }
@@ -29,15 +31,30 @@ public class TCPSwitchMasterPacket {
             address[i] = Byte.decode(bytes[i]);
         }
 
-        stream.write(address);
+
+        synchronized (stream) {
+            try {
+                stream.write(CONSTANTS.TCP_SWITCH_MASTER);
+                stream.write(address);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
 
     }
 
 
-    private void receive(InputStream stream) throws IOException{
+    private void receive(InputStream stream){
         byte[] address= new byte[4];
 
-        stream.read(address);
+
+        synchronized (stream) {
+            try {
+                stream.read(address);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
 
         mIP = address[0] + "." + address[1] + "." + address[2] + "." + address[3];
     }

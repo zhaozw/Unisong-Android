@@ -8,6 +8,7 @@ import android.util.Log;
 import com.ezturner.speakersync.Lame;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
+import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.slave.NetworkInputStream;
 
 import java.io.IOException;
@@ -57,7 +58,6 @@ public class SlaveDecoder {
 
         mSlaveCodec = new SlaveCodec(this, channels , mFrames);
 
-        mOutputBitrate = 128000;
     }
 
     public void decode(int frame){
@@ -82,11 +82,9 @@ public class SlaveDecoder {
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     public void createFrame(byte[] data){
         long bitsProcessed = mSamples * 8000;
-        long playTime = bitsProcessed  / mOutputBitrate + mTimeAdjust;
+        long playTime = bitsProcessed  / CONSTANTS.PCM_BITRATE + mTimeAdjust;
 
 
-
-        Log.d(LOG_TAG , "PCM Data is : " + data.length + " bytes long" );
         AudioFrame frame = new AudioFrame(data, mCurrentID , playTime);
         mCurrentID++;
 

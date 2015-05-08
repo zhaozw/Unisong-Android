@@ -114,7 +114,7 @@ public class SlaveDiscoveryHandler {
             boolean contains = false;
 
             for(Master listMaster : mTempMasters){
-                if(master.getIP() == listMaster.getIP()){
+                if(master.getIP().equals(listMaster.getIP())){
                     contains = true;
                 }
             }
@@ -190,8 +190,15 @@ public class SlaveDiscoveryHandler {
 
         try {
             mSendSocket.send(packet);
+            synchronized (this){
+                try {
+                    this.wait(10);
+                } catch (InterruptedException e){
+                    //Not terribly important
+                }
+            }
             mSendSocket.send(packet);
-            Log.d(LOG_TAG , "Packet sent");
+            Log.d(LOG_TAG, "Packet sent");
         } catch(IOException e){
             e.printStackTrace();
         }
