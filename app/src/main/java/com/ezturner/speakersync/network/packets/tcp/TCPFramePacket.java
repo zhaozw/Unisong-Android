@@ -22,19 +22,15 @@ public class TCPFramePacket {
         receive(stream);
     }
 
-    public static void send(OutputStream stream , long playTime , byte streamID , int frameID, byte[] aacData){
+    public static void send(OutputStream stream ,AudioFrame frame ,  byte streamID){
 
         //Throw the frame Id in a byte array, and throw all the other data in byte
         // arrays and combine them into the data that will go in the packet
-        byte[] frameIDArr = ByteBuffer.allocate(4).putInt(frameID).array();
+        byte[] frameIDArr = ByteBuffer.allocate(4).putInt(frame.getID()).array();
 
-        byte[] playTimeArr = ByteBuffer.allocate(8).putLong(playTime).array();
+        byte[] dataSizeArr = ByteBuffer.allocate(4).putInt(frame.getData().length).array();
 
-        byte[] dataSizeArr = ByteBuffer.allocate(4).putInt(aacData.length).array();
-
-        byte[] data = NetworkUtilities.combineArrays(frameIDArr, playTimeArr);
-
-        data = NetworkUtilities.combineArrays(data , dataSizeArr);
+        byte[] data = NetworkUtilities.combineArrays(frameIDArr , dataSizeArr);
 
         byte[] streamIDArr = NetworkUtilities.combineArrays(data ,new byte[]{streamID} );
 
@@ -43,7 +39,7 @@ public class TCPFramePacket {
             try {
                 stream.write(CONSTANTS.TCP_FRAME);
                 stream.write(data);
-                stream.write(aacData);
+                stream.write(frame.getData());
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -65,10 +61,6 @@ public class TCPFramePacket {
 
         int ID = ByteBuffer.wrap(frameIDArr).getInt();
 
-        byte[] playTimeArr = Arrays.copyOfRange(data, 4, 12);
-
-        long playTime = ByteBuffer.wrap(playTimeArr).getLong();
-
         byte[] dataSizeArr = Arrays.copyOfRange(data, 12, 16);
 
         int dataSize = ByteBuffer.wrap(dataSizeArr).getInt();
@@ -85,7 +77,7 @@ public class TCPFramePacket {
             }
         }
 
-        mFrame = new AudioFrame(aacData , ID , playTime);
+        mFrame = new AudioFrame(aacData , ID );
     }
 
     public AudioFrame getFrame(){

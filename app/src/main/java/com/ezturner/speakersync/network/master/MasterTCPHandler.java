@@ -3,7 +3,11 @@ package com.ezturner.speakersync.network.master;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPPausePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
@@ -146,25 +150,10 @@ public class MasterTCPHandler {
                 if(packetID != -1 || !checkSlaves(packetID))  mBroadcaster.rebroadcastPacket(packetID);
                 break;
             case CONSTANTS.TCP_ACK:
-                int ID = getInt(inputStream);
+                int ID = new TCPAcknowledgePacket(inputStream).getPacketAcknowledged();
                 if(ID != -1)    slave.packetReceived(ID);
                 break;
         }
-    }
-
-    private int getInt(InputStream inputStream){
-        byte[] data = new byte[4];
-
-        try {
-            synchronized (inputStream) {
-                inputStream.read(data);
-            }
-        } catch (IOException e){
-            e.printStackTrace();
-            return -1;
-        }
-
-        return ByteBuffer.wrap(data).getInt();
     }
 
     //Checks to see if any of the slaves have the packet in question.
@@ -268,6 +257,53 @@ public class MasterTCPHandler {
 
         } catch (IOException e){
             e.printStackTrace();
+        }
+    }
+
+    //Send a TCP packet to those who need it with the selected frame
+    //Should only be one, but can be more if needed.
+    public void sendPacketTCP(int packetID){
+        for(Slave slave : mBroadcaster.getSlaves()){
+            if(!slave.hasPacket(packetID)){
+                OutputStream stream = null;
+                try {
+                    stream = mSockets.get(slave).getOutputStream();
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+
+                TCPFramePacket.send(stream, mBroadcaster.getFrame(packetID), mBroadcaster.getStreamID());
+            }
+        }
+    }
+
+    public void pause(){
+        for(Slave slave : mBroadcaster.getSlaves()){
+
+            OutputStream stream = null;
+            try {
+                stream = mSockets.get(slave).getOutputStream();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+            TCPPausePacket.send(stream );
+
+        }
+    }
+
+    public void resume(long resumeTime, long newSongStartTime){
+        for(Slave slave : mBroadcaster.getSlaves()){
+
+            OutputStream stream = null;
+            try {
+                stream = mSockets.get(slave).getOutputStream();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+            TCPResumePacket.send(stream, resumeTime , newSongStartTime);
+
         }
     }
 

@@ -220,5 +220,20 @@ public class MainActivity extends ActionBarActivity {
         MyApplication.activityPaused();
     }
 
+    public void pause(View v){
+        Intent intent = new Intent("service-interface");
+        // You can also include some extra data.
+        intent.putExtra("command", "pause");
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    public void resume(View v){
+        Intent intent = new Intent("service-interface");
+        // You can also include some extra data.
+        intent.putExtra("command" , "resume");
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
 }

@@ -3,6 +3,7 @@ package com.ezturner.speakersync.network.ntp;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
@@ -69,16 +70,14 @@ public class SntpClient
     //The socket.
     private DatagramSocket mSocket;
 
-    //The audio track manager that needs to get the clock offset
-    private AudioListener mParent;
+    //The class that handles all of the time management stuff
+    private TimeManager mTimeManager;
 
     private AudioBroadcaster mBroadcaster;
 
     private AudioTrackManager mManager;
 
-    //TODO: use dns to look up this IP
-    public SntpClient(String serverIP , AudioListener parent){
-        mServerIP = serverIP;
+    public SntpClient(TimeManager timeManager){
         mServerIP = "pool.ntp.org";
         try {
             // Send request
@@ -87,60 +86,13 @@ public class SntpClient
             e.printStackTrace();
         }
 
-        mParent = parent;
+        mTimeManager = timeManager;
 
         mThread = getClientThread();
         mThread.start();
 
         mHasOffset = false;
 
-    }
-
-    //TODO: use dns to look up this IP
-    public SntpClient(String serverIP , AudioBroadcaster parent){
-        mServerIP = serverIP;
-        mServerIP = "pool.ntp.org";
-        try {
-            // Send request
-            mSocket = new DatagramSocket();
-        } catch(SocketException e){
-            e.printStackTrace();
-        }
-
-        mBroadcaster = parent;
-
-        mThread = getClientThread();
-        mThread.start();
-
-        mHasOffset = false;
-
-    }
-
-    public SntpClient(AudioTrackManager manager){
-        mServerIP = "pool.ntp.org";
-
-        try {
-            // Send request
-            mSocket = new DatagramSocket();
-        } catch(SocketException e){
-            e.printStackTrace();
-        }
-
-
-        mManager = manager;
-
-        mThread = getClientThread();
-        mThread.start();
-
-        mHasOffset = false;
-    }
-
-    public void setListener(AudioListener listener){
-        mParent = listener;
-    }
-
-    public void setBroadcaster(AudioBroadcaster broadcaster){
-        mBroadcaster = broadcaster;
     }
 
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.
@@ -148,7 +100,7 @@ public class SntpClient
 
         mNumberDone = 0;
 
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 20; i++){
             getOneOffset();/*
             try {
                 wait(5);
@@ -194,9 +146,7 @@ public class SntpClient
                 try {
                     mTimeOffset = calculateOffset();
 
-                    if(mManager != null){
-                        mManager.setOffset(mTimeOffset);
-                    }
+                    mTimeManager.setOffset(mTimeOffset);
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -221,6 +171,7 @@ public class SntpClient
         // Send request
 
         InetAddress address = InetAddress.getByName(mServerIP);
+        Log.d(LOG_TAG , "address is " + address.toString());
         byte[] buf = new NtpMessage().toByteArray();
         //TODO: change this to NTP_PORT
         DatagramPacket packet =
@@ -237,13 +188,13 @@ public class SntpClient
         // Get response
         Log.d(LOG_TAG , "NTP request sent to : " + mServerIP +" , waiting for response...\n");
         packet = new DatagramPacket(buf, buf.length);
-        mSocket.setSoTimeout(200);
+        mSocket.setSoTimeout(150);
         try {
             mSocket.receive(packet);
         } catch (SocketTimeoutException e){
             Log.d(LOG_TAG , e.toString());
             // resend
-            mNumberDone++;
+            getOneOffset();
             return;
         }
 

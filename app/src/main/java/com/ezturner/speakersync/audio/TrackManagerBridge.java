@@ -27,7 +27,8 @@ public class TrackManagerBridge extends ReaderBridge{
     }
 
     public void createAudioTrack(int sampleRate , int channels){
-        mManager.createAudioTrack(sampleRate , channels);
+        //TODO: figure out if some decoders output PCM at a rate other than 44100hz and 2channels
+//        mManager.createAudioTrack(sampleRate , channels);
     }
 
     public void startSong(long startTime){

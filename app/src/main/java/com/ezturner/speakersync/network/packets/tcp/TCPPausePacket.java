@@ -19,13 +19,11 @@ public class TCPPausePacket {
         receive(stream);
     }
 
-    public static void send(OutputStream stream, int frameToPlayNext) {
-        byte[] data = ByteBuffer.allocate(4).putInt(frameToPlayNext).array();
+    public static void send(OutputStream stream) {
 
         synchronized (stream) {
             try {
                 stream.write(CONSTANTS.TCP_PAUSE);
-                stream.write(data);
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -34,21 +32,7 @@ public class TCPPausePacket {
     }
 
     private void receive(InputStream stream){
-        byte[] data = new byte[4];
 
-        synchronized (stream) {
-            try {
-                stream.read(data);
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
 
-        mFrameToPlayNext = ByteBuffer.wrap(data).getInt();
-
-    }
-
-    public int getFrameToPlayNext(){
-        return mFrameToPlayNext;
     }
 }

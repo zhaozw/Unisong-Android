@@ -58,8 +58,6 @@ public class FramePacket implements NetworkPacket{
         mFrame = frame;
         mStreamID = streamID;
         mPacketID = packetID;
-        mLength = frame.getLength();
-        mPlayTime = frame.getPlayTime();
 
         //turn packet type into a byte array for combination , and put the stream ID in there
         byte[] packetType = new byte[]{CONSTANTS.FRAME_PACKET_ID , streamID};
@@ -70,19 +68,11 @@ public class FramePacket implements NetworkPacket{
         // arrays and combine them into the data that will go in the packet
         byte[] frameId = ByteBuffer.allocate(4).putInt(frame.getID()).array();
 
-        byte[] playTime = ByteBuffer.allocate(8).putLong(frame.getPlayTime()).array();
-
-        byte[] lengthArr = ByteBuffer.allocate(8).putLong(mPlayTime).array();
-
         byte[] dataSizeArr = ByteBuffer.allocate(4).putInt(frame.getData().length).array();
 
         byte[] data = NetworkUtilities.combineArrays(packetType, packetIDByte);
 
         data = NetworkUtilities.combineArrays(data , frameId);
-
-        data = NetworkUtilities.combineArrays(data , playTime);
-
-        data = NetworkUtilities.combineArrays(data , lengthArr);
 
         data = NetworkUtilities.combineArrays(data , dataSizeArr);
 
@@ -106,21 +96,13 @@ public class FramePacket implements NetworkPacket{
 
         mFrameID = ByteBuffer.wrap(frameIDArr).getInt();
 
-        byte[] playTimeArr = Arrays.copyOfRange(mData , 10 , 18);
-
-        mPlayTime = ByteBuffer.wrap(playTimeArr).getLong();
-
-        byte[] lengthArr = Arrays.copyOfRange(mData , 18 , 26);
-
-        mLength = ByteBuffer.wrap(lengthArr).getInt();
-
-        byte[] dataLengthArr = Arrays.copyOfRange(mData , 26, 30);
+        byte[] dataLengthArr = Arrays.copyOfRange(mData , 10, 14);
 
         int dataLength = ByteBuffer.wrap(dataLengthArr).getInt();
 
 //        Log.d(LOG_TAG , "Data Length is is : " + dataEnd + " so end position is: " + (dataEnd + 30) + "for frame #" + mFrameID);
 
-        mData = Arrays.copyOfRange(mData , 30 ,dataLength + 30);
+        mData = Arrays.copyOfRange(mData , 14 ,dataLength + 14);
 
 
     }

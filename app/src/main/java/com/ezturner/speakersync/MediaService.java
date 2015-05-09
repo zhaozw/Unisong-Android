@@ -17,6 +17,7 @@ import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
+import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.SntpClient;
@@ -52,6 +53,11 @@ public class MediaService extends Service{
 
     public PowerManager.WakeLock mWakeLock;
 
+    private TimeManager mTimeManager;
+
+    //The time that we have paused at, relative to the Song start time.
+    private long mResumeTime = 0;
+
 
 
     public void startToListen(){
@@ -71,16 +77,19 @@ public class MediaService extends Service{
                 String command = intent.getStringExtra("command");
 
                 if(command.equals("listener")){
-                    Log.d("ezturner" , "Listener received!");
+                    Log.d(LOG_TAG , "Listener received!");
                     listener();
                 } else if(command.equals("broadcaster")){
-                    Log.d("ezturner" , "Broadcaster received!");
+                    Log.d(LOG_TAG , "Broadcaster received!");
                     broadcaster();
                 }else if(command.equals("play")){
-                    Log.d("ezturner" , "Play received!");
+                    Log.d(LOG_TAG , "Play received!");
                     play();
-                } else if(command.equals("destroy")){
-                    Log.d("ezturner" , "Destroy received!");
+                }else if(command.equals("pause")){
+                    Log.d(LOG_TAG , "Pause received!");
+                    play();
+                }  else if(command.equals("destroy")){
+                    Log.d(LOG_TAG , "Destroy received!");
                     onDestroy();
                 }
 
@@ -91,9 +100,9 @@ public class MediaService extends Service{
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));
 
-        mAudioTrackManager = new AudioTrackManager();
-        mSntpClient = new SntpClient(mAudioTrackManager);
-
+        mTimeManager = new TimeManager();
+        mAudioTrackManager = new AudioTrackManager(mTimeManager);
+        mSntpClient = new SntpClient(mTimeManager);
         mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
 
 
@@ -117,16 +126,16 @@ public class MediaService extends Service{
 
     public void broadcaster() {
         if(mBroadcaster == null) {
-            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mSntpClient);
+            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mTimeManager);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
         }
     }
 
 
     public void listener(){
-        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2);
+        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2, mTimeManager);
         ListenerBridge bridge = new ListenerBridge(mSlaveDecoder , mAudioTrackManager );
-        mListener = new AudioListener(this , bridge , mSntpClient , mSlaveDecoder);
+        mListener = new AudioListener(this , bridge , mSlaveDecoder, mTimeManager);
 
 
     }
@@ -135,6 +144,14 @@ public class MediaService extends Service{
 
     }
 
+    public void pause(){
+        mResumeTime = mAudioTrackManager.pause();
+        mBroadcaster.pause();
+    }
+
+    public void resume(){
+        mBroadcaster.resume(mResumeTime);
+    }
     public IBinder onBind(Intent arg0){
         return mBinder;
     }

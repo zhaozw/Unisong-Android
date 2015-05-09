@@ -56,4 +56,25 @@ public class Slave {
         return "Slave, IP: " + mAddress.toString();
     }
 
+    public List<Integer> getPacketsToBeReSent(){
+        List<Integer> ids = new ArrayList<>();
+
+        ArrayList<Integer> packetsSent = new ArrayList<>();
+        synchronized (mPacketsRebroadcasted){
+            for (Map.Entry<Integer, Long> entry : mPacketsRebroadcasted.entrySet()) {
+                if (System.currentTimeMillis() - entry.getValue() >= 150) {
+                    ids.add(entry.getKey());
+                    packetsSent.add(entry.getKey());
+                }
+            }
+        }
+
+        for(Integer i : packetsSent){
+            mPacketsRebroadcasted.remove(i);
+            mPacketsRebroadcasted.put(i, System.currentTimeMillis());
+        }
+
+        return ids;
+    }
+
 }

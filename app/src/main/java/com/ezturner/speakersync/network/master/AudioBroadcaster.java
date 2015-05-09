@@ -9,12 +9,10 @@ import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.ntp.NtpServer;
-import com.ezturner.speakersync.network.ntp.SntpClient;
-import com.ezturner.speakersync.network.packets.AudioDataPacket;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
-import com.ezturner.speakersync.network.packets.SongStartPacket;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +57,7 @@ public class AudioBroadcaster {
     private ArrayList<NetworkPacket> mPackets;
 
     //The object that handles all reliability stuff
-    private MasterTCPHandler mReliabilityHandlder;
+    private MasterTCPHandler mTCPHandlder;
 
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte mStreamID;
@@ -116,9 +114,6 @@ public class AudioBroadcaster {
     //The channels for the slave AudioTracks
     private int mChannels;
 
-    //The packet that will be used as the song starter
-    private SongStartPacket mSongStartPacket;
-
     //The mime type
     private String mMime;
 
@@ -135,24 +130,20 @@ public class AudioBroadcaster {
 
     private List<Slave> mSlaves;
 
-    private SntpClient mSntpClient;
+    //The list of Audio Frames, exists for retransmission
+    //TODO: get rid of old/unused ones
+    private List<AudioFrame> mFrames;
 
-    //The time offset as calculated by SntpClient from pool.ntp.org
-    private long mOffset;
-
+    //The class that handles all of the offset stuff
+    private TimeManager mTimeManager;
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
-    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader , SntpClient client){
+    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader , TimeManager timeManager){
 
         mSlaves = new ArrayList<>();
-        mSntpClient = client;
 
-        if(mSntpClient.hasOffset()){
-            mOffset = (long) mSntpClient.getOffset();
-        }
-
-        mSntpClient.setBroadcaster(this);
+        mTimeManager = timeManager;
 
         //TODO: When not testing, get rid of this comment
         mPort = CONSTANTS.STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
@@ -163,7 +154,7 @@ public class AudioBroadcaster {
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
-            mReliabilityHandlder = new MasterTCPHandler(this);
+            mTCPHandlder = new MasterTCPHandler(this);
 
             //Start the NTP server for syncing the playback
             mNtpServer = new NtpServer();
@@ -207,6 +198,8 @@ public class AudioBroadcaster {
 
         mWorker = Executors.newSingleThreadScheduledExecutor();
 
+        mFrames = new ArrayList<>();
+
         mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
     }
 
@@ -217,7 +210,6 @@ public class AudioBroadcaster {
     Runnable mPacketSender = new Runnable() {
         @Override
         public void run() {
-
 
             long begin = System.currentTimeMillis();
 
@@ -252,47 +244,10 @@ public class AudioBroadcaster {
 
             //TODO: figure out a way to set delay properly
             //long delay = (long)(mPacketSendStartTime + packets.getInfoPacket().getFrame().getPlayTime()) - System.currentTimeMillis();
-            long delay = 23;
+            long delay = 18;
 
 
-            if(mPacketsToRebroadcast.size() > 0) {
-                try{
-                    synchronized (this){
-                        this.wait(10);
-                    }
-                }catch (InterruptedException e){
-
-                }
-
-                synchronized (mPacketsToRebroadcast){
-                    NetworkPacket packetl= null;
-                    synchronized (mPackets) {
-                        packetl = mPackets.get(mPacketsToRebroadcast.get(0));
-                    }
-                    Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
-
-                    for(Slave slave : mSlaves){
-                        slave.packetHasBeenRebroadcasted(packetl.getPacketID());
-                    }
-                    mPacketsToRebroadcast.remove(0);
-
-                    if(!mReliabilityHandlder.checkSlaves(packetl.getPacketID())) {
-                        try {
-                            mStreamSocket.send(packetl.getPacket());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        int packetID = mPacketsToRebroadcast.get(0);
-                        while(mReliabilityHandlder.checkSlaves(packetID)){
-                            mPacketsToRebroadcast.remove(0);
-                            packetID = mPacketsToRebroadcast.get(0);
-                        }
-                    }
-                }
-
-
-            }
+            rebroadcast();
             delay -= System.currentTimeMillis() - begin;
 
             if(delay < 0){
@@ -325,6 +280,7 @@ public class AudioBroadcaster {
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     public void startSongStream(){
+
         //Stop the old handler
         mHandler.removeCallbacks(mPacketSender);
         //If another stream is running,
@@ -335,7 +291,8 @@ public class AudioBroadcaster {
 
         //The start time in milliseconds
         //TODO: Recalculate this!
-        mSongStartTime = System.currentTimeMillis() + 2000 + mOffset;
+        mSongStartTime = System.currentTimeMillis() + 2000 + mTimeManager.getOffset();
+        mTimeManager.setSongStartTime(mSongStartTime);
         mManager.startSong(mSongStartTime);
         mNextFrameTime = mSongStartTime;
 
@@ -353,15 +310,13 @@ public class AudioBroadcaster {
         mPackets = new ArrayList<NetworkPacket>();
 
 
-
-
         try{
             mReader.readFile(MediaService.TEST_FILE_PATH);
         } catch(IOException e){
             e.printStackTrace();
         }
 
-        mReliabilityHandlder.startSong(mSongStartTime, mChannels , mStreamID);
+        mTCPHandlder.startSong(mSongStartTime, mChannels, mStreamID);
         mIsBroadcasting = true;
         Log.d(LOG_TAG, "Schedule task time!");
         mWorker.schedule(mPacketSender, 500, TimeUnit.MILLISECONDS);
@@ -429,13 +384,6 @@ public class AudioBroadcaster {
         mFrameLength = frameLength;
     }
 
-
-    private void addAudioDataPacket(byte[] data){
-        AudioDataPacket ap = new AudioDataPacket(data, mStreamID , mNextPacketCreateID);
-        mPackets.add(ap);
-        mNextPacketCreateID++;
-    }
-
     private void createFramePacket(AudioFrame frame){
         FramePacket fp = new FramePacket(frame ,getStreamID() , mNextPacketCreateID);
         mNextPacketCreateID++;
@@ -468,6 +416,7 @@ public class AudioBroadcaster {
         synchronized (mPackets){
             for(AudioFrame frame : frames){
                 createFramePacket(frame);
+                mFrames.add(frame);
             }
         }
     }
@@ -490,13 +439,6 @@ public class AudioBroadcaster {
             mSlaves.remove(slave);
         }
     }
-
-    public void setOffset(double offset){
-        Log.d(LOG_TAG , "Offset is : " + offset );
-        mManager.setOffset(offset);
-        mOffset = (long) offset;
-    }
-
     public int getNextPacketSendID(){
         return mNextPacketSendID;
     }
@@ -507,5 +449,93 @@ public class AudioBroadcaster {
 
     public long getSongStartTime(){
         return mSongStartTime;
+    }
+
+
+    private void rebroadcast(){
+        if(mPacketsToRebroadcast.size() > 0) {
+            try{
+                synchronized (this){
+                    this.wait(10);
+                }
+            }catch (InterruptedException e){
+
+            }
+
+            synchronized (mPacketsToRebroadcast){
+                NetworkPacket packetl= null;
+                synchronized (mPackets) {
+                    packetl = mPackets.get(mPacketsToRebroadcast.get(0));
+                }
+                Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
+
+                int count = 0;
+                for(Slave slave : mSlaves ){
+                    if(!slave.hasPacket(packetl.getPacketID())){
+                        count++;
+                    }
+                }
+
+                if(count == 0){
+                    mPacketsToRebroadcast.remove(0);
+                    rebroadcast();
+                    return;
+                } else if(count == 1){
+                    //TODO: uncomment/fix after we're done testing! This is the single TCP rebroadcast code
+//                    mTCPHandlder.sendPacketTCP(packetl.getPacketID());
+//                    rebroadcast();
+//                    return;
+                }
+
+                for(Slave slave : mSlaves){
+                    slave.packetHasBeenRebroadcasted(packetl.getPacketID());
+                }
+
+                for(Slave slave : mSlaves){
+                    List<Integer> packets = slave.getPacketsToBeReSent();
+                    for(Integer i : packets) {
+                        if (!mPacketsToRebroadcast.contains(i)) {
+                            mPacketsToRebroadcast.add(i);
+                        }
+                    }
+                }
+
+                mPacketsToRebroadcast.remove(0);
+
+                if(!mTCPHandlder.checkSlaves(packetl.getPacketID())) {
+                    try {
+                        mStreamSocket.send(packetl.getPacket());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    int packetID = mPacketsToRebroadcast.get(0);
+                    while(mTCPHandlder.checkSlaves(packetID)){
+                        mPacketsToRebroadcast.remove(0);
+                        packetID = mPacketsToRebroadcast.get(0);
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    public AudioFrame getFrame(int ID){
+        synchronized (mFrames){
+            return mFrames.get(ID);
+        }
+    }
+
+    public void pause(){
+        mTCPHandlder.pause();
+    }
+
+    public void resume(long resumeTime){
+        long newSongStartTime = System.currentTimeMillis() - resumeTime + 500 + mTimeManager.getOffset();
+
+        mTimeManager.setSongStartTime(newSongStartTime);
+
+        mTCPHandlder.resume(resumeTime , newSongStartTime);
     }
 }

@@ -6,6 +6,7 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.network.TimeManager;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -44,10 +45,12 @@ public class SlaveCodec {
     int sampleRate = 0, channels = 0, bitrate = 0;
     long presentationTimeUs = 0, duration = 0;
 
+    private TimeManager mTimeManager;
     private Map<Integer , AudioFrame> mFrames;
 
-    public SlaveCodec(SlaveDecoder decoder, int channels, Map<Integer , AudioFrame> frames){
+    public SlaveCodec(SlaveDecoder decoder, int channels, Map<Integer , AudioFrame> frames, TimeManager timeManager){
         mDecoder = decoder;
+        mTimeManager = timeManager;
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
         sampleRate = 44100;
@@ -130,8 +133,8 @@ public class SlaveCodec {
 
             //TODO: test/check this out
             while(!mFrames.containsKey(mCurrentFrame)){
-                /*TODO: fix and reimplement
-                if(System.currentTimeMillis() - lastPlayTime >= 150 && mCurrentFrame != 0 && info.size > 0){
+
+                if(System.currentTimeMillis() - mTimeManager.getAACPlayTime(mCurrentFrame) >= -100){
 
                     Log.d(LOG_TAG , "Creating blank PCM frame");
 
@@ -149,7 +152,7 @@ public class SlaveCodec {
                     }
 
 
-                } else {*/
+                } else {
                     synchronized (this){
                         try{
                             this.wait(20);
@@ -157,7 +160,7 @@ public class SlaveCodec {
 
                         }
                     }
-//                }
+                }
             }
             AudioFrame frame;
             synchronized (mFrames){
@@ -279,7 +282,6 @@ public class SlaveCodec {
     //The code to stop this MediaCodec
     public void stopDecode(){
         mStop = true;
-
     }
 
     private void releaseCodec(){

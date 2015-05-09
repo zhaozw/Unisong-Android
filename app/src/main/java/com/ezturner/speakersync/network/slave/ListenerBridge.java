@@ -48,9 +48,12 @@ public class ListenerBridge extends ReaderBridge{
         mManager.lastPacket();
     }
 
-    public void setOffset(long offset){
-        mSlaveDecoder.setOffset(offset);
-        mManager.setOffset(offset);
+    public void pause(){
+        mManager.pause();
+    }
+
+    public void resume(long resumeTime){
+        mManager.resume(resumeTime);
     }
 
 

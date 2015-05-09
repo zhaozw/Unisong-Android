@@ -11,6 +11,7 @@ import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPPausePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
@@ -94,7 +95,6 @@ public class SlaveTCPHandler {
         mPacketsNotReceived = new HashMap<>();
         mPacketsToRequest = new HashMap<>();
 
-        mPacketsReRequested = new ArrayList<>();
         mHandler = new Handler();
 
         mCanRequest = false;
@@ -121,25 +121,6 @@ public class SlaveTCPHandler {
                 }
             }
 
-
-            ArrayList<Integer> packetsToRemove = new ArrayList<>();
-            synchronized (mPacketsRecentlyRequested){
-                for (Map.Entry<Integer, Long> entry : mPacketsRecentlyRequested.entrySet()){
-                    long timeSince = System.currentTimeMillis() - entry.getValue();
-                    if(timeSince >= 250){
-                        requestPacket(entry.getKey());
-
-                        if(!mPacketsReRequested.contains(entry.getKey())){
-                            mPacketsReRequested.add(entry.getKey());
-                        }
-                    }
-                }
-            }
-
-            for(Integer i: packetsToRemove){
-                mPacketsRecentlyRequested.remove(i);
-            }
-
             for(Integer i : packetsSent){
                 mPacketsToRequest.remove(i);
             }
@@ -164,12 +145,8 @@ public class SlaveTCPHandler {
 
     //Sends a request to resend a packet
     public void requestPacket(int packetID){
-        String append ="";
-        if(mPacketsReRequested.contains(packetID)){
-            append += " once more";
-        }
 
-        Log.d(LOG_TAG, "Requesting Packet #" + packetID  + append);
+        Log.d(LOG_TAG, "Requesting Packet #" + packetID);
 
         TCPRequestPacket.send(mOutStream, packetID);
 
@@ -346,14 +323,21 @@ public class SlaveTCPHandler {
     private void listenFrame(){
         TCPFramePacket packet = new TCPFramePacket(mInStream);
 
+        mListener.addFrame(packet.getFrame());
+
+        packetReceived(packet.getFrame().getID());
         //TODO: handle frame here
     }
 
     private void listenPause(){
-
-        TCPPausePacket pausePacket = new TCPPausePacket(mInStream);
-
+        mListener.pause();
         //TODO: handle pause
+    }
+
+    private void listenResume(){
+        TCPResumePacket packet = new TCPResumePacket(mInStream);
+
+        mListener.resume(packet.getResumeTime(), packet.getNewSongStartTime());
     }
 
     private void switchMaster(){

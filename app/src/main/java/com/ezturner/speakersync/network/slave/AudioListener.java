@@ -8,10 +8,9 @@ import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
-import com.ezturner.speakersync.network.ntp.SntpClient;
+import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
-import com.ezturner.speakersync.network.packets.SongStartPacket;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -40,12 +39,6 @@ public class AudioListener {
 
     //The boolean indicating whether we are listening to a stream
     private boolean mIsListening;
-
-    //The Sntp client for time synchronization
-    private SntpClient mSntpClient;
-
-    //The time offset between this client and the master
-    private long mTimeOffset;
 
     //The multicast socket for discovery and control
     private MulticastSocket mManagementSocket;
@@ -114,17 +107,14 @@ public class AudioListener {
 
     private int mFirstFrame;
 
-    public AudioListener(Context context ,  ListenerBridge bridge , SntpClient client, SlaveDecoder decoder){
+    //The class that handles all of the time operations
+    private TimeManager mTimeManager;
 
-        if(client.hasOffset()){
-            mTimeOffset = (long)client.getOffset();
-        }
+    public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder, TimeManager manager){
 
-        mSntpClient = client;
-        client.setListener(this);
+        mTimeManager = manager;
         mBridge = bridge;
 
-        mTimeOffset = -9999;
         Log.d(LOG_TAG , "Audio Listener Started");
         mContext = context;
 
@@ -144,7 +134,6 @@ public class AudioListener {
 
     //Start playing from a master, start listening to the stream
     public void playFromMaster(Master master){
-        mTimeOffset = -9999;
         mStartTime = -1;
         mStartSongReceived = false;
         mPacketToWrite = 1;
@@ -153,15 +142,6 @@ public class AudioListener {
 
         mPackets = convertPackets(master.getPackets());
         mMaster = master;
-
-        if(mSntpClient.hasOffset()){
-            Log.d(LOG_TAG , "Offset is available!");
-            mTimeOffset = (long) mSntpClient.getOffset();
-            //TODO: consider whether to uncomment and remove the code applying it below
-            mBridge.setOffset(mTimeOffset);
-        } else {
-            Log.e(LOG_TAG , "ERROR: NO OFFSET");
-        }
 
         mPort = master.getPort();
         mIsListening = true;
@@ -311,9 +291,6 @@ public class AudioListener {
                 case CONSTANTS.FRAME_PACKET_ID:
                     networkPacket = handleFramePacket(packet);
                     break;
-                case CONSTANTS.SONG_START_PACKET_ID:
-                    networkPacket = handleStartSongPacket(packet);
-                    break;
             }
         //}
         if(networkPacket != null) {
@@ -341,19 +318,26 @@ public class AudioListener {
 
         FramePacket fp = new FramePacket(packet);
 
-        AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID() , fp.getLength() , fp.getPlayTime());
+        AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID()  , fp.getPlayTime());
 
-        if(mTimeOffset == -9999){
-
-        }
 //        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
 
         mBridge.addFrame(frame);
         return fp;
     }
 
+    private boolean songStarted = false;
 
     public void startSong(long startTime , int channels , byte streamID , int currentPacket){
+
+        //TODO: get rid of this, it's just test code
+        if(!songStarted){
+            songStarted = true;
+        } else {
+            Log.d(LOG_TAG , "Song is being started a second time!");
+        }
+
+        mTimeManager.setSongStartTime(startTime);
         mStartSongReceived = true;
         mStreamID = streamID;
         mStartTime = startTime;
@@ -364,56 +348,12 @@ public class AudioListener {
 
         mFirstFrame = currentPacket;
 
-
-        if(mTimeOffset != -9999){
-            mBridge.startSong(mStartTime , currentPacket);
-        }
+        mBridge.startSong(mStartTime, currentPacket);
     }
 
 
     private boolean mStartSongReceived = false;
 
-    private NetworkPacket handleStartSongPacket(DatagramPacket packet){
-        mStartSongReceived = true;
-        SongStartPacket sp = new SongStartPacket(packet);
-
-        mStreamID = sp.getStreamID();
-
-        mStartTime = sp.getStartTime();
-
-        mChannels = sp.getChannels();
-
-        mFirstFrame = 0;
-        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mBridge.getManager()) , mChannels);
-        mBridge.setDecoder(mSlaveDecoder);
-        
-        //TODO: this doesn't work, figure out why
-
-        //TODO: Figure out the time synchronization and then
-        //Convert from microseconds to millis and use the Sntp offset
-
-        Log.d(LOG_TAG, "Song start packet received! Starting song");
-
-        if(mTimeOffset != -9999) {
-            mBridge.startSong(mStartTime , mFirstFrame);
-        }
-
-        return sp;
-    }
-
-
-
-    public void setOffset(double offset){
-        Log.d(LOG_TAG , "Offset is : " + offset);
-        mTimeOffset = (long) offset;
-
-        mBridge.setOffset(mTimeOffset);
-
-        if(mStartTime != -1){
-            mBridge.startSong(mStartTime, mFirstFrame);
-        }
-
-    }
 
     public void setTrackBridge(ListenerBridge bridge){
         mBridge = bridge;
@@ -425,4 +365,16 @@ public class AudioListener {
         }
     }
 
+    public void addFrame(AudioFrame frame){
+        mBridge.addFrame(frame);
+    }
+
+    public void pause(){
+        mBridge.pause();
+    }
+
+    public void resume(long resumeTime , long newSongStartTime){
+        mTimeManager.setSongStartTime(newSongStartTime);
+        mBridge.resume(resumeTime);
+    }
 }

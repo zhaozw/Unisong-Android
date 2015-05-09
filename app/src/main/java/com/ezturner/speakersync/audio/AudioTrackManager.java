@@ -6,6 +6,8 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.util.Log;
 
+import com.ezturner.speakersync.network.TimeManager;
+
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -38,32 +40,38 @@ public class AudioTrackManager {
     //The handler for scheduling resyncs and the song start
     private Handler mHandler;
 
-    //The time difference between this and the master in milliseconds
-    private double mOffset;
-
     //The time that the current or next song will start at
     private long mSongStartTime;
 
     //The last frame added's ID
     private int mLastAddedFrameID;
 
+    //The class that handles all of the time calculations
+    private TimeManager mTimeManager;
+
+    private long mLastFrameTime;
+
+
     //TODO: Make AudioTrack configuration dynamic with the details of the file
-    public AudioTrackManager(){
+    public AudioTrackManager(TimeManager manager){
         mFrames = new TreeMap<Integer , AudioFrame>();
 
         mIsPlaying = false;
 
         mFrameToPlay = 0;
 
+        mTimeManager = manager;
+
         mLastFrameID = -89;
+        mLastFrameTime = 0;
 
         mHandler = new Handler();
-        mOffset = 0;
     }
 
     Runnable mStartSong = new Runnable() {
         @Override
         public void run() {
+            Log.d(LOG_TAG , "mStartSong called");
                 if(mIsPlaying){
                     //TODO: Switch the song
                 } else {
@@ -74,6 +82,7 @@ public class AudioTrackManager {
     };
 
     private void writeToTrack(){
+        Log.d(LOG_TAG , "Starting Write");
         while(isPlaying()) {
             if (mFrameToPlay == mLastFrameID) {
                 mIsPlaying = false;
@@ -100,14 +109,16 @@ public class AudioTrackManager {
                 }
                 frame = mFrames.get(mFrameToPlay);
             }
+
+            mLastFrameTime = frame.getPlayTime();
             mFrameToPlay++;
 
 
-            long difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - (long) mOffset);
+            long difference = mTimeManager.getPCMDifference(frame);
 
-//            Log.d(LOG_TAG, "Current time is : " + System.currentTimeMillis() + " and play time is : " + frame.getPlayTime() + " and Song Start time is : " + mSongStartTime);
+//            Log.d(LOG_TAG , frame.toString());
 
-
+//            Log.d(LOG_TAG , "Difference is :" + difference);
 
             if(difference <= -30){
                 long before = System.currentTimeMillis();
@@ -127,11 +138,17 @@ public class AudioTrackManager {
                         nextFrame = mFrames.get(index);
                     }
                     if (nextFrame != null) {
-                        difference = System.currentTimeMillis() - (nextFrame.getPlayTime() + mSongStartTime - (long) mOffset);
+                        difference = mTimeManager.getPCMDifference(nextFrame);
                         index++;
 //                        Log.d(LOG_TAG , "Difference v2 is : " + difference);
                     } else if(nextFrame == null){
-                        //TODO: handle
+                        synchronized (this){
+                            try {
+                                this.wait(4);
+                            } catch (InterruptedException e){
+
+                            }
+                        }
                     }
                 }
                 mFrameToPlay = index;
@@ -143,15 +160,13 @@ public class AudioTrackManager {
 
             mTest++;
 
-            if (mTest >= 100) {
-                mTest = 0;
-                difference = System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - (long) mOffset);
-                Log.d(LOG_TAG, "Time difference is : " + difference);
-            }
+//            if (mTest >= 100) {
+//                mTest = 0;
+//                difference = mTimeManager.getPCMDifference(frame);
+//                Log.d(LOG_TAG, "Time difference is : " + difference);
+//            }
             mAudioTrack.write(data, 0, data.length);
-            synchronized (mFrames) {
-                mFrames.remove(frame.getID());
-            }
+
         }
     }
     //Takes in some frames, then waits for mFrames to be open and writes it to it
@@ -187,16 +202,15 @@ public class AudioTrackManager {
 
     public void startSong(long songStart){
         mSongStartTime = songStart;
-        double millisTillSongStart =  (songStart - mOffset) - System.currentTimeMillis();
-        Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mOffset is :" + mOffset);
-        mHandler.postDelayed(mStartSong, (long) millisTillSongStart);
+        double millisTillSongStart =  (songStart - mTimeManager.getOffset()) - System.currentTimeMillis();
+        Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mTimeManager.getOffset() is :" + mTimeManager.getOffset());
+        mHandler.post(mStartSong);
     }
 
     private void startPlaying(){
-        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mSongStartTime - mOffset))+ " mOffset is : " + mOffset);
-        if(mAudioTrack == null){
-            createAudioTrack(44100 , 2);
-        }
+        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mSongStartTime - mTimeManager.getOffset()))+ " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
+
+        createAudioTrack(44100 , 2);
         mAudioTrack.play();
         mIsPlaying = true;
         mWriteThread = getWriteThread();
@@ -207,7 +221,7 @@ public class AudioTrackManager {
         return mIsPlaying;
     }
 
-    public void createAudioTrack(int sampleRate , int channels){
+    private void createAudioTrack(int sampleRate , int channels){
         Log.d(LOG_TAG , "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
         int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
 
@@ -227,10 +241,6 @@ public class AudioTrackManager {
         }
     }
 
-    public void setOffset(double offset){
-        mOffset = offset;
-    }
-
     public void setLastFrameID(int lastFrame){
         mLastFrameID = lastFrame;
     }
@@ -238,4 +248,30 @@ public class AudioTrackManager {
     public void lastPacket(){
         mLastFrameID = mLastAddedFrameID;
     }
+
+    public long pause(){
+        mIsPlaying = false;
+        return mLastFrameTime;
+    }
+
+    public void seek(long seekTime){
+
+
+        //If we're playing, start up an AudioTrack instance and the write thread
+        if(mIsPlaying){
+            startPlaying();
+        }
+
+    }
+
+    public void resume(long resumeTime){
+        for(int i = 0; i < mFrames.size(); i++){
+            long diff = mFrames.get(i).getPlayTime() - resumeTime;
+
+            if(Math.abs(diff) <= 22){
+                mFrameToPlay = i;
+            }
+        }
+    }
+
 }

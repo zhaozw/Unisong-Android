@@ -298,14 +298,13 @@ public class AACEncoder {
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
         //TODO: get rid of these and remove from the packets
-        long length = (long)((1024.0 / 44100.0) * 1000);
+        //TODO : figure out what this ^^ is referencing?
         long playTime = mLastTime;
 
-        AudioFrame frame = new AudioFrame(data, mCurrentID , length ,playTime);
+        AudioFrame frame = new AudioFrame(data, mCurrentID );
         mCurrentID++;
 
         mBroadcasterBridge.addFrame(frame);
-        mLastTime += (long)((1024.0 / 44100.0) * 1000);
 
     }
 

@@ -362,7 +362,7 @@ public class AudioFileReader {
         long length = (data.length * 8000) / CONSTANTS.PCM_BITRATE;
 //        if()
 //        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
-        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime, length);
+        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
 
         mTrackManagerBridge.addFrame(frame);
         mAACBridge.addFrame(frame);

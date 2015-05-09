@@ -9,6 +9,7 @@ import com.ezturner.speakersync.Lame;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.slave.NetworkInputStream;
 
 import java.io.IOException;
@@ -51,12 +52,15 @@ public class SlaveDecoder {
 
     private SlaveCodec mSlaveCodec;
 
-    public SlaveDecoder(TrackManagerBridge bridge , int channels){
+    private TimeManager mTimeManager;
+
+    public SlaveDecoder(TrackManagerBridge bridge , int channels, TimeManager manager){
         mTrackManagerBridge = bridge;
         mCurrentID = 0;
         mFrames = new HashMap<>();
+        mTimeManager = manager;
 
-        mSlaveCodec = new SlaveCodec(this, channels , mFrames);
+        mSlaveCodec = new SlaveCodec(this, channels , mFrames, mTimeManager);
 
     }
 
@@ -85,7 +89,7 @@ public class SlaveDecoder {
         long playTime = bitsProcessed  / CONSTANTS.PCM_BITRATE + mTimeAdjust;
 
 
-        AudioFrame frame = new AudioFrame(data, mCurrentID , playTime);
+        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
         mCurrentID++;
 
         mTrackManagerBridge.addFrame(frame);
