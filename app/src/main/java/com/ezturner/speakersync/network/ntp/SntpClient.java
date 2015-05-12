@@ -46,9 +46,7 @@ import java.util.ArrayList;
 public class SntpClient
 {
 
-    private final int NTP_PORT = 46232;
-
-    private final String LOG_TAG = "SntpClient";
+    private final String LOG_TAG = SntpClient.class.getSimpleName();
 
     //The current server IP
     private String mServerIP = "";
@@ -72,10 +70,6 @@ public class SntpClient
 
     //The class that handles all of the time management stuff
     private TimeManager mTimeManager;
-
-    private AudioBroadcaster mBroadcaster;
-
-    private AudioTrackManager mManager;
 
     public SntpClient(TimeManager timeManager){
         mServerIP = "pool.ntp.org";
@@ -161,11 +155,12 @@ public class SntpClient
                 try {
                     Thread.sleep(15 * 60 * 1000);
                 } catch (InterruptedException e){
-                    Log.d(LOG_TAG , "NTP Re-Check wait interrupted!");
+                    Log.d(LOG_TAG, "NTP Re-Check wait interrupted!");
                 }
             }
         };
     }
+
 
     private void getOneOffset() throws IOException{
         // Send request
@@ -237,6 +232,11 @@ public class SntpClient
     }
 
 
+    public void destroy(){
+        mSocket.close();
+        mSocket = null;
+        mTimeManager = null;
+    }
 
 
 

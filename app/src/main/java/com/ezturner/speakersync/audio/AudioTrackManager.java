@@ -9,6 +9,7 @@ import android.util.Log;
 import com.ezturner.speakersync.network.TimeManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -51,7 +52,6 @@ public class AudioTrackManager {
 
     private long mLastFrameTime;
 
-
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(TimeManager manager){
         mFrames = new TreeMap<Integer , AudioFrame>();
@@ -68,9 +68,13 @@ public class AudioTrackManager {
         mHandler = new Handler();
     }
 
+    private boolean mStartSongRunning = false;
+
     Runnable mStartSong = new Runnable() {
         @Override
         public void run() {
+            mStartSongRunning = true;
+
             Log.d(LOG_TAG , "mStartSong called");
                 if(mIsPlaying){
                     //TODO: Switch the song
@@ -78,6 +82,8 @@ public class AudioTrackManager {
                     //TODO: uncomment these after it's safe
                     startPlaying();
                 }
+
+            mStartSongRunning = false;
         }
     };
 
@@ -104,6 +110,9 @@ public class AudioTrackManager {
                             this.wait(1);
                         } catch (InterruptedException e) {
 
+                        }
+                        if(!isPlaying()){
+                            return;
                         }
                     }
                 }
@@ -147,6 +156,9 @@ public class AudioTrackManager {
                                 this.wait(4);
                             } catch (InterruptedException e){
 
+                            }
+                            if(!isPlaying()){
+                                return;
                             }
                         }
                     }
@@ -201,6 +213,7 @@ public class AudioTrackManager {
     }
 
     public void startSong(long songStart){
+        mFrames = new HashMap<>();
         mSongStartTime = songStart;
         double millisTillSongStart =  (songStart - mTimeManager.getOffset()) - System.currentTimeMillis();
         Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mTimeManager.getOffset() is :" + mTimeManager.getOffset());
@@ -272,6 +285,31 @@ public class AudioTrackManager {
                 mFrameToPlay = i;
             }
         }
+
+        Log.d(LOG_TAG , "Resuming, mFrameToPlay is : " + mFrameToPlay);
+
+        mIsPlaying = true;
+        mWriteThread = getWriteThread();
+        mWriteThread.start();
     }
 
+    public void destroy(){
+        mIsPlaying = false;
+        mWriteThread = null;
+        mTimeManager = null;
+        if(mStartSongRunning){
+            while(mStartSongRunning){
+
+            }
+        }
+        mHandler.removeCallbacks(mStartSong);
+        mAudioTrack = null;
+        mFrames = null;
+
+    }
+
+    public void newSong(){
+        mIsPlaying = false;
+
+    }
 }

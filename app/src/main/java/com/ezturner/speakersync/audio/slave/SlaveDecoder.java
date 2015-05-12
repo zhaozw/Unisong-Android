@@ -48,8 +48,6 @@ public class SlaveDecoder {
     //The time that the song starts at
     private long mSongStartTime;
 
-    private int mOutputBitrate;
-
     private SlaveCodec mSlaveCodec;
 
     private TimeManager mTimeManager;
@@ -120,5 +118,21 @@ public class SlaveDecoder {
 
     public long getOffset(){
         return mOffset;
+    }
+
+    //TODO: keep this updated.
+    public void destroy(){
+        mSlaveCodec.destroy();
+        mSlaveCodec = null;
+        mTimeManager = null;
+        mTrackManagerBridge.destroy();
+        mTrackManagerBridge = null;
+
+    }
+
+    public void newSong(){
+        mSlaveCodec.destroy();
+        mFrames = new HashMap<>();
+        mSlaveCodec = new SlaveCodec(this, channels ,  mFrames ,mTimeManager );
     }
 }

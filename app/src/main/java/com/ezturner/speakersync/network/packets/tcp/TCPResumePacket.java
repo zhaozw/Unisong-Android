@@ -30,7 +30,7 @@ public class TCPResumePacket {
 
         synchronized (stream) {
             try {
-                stream.write(CONSTANTS.TCP_PAUSE);
+                stream.write(CONSTANTS.TCP_RESUME);
                 stream.write(data);
             } catch (IOException e){
                 e.printStackTrace();
@@ -60,6 +60,6 @@ public class TCPResumePacket {
     }
 
     public long getNewSongStartTime(){
-        return mResumeTime;
+        return mNewSongStartTime;
     }
 }

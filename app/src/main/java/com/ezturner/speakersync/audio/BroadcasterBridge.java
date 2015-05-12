@@ -7,7 +7,7 @@ import java.util.ArrayList;
 /**
  * Created by Ethan on 4/27/2015.
  */
-public class BroadcasterBridge extends ReaderBridge {
+public class BroadcasterBridge extends AbstractBridge {
 
     private AudioBroadcaster mBroadcaster;
 
@@ -23,5 +23,10 @@ public class BroadcasterBridge extends ReaderBridge {
 
     public void setAudioInfo(int channels){
         mBroadcaster.setAudioInfo(channels);
+    }
+
+    public void destroy(){
+        mBroadcaster = null;
+        super.destroy();
     }
 }

@@ -136,7 +136,7 @@ public class SlaveCodec {
 
                 if(System.currentTimeMillis() - mTimeManager.getAACPlayTime(mCurrentFrame) >= -100){
 
-                    Log.d(LOG_TAG , "Creating blank PCM frame");
+                    Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + "" );
 
                     mDecoder.createFrame(new byte[info.size]);
                     mCurrentFrame++;
@@ -197,7 +197,7 @@ public class SlaveCodec {
                 final byte[] chunk = new byte[info.size];
                 buf.get(chunk);
                 buf.clear();
-                if(chunk.length > 0){
+                if(chunk.length > 0 && !mStop){
                     mDecoder.createFrame(chunk);
                 }
 
@@ -294,5 +294,10 @@ public class SlaveCodec {
 
     public void setCurrentFrame(int currentFrame){
         mCurrentFrame = currentFrame;
+    }
+
+    public void destroy(){
+        mDecodeThread = null;
+        mStop = true;
     }
 }

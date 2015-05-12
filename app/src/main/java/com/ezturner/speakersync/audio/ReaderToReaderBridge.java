@@ -7,7 +7,7 @@ import java.util.ArrayList;
 /**
  * Created by Ethan on 4/28/2015.
  */
-public class ReaderToReaderBridge extends ReaderBridge {
+public class ReaderToReaderBridge extends AbstractBridge {
 
     private AACEncoder mEncoder;
 
@@ -18,5 +18,9 @@ public class ReaderToReaderBridge extends ReaderBridge {
     @Override
     protected void sendOutFrames(ArrayList<AudioFrame> frames) {
         mEncoder.addFrames(frames);
+    }
+
+    public void destroy(){
+        mEncoder = null;
     }
 }

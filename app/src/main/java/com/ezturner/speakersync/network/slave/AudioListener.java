@@ -4,7 +4,6 @@ import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
-import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -34,14 +33,8 @@ public class AudioListener {
 
     private final static String LOG_TAG = "AudioListener";
 
-    //The boolean indicating whether the above objects are in use(a master has not been chosen yet)
-    private boolean mIsDeciding;
-
     //The boolean indicating whether we are listening to a stream
     private boolean mIsListening;
-
-    //The multicast socket for discovery and control
-    private MulticastSocket mManagementSocket;
 
     //the socket for receiving the stream
     private DatagramSocket mSocket;
@@ -51,9 +44,6 @@ public class AudioListener {
 
     //The master that the listener is currently listening to
     private Master mMaster;
-
-    //The broadcast address that will be used
-    private InetAddress mAddress;
 
     //The port that the stream will be on
     private int mPort;
@@ -65,15 +55,10 @@ public class AudioListener {
     private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
 
     //The Slave reliability handler which handles packet reliability
-    private SlaveTCPHandler mSlaveReliabilityHandler;
+    private SlaveTCPHandler mSlaveTCPHandler;
 
     //The activity context
     private Context mContext;
-
-    //The unfinished AudioFrames that need to be built and sent over to the AudioTrackManager
-    private Map<Integer , AudioFrame> mUnfinishedFrames;
-
-    private ArrayList<AudioFrame> mUnOffsetedFrames;
 
     //The stream ID
     private byte mStreamID;
@@ -97,12 +82,6 @@ public class AudioListener {
     private String mMime;
     private int mBitrate;
 
-    //The InputStream used to write the mp3 data
-    private NetworkInputStream mInputStream;
-
-    //The next packet to be writted to the inputStream
-    private int mPacketToWrite;
-
     private SlaveDecoder mSlaveDecoder;
 
     private int mFirstFrame;
@@ -120,13 +99,10 @@ public class AudioListener {
 
         mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this , mContext);
 
-        mAddress = NetworkUtilities.getBroadcastAddress();
-
         mIsListening = false;
 
         mSlaveDecoder = decoder;
 
-        mUnOffsetedFrames = new ArrayList<AudioFrame>();
 
         mProcessingQueue = new LinkedList<DatagramPacket>();
     }
@@ -136,7 +112,6 @@ public class AudioListener {
     public void playFromMaster(Master master){
         mStartTime = -1;
         mStartSongReceived = false;
-        mPacketToWrite = 1;
 
         Log.d(LOG_TAG , "Listening from master: " + master.getIP().toString().substring(1) + ":"  + master.getPort());
 
@@ -148,7 +123,7 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
-        mSlaveReliabilityHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this);
+        mSlaveTCPHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this);
 
         mListenThread = getListenThread();
         mListenThread.start();
@@ -157,8 +132,6 @@ public class AudioListener {
         mProcessingThread.start();
 
 
-
-        mUnfinishedFrames = new HashMap<Integer , AudioFrame>();
     }
 
     //Starts the process of finding masters
@@ -245,7 +218,7 @@ public class AudioListener {
 
 
     private void listenForPacket(){
-        DatagramPacket packet = new DatagramPacket(new byte[3048] , 3048);
+        DatagramPacket packet = new DatagramPacket(new byte[1024] , 1024);
         try{
             //startTime = System.currentTimeMillis();
             //Log.d(LOG_TAG , "Time difference is : " + (startTime - finishTime));
@@ -295,7 +268,7 @@ public class AudioListener {
         //}
         if(networkPacket != null) {
 //            Log.d(LOG_TAG , networkPacket.toString());
-            mSlaveReliabilityHandler.packetReceived(networkPacket.getPacketID());
+            mSlaveTCPHandler.packetReceived(networkPacket.getPacketID());
             if(!mPackets.containsKey(networkPacket.getPacketID())){
 
                 mCounter++;
@@ -330,6 +303,9 @@ public class AudioListener {
 
     public void startSong(long startTime , int channels , byte streamID , int currentPacket){
 
+        if(streamID == 0){
+
+        }
         //TODO: get rid of this, it's just test code
         if(!songStarted){
             songStarted = true;
@@ -376,5 +352,15 @@ public class AudioListener {
     public void resume(long resumeTime , long newSongStartTime){
         mTimeManager.setSongStartTime(newSongStartTime);
         mBridge.resume(resumeTime);
+    }
+
+    public synchronized void destroy(){
+        mSlaveTCPHandler.destroy();
+        mSocket.close();
+        mSlaveDiscoveryHandler.destroy();
+        mSlaveDecoder.destroy();
+        mIsListening = false;
+
+        mBridge.destroy();
     }
 }

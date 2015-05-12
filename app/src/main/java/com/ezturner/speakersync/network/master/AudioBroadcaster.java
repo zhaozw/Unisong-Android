@@ -10,12 +10,12 @@ import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.TimeManager;
-import com.ezturner.speakersync.network.ntp.NtpServer;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -36,13 +36,8 @@ public class AudioBroadcaster {
     //The port that the stream will broadcast on
     public int mPort;
 
-    public int MAX_PACKET_SIZE = 2048;
-
     //The IP that the broadcast stream will be sent on
     private InetAddress mStreamIP;
-
-    //The multicast listener for giving out the IP of the multicast stream
-    private MulticastSocket mControlSocket;
 
     //The multicast listener for giving out the IP of the multicast stream
     private DatagramSocket mStreamSocket;
@@ -68,14 +63,8 @@ public class AudioBroadcaster {
     //In microseconds , the length of a frame
     private long mFrameLength;
 
-    //The time at which the next packet should be played
-    private long mNextFrameTime;
-
     //The time at which the current song either has or will start
     private long mSongStartTime;
-
-    //The current file being read from
-    private File mCurrentFile;
 
     private Handler mHandler;
 
@@ -99,34 +88,13 @@ public class AudioBroadcaster {
     //The boolean that lets us know if we are still broadcasting
     private boolean mIsBroadcasting;
 
-    //The NTP server for time synchronization
-    private NtpServer mNtpServer;
-
     //the scheduler
     private ScheduledExecutorService mWorker;
-
-    //The time that the packets started sending at
-    private long mPacketSendStartTime;
-
-    //The sample rate for the AudioTracks on the slave devices
-    private int mSampleRate;
 
     //The channels for the slave AudioTracks
     private int mChannels;
 
-    //The mime type
-    private String mMime;
-
-    //The bitrate of the current song
-    private int mBitrate;
-
-    //the duration
-    private long mDuration;
-
     private List<Integer> mPacketsToRebroadcast;
-
-    //The thread that will read in the file to be broadcast.
-    private Thread mReadThread;
 
     private List<Slave> mSlaves;
 
@@ -136,6 +104,10 @@ public class AudioBroadcaster {
 
     //The class that handles all of the offset stuff
     private TimeManager mTimeManager;
+
+    private boolean mSendRunnableRunning = false;
+    private boolean mStartRunnableRunning = false;
+
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -156,8 +128,6 @@ public class AudioBroadcaster {
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
             mTCPHandlder = new MasterTCPHandler(this);
 
-            //Start the NTP server for syncing the playback
-            mNtpServer = new NtpServer();
 
         } catch(IOException e){
             e.printStackTrace();
@@ -166,7 +136,7 @@ public class AudioBroadcaster {
         mReader = reader;
 
         //set the stream ID to zero
-        mStreamID = 0;
+        mStreamID = -1;
 
         //Make the map of the packets
         mPackets = new ArrayList<NetworkPacket>();
@@ -184,15 +154,11 @@ public class AudioBroadcaster {
 
         mPacketsToRebroadcast = new ArrayList<>();
 
-        //TODO: fix and implement
-        mIsBroadcasting = false;
-
         mManager = manager;
 
         mReader = reader;
 
-        //TODO: Switch to false, just for the test
-        mStreamRunning = true;
+        mStreamRunning = false;
 
         mLastPacketID = -1;
 
@@ -210,12 +176,15 @@ public class AudioBroadcaster {
     Runnable mPacketSender = new Runnable() {
         @Override
         public void run() {
-
+            mSendRunnableRunning = true;
             long begin = System.currentTimeMillis();
 
             NetworkPacket packet;
             synchronized (mPackets){
                 packet = mPackets.get(mNextPacketSendID);
+                if(packet == null){
+                    Log.d(LOG_TAG , "Packet #" + mNextPacketSendID + " is null!");
+                }
                 //Log.d(LOG_TAG , packet.toString());
                 mNextPacketSendID++;
             }
@@ -224,9 +193,12 @@ public class AudioBroadcaster {
 
             synchronized (mStreamSocket){
                 try {
-                    int len = packet.getPacket().getLength();
-                    mStreamSocket.send(packet.getPacket());
-                    /*
+                    DatagramPacket datagramPacket = packet.getPacket();
+
+                    if(datagramPacket == null){
+                        Log.d(LOG_TAG , "The datagram packet is null for packet #" + (mNextPacketSendID -1));
+                    }
+
                     try{
                         synchronized (this){
                             this.wait(10);
@@ -234,7 +206,12 @@ public class AudioBroadcaster {
                     }catch (InterruptedException e){
 
                     }
-                    mStreamSocket.send(new DatagramPacket(new byte[len] , len));*/
+                    if(!mStreamRunning){
+                        return;
+                    }
+
+                    mStreamSocket.send(datagramPacket);
+
                     mPacketsSentCount++;
                 } catch (IOException e){
                     e.printStackTrace();
@@ -244,7 +221,7 @@ public class AudioBroadcaster {
 
             //TODO: figure out a way to set delay properly
             //long delay = (long)(mPacketSendStartTime + packets.getInfoPacket().getFrame().getPlayTime()) - System.currentTimeMillis();
-            long delay = 18;
+            long delay = 20;
 
 
             rebroadcast();
@@ -263,6 +240,7 @@ public class AudioBroadcaster {
             if(mNextPacketSendID != mLastFrameID) {
                 mWorker.schedule(mPacketSender , delay , TimeUnit.MILLISECONDS);
             }
+            mSendRunnableRunning = false;
         }
 
     };
@@ -271,9 +249,11 @@ public class AudioBroadcaster {
     Runnable mSongStreamStart = new Runnable() {
         @Override
         public void run() {
+            mStartRunnableRunning = true;
             mStreamSocket.connect(mStreamIP , getPort());
-            Log.d(LOG_TAG , "Stream starting!");
+            Log.d(LOG_TAG, "Stream starting!");
             startSongStream();
+            mStartRunnableRunning = false;
         }
     };
 
@@ -294,7 +274,6 @@ public class AudioBroadcaster {
         mSongStartTime = System.currentTimeMillis() + 2000 + mTimeManager.getOffset();
         mTimeManager.setSongStartTime(mSongStartTime);
         mManager.startSong(mSongStartTime);
-        mNextFrameTime = mSongStartTime;
 
         mNextPacketCreateID= 0;
 
@@ -467,6 +446,9 @@ public class AudioBroadcaster {
                 synchronized (mPackets) {
                     packetl = mPackets.get(mPacketsToRebroadcast.get(0));
                 }
+                if(packetl == null){
+                    Log.d(LOG_TAG , "Packet to be rebroadcast is null! #" + mPacketsToRebroadcast.get(0));
+                }
                 Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
 
                 int count = 0;
@@ -533,9 +515,36 @@ public class AudioBroadcaster {
 
     public void resume(long resumeTime){
         long newSongStartTime = System.currentTimeMillis() - resumeTime + 500 + mTimeManager.getOffset();
-
+        Log.d(LOG_TAG , "Resume time is : " + resumeTime + " and newSongStartTime is : " + newSongStartTime);
         mTimeManager.setSongStartTime(newSongStartTime);
 
-        mTCPHandlder.resume(resumeTime , newSongStartTime);
+        mTCPHandlder.resume(resumeTime, newSongStartTime);
+    }
+
+    public void destroy(){
+        mManager = null;
+
+        mTCPHandlder.destroy();
+        mTCPHandlder = null;
+
+        if(mStartRunnableRunning || mSendRunnableRunning){
+            while (mSendRunnableRunning || mStartRunnableRunning){
+                synchronized (this){
+                    try{
+                        this.wait(1);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        synchronized (mHandler) {
+            mHandler.removeCallbacks(mPacketSender);
+            mHandler.removeCallbacks(mSongStreamStart);
+        }
+
+        mDiscoveryHandler.destroy();
+        mDiscoveryHandler = null;
     }
 }

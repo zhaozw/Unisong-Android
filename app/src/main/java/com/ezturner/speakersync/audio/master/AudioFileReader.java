@@ -298,17 +298,6 @@ public class AudioFileReader {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
 
-
-            /*
-            //TODO: test and figure out
-            try{
-                synchronized (this){
-                    this.wait(5);
-                }
-            } catch (InterruptedException e){
-
-            }
-            */
         }
 
         mRunning = false;
@@ -343,16 +332,9 @@ public class AudioFileReader {
         }
     }
 
-    private void checkGC(){
-        mRuns++;
-        if(mRuns >= 200){
-            System.gc();
-            mRuns = 0;
-        }
-    }
-
     //The code to stop the decoding
-    public void stopDecode(){
+    public void
+    stopDecode(){
         mStop = true;
     }
 
@@ -376,5 +358,15 @@ public class AudioFileReader {
         mBroadcasterBridge = bridge;
     }
 
+    public void destroy(){
+        mBroadcasterBridge.destroy();
+        mBroadcasterBridge = null;
+        mAACBridge.destroy();
+        mAACBridge = null;
+        mDecodeThread = null;
+        mStop = true;
+
+
+    }
 
 }

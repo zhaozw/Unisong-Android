@@ -107,7 +107,7 @@ public class MasterDiscoveryHandler {
 
     //Listens for packets
     private void listenForPacket(){
-        byte[] data = new byte[1024];
+        byte[] data = new byte[256];
         DatagramPacket packet = new DatagramPacket(data , data.length);
 
         Log.d(LOG_TAG , "Starting to listen");
@@ -125,38 +125,34 @@ public class MasterDiscoveryHandler {
     }
 
     //Takes in a packet, and sends back the port in use and
-    private void handlePacket(DatagramPacket packet){
+    private void handlePacket(DatagramPacket packet) {
         InetAddress addr = packet.getAddress();
 
-        Log.d(LOG_TAG , "Packet received , from : " + addr.toString());
+        Log.d(LOG_TAG, "Packet received , from : " + addr.toString());
 
         MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
 
         byte[] data = resPacket.getData();
 
         //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_SLAVE_PORT);
+        DatagramPacket outPacket = new DatagramPacket(data, data.length, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_SLAVE_PORT);
 
         //Send out packet
         try {
             mSendSocket.send(outPacket);
-        } catch(SocketException e){
+        } catch (SocketException e) {
             e.printStackTrace();
-        } catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
-
-
-    public synchronized void release(){
+    public synchronized void destroy(){
         mListening = false;
         mReceiveSocket.close();
         mSendSocket.close();
+
     }
-
-
 
 
 }

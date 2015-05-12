@@ -5,11 +5,8 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
-import com.ezturner.speakersync.network.NetworkUtilities;
-import com.ezturner.speakersync.network.master.Slave;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
-import com.ezturner.speakersync.network.packets.tcp.TCPPausePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
@@ -25,7 +22,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +55,7 @@ public class SlaveTCPHandler {
     //The handler that checks if a packet that was asked for has been received
     private Handler mHandler;
 
-    private boolean mRequesting;
+    private boolean mRunning;
     private Thread mThread;
     private ArrayList<Integer> mPacketsReRequested;
 
@@ -101,7 +97,7 @@ public class SlaveTCPHandler {
 
         mHandler.postDelayed(mPacketRequester , 30);
 
-        mRequesting = true;
+        mRunning = true;
 
         mThread = getThread();
         mThread.start();
@@ -124,14 +120,14 @@ public class SlaveTCPHandler {
             for(Integer i : packetsSent){
                 mPacketsToRequest.remove(i);
             }
-            if(mRequesting){
+            if(mRunning){
                 mHandler.postDelayed(mPacketRequester , 10);
             }
         }
     };
 
     private void stop(){
-        mRequesting = false;
+        mRunning = false;
     }
 
     private Thread getThread(){
@@ -190,11 +186,12 @@ public class SlaveTCPHandler {
 
             type = mInStream.readByte();
         } catch (IOException e){
+            Log.d(LOG_TAG , e.toString());
             e.printStackTrace();
         }
 
 
-        while (type != -1){
+        while (type != -1 && mRunning){
             Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
             switch (type){
                 case CONSTANTS.TCP_COMMAND_RETRANSMIT:
@@ -212,6 +209,9 @@ public class SlaveTCPHandler {
                 case CONSTANTS.TCP_PAUSE:
                     listenPause();
                     break;
+                case CONSTANTS.TCP_RESUME:
+                    listenResume();
+                    break;
                 case CONSTANTS.TCP_END_SESSION:
                     endSession();
                     break;
@@ -225,6 +225,13 @@ public class SlaveTCPHandler {
                 case CONSTANTS.TCP_SWITCH_MASTER:
                     switchMaster();
                     break;
+            }
+
+            try {
+                type = mInStream.readByte();
+            } catch (IOException e){
+                Log.d(LOG_TAG , e.toString());
+                e.printStackTrace();
             }
         }
 
@@ -330,6 +337,7 @@ public class SlaveTCPHandler {
     }
 
     private void listenPause(){
+        Log.d(LOG_TAG, "Pause Received");
         mListener.pause();
         //TODO: handle pause
     }
@@ -337,6 +345,7 @@ public class SlaveTCPHandler {
     private void listenResume(){
         TCPResumePacket packet = new TCPResumePacket(mInStream);
 
+        Log.d(LOG_TAG , "Resume time is : " + packet.getResumeTime() + " and song start time is : " + packet.getNewSongStartTime());
         mListener.resume(packet.getResumeTime(), packet.getNewSongStartTime());
     }
 
@@ -351,6 +360,12 @@ public class SlaveTCPHandler {
     }
 
     private void endSession(){
+
+    }
+    
+    public synchronized void destroy(){
+        mRunning = false;
+        mThread = null;
 
     }
 

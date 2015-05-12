@@ -49,6 +49,8 @@ public class SlaveDiscoveryHandler {
     //The AudioListener parent
     private AudioListener mParent;
 
+    private boolean mRunnableRunning = false;
+
 
 
     //TODO: ensure that this works with multiple masters
@@ -57,7 +59,7 @@ public class SlaveDiscoveryHandler {
         mParent = parent;
 
 
-        mTempMasters = new ArrayList<Master>();
+        mTempMasters = new ArrayList<>();
 
         //Makes the handler for broadcasting packets
         mHandler = new Handler();
@@ -155,6 +157,7 @@ public class SlaveDiscoveryHandler {
     Runnable mWaitForMoreMasters = new Runnable() {
         @Override
         public void run() {
+            mRunnableRunning = true;
             Log.d(LOG_TAG , "Wait is over");
             mSendSocket.close();
             mReceiveSocket.close();
@@ -164,6 +167,7 @@ public class SlaveDiscoveryHandler {
                 Log.d(LOG_TAG , "Only one master detected, playing from" + mTempMasters.get(0).getIP() + ":" + mTempMasters.get(0).getPort());
                 mParent.playFromMaster(mTempMasters.get(0));
             }
+            mRunnableRunning = false;
         }
     };
 
@@ -266,5 +270,27 @@ public class SlaveDiscoveryHandler {
 
         mTempMasters = new ArrayList<Master>();
 
+    }
+
+
+    public synchronized void destroy(){
+        mListening = false;
+
+        mReceiveSocket.close();
+        mSendSocket.close();
+
+        if(mRunnableRunning){
+            while(mRunnableRunning){
+                synchronized (this){
+                    try {
+                        this.wait(1);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        mHandler.removeCallbacks(mWaitForMoreMasters);
     }
 }

@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 
@@ -13,6 +15,8 @@ import java.util.Arrays;
  * Created by ezturner on 5/5/2015.
  */
 public class TCPSongStartPacket {
+
+    private final static String LOG_TAG = "TCPSongStartPacket";
 
     //The stream ID
     private byte mStreamID;
@@ -44,7 +48,6 @@ public class TCPSongStartPacket {
 
         data = NetworkUtilities.combineArrays(songStartArr, data);
 
-
         synchronized (stream) {
             try {
                 stream.write(CONSTANTS.TCP_SONG_START);
@@ -57,6 +60,7 @@ public class TCPSongStartPacket {
 
 
     private void receive(InputStream stream){
+        Log.d(LOG_TAG, "Receiving Song Start Instructions");
         byte[] data = new byte[13];
 
         synchronized (stream){
@@ -66,6 +70,7 @@ public class TCPSongStartPacket {
                 e.printStackTrace();
             }
         }
+        Log.d(LOG_TAG , "Stream Read succesfully");
 
         byte[] playTimeArr = Arrays.copyOfRange(data, 0, 8);
 
@@ -76,6 +81,8 @@ public class TCPSongStartPacket {
         mChannels = ByteBuffer.wrap(channelsArr).getInt();
 
         mStreamID = data[12];
+
+        Log.d(LOG_TAG , "mSongStartTime is: " + mSongStartTime + " and mChannels is : " + mChannels + " and mStreamID is : " + mStreamID);
     }
 
     public byte getStreamID(){

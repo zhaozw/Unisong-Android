@@ -8,7 +8,7 @@ import java.util.Queue;
 /**
  * Created by Ethan on 3/12/2015.
  */
-public abstract class ReaderBridge {
+public abstract class AbstractBridge {
 
     protected Queue<AudioFrame> mFrames;
     protected Thread mThread;
@@ -17,7 +17,7 @@ public abstract class ReaderBridge {
 
     private boolean mIsRunning;
 
-    public ReaderBridge(){
+    public AbstractBridge(){
         mIsRunning = true;
         mFrames = new LinkedList<AudioFrame>();
         mThread = getThread();
@@ -39,10 +39,12 @@ public abstract class ReaderBridge {
                         sendAllOutputFrames();
                     }
 
-                    try {
-                        Thread.sleep(5);
-                    } catch(InterruptedException e){
+                    synchronized (this){
+                        try {
+                            this.sleep(5);
+                        } catch(InterruptedException e){
 
+                        }
                     }
 
                 }
@@ -62,5 +64,12 @@ public abstract class ReaderBridge {
 
     //This will be overriden in the subclass
     protected abstract  void sendOutFrames(ArrayList<AudioFrame> frames);
+
+    protected void destroy(){
+        mIsRunning = false;
+        mThread = null;
+        mFrames = null;
+
+    }
 
 }

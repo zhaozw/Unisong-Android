@@ -80,10 +80,10 @@ public class MasterTCPHandler {
     private Thread startReliabilityConnectionListener(){
         return new Thread(){
             public void run(){
+                Log.d(LOG_TAG , "Starting to listen for sockets");
                 while(mRunning){
                     Socket socket = null;
 
-                    Log.d(LOG_TAG , "Starting to listen for sockets");
                     try {
                         socket = mServerSocket.accept();
                     } catch(IOException e){
@@ -131,9 +131,10 @@ public class MasterTCPHandler {
         InputStream is = socket.getInputStream();
 
 
-        int identifier = -1;
-        while((identifier = is.read()) != -1){
+        int identifier = is.read();
+        while(identifier != -1 && mRunning){
             handleDataReceived(identifier, slave , is);
+            identifier = is.read();
         }
 
         if(socket.isClosed()){
@@ -183,6 +184,7 @@ public class MasterTCPHandler {
         Socket socket = mSockets.get(havePacket.get(index));
 
         try {
+            Log.d(LOG_TAG , "Telling "  + havePacket.get(index).toString() + " to rebroadcast frame #" + packetID);
             OutputStream stream = socket.getOutputStream();
             TCPRetransmitPacket.send(stream, packetID);
         } catch (IOException e){
@@ -212,6 +214,8 @@ public class MasterTCPHandler {
 
         mSongStart = songStart;
         mChannels = channels;
+        //TODO: see about if deleting this is neccessary
+        mChannels = 2;
         mStreamID = streamID;
 
         getStartThread().start();
@@ -249,6 +253,7 @@ public class MasterTCPHandler {
 
     private void sendSongInProgress(Socket socket){
         try{
+            Log.d(LOG_TAG , "Sending Song Start to ");
             OutputStream stream = socket.getOutputStream();
 
             //Send out the Song In Progress TCP packet.
@@ -262,7 +267,7 @@ public class MasterTCPHandler {
 
     //Send a TCP packet to those who need it with the selected frame
     //Should only be one, but can be more if needed.
-    public void sendPacketTCP(int packetID){
+    public void sendFrameTCP(int packetID){
         for(Slave slave : mBroadcaster.getSlaves()){
             if(!slave.hasPacket(packetID)){
                 OutputStream stream = null;
@@ -307,4 +312,24 @@ public class MasterTCPHandler {
         }
     }
 
+    public synchronized void destroy(){
+        mRunning = false;
+        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+
+            Socket socket = entry.getValue();
+            try {
+                socket.close();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
+        try{
+            mServerSocket.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+
+    }
 }

@@ -69,6 +69,8 @@ public class MediaService extends Service{
     public void onCreate(){
         super.onCreate();
 
+        Log.d(LOG_TAG , "Starting MediaService");
+
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -87,7 +89,10 @@ public class MediaService extends Service{
                     play();
                 }else if(command.equals("pause")){
                     Log.d(LOG_TAG , "Pause received!");
-                    play();
+                    pause();
+                }else if(command.equals("resume")){
+                    Log.d(LOG_TAG , "Resume received!");
+                    resume();
                 }  else if(command.equals("destroy")){
                     Log.d(LOG_TAG , "Destroy received!");
                     onDestroy();
@@ -103,7 +108,6 @@ public class MediaService extends Service{
         mTimeManager = new TimeManager();
         mAudioTrackManager = new AudioTrackManager(mTimeManager);
         mSntpClient = new SntpClient(mTimeManager);
-        mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
 
 
 
@@ -126,6 +130,7 @@ public class MediaService extends Service{
 
     public void broadcaster() {
         if(mBroadcaster == null) {
+            mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
             mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mTimeManager);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
         }
@@ -151,7 +156,10 @@ public class MediaService extends Service{
 
     public void resume(){
         mBroadcaster.resume(mResumeTime);
+        mAudioTrackManager.resume(mResumeTime);
+        mResumeTime = -1;
     }
+
     public IBinder onBind(Intent arg0){
         return mBinder;
     }
@@ -173,6 +181,35 @@ public class MediaService extends Service{
     public void onDestroy(){
         super.onDestroy();
         mWakeLock.release();
+
+        if(mBroadcaster != null){
+            mBroadcaster.destroy();
+            mBroadcaster = null;
+        }
+
+        if(mListener != null){
+            mListener.destroy();
+            mListener = null;
+        }
+
+        if(mAudioTrackManager != null){
+            mAudioTrackManager.destroy();
+            mAudioTrackManager = null;
+        }
+
+        if(mFileReader != null){
+            mFileReader.destroy();
+            mFileReader = null;
+        }
+
+        if(mSntpClient != null){
+            mSntpClient.destroy();
+            mSntpClient = null;
+        }
+
+        mTimeManager = null;
+
+        System.gc();
     }
 
 }

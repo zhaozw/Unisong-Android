@@ -1,15 +1,11 @@
 package com.ezturner.speakersync.audio;
 
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 
 /**
  * Created by ezturner on 3/11/2015.
  */
-public class TrackManagerBridge extends ReaderBridge{
+public class TrackManagerBridge extends AbstractBridge {
 
 
     private String LOG_TAG = "TrackManagerBridge";
@@ -37,6 +33,11 @@ public class TrackManagerBridge extends ReaderBridge{
 
     public void lastPacket(){
         mManager.lastPacket();
+    }
+
+    public void destroy(){
+        mManager = null;
+        super.destroy();
     }
 
 }

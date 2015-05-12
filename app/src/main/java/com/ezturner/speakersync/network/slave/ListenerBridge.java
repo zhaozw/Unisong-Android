@@ -3,14 +3,14 @@ package com.ezturner.speakersync.network.slave;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
-import com.ezturner.speakersync.audio.ReaderBridge;
+import com.ezturner.speakersync.audio.AbstractBridge;
 
 import java.util.ArrayList;
 
 /**
  * Created by Ethan on 3/12/2015.
  */
-public class ListenerBridge extends ReaderBridge{
+public class ListenerBridge extends AbstractBridge {
 
     private final String LOG_TAG = "ListenerBridge";
     private SlaveDecoder mSlaveDecoder;
@@ -39,6 +39,8 @@ public class ListenerBridge extends ReaderBridge{
     }
 
     public void startSong(long startTime , int currentPacket){
+        mSlaveDecoder.newSong();
+        mManager.newSong();
         mSlaveDecoder.decode(currentPacket);
         mSlaveDecoder.setSongStartTime(startTime);
         mManager.startSong(startTime);
@@ -54,6 +56,12 @@ public class ListenerBridge extends ReaderBridge{
 
     public void resume(long resumeTime){
         mManager.resume(resumeTime);
+    }
+
+    public void destroy(){
+        mSlaveDecoder = null;
+        mManager = null;
+        super.destroy();
     }
 
 
