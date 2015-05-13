@@ -50,6 +50,9 @@ public class AudioTrackManager {
     //The class that handles all of the time calculations
     private TimeManager mTimeManager;
 
+    //The boolean telling us if we have received a seek command
+    private boolean mSeek = false;
+
     private long mLastFrameTime;
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
@@ -125,9 +128,9 @@ public class AudioTrackManager {
 
             long difference = mTimeManager.getPCMDifference(frame);
 
-//            Log.d(LOG_TAG , frame.toString());
+            Log.d(LOG_TAG , frame.toString());
 
-//            Log.d(LOG_TAG , "Difference is :" + difference);
+            Log.d(LOG_TAG , "Difference is :" + difference);
 
             if(difference <= -30){
                 long before = System.currentTimeMillis();
@@ -253,6 +256,12 @@ public class AudioTrackManager {
             mAudioTrack = null;
         }
     }
+    public void seek(long seekTime){
+        mSeek = true;
+        mFrameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
+        mTimeManager.seek(seekTime);
+        Log.d(LOG_TAG , "mFrameToPlay is : " + mFrameToPlay);
+    }
 
     public void setLastFrameID(int lastFrame){
         mLastFrameID = lastFrame;
@@ -267,22 +276,31 @@ public class AudioTrackManager {
         return mLastFrameTime;
     }
 
-    public void seek(long seekTime){
+    private boolean containsFrame(long seekTime){
+        boolean contains = false;
 
-
-        //If we're playing, start up an AudioTrack instance and the write thread
-        if(mIsPlaying){
-            startPlaying();
-        }
-
-    }
-
-    public void resume(long resumeTime){
         for(int i = 0; i < mFrames.size(); i++){
-            long diff = mFrames.get(i).getPlayTime() - resumeTime;
+            long diff = mFrames.get(i).getPlayTime() - seekTime;
 
             if(Math.abs(diff) <= 22){
+                contains = true;
                 mFrameToPlay = i;
+            }
+        }
+        return contains;
+    }
+
+
+    public void resume(long resumeTime){
+        synchronized (mFrames) {
+            Log.d(LOG_TAG, mFrames.size() + " ");
+            for (int i = 0; i < mFrames.size(); i++) {
+                Log.d(LOG_TAG ,"mFrames index is: " + i);
+                long diff = mFrames.get(i).getPlayTime() - resumeTime;
+
+                if (Math.abs(diff) <= 22) {
+                    mFrameToPlay = i;
+                }
             }
         }
 
@@ -294,6 +312,7 @@ public class AudioTrackManager {
     }
 
     public void destroy(){
+        Log.d(LOG_TAG , "AudioTrackManager Destroy Called");
         mIsPlaying = false;
         mWriteThread = null;
         mTimeManager = null;

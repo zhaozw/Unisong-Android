@@ -40,7 +40,7 @@ public class SlaveDecoder {
     //The Bridge that will be used to send the finished AAC frames to the broadcaster.
     private TrackManagerBridge mTrackManagerBridge;
 
-    //The adjustment for when we're joining mid-session
+    //The adjust to playTime used to adjust time when we have done a seek command or when we have joined mid-session
     private long mTimeAdjust = 0;
 
     private long mOffset = 0;
@@ -134,5 +134,10 @@ public class SlaveDecoder {
         mSlaveCodec.destroy();
         mFrames = new HashMap<>();
         mSlaveCodec = new SlaveCodec(this, channels ,  mFrames ,mTimeManager );
+    }
+
+    public void seek(long seekTime){
+        mSlaveCodec.seek(seekTime);
+        mTimeAdjust = seekTime;
     }
 }

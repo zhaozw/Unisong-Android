@@ -363,4 +363,10 @@ public class AudioListener {
 
         mBridge.destroy();
     }
+
+    public void seek(long seekTime){
+        mSlaveDecoder.seek(seekTime);
+        mBridge.seek(seekTime);
+        mTimeManager.seek(seekTime);
+    }
 }

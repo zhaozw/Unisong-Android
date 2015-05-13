@@ -39,7 +39,10 @@ public class SlaveCodec {
 
     private boolean mStop;
 
-    private int mCurrentFrame = 0;
+    private Integer mCurrentFrame = 0;
+
+    //The boolean telling the blank PCM frame creation code that we have a
+    private boolean mSeek = false;
 
     String mime = null;
     int sampleRate = 0, channels = 0, bitrate = 0;
@@ -47,6 +50,7 @@ public class SlaveCodec {
 
     private TimeManager mTimeManager;
     private Map<Integer , AudioFrame> mFrames;
+
 
     public SlaveCodec(SlaveDecoder decoder, int channels, Map<Integer , AudioFrame> frames, TimeManager timeManager){
         mDecoder = decoder;
@@ -134,7 +138,7 @@ public class SlaveCodec {
             //TODO: test/check this out
             while(!mFrames.containsKey(mCurrentFrame)){
 
-                if(System.currentTimeMillis() - mTimeManager.getAACPlayTime(mCurrentFrame) >= -100){
+                if(System.currentTimeMillis() - mTimeManager.getAACPlayTime(mCurrentFrame) >= -100 && !mSeek){
 
                     Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + "" );
 
@@ -162,6 +166,10 @@ public class SlaveCodec {
                     }
                 }
             }
+
+            if(mSeek)   mSeek = false;
+
+
             AudioFrame frame;
             synchronized (mFrames){
                 frame = mFrames.get(mCurrentFrame);
@@ -299,5 +307,12 @@ public class SlaveCodec {
     public void destroy(){
         mDecodeThread = null;
         mStop = true;
+    }
+
+    public void seek(long seekTime){
+        mSeek = true;
+        synchronized (mCurrentFrame) {
+            mCurrentFrame = (int) (seekTime / (1024000.0 / 44100.0));
+        }
     }
 }

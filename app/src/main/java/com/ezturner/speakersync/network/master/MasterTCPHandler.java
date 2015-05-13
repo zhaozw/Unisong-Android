@@ -9,6 +9,7 @@ import com.ezturner.speakersync.network.packets.tcp.TCPPausePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPSeekPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
@@ -89,6 +90,10 @@ public class MasterTCPHandler {
                     } catch(IOException e){
                         e.printStackTrace();
                     }
+                    //TODO: uncomment after you
+//                    if(socket == null){
+//                        break;
+//                    }
                     Log.d(LOG_TAG , "Socket connected : " + socket.getInetAddress());
 
                     if(socket != null){
@@ -331,5 +336,20 @@ public class MasterTCPHandler {
         }
 
 
+    }
+
+    public void seek(long seekTime){
+        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+
+            Socket socket = entry.getValue();
+            try {
+                OutputStream stream = socket.getOutputStream();
+                TCPSeekPacket.send(stream , seekTime);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+
+        }
     }
 }

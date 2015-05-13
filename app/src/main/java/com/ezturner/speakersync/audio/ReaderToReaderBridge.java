@@ -3,6 +3,7 @@ package com.ezturner.speakersync.audio;
 import com.ezturner.speakersync.audio.master.AACEncoder;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Created by Ethan on 4/28/2015.
@@ -10,17 +11,30 @@ import java.util.ArrayList;
 public class ReaderToReaderBridge extends AbstractBridge {
 
     private AACEncoder mEncoder;
+    private boolean mSeek;
 
     public ReaderToReaderBridge(AACEncoder encoder){
         mEncoder = encoder;
+        mSeek = false;
     }
 
     @Override
     protected void sendOutFrames(ArrayList<AudioFrame> frames) {
-        mEncoder.addFrames(frames);
+        if(mEncoder != null) {
+            mEncoder.addFrames(frames);
+        }
     }
 
     public void destroy(){
-        mEncoder = null;
+        if(mEncoder != null) {
+            mEncoder = null;
+        }
+    }
+
+    public void seek(){
+        mSeek = true;
+        synchronized (mFrames){
+            mFrames = new LinkedList<>();
+        }
     }
 }

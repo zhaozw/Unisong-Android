@@ -45,7 +45,7 @@ public class AudioFileReader {
     private AudioListener mListener;
 
     //The current ID of the audio frame
-    private int mCurrentID;
+    private Integer mCurrentID;
 
     //Whether this is the first run
     private boolean mFirstRun;
@@ -74,6 +74,7 @@ public class AudioFileReader {
 
     private boolean mRunning;
 
+    private long mTimeAdjust = 0;
     //The encoder that turns the PCM data into AAC for transmit
     private AACEncoder mEncoder;
 
@@ -221,7 +222,7 @@ public class AudioFileReader {
                     } else {
 
                         mLength = mExtractor.getSampleTime() -presentationTimeUs;
-                        mPlayTime = mExtractor.getSampleTime();
+                        mPlayTime = mExtractor.getSampleTime() / 1000;
 //                        Log.d(LOG_TAG , "PlayTime is : " + mPlayTime);
 
                         presentationTimeUs = mExtractor.getSampleTime();
@@ -338,13 +339,14 @@ public class AudioFileReader {
         mStop = true;
     }
 
-    private long mSamples =0;
+    private Long mSamples =0l;
     private void createPCMFrame(byte[] data ){
-        long playTime = (mSamples * 8000) / CONSTANTS.PCM_BITRATE;
+        long playTime = (mSamples * 8000) / CONSTANTS.PCM_BITRATE + mTimeAdjust;
         long length = (data.length * 8000) / CONSTANTS.PCM_BITRATE;
 //        if()
 //        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
+        Log.d(LOG_TAG , "Frame is : " + frame.toString());
 
         mTrackManagerBridge.addFrame(frame);
         mAACBridge.addFrame(frame);
@@ -365,8 +367,28 @@ public class AudioFileReader {
         mAACBridge = null;
         mDecodeThread = null;
         mStop = true;
+    }
 
+    public long seek(long seekTime) {
+        synchronized (mExtractor){
+            if (mPlayTime < seekTime) {
+                mExtractor.seekTo((seekTime - 50) * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
+                seekTime = mExtractor.getSampleTime() / 1000;
+
+                synchronized (mCurrentID) {
+                    mCurrentID = (int) (seekTime / (1024000.0 / 44100.0));
+                }
+                synchronized (mSamples) {
+                    mSamples = 0l;
+                }
+                mAACBridge.seek();
+
+                mTimeAdjust = seekTime;
+            }
+        }
+
+        return seekTime;
     }
 
 }

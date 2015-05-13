@@ -13,6 +13,9 @@ public class TimeManager {
     //The time offset returned by the SntpClient class
     private long mOffset;
 
+    //The seek time adjustment
+    private long mSeekTime;
+
     // The time that the current song starts at, with the offset applied
     // To convert to this device's local time, subtract mOffset.
     private long mSongStartTime;
@@ -31,21 +34,21 @@ public class TimeManager {
         mSongStartTime = songStartTime;
     }
 
+    //TODO: make sure that my mSeekTime thing works
     public long getAACPlayTime(int ID){
-        return mSongStartTime - mOffset + (long)(((1024.0 * ID) / 44100.0) * 1000.0);
-    }
-
-    public long getPCMPlayTime(long playTime){
-        return playTime + mSongStartTime - mOffset;
+        return mSongStartTime - mOffset + (long)(((1024.0 * ID) / 44100.0) * 1000.0) + mSeekTime;
     }
 
     public long getPCMDifference(AudioFrame frame){
-        return System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - mOffset);
+        return System.currentTimeMillis() - (frame.getPlayTime() - mSeekTime + mSongStartTime - mOffset);
     }
 
     public long getOffset(){
         return mOffset;
     }
 
+    public void seek(long seekTime){
+        mSeekTime = seekTime;
+    }
 
 }

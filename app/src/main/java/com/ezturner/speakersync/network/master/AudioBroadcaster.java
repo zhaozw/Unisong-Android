@@ -20,7 +20,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,7 +51,7 @@ public class AudioBroadcaster {
     static private Random random = new Random();
 
     //ArrayList of packets made
-    private ArrayList<NetworkPacket> mPackets;
+    private Map<Integer , NetworkPacket> mPackets;
 
     //The object that handles all reliability stuff
     private MasterTCPHandler mTCPHandlder;
@@ -70,9 +72,6 @@ public class AudioBroadcaster {
 
     //The ID of the packet to be sent next
     private int mNextPacketSendID;
-
-    //The ID of the next packet to be made
-    private int mNextPacketCreateID;
 
     //The ID of the last packet in this stream
     private int mLastPacketID;
@@ -139,14 +138,11 @@ public class AudioBroadcaster {
         mStreamID = -1;
 
         //Make the map of the packets
-        mPackets = new ArrayList<NetworkPacket>();
+        mPackets = new HashMap<>();
 
-        //Makes the handler for broadcasting packets
+                //Makes the handler for broadcasting packets
         //TODO : delete if useless
         mHandler = new Handler();
-
-        //Set the next packet to be created to 1, the song start packet is 0
-        mNextPacketCreateID = 0;
 
         //Set the next packet to be created to be 0
         mNextPacketSendID = 0;
@@ -179,6 +175,7 @@ public class AudioBroadcaster {
             mSendRunnableRunning = true;
             long begin = System.currentTimeMillis();
 
+//            Log.d(LOG_TAG , "Starting packet send!");
             NetworkPacket packet;
             synchronized (mPackets){
                 packet = mPackets.get(mNextPacketSendID);
@@ -189,8 +186,21 @@ public class AudioBroadcaster {
                 mNextPacketSendID++;
             }
 
+            if(packet == null){
+                while (!mPackets.containsKey(mNextPacketSendID)){
+                    synchronized (this){
+                        try {
+                            this.wait(1);
+                        } catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
 
 
+
+//            Log.d(LOG_TAG , "Sending packet!");
             synchronized (mStreamSocket){
                 try {
                     DatagramPacket datagramPacket = packet.getPacket();
@@ -199,13 +209,7 @@ public class AudioBroadcaster {
                         Log.d(LOG_TAG , "The datagram packet is null for packet #" + (mNextPacketSendID -1));
                     }
 
-                    try{
-                        synchronized (this){
-                            this.wait(10);
-                        }
-                    }catch (InterruptedException e){
 
-                    }
                     if(!mStreamRunning){
                         return;
                     }
@@ -218,10 +222,11 @@ public class AudioBroadcaster {
                 }
             }
 
-
+//
+//            Log.d(LOG_TAG , "Packet Sent!");
             //TODO: figure out a way to set delay properly
             //long delay = (long)(mPacketSendStartTime + packets.getInfoPacket().getFrame().getPlayTime()) - System.currentTimeMillis();
-            long delay = 20;
+            long delay = 23;
 
 
             rebroadcast();
@@ -275,7 +280,8 @@ public class AudioBroadcaster {
         mTimeManager.setSongStartTime(mSongStartTime);
         mManager.startSong(mSongStartTime);
 
-        mNextPacketCreateID= 0;
+        mStreamRunning = true;
+
 
         mNextPacketSendID = 0;
         mLastPacketID = 0;
@@ -286,7 +292,7 @@ public class AudioBroadcaster {
             mStreamID++;
         }
 
-        mPackets = new ArrayList<NetworkPacket>();
+        mPackets = new HashMap<>();
 
 
         try{
@@ -364,9 +370,8 @@ public class AudioBroadcaster {
     }
 
     private void createFramePacket(AudioFrame frame){
-        FramePacket fp = new FramePacket(frame ,getStreamID() , mNextPacketCreateID);
-        mNextPacketCreateID++;
-        mPackets.add(fp);
+        FramePacket fp = new FramePacket(frame ,getStreamID() , frame.getID());
+        mPackets.put(fp.getPacketID(), fp);
     }
     /*Not in use atm
 
@@ -382,9 +387,6 @@ public class AudioBroadcaster {
 
         return songStartPacket;
     }*/
-    public void lastPacket(){
-        mLastPacketID = mNextPacketCreateID;
-    }
 
 
     public byte getStreamID(){
@@ -446,6 +448,7 @@ public class AudioBroadcaster {
                 synchronized (mPackets) {
                     packetl = mPackets.get(mPacketsToRebroadcast.get(0));
                 }
+
                 if(packetl == null){
                     Log.d(LOG_TAG , "Packet to be rebroadcast is null! #" + mPacketsToRebroadcast.get(0));
                 }
@@ -519,6 +522,11 @@ public class AudioBroadcaster {
         mTimeManager.setSongStartTime(newSongStartTime);
 
         mTCPHandlder.resume(resumeTime, newSongStartTime);
+    }
+
+    public void seek(long seekTime){
+        mTCPHandlder.seek(seekTime);
+        mNextPacketSendID = (int)(seekTime / (1024000.0 / 44100.0));
     }
 
     public void destroy(){

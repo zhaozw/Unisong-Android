@@ -10,6 +10,7 @@ import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPSeekPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSwitchMasterPacket;
@@ -292,8 +293,15 @@ public class SlaveTCPHandler {
 
     //Listens for the Seek command for the song
     private void listenSeek(){
+        TCPSeekPacket seekPacket = new TCPSeekPacket(mInStream);
+        long seekTime = seekPacket.getSeekTime();
 
+        mListener.seek(seekTime);
+
+        mTopPacket = (int) (seekTime / (1024000.0 / 44100.0));
     }
+
+
     //Listens for the retransmit data/packet ID
     private void listenRetransmit(){
         Log.d(LOG_TAG, "Listening for Retransmit");

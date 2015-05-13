@@ -14,14 +14,14 @@ import java.nio.ByteBuffer;
 public class TCPSeekPacket {
 
     //The frame that the host will seek to
-    private int mFrameToDecodeNext;
+    private long mSeekTime;
 
     public TCPSeekPacket(InputStream stream){
         receive(stream);
     }
 
-    public static void send(OutputStream stream, int frameToDecodeNext){
-        byte[] data = ByteBuffer.allocate(4).putInt(frameToDecodeNext).array();
+    public static void send(OutputStream stream, long seekTime){
+        byte[] data = ByteBuffer.allocate(8).putLong(seekTime).array();
 
         synchronized (stream) {
             try {
@@ -35,7 +35,7 @@ public class TCPSeekPacket {
     }
 
     private void receive(InputStream stream){
-        byte[] data = new byte[4];
+        byte[] data = new byte[8];
 
         synchronized (stream) {
             try {
@@ -45,11 +45,11 @@ public class TCPSeekPacket {
             }
         }
 
-        mFrameToDecodeNext = ByteBuffer.wrap(data).getInt();
+        mSeekTime = ByteBuffer.wrap(data).getInt();
 
     }
 
-    public int getFrameToDecodeNext(){
-        return mFrameToDecodeNext;
+    public long getSeekTime(){
+        return mSeekTime;
     }
 }

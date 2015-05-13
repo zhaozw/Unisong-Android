@@ -57,11 +57,11 @@ public class AACEncoder {
     public void encode(MediaFormat inputFormat){
         mInputFormat = inputFormat;
         mFrames = new ArrayList<>();
-        mEncodeThread = getDecode();
+        mEncodeThread = getEncode();
         mEncodeThread.start();
     }
 
-    private Thread getDecode(){
+    private Thread getEncode(){
         return new Thread(new Runnable()  {
             public void run(){
                 try {
@@ -86,7 +86,7 @@ public class AACEncoder {
     private void decode() throws IOException {
 
         long startTime = System.currentTimeMillis();
-
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
         Log.d(LOG_TAG , "Creating mCodec : OMX.google.aac.encoder");
         // create the actual decoder, using the mime to select
@@ -140,6 +140,9 @@ public class AACEncoder {
         while(!mStop){
 
             if(mFrames.size() <= mCurrentFrame){
+                if(mStop){
+                    break;
+                }
                 try{
                     synchronized (this){
                         this.wait();
@@ -147,7 +150,9 @@ public class AACEncoder {
                 } catch (InterruptedException e){
                     Log.d(LOG_TAG , "We have more frames to decode!");
                 }
-                if(mFrames.size() <= mCurrentFrame){
+                if(mFrames.size() <= mCurrentFrame && mStop){
+                    break;
+                } else {
                     continue;
                 }
             }
@@ -234,8 +239,7 @@ public class AACEncoder {
 
     }
 
-    private int count = 0;
-    private int previous = -1;
+
     //Figures out how much data to put in the ByteBuffer dstBuf
     //TODO: Make this more efficient by getting rid of the byte array assignments and check if it makes a difference
     private int setData(AudioFrame frame , ByteBuffer dstBuf){
@@ -320,6 +324,18 @@ public class AACEncoder {
         synchronized (mEncodeThread){
             mEncodeThread.notify();
         }
+    }
+
+    public void seek(){
+        mFrames = new ArrayList<>();
+        mStop = true;
+        while (mRunning) {
+
+        }
+
+        mEncodeThread = getEncode();
+        mEncodeThread.start();
+
     }
 
 

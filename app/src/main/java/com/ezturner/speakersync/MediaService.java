@@ -93,6 +93,9 @@ public class MediaService extends Service{
                 }else if(command.equals("resume")){
                     Log.d(LOG_TAG , "Resume received!");
                     resume();
+                }else if(command.equals("seek")){
+                    Log.d(LOG_TAG , "Seek received!");
+                    seek();
                 }  else if(command.equals("destroy")){
                     Log.d(LOG_TAG , "Destroy received!");
                     onDestroy();
@@ -150,16 +153,50 @@ public class MediaService extends Service{
     }
 
     public void pause(){
-        mResumeTime = mAudioTrackManager.pause();
-        mBroadcaster.pause();
+        if(mBroadcaster != null) {
+            mResumeTime = mAudioTrackManager.pause();
+            mBroadcaster.pause();
+        }
     }
 
     public void resume(){
-        mBroadcaster.resume(mResumeTime);
-        mAudioTrackManager.resume(mResumeTime);
-        mResumeTime = -1;
+        if(mBroadcaster != null) {
+            mBroadcaster.resume(mResumeTime);
+            mAudioTrackManager.resume(mResumeTime);
+            mResumeTime = -1;
+        }
     }
 
+    private Thread mSeekThread;
+    public void seek(){
+        mSeekThread = getSeekThread();
+        mSeekThread.start();
+    }
+
+    private Thread getSeekThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                pause();
+
+                synchronized (this){
+                    try{
+                        this.wait(500);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+
+                if(mBroadcaster != null) {
+                    long time =mFileReader.seek(100000);
+                    mAudioTrackManager.seek(time);
+                    mBroadcaster.seek(time);
+                }
+
+                resume();
+            }
+        });
+    }
     public IBinder onBind(Intent arg0){
         return mBinder;
     }
@@ -192,10 +229,10 @@ public class MediaService extends Service{
             mListener = null;
         }
 
-        if(mAudioTrackManager != null){
-            mAudioTrackManager.destroy();
-            mAudioTrackManager = null;
-        }
+        Log.d(LOG_TAG , "Destroying mAudioTrackManager");
+        mAudioTrackManager.destroy();
+        mAudioTrackManager = null;
+
 
         if(mFileReader != null){
             mFileReader.destroy();

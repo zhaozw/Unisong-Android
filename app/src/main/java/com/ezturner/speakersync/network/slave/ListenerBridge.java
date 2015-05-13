@@ -39,11 +39,13 @@ public class ListenerBridge extends AbstractBridge {
     }
 
     public void startSong(long startTime , int currentPacket){
-        mSlaveDecoder.newSong();
-        mManager.newSong();
-        mSlaveDecoder.decode(currentPacket);
-        mSlaveDecoder.setSongStartTime(startTime);
-        mManager.startSong(startTime);
+        if(mSlaveDecoder != null && mManager != null){
+            mSlaveDecoder.newSong();
+            mManager.newSong();
+            mSlaveDecoder.decode(currentPacket);
+            mSlaveDecoder.setSongStartTime(startTime);
+            mManager.startSong(startTime);
+        }
     }
 
     public void lastPacket(){
@@ -62,6 +64,12 @@ public class ListenerBridge extends AbstractBridge {
         mSlaveDecoder = null;
         mManager = null;
         super.destroy();
+    }
+
+    public void seek(long seekTime){
+        if(mManager != null){
+            mManager.seek(seekTime);
+        }
     }
 
 
