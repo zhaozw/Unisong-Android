@@ -67,31 +67,6 @@ public class MasterDiscoveryHandler {
     }
 
 
-    private void sendStartPacket(){
-        //Set packet type
-        byte [] data = new byte[CONSTANTS.MASTER_START_PACKET];
-
-        //Get port
-        data = NetworkUtilities.combineArrays(data ,ByteBuffer.allocate(4).putInt(mParent.getPort()).array());
-
-        //Get phone number
-        byte[] number = MyApplication.getPhoneNumber().getBytes();
-
-        //combine the two arrays
-        data = NetworkUtilities.combineArrays(data, number);
-
-        //Make the packet
-        DatagramPacket outPacket = new DatagramPacket(data , data.length , NetworkUtilities.getBroadcastAddress() , CONSTANTS.DISCOVERY_SLAVE_PORT );
-
-        //Send out packet
-        try {
-            mSendSocket.send(outPacket);
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-
-    }
-
     private Thread startPacketListener(){
         return new Thread(){
             public void run(){
@@ -139,6 +114,16 @@ public class MasterDiscoveryHandler {
 
         //Send out packet
         try {
+            mSendSocket.send(outPacket);
+
+            try{
+                synchronized (this){
+                    this.wait(5);
+                }
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+
             mSendSocket.send(outPacket);
         } catch (SocketException e) {
             e.printStackTrace();

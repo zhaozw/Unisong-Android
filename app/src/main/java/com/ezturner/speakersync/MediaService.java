@@ -17,6 +17,7 @@ import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
+import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
@@ -54,6 +55,8 @@ public class MediaService extends Service{
     public PowerManager.WakeLock mWakeLock;
 
     private TimeManager mTimeManager;
+
+    private AnalyticsSuite mAnalyticsSuite;
 
     //The time that we have paused at, relative to the Song start time.
     private long mResumeTime = 0;
@@ -108,9 +111,10 @@ public class MediaService extends Service{
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));
 
-        mTimeManager = new TimeManager();
+        mAnalyticsSuite = new AnalyticsSuite();
+        mSntpClient = new SntpClient();
+        mTimeManager = new TimeManager(mSntpClient);
         mAudioTrackManager = new AudioTrackManager(mTimeManager);
-        mSntpClient = new SntpClient(mTimeManager);
 
 
 
@@ -134,7 +138,7 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
-            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mTimeManager);
+            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mTimeManager, mAnalyticsSuite);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
         }
     }
@@ -143,7 +147,7 @@ public class MediaService extends Service{
     public void listener(){
         mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2, mTimeManager);
         ListenerBridge bridge = new ListenerBridge(mSlaveDecoder , mAudioTrackManager );
-        mListener = new AudioListener(this , bridge , mSlaveDecoder, mTimeManager);
+        mListener = new AudioListener(this , bridge , mSlaveDecoder, mTimeManager , mAnalyticsSuite);
 
 
     }

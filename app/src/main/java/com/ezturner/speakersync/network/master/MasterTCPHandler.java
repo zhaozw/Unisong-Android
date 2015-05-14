@@ -2,6 +2,7 @@ package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 
+import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
@@ -54,7 +55,11 @@ public class MasterTCPHandler {
     private Random mRandom;
     //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
-    public MasterTCPHandler(AudioBroadcaster broadcaster){
+    private AnalyticsSuite mAnalyticsSuite;
+
+    public MasterTCPHandler(AudioBroadcaster broadcaster, AnalyticsSuite analyticsSuite){
+
+        mAnalyticsSuite = analyticsSuite;
 
         mBroadcaster = broadcaster;
 
@@ -157,6 +162,7 @@ public class MasterTCPHandler {
                 break;
             case CONSTANTS.TCP_ACK:
                 int ID = new TCPAcknowledgePacket(inputStream).getPacketAcknowledged();
+                mAnalyticsSuite.ackReceived(ID , slave);
                 if(ID != -1)    slave.packetReceived(ID);
                 break;
         }
@@ -344,7 +350,7 @@ public class MasterTCPHandler {
             Socket socket = entry.getValue();
             try {
                 OutputStream stream = socket.getOutputStream();
-                TCPSeekPacket.send(stream , seekTime);
+                TCPSeekPacket.send(stream, seekTime);
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -352,4 +358,18 @@ public class MasterTCPHandler {
 
         }
     }
+
+    public void sendPacketTCP(int packet , Slave slave){
+
+    }
+
+    private Thread getSendPacketThread(int packet , Slave slave){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+    }
+
 }

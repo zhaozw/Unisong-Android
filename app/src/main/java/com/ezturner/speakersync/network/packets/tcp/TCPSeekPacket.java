@@ -37,7 +37,7 @@ public class TCPSeekPacket {
     private void receive(InputStream stream){
         byte[] data = new byte[8];
 
-        synchronized (stream) {
+        synchronized (stream){
             try {
                 stream.read(data);
             } catch (IOException e){

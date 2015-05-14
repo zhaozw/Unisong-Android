@@ -7,18 +7,17 @@ import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +78,7 @@ public class AudioBroadcaster {
     private int mLastFrameID;
 
     //The AudioTrackManager that handles the playback of the audio data on this device
-    private AudioTrackManager mManager;
+    private AudioTrackManager mAudioTrackManager;
 
     //The object that handles the reading and decoding of all of dem music
     private AudioFileReader mReader;
@@ -107,11 +106,14 @@ public class AudioBroadcaster {
     private boolean mSendRunnableRunning = false;
     private boolean mStartRunnableRunning = false;
 
+    //The Analytics Suite that I use to help me get information about data transfer and whatnot
+    private AnalyticsSuite mAnalyticsSuite;
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
-    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader , TimeManager timeManager){
+    public AudioBroadcaster(AudioTrackManager manager , AudioFileReader reader , TimeManager timeManager , AnalyticsSuite analyticsSuite){
 
+        mAnalyticsSuite = analyticsSuite;
         mSlaves = new ArrayList<>();
 
         mTimeManager = timeManager;
@@ -125,7 +127,7 @@ public class AudioBroadcaster {
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
-            mTCPHandlder = new MasterTCPHandler(this);
+            mTCPHandlder = new MasterTCPHandler(this , mAnalyticsSuite);
 
 
         } catch(IOException e){
@@ -150,7 +152,7 @@ public class AudioBroadcaster {
 
         mPacketsToRebroadcast = new ArrayList<>();
 
-        mManager = manager;
+        mAudioTrackManager = manager;
 
         mReader = reader;
 
@@ -214,6 +216,7 @@ public class AudioBroadcaster {
                         return;
                     }
 
+                    mAnalyticsSuite.packetSent(packet.getPacketID());
                     mStreamSocket.send(datagramPacket);
 
                     mPacketsSentCount++;
@@ -276,9 +279,9 @@ public class AudioBroadcaster {
 
         //The start time in milliseconds
         //TODO: Recalculate this!
-        mSongStartTime = System.currentTimeMillis() + 2000 + mTimeManager.getOffset();
+        mSongStartTime = System.currentTimeMillis() + 1500 + mTimeManager.getOffset();
         mTimeManager.setSongStartTime(mSongStartTime);
-        mManager.startSong(mSongStartTime);
+        mAudioTrackManager.startSong(mSongStartTime);
 
         mStreamRunning = true;
 
@@ -293,7 +296,6 @@ public class AudioBroadcaster {
         }
 
         mPackets = new HashMap<>();
-
 
         try{
             mReader.readFile(MediaService.TEST_FILE_PATH);
@@ -455,9 +457,11 @@ public class AudioBroadcaster {
                 Log.d(LOG_TAG, "packet to be rebroadcast is: " + packetl.toString());
 
                 int count = 0;
+                Slave oneSlave = null;
                 for(Slave slave : mSlaves ){
                     if(!slave.hasPacket(packetl.getPacketID())){
                         count++;
+                        oneSlave = slave;
                     }
                 }
 
@@ -466,10 +470,10 @@ public class AudioBroadcaster {
                     rebroadcast();
                     return;
                 } else if(count == 1){
-                    //TODO: uncomment/fix after we're done testing! This is the single TCP rebroadcast code
-//                    mTCPHandlder.sendPacketTCP(packetl.getPacketID());
-//                    rebroadcast();
-//                    return;
+                    //TODO: comment for local rebroadcasting tests
+                    mTCPHandlder.sendPacketTCP(packetl.getPacketID(), oneSlave);
+                    rebroadcast();
+                    return;
                 }
 
                 for(Slave slave : mSlaves){
@@ -530,7 +534,7 @@ public class AudioBroadcaster {
     }
 
     public void destroy(){
-        mManager = null;
+        mAudioTrackManager = null;
 
         mTCPHandlder.destroy();
         mTCPHandlder = null;

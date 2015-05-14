@@ -346,7 +346,7 @@ public class AudioFileReader {
 //        if()
 //        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
-        Log.d(LOG_TAG , "Frame is : " + frame.toString());
+//        Log.d(LOG_TAG , "Frame is : " + frame.toString());
 
         mTrackManagerBridge.addFrame(frame);
         mAACBridge.addFrame(frame);
@@ -379,10 +379,12 @@ public class AudioFileReader {
                 synchronized (mCurrentID) {
                     mCurrentID = (int) (seekTime / (1024000.0 / 44100.0));
                 }
+
                 synchronized (mSamples) {
                     mSamples = 0l;
                 }
-                mAACBridge.seek();
+
+                mAACBridge.seek(mCurrentID);
 
                 mTimeAdjust = seekTime;
             }

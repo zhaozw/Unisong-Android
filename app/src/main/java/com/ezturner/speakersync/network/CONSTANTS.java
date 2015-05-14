@@ -75,6 +75,8 @@ public class CONSTANTS {
 
     public static final byte TCP_RESUME = 13;
 
+    public static final byte TCP_LATENCY_TEST = 14;
+
     public static final int PCM_BITRATE = 1441200;
 
 }

@@ -128,9 +128,9 @@ public class AudioTrackManager {
 
             long difference = mTimeManager.getPCMDifference(frame);
 
-            Log.d(LOG_TAG , frame.toString());
-
-            Log.d(LOG_TAG , "Difference is :" + difference);
+//            Log.d(LOG_TAG , frame.toString());
+//
+//            Log.d(LOG_TAG , "Difference is :" + difference);
 
             if(difference <= -30){
                 long before = System.currentTimeMillis();
@@ -216,6 +216,8 @@ public class AudioTrackManager {
     }
 
     public void startSong(long songStart){
+
+
         mFrames = new HashMap<>();
         mSongStartTime = songStart;
         double millisTillSongStart =  (songStart - mTimeManager.getOffset()) - System.currentTimeMillis();
@@ -285,6 +287,7 @@ public class AudioTrackManager {
             if(Math.abs(diff) <= 22){
                 contains = true;
                 mFrameToPlay = i;
+                break;
             }
         }
         return contains;
@@ -295,11 +298,12 @@ public class AudioTrackManager {
         synchronized (mFrames) {
             Log.d(LOG_TAG, mFrames.size() + " ");
             for (int i = 0; i < mFrames.size(); i++) {
-                Log.d(LOG_TAG ,"mFrames index is: " + i);
+
                 long diff = mFrames.get(i).getPlayTime() - resumeTime;
 
                 if (Math.abs(diff) <= 22) {
                     mFrameToPlay = i;
+                    break;
                 }
             }
         }

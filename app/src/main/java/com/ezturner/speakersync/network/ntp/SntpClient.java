@@ -69,18 +69,17 @@ public class SntpClient
     private DatagramSocket mSocket;
 
     //The class that handles all of the time management stuff
-    private TimeManager mTimeManager;
 
-    public SntpClient(TimeManager timeManager){
+    public SntpClient(){
+        //TODO: manually resolve the address instead of the default android code
         mServerIP = "pool.ntp.org";
+        mTimeOffset = 0;
         try {
             // Send request
             mSocket = new DatagramSocket();
         } catch(SocketException e){
             e.printStackTrace();
         }
-
-        mTimeManager = timeManager;
 
         mThread = getClientThread();
         mThread.start();
@@ -130,8 +129,8 @@ public class SntpClient
         return average;
     }
 
-    public double getOffset(){
-        return mTimeOffset;
+    public long getOffset(){
+        return (long)mTimeOffset;
     }
 
     private Thread getClientThread(){
@@ -139,8 +138,6 @@ public class SntpClient
             public void run(){
                 try {
                     mTimeOffset = calculateOffset();
-
-                    mTimeManager.setOffset(mTimeOffset);
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -227,15 +224,10 @@ public class SntpClient
         mNumberDone++;
     }
 
-    public boolean hasOffset(){
-        return mHasOffset;
-    }
-
 
     public void destroy(){
         mSocket.close();
         mSocket = null;
-        mTimeManager = null;
     }
 
 

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
+import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -89,7 +90,11 @@ public class AudioListener {
     //The class that handles all of the time operations
     private TimeManager mTimeManager;
 
-    public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder, TimeManager manager){
+    private AnalyticsSuite mAnalyticsSuite;
+
+    public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder, TimeManager manager , AnalyticsSuite suite){
+
+        mAnalyticsSuite = suite;
 
         mTimeManager = manager;
         mBridge = bridge;
@@ -123,7 +128,7 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
-        mSlaveTCPHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this);
+        mSlaveTCPHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this , mAnalyticsSuite);
 
         mListenThread = getListenThread();
         mListenThread.start();

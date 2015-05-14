@@ -31,10 +31,12 @@ public class ReaderToReaderBridge extends AbstractBridge {
         }
     }
 
-    public void seek(){
+    public void seek(int currentID){
         mSeek = true;
         synchronized (mFrames){
             mFrames = new LinkedList<>();
         }
+        mEncoder.seek(currentID);
     }
+
 }

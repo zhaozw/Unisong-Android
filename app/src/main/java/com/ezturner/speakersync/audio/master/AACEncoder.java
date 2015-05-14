@@ -13,7 +13,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Ethan on 4/27/2015.
@@ -41,7 +43,7 @@ public class AACEncoder {
     private InputStream mInputStream;
     private MediaFormat mInputFormat;
 
-    private List<AudioFrame> mFrames;
+    private Map<Integer , AudioFrame> mFrames;
 
     private int mCurrentFrame = 0;
 
@@ -56,7 +58,7 @@ public class AACEncoder {
 
     public void encode(MediaFormat inputFormat){
         mInputFormat = inputFormat;
-        mFrames = new ArrayList<>();
+        mFrames = new HashMap<>();
         mEncodeThread = getEncode();
         mEncodeThread.start();
     }
@@ -317,7 +319,7 @@ public class AACEncoder {
     public void addFrames(ArrayList<AudioFrame> frames){
         synchronized (mFrames){
             for(AudioFrame frame : frames){
-                mFrames.add(frame);
+                mFrames.put(frame.getID() , frame);
             }
         }
 
@@ -326,12 +328,15 @@ public class AACEncoder {
         }
     }
 
-    public void seek(){
-        mFrames = new ArrayList<>();
+    public void seek(int currentFrame){
         mStop = true;
+        long begin = System.currentTimeMillis();
         while (mRunning) {
 
         }
+
+        Log.d(LOG_TAG , "Waiting for encode thread to finish , took " + (System.currentTimeMillis() - begin) + "ms");
+        mCurrentFrame = currentFrame;
 
         mEncodeThread = getEncode();
         mEncodeThread.start();

@@ -4,6 +4,7 @@ package com.ezturner.speakersync.network.slave;
 import android.os.Handler;
 import android.util.Log;
 
+import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
@@ -72,9 +73,12 @@ public class SlaveTCPHandler {
     //Whether we can request packets. Is false until
     private boolean mCanRequest;
 
+    private AnalyticsSuite mAnalyticsSuite;
 
-    public SlaveTCPHandler(InetAddress address, int broadcastPort, AudioListener listener){
+    public SlaveTCPHandler(InetAddress address, int broadcastPort, AudioListener listener , AnalyticsSuite suite){
         mMasterAddress = address;
+
+        mAnalyticsSuite = suite;
 
         mListener = listener;
         try{
@@ -341,7 +345,6 @@ public class SlaveTCPHandler {
         mListener.addFrame(packet.getFrame());
 
         packetReceived(packet.getFrame().getID());
-        //TODO: handle frame here
     }
 
     private void listenPause(){
