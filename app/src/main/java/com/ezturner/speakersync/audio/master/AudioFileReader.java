@@ -129,7 +129,6 @@ public class AudioFileReader {
     //A boolean telling us when the first Output format is changed, so that we can start the AAC Encoder
     private boolean mFirstOutputChange = true;
 
-    private Long mLength = 0l;
     private Long mPlayTime = 0l;
 
     private void decode() throws IOException {
@@ -188,9 +187,9 @@ public class AudioFileReader {
         ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
         ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
 
-        mEncoder = new AACEncoder(mBroadcasterBridge);
-        mAACBridge = new ReaderToReaderBridge(mEncoder);
 
+        mEncoder = new AACEncoder(mBroadcasterBridge , -1);
+        mAACBridge = new ReaderToReaderBridge(mEncoder);
         mExtractor.selectTrack(0);
 
         // start decoding
@@ -219,9 +218,9 @@ public class AudioFileReader {
 //                        mTrackManagerBridge.lastPacket();
                         sawInputEOS = true;
                         sampleSize = 0;
+                        mAACBridge.lastFrame(mCurrentID);
                     } else {
 
-                        mLength = mExtractor.getSampleTime() -presentationTimeUs;
                         mPlayTime = mExtractor.getSampleTime() / 1000;
 //                        Log.d(LOG_TAG , "PlayTime is : " + mPlayTime);
 
@@ -293,7 +292,7 @@ public class AudioFileReader {
                     mTrackManagerBridge.createAudioTrack(outputSampleRate , outputChannels);
 
                     //TODO: Ensure that the output format is always 2 channels and 44100 sample rate
-                    mEncoder.encode(format);
+                    mAACBridge.encode(format, 0);
                 }
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
@@ -384,7 +383,7 @@ public class AudioFileReader {
                     mSamples = 0l;
                 }
 
-                mAACBridge.seek(mCurrentID);
+                mAACBridge.seek(mCurrentID , seekTime);
 
                 mTimeAdjust = seekTime;
             }

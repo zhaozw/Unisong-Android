@@ -172,9 +172,11 @@ public class MediaService extends Service{
     }
 
     private Thread mSeekThread;
-    public void seek(){
-        mSeekThread = getSeekThread();
-        mSeekThread.start();
+    public void seek() {
+        if (mBroadcaster != null){
+            mSeekThread = getSeekThread();
+            mSeekThread.start();
+        }
     }
 
     private Thread getSeekThread(){
@@ -192,15 +194,25 @@ public class MediaService extends Service{
                 }
 
                 if(mBroadcaster != null) {
-                    long time =mFileReader.seek(100000);
+                    long time = mFileReader.seek(100000);
                     mAudioTrackManager.seek(time);
                     mBroadcaster.seek(time);
+                    mResumeTime = time;
                 }
 
                 resume();
+
             }
         });
     }
+
+
+    public void retransmit() {
+        if (mBroadcaster != null){
+            mBroadcaster.retransmit();
+        }
+    }
+
     public IBinder onBind(Intent arg0){
         return mBinder;
     }

@@ -2,10 +2,12 @@ package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 
+import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
+import com.ezturner.speakersync.network.packets.tcp.TCPLastFramePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPPausePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
@@ -62,6 +64,8 @@ public class MasterTCPHandler {
         mAnalyticsSuite = analyticsSuite;
 
         mBroadcaster = broadcaster;
+
+        mRecentlyRebroadcasted = new HashMap<>();
 
         mRandom = new Random();
 
@@ -168,18 +172,26 @@ public class MasterTCPHandler {
         }
     }
 
+    private Map<Integer, Long> mRecentlyRebroadcasted;
     //Checks to see if any of the slaves have the packet in question.
     public boolean checkSlaves(int packetID){
         List<Slave> slaves = mBroadcaster.getSlaves();
         //The list of slaves that have the packet in question
         List<Slave> havePacket = new ArrayList<>();
 
+        if(checkRecentlyRebroadcasted(packetID)){
+            return true;
+        }
+
         synchronized (slaves){
             for(Slave slave : slaves) {
                 if(slave.hasPacket(packetID)) {
                     havePacket.add(slave);
+
                 }
             }
+
+
 
             //If no slaves have the packet return false, but if they all have it return true.
             if(havePacket.size() == 0){
@@ -190,6 +202,7 @@ public class MasterTCPHandler {
         }
 
 
+
         int index = mRandom.nextInt(havePacket.size());
 
         Socket socket = mSockets.get(havePacket.get(index));
@@ -198,10 +211,30 @@ public class MasterTCPHandler {
             Log.d(LOG_TAG , "Telling "  + havePacket.get(index).toString() + " to rebroadcast frame #" + packetID);
             OutputStream stream = socket.getOutputStream();
             TCPRetransmitPacket.send(stream, packetID);
+
+            mRecentlyRebroadcasted.put(packetID , System.currentTimeMillis());
         } catch (IOException e){
             e.printStackTrace();
         }
         return true;
+    }
+
+    private boolean checkRecentlyRebroadcasted(int packetID){
+        synchronized (mRecentlyRebroadcasted) {
+            ArrayList<Integer> toRemove = new ArrayList<>();
+            for (Map.Entry<Integer, Long> entry : mRecentlyRebroadcasted.entrySet()) {
+                if (System.currentTimeMillis() - entry.getValue() >= 25) {
+                    toRemove.add(entry.getKey());
+                }
+            }
+            for(Integer i : toRemove){
+                mRecentlyRebroadcasted.remove(i);
+            }
+        }
+        if (mRecentlyRebroadcasted.containsKey(packetID)) {
+            return true;
+        }
+        return false;
     }
 
     public void startNewConnection(DatagramPacket packet){
@@ -244,13 +277,11 @@ public class MasterTCPHandler {
 
     private void notifyOfSongStart(){
         for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
-            Log.d(LOG_TAG , "Starting song for slave : " + entry.getKey() );
+
             Socket socket = entry.getValue();
 
             try {
                 OutputStream outputStream = socket.getOutputStream();
-
-
                 TCPSongStartPacket.send(outputStream, mBroadcaster.getSongStartTime(),
                         mBroadcaster.getChannels(), mBroadcaster.getStreamID());
             } catch (IOException e){
@@ -276,21 +307,19 @@ public class MasterTCPHandler {
         }
     }
 
-    //Send a TCP packet to those who need it with the selected frame
-    //Should only be one, but can be more if needed.
-    public void sendFrameTCP(int packetID){
-        for(Slave slave : mBroadcaster.getSlaves()){
-            if(!slave.hasPacket(packetID)){
-                OutputStream stream = null;
-                try {
-                    stream = mSockets.get(slave).getOutputStream();
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
-
-                TCPFramePacket.send(stream, mBroadcaster.getFrame(packetID), mBroadcaster.getStreamID());
-            }
+    //Send a TCP packet to the one that needs it containing an AAC frame
+    public void sendFrameTCP(AudioFrame frame , Slave slave){
+        OutputStream stream = null;
+        try {
+            stream = mSockets.get(slave).getOutputStream();
+        } catch (IOException e){
+            e.printStackTrace();
         }
+
+
+        TCPFramePacket.send(stream, frame, mBroadcaster.getStreamID());
+
+
     }
 
     public void pause(){
@@ -359,10 +388,6 @@ public class MasterTCPHandler {
         }
     }
 
-    public void sendPacketTCP(int packet , Slave slave){
-
-    }
-
     private Thread getSendPacketThread(int packet , Slave slave){
         return new Thread(new Runnable() {
             @Override
@@ -372,4 +397,35 @@ public class MasterTCPHandler {
         });
     }
 
+    public void lastPacket(int ID){
+
+        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+
+            Socket socket = entry.getValue();
+            try {
+                OutputStream stream = socket.getOutputStream();
+                TCPLastFramePacket.send(stream, ID);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+
+        }
+    }
+
+
+    public void retransmit(){
+        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+
+            Socket socket = entry.getValue();
+            try {
+                OutputStream stream = socket.getOutputStream();
+                TCPRetransmitPacket.send(stream, 0);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+
+        }
+    }
 }

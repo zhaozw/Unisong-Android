@@ -39,6 +39,7 @@ public class SlaveCodec {
 
     private boolean mStop;
 
+    private boolean mRunning;
     private Integer mCurrentFrame = 0;
 
     //The boolean telling the blank PCM frame creation code that we have a
@@ -59,6 +60,7 @@ public class SlaveCodec {
         bitrate = channels * 64000;
         sampleRate = 44100;
         mFrames = frames;
+        mRunning = false;
     }
 
     public void decode(int startFrame){
@@ -125,7 +127,7 @@ public class SlaveCodec {
         int noOutputCounterLimit = 10;
 
         mStop = false;
-
+        mRunning = true;
 
         boolean firstOutputChange = true;
         long lastPlayTime = System.currentTimeMillis();
@@ -138,9 +140,14 @@ public class SlaveCodec {
             //TODO: test/check this out
             while(!mFrames.containsKey(mCurrentFrame)){
 
-                if(System.currentTimeMillis() - mTimeManager.getAACPlayTime(mCurrentFrame) >= -100 && !mSeek){
+                if(mStop){
+                    break;
+                }
+                long diff = mTimeManager.getAACPlayTime(mCurrentFrame) - System.currentTimeMillis();
 
-                    Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + "" );
+                if(diff <= 50 && !mSeek){
+
+                    Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + " which should be played in " + (diff)  + "ms" );
 
                     mDecoder.createFrame(new byte[info.size]);
                     mCurrentFrame++;
@@ -148,7 +155,7 @@ public class SlaveCodec {
                     if(!mFrames.containsKey(mCurrentFrame)){
                         synchronized (this){
                             try{
-                                this.wait(50);
+                                this.wait(5);
                             } catch (InterruptedException e){
 
                             }
@@ -167,7 +174,7 @@ public class SlaveCodec {
                 }
             }
 
-            if(mSeek)   mSeek = false;
+            if(mSeek || mStop)   break;
 
 
             AudioFrame frame;
@@ -233,7 +240,7 @@ public class SlaveCodec {
         Log.d(LOG_TAG, "stopping...");
 
         releaseCodec();
-
+        mRunning = false;
         // clear source and the other globals
         //sourcePath = null;
         duration = 0;
@@ -310,9 +317,9 @@ public class SlaveCodec {
     }
 
     public void seek(long seekTime){
+        mStop = true;
         mSeek = true;
-        synchronized (mCurrentFrame) {
-            mCurrentFrame = (int) (seekTime / (1024000.0 / 44100.0));
-        }
+        long begin = System.currentTimeMillis();
+
     }
 }

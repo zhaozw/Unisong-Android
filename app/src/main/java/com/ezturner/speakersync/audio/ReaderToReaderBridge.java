@@ -1,9 +1,12 @@
 package com.ezturner.speakersync.audio;
 
+import android.media.MediaFormat;
+
 import com.ezturner.speakersync.audio.master.AACEncoder;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Created by Ethan on 4/28/2015.
@@ -11,7 +14,10 @@ import java.util.LinkedList;
 public class ReaderToReaderBridge extends AbstractBridge {
 
     private AACEncoder mEncoder;
+    private MediaFormat mInputFormat;
     private boolean mSeek;
+
+
 
     public ReaderToReaderBridge(AACEncoder encoder){
         mEncoder = encoder;
@@ -20,7 +26,7 @@ public class ReaderToReaderBridge extends AbstractBridge {
 
     @Override
     protected void sendOutFrames(ArrayList<AudioFrame> frames) {
-        if(mEncoder != null) {
+        if(mEncoder != null && !mSeek) {
             mEncoder.addFrames(frames);
         }
     }
@@ -31,12 +37,25 @@ public class ReaderToReaderBridge extends AbstractBridge {
         }
     }
 
-    public void seek(int currentID){
+    public void encode(MediaFormat inputFormat, int frame){
+        mEncoder.encode(inputFormat , frame , 0);
+        mInputFormat = inputFormat;
+    }
+
+    public void seek(int currentID, long seekTime){
         mSeek = true;
-        synchronized (mFrames){
-            mFrames = new LinkedList<>();
-        }
-        mEncoder.seek(currentID);
+
+        mEncoder.seek();
+        Map<Integer, AudioFrame> frames = mEncoder.getFrames();
+        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge() , mEncoder.getLastFrame());
+        mEncoder.setFrames(frames);
+
+        mEncoder.encode(mInputFormat , currentID , seekTime);
+        mSeek = false;
+    }
+
+    public void lastFrame(int frameID){
+        mEncoder.lastFrame(frameID);
     }
 
 }

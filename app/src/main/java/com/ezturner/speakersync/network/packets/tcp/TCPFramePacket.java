@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -16,6 +18,7 @@ import java.util.Arrays;
  */
 public class TCPFramePacket {
 
+    private final static String LOG_TAG = TCPFramePacket.class.getSimpleName();
     private AudioFrame mFrame;
 
     public TCPFramePacket(InputStream stream){
@@ -32,10 +35,11 @@ public class TCPFramePacket {
 
         byte[] data = NetworkUtilities.combineArrays(frameIDArr , dataSizeArr);
 
-        byte[] streamIDArr = NetworkUtilities.combineArrays(data ,new byte[]{streamID} );
+        byte[] streamIDArr = new byte[]{streamID};
 
+        data = NetworkUtilities.combineArrays(data ,streamIDArr);
 
-        synchronized (stream) {
+        synchronized (stream){
             try {
                 stream.write(CONSTANTS.TCP_FRAME);
                 stream.write(data);
@@ -47,7 +51,7 @@ public class TCPFramePacket {
     }
 
     private void receive(InputStream stream){
-        byte[] data = new byte[17];
+        byte[] data = new byte[9];
 
         synchronized (stream) {
             try {
@@ -61,11 +65,11 @@ public class TCPFramePacket {
 
         int ID = ByteBuffer.wrap(frameIDArr).getInt();
 
-        byte[] dataSizeArr = Arrays.copyOfRange(data, 12, 16);
+        byte[] dataSizeArr = Arrays.copyOfRange(data, 4, 8);
 
         int dataSize = ByteBuffer.wrap(dataSizeArr).getInt();
 
-        byte streamID = data[16];
+        byte streamID = data[8];
 
         byte[] aacData = new byte[dataSize];
 

@@ -223,7 +223,7 @@ public class AudioListener {
 
 
     private void listenForPacket(){
-        DatagramPacket packet = new DatagramPacket(new byte[1024] , 1024);
+        DatagramPacket packet = new DatagramPacket(new byte[1030] , 1030);
         try{
             //startTime = System.currentTimeMillis();
             //Log.d(LOG_TAG , "Time difference is : " + (startTime - finishTime));
@@ -348,6 +348,7 @@ public class AudioListener {
 
     public void addFrame(AudioFrame frame){
         mBridge.addFrame(frame);
+        mCounter++;
     }
 
     public void pause(){
@@ -370,8 +371,11 @@ public class AudioListener {
     }
 
     public void seek(long seekTime){
-        mSlaveDecoder.seek(seekTime);
-        mBridge.seek(seekTime);
         mTimeManager.seek(seekTime);
+        mBridge.seek(seekTime);
+    }
+
+    public void lastPacket(int packetID){
+        mLastPacket = packetID;
     }
 }

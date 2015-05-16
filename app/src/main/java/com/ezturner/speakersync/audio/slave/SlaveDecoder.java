@@ -136,8 +136,13 @@ public class SlaveDecoder {
         mSlaveCodec = new SlaveCodec(this, channels ,  mFrames ,mTimeManager );
     }
 
+    private boolean mSeek = false;
     public void seek(long seekTime){
         mSlaveCodec.seek(seekTime);
         mTimeAdjust = seekTime;
+        mSlaveCodec = new SlaveCodec(this ,2, mFrames , mTimeManager);
+        mSeek = true;
+
+        mSlaveCodec.decode((int)(seekTime / (1024000.0 / 44100.0)));
     }
 }

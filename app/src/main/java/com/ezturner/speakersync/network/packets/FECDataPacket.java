@@ -1,7 +1,5 @@
 package com.ezturner.speakersync.network.packets;
 
-import android.util.Log;
-
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -11,10 +9,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * Created by Ethan on 4/2/2015.
+ * Created by Ethan on 5/15/2015.
  */
-public class FramePacket implements NetworkPacket{
-
+public class FECDataPacket implements NetworkPacket {
     private final String LOG_TAG = "FramePacket";
 
     private byte[] mData;
@@ -46,7 +43,7 @@ public class FramePacket implements NetworkPacket{
     private byte[] mFrameData;
 
 
-    public FramePacket(DatagramPacket packet){
+    public FECDataPacket(DatagramPacket packet){
         mPacket = packet;
         mData = packet.getData();
         decode();
@@ -54,29 +51,25 @@ public class FramePacket implements NetworkPacket{
 
     //A constructor that takes in all of the relevant parameters, then formats the data
     //The song's start time is passed so we can calculate the direct playtime with the frame
-    public FramePacket(AudioFrame frame, byte streamID, int packetID){
-        mFrame = frame;
+    public FECDataPacket(byte streamID, int packetID, byte[] data){
         mStreamID = streamID;
         mPacketID = packetID;
 
         //turn packet type into a byte array for combination , and put the stream ID in there
-        byte[] packetType = new byte[]{CONSTANTS.FRAME_PACKET_ID , streamID};
+        byte[] packetType = new byte[]{CONSTANTS.FEC_DATA_PACKET_ID , streamID};
 
         byte[] packetIDByte = ByteBuffer.allocate(4).putInt(packetID).array();
 
         //Throw the frame Id in a byte array, and throw all the other data in byte
         // arrays and combine them into the data that will go in the packet
-        byte[] frameId = ByteBuffer.allocate(4).putInt(frame.getID()).array();
 
-        byte[] dataSizeArr = ByteBuffer.allocate(4).putInt(frame.getData().length).array();
 
-        byte[] data = NetworkUtilities.combineArrays(packetType, packetIDByte);
+        byte[] arrdata = NetworkUtilities.combineArrays(packetType, packetIDByte);
 
-        data = NetworkUtilities.combineArrays(data , frameId);
 
-        data = NetworkUtilities.combineArrays(data , dataSizeArr);
+        data = NetworkUtilities.combineArrays(arrdata , data);
 
-        mData = NetworkUtilities.combineArrays(data , frame.getData());
+        mData = NetworkUtilities.combineArrays(arrdata , data);
 
         mPacket = new DatagramPacket(mData, mData.length);
     }
@@ -87,23 +80,14 @@ public class FramePacket implements NetworkPacket{
     }
 
     private void decode(){
-        mStreamID = mData[1];
 
         byte[] packetIDArr = Arrays.copyOfRange(mData, 2, 6);
 
         mPacketID = ByteBuffer.wrap(packetIDArr).getInt();
 
-        byte[] frameIDArr = Arrays.copyOfRange(mData, 6, 10);
+        mStreamID = mData[1];
 
-        mFrameID = ByteBuffer.wrap(frameIDArr).getInt();
-
-        byte[] dataLengthArr = Arrays.copyOfRange(mData , 10, 14);
-
-        int dataLength = ByteBuffer.wrap(dataLengthArr).getInt();
-
-//        Log.d(LOG_TAG , "Data Length is is : " + dataEnd + " so end position is: " + (dataEnd + 30) + "for frame #" + mFrameID);
-
-        mData = Arrays.copyOfRange(mData , 14 ,dataLength + 14);
+        mData = Arrays.copyOfRange(mData , 6 , 1030);
 
 
     }
@@ -114,37 +98,18 @@ public class FramePacket implements NetworkPacket{
         return mStreamID;
     }
 
-    public int getPacketID(){
-        return mPacketID;
-    }
-
-    public long getPlayTime(){
-        return mPlayTime;
-    }
-
-    public int getNumPackets(){
-        return mNumPackets;
-    }
-
-    public int getFrameID(){
-        return mFrameID;
-    }
-
-    public long getLength(){
-        return mLength;
-    }
-
-    public AudioFrame getFrame(){
-        return mFrame;
-    }
 
     @Override
     public DatagramPacket getPacket() {
         return mPacket;
     }
 
-    public String toString(){
-        return "FramePacket#" + mPacketID;
+    @Override
+    public int getPacketID(){
+        return mPacketID;
     }
 
+    public String toString(){
+        return "FECDataPacket#" + mPacketID;
+    }
 }

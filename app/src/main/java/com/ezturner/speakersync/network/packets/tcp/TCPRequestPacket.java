@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.network.CONSTANTS;
 
 import java.io.IOException;
@@ -12,6 +14,8 @@ import java.nio.ByteBuffer;
  */
 public class TCPRequestPacket {
 
+    private static final String LOG_TAG = TCPRequestPacket.class.getSimpleName();
+
     //The packet that has been requested
     private int mPacketID;
 
@@ -22,6 +26,8 @@ public class TCPRequestPacket {
     public static void send(OutputStream stream , int packetID){
 
         byte[] data = ByteBuffer.allocate(4).putInt(packetID).array();
+
+
 
         synchronized (stream){
             try {

@@ -7,6 +7,8 @@ import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.AudioBroadcaster;
 import com.ezturner.speakersync.network.slave.AudioListener;
 
+import org.xbill.DNS.Address;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -162,7 +164,7 @@ public class SntpClient
     private void getOneOffset() throws IOException{
         // Send request
 
-        InetAddress address = InetAddress.getByName(mServerIP);
+        InetAddress address = Address.getByName(mServerIP);
         Log.d(LOG_TAG , "address is " + address.toString());
         byte[] buf = new NtpMessage().toByteArray();
         //TODO: change this to NTP_PORT

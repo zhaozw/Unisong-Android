@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.network.CONSTANTS;
 
 import java.io.IOException;
@@ -11,6 +13,8 @@ import java.nio.ByteBuffer;
  * Created by Ethan on 5/7/2015.
  */
 public class TCPAcknowledgePacket {
+
+    private static final String LOG_TAG = TCPAcknowledgePacket.class.getSimpleName();
 
     //The packet that has been acknowledged.
     private int mPacketID;

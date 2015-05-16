@@ -31,7 +31,6 @@ public class TCPSeekPacket {
                 e.printStackTrace();
             }
         }
-
     }
 
     private void receive(InputStream stream){
@@ -45,7 +44,7 @@ public class TCPSeekPacket {
             }
         }
 
-        mSeekTime = ByteBuffer.wrap(data).getInt();
+        mSeekTime = ByteBuffer.wrap(data).getLong();
 
     }
 

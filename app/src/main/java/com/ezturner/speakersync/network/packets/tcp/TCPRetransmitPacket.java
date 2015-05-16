@@ -1,5 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
+import android.util.Log;
+
 import com.ezturner.speakersync.network.CONSTANTS;
 
 import java.io.IOException;
@@ -12,6 +14,8 @@ import java.nio.ByteBuffer;
  */
 public class TCPRetransmitPacket {
 
+    private static final String LOG_TAG = TCPRetransmitPacket.class.getSimpleName();
+    
     //The packet to retransmit
     private int mPacketID;
 
@@ -21,6 +25,7 @@ public class TCPRetransmitPacket {
 
     public static void send(OutputStream stream , int ID){
         byte[] arr = ByteBuffer.allocate(4).putInt(ID).array();
+
 
         synchronized (stream){
             try {

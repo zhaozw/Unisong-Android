@@ -22,11 +22,11 @@ public class AnalyticsSuite {
     }
 
     public void packetSent(int packetID){
-        mPacketSendTimes.put(packetID, System.currentTimeMillis());
+//        mPacketSendTimes.put(packetID, System.currentTimeMillis());
     }
 
     public void ackReceived(int packetID , Slave slave){
-
+/*
         Map<Integer, Long> ackDelayMap = null;
 
         long diff = System.currentTimeMillis() - mPacketSendTimes.get(packetID);
@@ -40,7 +40,7 @@ public class AnalyticsSuite {
             mAckDelayTimes.put(slave , ackDelayMap);
             ackDelayMap.put(packetID , diff);
 
-        }
+        }*/
     }
 
     public void packetRequested(){

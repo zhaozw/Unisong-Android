@@ -67,6 +67,7 @@ public class ListenerBridge extends AbstractBridge {
     }
 
     public void seek(long seekTime){
+        mSlaveDecoder.seek(seekTime);
         if(mManager != null){
             mManager.seek(seekTime);
         }

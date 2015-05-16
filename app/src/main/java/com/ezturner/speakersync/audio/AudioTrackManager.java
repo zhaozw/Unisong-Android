@@ -180,8 +180,13 @@ public class AudioTrackManager {
 //                difference = mTimeManager.getPCMDifference(frame);
 //                Log.d(LOG_TAG, "Time difference is : " + difference);
 //            }
+
+
             mAudioTrack.write(data, 0, data.length);
 
+            synchronized (mFrames) {
+                mFrames.remove(frame);
+            }
         }
     }
     //Takes in some frames, then waits for mFrames to be open and writes it to it
@@ -295,15 +300,17 @@ public class AudioTrackManager {
 
 
     public void resume(long resumeTime){
-        synchronized (mFrames) {
-            Log.d(LOG_TAG, mFrames.size() + " ");
-            for (int i = 0; i < mFrames.size(); i++) {
+        if(!mSeek) {
+            synchronized (mFrames) {
+                Log.d(LOG_TAG, mFrames.size() + " ");
+                for (int i = 0; i < mFrames.size(); i++) {
 
-                long diff = mFrames.get(i).getPlayTime() - resumeTime;
+                    long diff = mFrames.get(i).getPlayTime() - resumeTime;
 
-                if (Math.abs(diff) <= 22) {
-                    mFrameToPlay = i;
-                    break;
+                    if (Math.abs(diff) <= 22) {
+                        mFrameToPlay = i;
+                        break;
+                    }
                 }
             }
         }

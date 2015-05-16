@@ -37,9 +37,10 @@ public class CONSTANTS {
 
     public static final byte FRAME_PACKET_ID = 6;
 
+
     public static final byte MIME_PACKET_ID = 7;
 
-    public static final byte AUDIO_DATA_PACKET_ID = 8;
+    public static final byte FEC_DATA_PACKET_ID = 8;
 
     public static final int AUDIO_CHUNK_SIZE = 1024;
 
@@ -78,5 +79,12 @@ public class CONSTANTS {
     public static final byte TCP_LATENCY_TEST = 14;
 
     public static final int PCM_BITRATE = 1441200;
+
+    //The packet size for FEC data
+    public static final int FEC_SYMBOL_SIZE = 512;
+
+    public static final int FEC_NUM_SRC_BLOCKS = 20;
+
+    public static final int FEC_DATA_LENGTH = FEC_SYMBOL_SIZE * FEC_NUM_SRC_BLOCKS;
 
 }
