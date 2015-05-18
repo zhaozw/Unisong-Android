@@ -42,9 +42,6 @@ public class SlaveCodec {
     private boolean mRunning;
     private Integer mCurrentFrame = 0;
 
-    //The boolean telling the blank PCM frame creation code that we have a
-    private boolean mSeek = false;
-
     String mime = null;
     int sampleRate = 0, channels = 0, bitrate = 0;
     long presentationTimeUs = 0, duration = 0;
@@ -145,7 +142,7 @@ public class SlaveCodec {
                 }
                 long diff = mTimeManager.getAACPlayTime(mCurrentFrame) - System.currentTimeMillis();
 
-                if(diff <= 50 && !mSeek){
+                if(diff <= 50 && !mStop){
 
                     Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + " which should be played in " + (diff)  + "ms" );
 
@@ -174,7 +171,7 @@ public class SlaveCodec {
                 }
             }
 
-            if(mSeek || mStop)   break;
+            if(mStop)   break;
 
 
             AudioFrame frame;
@@ -265,7 +262,7 @@ public class SlaveCodec {
 
 
         //If we've got enough space for the whole rest of the frame, then use the rest of the frame
-        if(spaceLeft > (sampleSize - mDataIndex) ){
+        if(spaceLeft > (sampleSize - mDataIndex)){
             if(mDataIndex != 0) {
                 data = Arrays.copyOfRange(data, mDataIndex, sampleSize);
                 mDataIndex = 0;
@@ -318,7 +315,7 @@ public class SlaveCodec {
 
     public void seek(long seekTime){
         mStop = true;
-        mSeek = true;
+        while(mRunning){}
         long begin = System.currentTimeMillis();
 
     }

@@ -189,8 +189,9 @@ public class SlaveTCPHandler {
     private void listenForCommands(){
         byte type = -1;
         try {
-
-            type = mInStream.readByte();
+            synchronized(mInStream) {
+                type = mInStream.readByte();
+            }
         } catch (IOException e){
             Log.d(LOG_TAG , e.toString());
             e.printStackTrace();
@@ -250,6 +251,16 @@ public class SlaveTCPHandler {
                     Log.d(LOG_TAG , "End Frame received");
                     hasRun = true;
                     break;
+                case CONSTANTS.TCP_MASTER_CLOSE:
+                    Log.d(LOG_TAG , "Master Close Received");
+                    synchronized (mSocket){
+                        try {
+                            mSocket.close();
+                        } catch (IOException e){
+                            e.printStackTrace();
+                        }
+                    }
+                    return;
             }
 
             if(!hasRun){
@@ -257,7 +268,9 @@ public class SlaveTCPHandler {
                 int times = 0;
                 while(type != 15){
                     try {
-                        type = mInStream.readByte();
+                        synchronized (mInStream) {
+                            type = mInStream.readByte();
+                        }
                     } catch (IOException e){
                         Log.d(LOG_TAG , e.toString());
                         e.printStackTrace();
@@ -268,14 +281,18 @@ public class SlaveTCPHandler {
                 Log.d(LOG_TAG , "15 received! Now to see if it is actually another packet");
 
                 try {
-                    type = mInStream.readByte();
+                    synchronized (mInStream) {
+                        type = mInStream.readByte();
+                    }
                 } catch (IOException e){
                     Log.d(LOG_TAG , e.toString());
                     e.printStackTrace();
                 }
             } else {
                 try {
-                    type = mInStream.readByte();
+                    synchronized (mInStream) {
+                        type = mInStream.readByte();
+                    }
                 } catch (IOException e) {
                     Log.d(LOG_TAG, e.toString());
                     e.printStackTrace();

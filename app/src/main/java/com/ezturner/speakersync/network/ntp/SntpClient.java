@@ -96,8 +96,11 @@ public class SntpClient
         mNumberDone = 0;
 
         for(int i = 0; i < 20; i++){
-            getOneOffset();/*
-            try {
+            getOneOffset();
+            if(i == 0){
+                mTimeOffset = list.get(i);
+            }
+            /*try {
                 wait(5);
             } catch(InterruptedException e){
                 e.printStackTrace();
