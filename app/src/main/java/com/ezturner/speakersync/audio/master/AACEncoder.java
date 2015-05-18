@@ -84,6 +84,7 @@ public class AACEncoder {
     protected int bufIndexCheck;
     protected int lastInputBufIndex;
     private int mRuns = 0;
+    private boolean mSeek = false;
     private boolean isRunning = false;
 
     private int mOutputBitrate;
@@ -235,8 +236,12 @@ public class AACEncoder {
             }
         }
 
+        if(!mSeek){
+            mBroadcasterBridge.lastFrame();
+        } else {
+            mSeek = false;
+        }
         mRunning = false;
-        mBroadcasterBridge.lastFrame();
 
         Log.d(LOG_TAG, "stopping...");
 
@@ -345,6 +350,7 @@ public class AACEncoder {
 
     public void seek(){
         mStop = true;
+        mSeek = true;
         long begin = System.currentTimeMillis();
 
         while (mRunning) {}

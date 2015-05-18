@@ -59,6 +59,7 @@ public class AudioTrackManager {
     public AudioTrackManager(TimeManager manager){
         mFrames = new TreeMap<Integer , AudioFrame>();
 
+        mThreadRunning = false;
         mIsPlaying = false;
 
         mFrameToPlay = 0;
@@ -90,7 +91,9 @@ public class AudioTrackManager {
         }
     };
 
+    private boolean mThreadRunning;
     private void writeToTrack(){
+        mThreadRunning = true;
         Log.d(LOG_TAG , "Starting Write");
         while(isPlaying()) {
             if (mFrameToPlay == mLastFrameID) {
@@ -120,6 +123,7 @@ public class AudioTrackManager {
                     }
                 }
                 frame = mFrames.get(mFrameToPlay);
+                Log.d(LOG_TAG , "Frame #" + mFrameToPlay + " found.");
             }
 
             mLastFrameTime = frame.getPlayTime();
@@ -127,6 +131,7 @@ public class AudioTrackManager {
 
 
             long difference = mTimeManager.getPCMDifference(frame);
+
 
 //            Log.d(LOG_TAG , frame.toString());
 //
@@ -170,6 +175,8 @@ public class AudioTrackManager {
             }
 
 
+
+
             //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();
 
@@ -188,6 +195,8 @@ public class AudioTrackManager {
                 mFrames.remove(frame);
             }
         }
+        Log.d(LOG_TAG , "Write Thread done");
+        mThreadRunning = false;
     }
     //Takes in some frames, then waits for mFrames to be open and writes it to it
     public void addFrames(ArrayList<AudioFrame> frames){
@@ -266,7 +275,6 @@ public class AudioTrackManager {
     public void seek(long seekTime){
         mSeek = true;
         mFrameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
-        mTimeManager.seek(seekTime);
         Log.d(LOG_TAG , "mFrameToPlay is : " + mFrameToPlay);
     }
 
@@ -279,7 +287,9 @@ public class AudioTrackManager {
     }
 
     public long pause(){
+        Log.d(LOG_TAG , "Pausing AudioTrack");
         mIsPlaying = false;
+        while(mThreadRunning){}
         return mLastFrameTime;
     }
 
@@ -300,8 +310,8 @@ public class AudioTrackManager {
 
 
     public void resume(long resumeTime){
-        if(!mSeek) {
-            synchronized (mFrames) {
+        if(!mSeek){
+            synchronized (mFrames){
                 Log.d(LOG_TAG, mFrames.size() + " ");
                 for (int i = 0; i < mFrames.size(); i++) {
 
@@ -313,6 +323,10 @@ public class AudioTrackManager {
                     }
                 }
             }
+        } else {
+            Log.d(LOG_TAG , "Difference between target frame play time and now is : " + (System.currentTimeMillis() - mTimeManager.getAACPlayTime(mFrameToPlay)));
+            //TODO: Delete this comment
+//            mSeek = false;
         }
 
         Log.d(LOG_TAG , "Resuming, mFrameToPlay is : " + mFrameToPlay);
@@ -326,12 +340,12 @@ public class AudioTrackManager {
         Log.d(LOG_TAG , "AudioTrackManager Destroy Called");
         mIsPlaying = false;
         mWriteThread = null;
-        mTimeManager = null;
         if(mStartSongRunning){
             while(mStartSongRunning){
 
             }
         }
+        mTimeManager = null;
         mHandler.removeCallbacks(mStartSong);
         mAudioTrack = null;
         mFrames = null;
@@ -340,6 +354,5 @@ public class AudioTrackManager {
 
     public void newSong(){
         mIsPlaying = false;
-
     }
 }

@@ -215,10 +215,9 @@ public class AudioFileReader {
                     int sampleSize = mExtractor.readSampleData(dstBuf, 0);
                     if (sampleSize < 0){
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
-//                        mTrackManagerBridge.lastPacket();
+                        mTrackManagerBridge.lastPacket();
                         sawInputEOS = true;
                         sampleSize = 0;
-                        mAACBridge.lastFrame(mCurrentID);
                     } else {
 
                         mPlayTime = mExtractor.getSampleTime() / 1000;

@@ -32,20 +32,16 @@ public class TimeManager {
 
     //TODO: make sure that my mSeekTime thing works
     public long getAACPlayTime(int ID){
-        return mSongStartTime - mSntpClient.getOffset() + (long)(((1024.0 * ID) / 44100.0) * 1000.0) + mSeekTime;
+        return mSongStartTime - mSntpClient.getOffset() + (long)(((1024.0 * ID) / 44100.0) * 1000.0);
     }
 
     public long getPCMDifference(AudioFrame frame){
-        return System.currentTimeMillis() - (frame.getPlayTime() - mSeekTime + mSongStartTime - mSntpClient.getOffset());
+        return System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - mSntpClient.getOffset());
     }
 
     public long getOffset(){
         long offset = mSntpClient.getOffset();
         return offset;
-    }
-
-    public void seek(long seekTime){
-        mSeekTime = seekTime;
     }
 
 }

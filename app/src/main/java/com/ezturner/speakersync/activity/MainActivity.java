@@ -244,4 +244,12 @@ public class MainActivity extends ActionBarActivity {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    public void retransmit(View v){
+        Intent intent = new Intent("service-interface");
+        // You can also include some extra data.
+        intent.putExtra("command" , "retransmit");
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
 }

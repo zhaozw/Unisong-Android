@@ -371,7 +371,6 @@ public class AudioListener {
     }
 
     public void seek(long seekTime){
-        mTimeManager.seek(seekTime);
         mBridge.seek(seekTime);
     }
 
