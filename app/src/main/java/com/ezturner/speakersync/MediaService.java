@@ -102,6 +102,9 @@ public class MediaService extends Service{
                 }  else if(command.equals("destroy")){
                     Log.d(LOG_TAG , "Destroy received!");
                     onDestroy();
+                }  else if(command.equals("retransmit")){
+                    Log.d(LOG_TAG , "Retransmit received!");
+                    retransmit();
                 }
 
             }
@@ -185,13 +188,7 @@ public class MediaService extends Service{
             public void run() {
                 pause();
 
-                synchronized (this){
-                    try{
-                        this.wait(500);
-                    } catch (InterruptedException e){
-                        e.printStackTrace();
-                    }
-                }
+
 
                 if(mBroadcaster != null) {
                     long time = mFileReader.seek(100000);

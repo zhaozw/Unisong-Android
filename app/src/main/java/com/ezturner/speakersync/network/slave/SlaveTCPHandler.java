@@ -199,48 +199,87 @@ public class SlaveTCPHandler {
 
         while (type != -1 && mRunning){
             Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
+            boolean hasRun = false;
             switch (type){
                 case CONSTANTS.TCP_COMMAND_RETRANSMIT:
                     listenRetransmit();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SONG_START:
                     listenSongStart();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SONG_IN_PROGRESS:
                     listenSongInProgress();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_FRAME:
                     listenFrame();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_PAUSE:
                     listenPause();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_RESUME:
                     listenResume();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_END_SESSION:
                     endSession();
+                    hasRun = true;
                     break;
                 //This Slave is now the session master.
                 case CONSTANTS.TCP_ASSIGN_MASTER:
                     assignMaster();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SEEK:
                     listenSeek();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SWITCH_MASTER:
                     switchMaster();
+                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_LAST_FRAME:
                     listenLastPacket();
+                    hasRun = true;
+                    break;
+                case CONSTANTS.TCP_END_FRAME:
+                    Log.d(LOG_TAG , "End Frame received");
+                    hasRun = true;
                     break;
             }
 
-            try {
-                type = mInStream.readByte();
-            } catch (IOException e){
-                Log.d(LOG_TAG , e.toString());
-                e.printStackTrace();
+            if(!hasRun){
+                Log.d(LOG_TAG ,  "TCP overflow! Type not recognized: " + type);
+                int times = 0;
+                while(type != 15){
+                    try {
+                        type = mInStream.readByte();
+                    } catch (IOException e){
+                        Log.d(LOG_TAG , e.toString());
+                        e.printStackTrace();
+                    }
+                    Log.d(LOG_TAG , "Data is : " + type + " for time " + times);
+                    times++;
+                }
+                Log.d(LOG_TAG , "15 received! Now to see if it is actually another packet");
+
+                try {
+                    type = mInStream.readByte();
+                } catch (IOException e){
+                    Log.d(LOG_TAG , e.toString());
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    type = mInStream.readByte();
+                } catch (IOException e) {
+                    Log.d(LOG_TAG, e.toString());
+                    e.printStackTrace();
+                }
             }
         }
 

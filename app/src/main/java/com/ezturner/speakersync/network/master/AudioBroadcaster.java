@@ -188,10 +188,13 @@ public class AudioBroadcaster {
             synchronized (mPackets){
                 packet = mPackets.get(mNextPacketSendID);
                 if(packet == null){
-                    Log.d(LOG_TAG , "Packet #" + mNextPacketSendID + " is null!");
+                    Log.d(LOG_TAG , "Packet #" + mNextPacketSendID + " is null! mPackets size is: " + mPackets.size());
+//                    if(mPackets.containsKey(mNextPacketSendID + 1)){
+//                        packet = mPackets.get(mNextPacketSendID + 1);
+//                        mNextPacketSendID++;
+//                    }
                 }
                 //Log.d(LOG_TAG , packet.toString());
-                mNextPacketSendID++;
             }
 
             if(packet == null){
@@ -213,6 +216,8 @@ public class AudioBroadcaster {
                 }
             }
 
+            mNextPacketSendID++;
+
 
 
 //            Log.d(LOG_TAG , "Sending packet!");
@@ -223,7 +228,6 @@ public class AudioBroadcaster {
                     if(datagramPacket == null){
                         Log.d(LOG_TAG , "The datagram packet is null for packet #" + (mNextPacketSendID -1));
                     }
-
 
                     if(!mStreamRunning){
                         return;
@@ -251,7 +255,7 @@ public class AudioBroadcaster {
             }
 
             long diff = System.currentTimeMillis() - mTimeManager.getAACPlayTime(packet.getPacketID());
-            Log.d(LOG_TAG , "For Packet #" + packet.getPacketID() + " , the difference between now and play time is : " + diff + "ms" );
+//            Log.d(LOG_TAG , "For Packet #" + packet.getPacketID() + " , the difference between now and play time is : " + diff + "ms" );
             if(mPacketsSentCount % 100 == 0) {
 
                 Log.d(LOG_TAG, "mPacketsSentCount :" + mPacketsSentCount + " , delay is : " + delay);
@@ -373,6 +377,9 @@ public class AudioBroadcaster {
 
     private void createFramePacket(AudioFrame frame){
         FramePacket fp = new FramePacket(frame ,getStreamID() , frame.getID());
+        if(fp == null){
+            Log.d(LOG_TAG , "Frame Packet for frame #" + frame.getID() + " is null");
+        }
         mPackets.put(fp.getPacketID(), fp);
     }
     /*Not in use atm
@@ -398,6 +405,7 @@ public class AudioBroadcaster {
     public void addFrames(ArrayList<AudioFrame> frames){
         synchronized (mPackets){
             for(AudioFrame frame : frames){
+                if(frame == null) Log.d(LOG_TAG , "Input AudioFrame # " +(mLastFrameID + 1) +" is null!");
                 createFramePacket(frame);
                 mFrames.add(frame);
                 mLastFrameID = frame.getID();
@@ -476,13 +484,13 @@ public class AudioBroadcaster {
                     return;
                 } else if(count == 1){
 //                    TODO: comment for local rebroadcasting tests
-//                    mTCPHandlder.sendFrameTCP(((FramePacket)packetl).getFrame(), oneSlave);
-//                    synchronized (mPacketsToRebroadcast) {
-//                        mPacketsToRebroadcast.remove(0);
-//                    }
-//
-//                    rebroadcast();
-//                    return;
+                    mTCPHandlder.sendFrameTCP(((FramePacket)packetl).getFrame(), oneSlave);
+                    synchronized (mPacketsToRebroadcast) {
+                        mPacketsToRebroadcast.remove(0);
+                    }
+
+                    rebroadcast();
+                    return;
                 }
 
                 for(Slave slave : mSlaves){
@@ -534,14 +542,16 @@ public class AudioBroadcaster {
     }
 
     public void resume(long resumeTime){
-        long newSongStartTime = System.currentTimeMillis() - resumeTime + 500 + mTimeManager.getOffset();
+        long newSongStartTime = System.currentTimeMillis() - resumeTime + 1000 + mTimeManager.getOffset();
         Log.d(LOG_TAG , "Resume time is : " + resumeTime + " and newSongStartTime is : " + newSongStartTime);
         mTimeManager.setSongStartTime(newSongStartTime);
 
         mTCPHandlder.resume(resumeTime, newSongStartTime);
     }
 
+    private boolean mSeek = false;
     public void seek(long seekTime){
+        mSeek = true;
         mTCPHandlder.seek(seekTime);
         mNextPacketSendID = (int)(seekTime / (1024000.0 / 44100.0));
     }
@@ -579,7 +589,7 @@ public class AudioBroadcaster {
     //TODO implement a way to keep the buffer at a certain amount (say 1000ms)
     //TODO: implement and calculate this based on the bitrate and whatnot for the FEC
     private long getDelay(){
-        return 22;
+        return 20;
     }
 
     public void retransmit(){

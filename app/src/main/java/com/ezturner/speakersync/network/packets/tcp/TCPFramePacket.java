@@ -39,11 +39,13 @@ public class TCPFramePacket {
 
         data = NetworkUtilities.combineArrays(data ,streamIDArr);
 
+        Log.d(LOG_TAG , "Frame #" + frame.getID() + " has " + frame.getData().length + " bytes.");
         synchronized (stream){
             try {
                 stream.write(CONSTANTS.TCP_FRAME);
                 stream.write(data);
                 stream.write(frame.getData());
+                stream.write(CONSTANTS.TCP_END_FRAME);
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -68,7 +70,7 @@ public class TCPFramePacket {
         byte[] dataSizeArr = Arrays.copyOfRange(data, 4, 8);
 
         int dataSize = ByteBuffer.wrap(dataSizeArr).getInt();
-
+        Log.d(LOG_TAG , "Data size is : " + dataSize + " for frame #" + ID);
         byte streamID = data[8];
 
         byte[] aacData = new byte[dataSize];
@@ -81,7 +83,7 @@ public class TCPFramePacket {
             }
         }
 
-        mFrame = new AudioFrame(aacData , ID );
+        mFrame = new AudioFrame(aacData , ID , streamID);
     }
 
     public AudioFrame getFrame(){
