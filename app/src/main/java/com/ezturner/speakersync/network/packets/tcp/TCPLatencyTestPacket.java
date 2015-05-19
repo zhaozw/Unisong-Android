@@ -43,7 +43,7 @@ public class TCPLatencyTestPacket {
 
         synchronized (stream) {
             try {
-                stream.read(data);
+                NetworkUtilities.readFromStream(stream , data);
             } catch (IOException e){
                 e.printStackTrace();
             }

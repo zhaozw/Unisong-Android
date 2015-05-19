@@ -296,7 +296,7 @@ public class AudioListener {
 
         FramePacket fp = new FramePacket(packet);
 
-        AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID()  , fp.getPlayTime());
+        AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID()  , fp.getPlayTime() , mStreamID);
 
 //        Log.d(LOG_TAG , "Frame Packet #" + fp.getPacketID() +" received.");
 

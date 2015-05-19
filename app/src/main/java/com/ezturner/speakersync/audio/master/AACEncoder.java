@@ -52,11 +52,12 @@ public class AACEncoder {
     //The Bridge that will be used to send the finished AAC frames to the broadcaster.
     private BroadcasterBridge mBroadcasterBridge;
 
-    public AACEncoder(BroadcasterBridge bridge, int lastFrame){
+    public AACEncoder(BroadcasterBridge bridge, int lastFrame , byte streamID){
         mBroadcasterBridge = bridge;
         mCurrentOutputID = 0;
         mRunning = false;
         mLastFrame = lastFrame;
+        mStreamID = streamID;
     }
 
     public void encode(MediaFormat inputFormat, int currentInputFrame , long startTime){
@@ -327,7 +328,7 @@ public class AACEncoder {
         //TODO : figure out what this ^^ is referencing?
         long playTime = mLastTime;
 
-        AudioFrame frame = new AudioFrame(data, mCurrentOutputID);
+        AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mStreamID);
         mCurrentOutputID++;
 
         mBroadcasterBridge.addFrame(frame);
@@ -339,7 +340,9 @@ public class AACEncoder {
     public void addFrames(ArrayList<AudioFrame> frames){
         synchronized (mFrames){
             for(AudioFrame frame : frames){
-                mFrames.put(frame.getID(), frame);
+                if(!mFrames.containsKey(frame.getID())) {
+                    mFrames.put(frame.getID(), frame);
+                }
             }
         }
 

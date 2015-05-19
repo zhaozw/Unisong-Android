@@ -46,15 +46,17 @@ public class AudioFrame {
     private short[] mAudioData;
 
     //The constructor, sets all of the data
-    public AudioFrame(byte[] data, int ID){
+    public AudioFrame(byte[] data, int ID, byte streamID){
         mData = data;
         mID = ID;
+        mStreamID = streamID;
     }
 
-    public AudioFrame(byte[] data, int ID, long playTime){
+    public AudioFrame(byte[] data, int ID, long playTime , byte streamID){
         mData = data;
         mID = ID;
         mPlayTime = playTime;
+        mStreamID = streamID;
     }
 
     //Adds some data to recreate the original data

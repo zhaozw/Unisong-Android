@@ -1,6 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +39,7 @@ public class TCPSeekPacket {
 
         synchronized (stream){
             try {
-                stream.read(data);
+                NetworkUtilities.readFromStream(stream, data);
             } catch (IOException e){
                 e.printStackTrace();
             }

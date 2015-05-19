@@ -19,6 +19,8 @@ import com.ezturner.speakersync.network.slave.NetworkInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Ethan on 2/12/2015.
@@ -78,6 +80,7 @@ public class AudioFileReader {
     //The encoder that turns the PCM data into AAC for transmit
     private AACEncoder mEncoder;
 
+
     public AudioFileReader(TrackManagerBridge trackManagerBridge) {
         mTrackManagerBridge = trackManagerBridge;
         mStop = false;
@@ -85,9 +88,13 @@ public class AudioFileReader {
         mCurrentID = 0;
         mEvents = new AudioFileReaderEvents();
         mRunning = false;
+        mSeekTime = 0;
+        mSeekDone = true;
+        mStreamID = -1;
     }
 
     public void readFile(String path) throws IOException{
+        mStreamID++;
         if(mDecodeThread != null) {
             synchronized (mDecodeThread) {
                 try {
@@ -123,12 +130,13 @@ public class AudioFileReader {
 
     private byte[] mData;
 
+    private boolean mSeekDone;
     private int mCount = 0;
     private int mSize = 0;
     private NetworkInputStream mInputStream;
     //A boolean telling us when the first Output format is changed, so that we can start the AAC Encoder
     private boolean mFirstOutputChange = true;
-
+    private long mSeekTime;
     private Long mPlayTime = 0l;
 
     private void decode() throws IOException {
@@ -137,12 +145,20 @@ public class AudioFileReader {
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
+        long startSampleTime = -1;
+        mSamples = 0l;
         mRunning = true;
         // mExtractor gets information about the stream
         mExtractor = new MediaExtractor();
         // try to set the source, this might fail
         try {
             mExtractor.setDataSource(mCurrentFile.getPath());
+            mExtractor.seekTo(mSeekTime * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            if(mSeekTime != 0){
+                mSeekTime = mExtractor.getSampleTime() / 1000;
+                mCurrentID = (int) (mSeekTime / (1024000.0 / 44100.0));
+                mSeekDone = true;
+            }
 
             /* This is the code for using internal app resources
             if (mSourceRawResId != -1) {
@@ -188,7 +204,7 @@ public class AudioFileReader {
         ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
 
 
-        mEncoder = new AACEncoder(mBroadcasterBridge , -1);
+        mEncoder = new AACEncoder(mBroadcasterBridge , -1 , mStreamID);
         mAACBridge = new ReaderToReaderBridge(mEncoder);
         mExtractor.selectTrack(0);
 
@@ -299,10 +315,9 @@ public class AudioFileReader {
 
         }
 
+
         mRunning = false;
         Log.d(LOG_TAG, "stopping...");
-
-
 
         // clear source and the other globals
         //sourcePath = null;
@@ -343,7 +358,7 @@ public class AudioFileReader {
         long length = (data.length * 8000) / CONSTANTS.PCM_BITRATE;
 //        if()
 //        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
-        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
+        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime , mStreamID);
 //        Log.d(LOG_TAG , "Frame is : " + frame.toString());
 
         mTrackManagerBridge.addFrame(frame);
@@ -367,28 +382,24 @@ public class AudioFileReader {
         mStop = true;
     }
 
-    public long seek(long seekTime) {
-        synchronized (mExtractor){
-            if (mPlayTime < seekTime) {
-                mExtractor.seekTo((seekTime - 50) * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+    //TODO: put in code that recognizes if we have already decoded part of a song
+    //Ends the current thread, and starts a new one
+    public long seek(long seekTime){
+        mSeekDone = false;
+        mStop = true;
 
-                seekTime = mExtractor.getSampleTime() / 1000;
+        while(mRunning){}
 
-                synchronized (mCurrentID) {
-                    mCurrentID = (int) (seekTime / (1024000.0 / 44100.0));
-                }
+        mAACBridge.seek(mCurrentID , seekTime);
+        mSeekTime = seekTime;
+        mTimeAdjust = seekTime;
 
-                synchronized (mSamples) {
-                    mSamples = 0l;
-                }
+        mDecodeThread = getDecode();
+        mDecodeThread.start();
 
-                mAACBridge.seek(mCurrentID , seekTime);
+        while(!mSeekDone){}
 
-                mTimeAdjust = seekTime;
-            }
-        }
-
-        return seekTime;
+        return mSeekTime;
     }
 
 }

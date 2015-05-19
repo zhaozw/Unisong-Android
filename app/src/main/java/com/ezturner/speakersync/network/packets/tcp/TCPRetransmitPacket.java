@@ -3,6 +3,7 @@ package com.ezturner.speakersync.network.packets.tcp;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,17 +39,17 @@ public class TCPRetransmitPacket {
     }
 
     private void receive(InputStream stream){
-        byte[] arr = new byte[4];
+        byte[] data = new byte[4];
 
         synchronized (stream){
             try {
-                stream.read(arr);
+                NetworkUtilities.readFromStream(stream, data);
             } catch (IOException e){
                 e.printStackTrace();
             }
         }
 
-        mPacketID = ByteBuffer.wrap(arr).getInt();
+        mPacketID = ByteBuffer.wrap(data).getInt();
 
     }
 

@@ -1,6 +1,7 @@
 package com.ezturner.speakersync.network.packets.tcp;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +51,7 @@ public class TCPSwitchMasterPacket {
 
         synchronized (stream) {
             try {
-                stream.read(address);
+                NetworkUtilities.readFromStream(stream, address);
             } catch (IOException e){
                 e.printStackTrace();
             }

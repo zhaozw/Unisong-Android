@@ -2,6 +2,8 @@ package com.ezturner.speakersync.network;
 
 import android.util.Log;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
@@ -14,6 +16,8 @@ import java.util.Enumeration;
  * Created by ezturner on 3/2/2015.
  */
 public class NetworkUtilities {
+
+    private final static String LOG_TAG = NetworkUtilities.class.getSimpleName();
 
     //Returns the IP address of the local interface. Code is from online.
     public static String getLocalIpAddress() {
@@ -28,7 +32,7 @@ public class NetworkUtilities {
                 }
             }
         } catch (SocketException ex) {
-            Log.e("ezturner", ex.toString());
+            Log.e(LOG_TAG , ex.toString());
         }
         return null;
     }
@@ -50,9 +54,9 @@ public class NetworkUtilities {
                 }
             }
         } catch (SocketException e){
-            Log.e("ezturner" , e.toString());
+            Log.e(LOG_TAG , e.toString());
         } catch(UnknownHostException e){
-            Log.e("ezturner", e.toString());
+            Log.e(LOG_TAG , e.toString());
         }
         return null;
     }
@@ -65,5 +69,13 @@ public class NetworkUtilities {
         System.arraycopy(a, 0, c, 0, aLen);
         System.arraycopy(b, 0, c, aLen, bLen);
         return c;
+    }
+
+    public static void readFromStream(InputStream stream , byte[] data) throws IOException{
+        int res = 0;
+
+        while(res < data.length){
+            res += stream.read(data , res , (data.length - res));
+        }
     }
 }
