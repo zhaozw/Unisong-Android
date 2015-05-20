@@ -148,7 +148,7 @@ public class MediaService extends Service{
 
 
     public void listener(){
-        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2, mTimeManager);
+        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2, mTimeManager, (byte)0);
         ListenerBridge bridge = new ListenerBridge(mSlaveDecoder , mAudioTrackManager );
         mListener = new AudioListener(this , bridge , mSlaveDecoder, mTimeManager , mAnalyticsSuite);
 

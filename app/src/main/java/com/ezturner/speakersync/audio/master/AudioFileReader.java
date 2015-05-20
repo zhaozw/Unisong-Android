@@ -383,23 +383,30 @@ public class AudioFileReader {
     }
 
     //TODO: put in code that recognizes if we have already decoded part of a song
+    //TODO: revampt this whole method so that we can keep track of what's been decoded
     //Ends the current thread, and starts a new one
     public long seek(long seekTime){
-        mSeekDone = false;
-        mStop = true;
+        synchronized (mExtractor){
+            if (mPlayTime < seekTime) {
+                mExtractor.seekTo((seekTime - 50) * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
-        while(mRunning){}
+                seekTime = mExtractor.getSampleTime() / 1000;
 
-        mAACBridge.seek(mCurrentID , seekTime);
-        mSeekTime = seekTime;
-        mTimeAdjust = seekTime;
+                synchronized (mCurrentID) {
+                    mCurrentID = (int) (seekTime / (1024000.0 / 44100.0));
+                }
 
-        mDecodeThread = getDecode();
-        mDecodeThread.start();
+                synchronized (mSamples) {
+                    mSamples = 0l;
+                }
 
-        while(!mSeekDone){}
+                mAACBridge.seek(mCurrentID , seekTime, mStreamID);
 
-        return mSeekTime;
+                mTimeAdjust = seekTime;
+            }
+        }
+
+        return seekTime;
     }
 
 }

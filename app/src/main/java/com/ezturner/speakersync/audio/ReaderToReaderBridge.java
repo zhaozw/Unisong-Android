@@ -42,12 +42,12 @@ public class ReaderToReaderBridge extends AbstractBridge {
         mInputFormat = inputFormat;
     }
 
-    public void seek(int currentID, long seekTime){
+    public void seek(int currentID, long seekTime, byte streamID){
         mSeek = true;
 
         mEncoder.seek();
         Map<Integer, AudioFrame> frames = mEncoder.getFrames();
-        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge() , mEncoder.getLastFrame());
+        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge() , mEncoder.getLastFrame(), streamID);
         mEncoder.setFrames(frames);
 
         mEncoder.encode(mInputFormat , currentID , seekTime);

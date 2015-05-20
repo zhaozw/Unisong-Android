@@ -52,11 +52,14 @@ public class SlaveDecoder {
 
     private TimeManager mTimeManager;
 
-    public SlaveDecoder(TrackManagerBridge bridge , int channels, TimeManager manager){
+    private byte mStreamID;
+
+    public SlaveDecoder(TrackManagerBridge bridge , int channels, TimeManager manager , byte streamID){
         mTrackManagerBridge = bridge;
         mCurrentID = 0;
         mFrames = new HashMap<>();
         mTimeManager = manager;
+        mStreamID = streamID;
 
         mSlaveCodec = new SlaveCodec(this, channels , mFrames, mTimeManager);
 
@@ -87,7 +90,7 @@ public class SlaveDecoder {
         long playTime = bitsProcessed  / CONSTANTS.PCM_BITRATE + mTimeAdjust;
 
 
-        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
+        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime , mStreamID);
         mCurrentID++;
 
         mTrackManagerBridge.addFrame(frame);
