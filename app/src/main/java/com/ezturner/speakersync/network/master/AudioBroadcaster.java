@@ -53,7 +53,7 @@ public class AudioBroadcaster {
     private Map<Integer , NetworkPacket> mPackets;
 
     //The object that handles all reliability stuff
-    private MasterTCPHandler mTCPHandlder;
+    private MasterTCPHandler mTCPHandler;
 
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte mStreamID;
@@ -129,7 +129,7 @@ public class AudioBroadcaster {
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
-            mTCPHandlder = new MasterTCPHandler(this , mAnalyticsSuite);
+            mTCPHandler = new MasterTCPHandler(this , mAnalyticsSuite);
 
 
         } catch(IOException e){
@@ -296,7 +296,7 @@ public class AudioBroadcaster {
 
         //The start time in milliseconds
         //TODO: Recalculate this!
-        mSongStartTime = System.currentTimeMillis() + 1500 + mTimeManager.getOffset();
+        mSongStartTime = System.currentTimeMillis() + 2500 + mTimeManager.getOffset();
         mTimeManager.setSongStartTime(mSongStartTime);
         mAudioTrackManager.startSong(mSongStartTime);
 
@@ -319,7 +319,7 @@ public class AudioBroadcaster {
             e.printStackTrace();
         }
 
-        mTCPHandlder.startSong(mSongStartTime, mChannels, mStreamID);
+        mTCPHandler.startSong(mSongStartTime, mChannels, mStreamID);
         mIsBroadcasting = true;
         Log.d(LOG_TAG, "Schedule task time!");
         mWorker.schedule(mPacketSender, 500 , TimeUnit.MILLISECONDS);
@@ -354,7 +354,7 @@ public class AudioBroadcaster {
 
     public void lastPacket(){
         mEncodeDone = true;
-        mTCPHandlder.lastPacket(mLastFrameID);
+        mTCPHandler.lastPacket(mLastFrameID);
     }
 
     public void rebroadcastPacket(int packetID){
@@ -448,13 +448,7 @@ public class AudioBroadcaster {
 
     private void rebroadcast(){
         if(mPacketsToRebroadcast.size() > 0) {
-            try{
-                synchronized (this){
-                    this.wait(10);
-                }
-            }catch (InterruptedException e){
 
-            }
 
             synchronized (mPacketsToRebroadcast){
                 NetworkPacket packetl= null;
@@ -484,7 +478,7 @@ public class AudioBroadcaster {
                     return;
                 } else if(count == 1){
 //                    TODO: comment for local rebroadcasting tests
-                    mTCPHandlder.sendFrameTCP(((FramePacket)packetl).getFrame(), oneSlave);
+                    mTCPHandler.sendFrameTCP(((FramePacket) packetl).getFrame(), oneSlave);
                     synchronized (mPacketsToRebroadcast) {
                         mPacketsToRebroadcast.remove(0);
                     }
@@ -508,7 +502,15 @@ public class AudioBroadcaster {
 
                 mPacketsToRebroadcast.remove(0);
 
-                if(!mTCPHandlder.checkSlaves(packetl.getPacketID())) {
+                if(!mTCPHandler.checkSlaves(packetl.getPacketID())) {
+                    try{
+                        synchronized (this){
+                            this.wait(10);
+                        }
+                    }catch (InterruptedException e){
+
+                    }
+
                     try {
                         mStreamSocket.send(packetl.getPacket());
                     } catch (IOException e) {
@@ -516,7 +518,8 @@ public class AudioBroadcaster {
                     }
                 } else {
                     int packetID = mPacketsToRebroadcast.get(0);
-                    while(mTCPHandlder.checkSlaves(packetID)){
+                    //If the checkSlaves returns true, then try again and again until we don't have it anymore
+                    while(mTCPHandler.checkSlaves(packetID)){
                         mPacketsToRebroadcast.remove(0);
                         packetID = mPacketsToRebroadcast.get(0);
                     }
@@ -538,7 +541,7 @@ public class AudioBroadcaster {
     }
 
     public void pause(){
-        mTCPHandlder.pause();
+        mTCPHandler.pause();
     }
 
     public void resume(long resumeTime){
@@ -546,21 +549,21 @@ public class AudioBroadcaster {
         Log.d(LOG_TAG , "Resume time is : " + resumeTime + " and newSongStartTime is : " + newSongStartTime);
         mTimeManager.setSongStartTime(newSongStartTime);
 
-        mTCPHandlder.resume(resumeTime, newSongStartTime);
+        mTCPHandler.resume(resumeTime, newSongStartTime);
     }
 
     private boolean mSeek = false;
     public void seek(long seekTime){
         mSeek = true;
-        mTCPHandlder.seek(seekTime);
+        mTCPHandler.seek(seekTime);
         mNextPacketSendID = (int)(seekTime / (1024000.0 / 44100.0));
     }
 
     public void destroy(){
         mAudioTrackManager = null;
 
-        mTCPHandlder.destroy();
-        mTCPHandlder = null;
+        mTCPHandler.destroy();
+        mTCPHandler = null;
 
         if(mStartRunnableRunning || mSendRunnableRunning){
             while (mSendRunnableRunning || mStartRunnableRunning){
@@ -593,6 +596,6 @@ public class AudioBroadcaster {
     }
 
     public void retransmit(){
-        mTCPHandlder.retransmit();
+        mTCPHandler.retransmit();
     }
 }

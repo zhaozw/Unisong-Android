@@ -28,6 +28,7 @@ public class TCPSeekPacket {
             try {
                 stream.write(CONSTANTS.TCP_SEEK);
                 stream.write(data);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

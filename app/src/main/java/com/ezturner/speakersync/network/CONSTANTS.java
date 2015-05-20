@@ -78,9 +78,7 @@ public class CONSTANTS {
 
     public static final byte TCP_LATENCY_TEST = 14;
 
-    public static final byte TCP_END_FRAME = 15;
-
-    public static final byte TCP_MASTER_CLOSE = 16;
+    public static final byte TCP_MASTER_CLOSE = 15;
 
     public static final int PCM_BITRATE = 1441200;
 

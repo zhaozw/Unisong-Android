@@ -32,6 +32,7 @@ public class TCPResumePacket {
             try {
                 stream.write(CONSTANTS.TCP_RESUME);
                 stream.write(data);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

@@ -32,6 +32,7 @@ public class TCPLatencyTestPacket {
             try {
                 stream.write(CONSTANTS.TCP_LATENCY_TEST);
                 stream.write(data);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

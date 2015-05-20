@@ -17,6 +17,8 @@ import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSwitchMasterPacket;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -176,8 +178,8 @@ public class SlaveTCPHandler {
             }
 
             mSocket = new Socket(address , CONSTANTS.RELIABILITY_PORT);
-            mOutStream = new DataOutputStream(mSocket.getOutputStream());
-            mInStream = new DataInputStream(mSocket.getInputStream());
+            mOutStream = new DataOutputStream(new BufferedOutputStream(mSocket.getOutputStream()));
+            mInStream = new DataInputStream(new BufferedInputStream(mSocket.getInputStream()));
 
         } catch(IOException e){
             e.printStackTrace();
@@ -188,6 +190,7 @@ public class SlaveTCPHandler {
 
     private void listenForCommands(){
         byte type = -1;
+
         try {
             synchronized(mInStream) {
                 type = mInStream.readByte();
@@ -198,108 +201,67 @@ public class SlaveTCPHandler {
         }
 
 
-        while (type != -1 && mRunning){
-            Log.d(LOG_TAG , "Listening for TCP Data, type is: " + type);
-            boolean hasRun = false;
-            switch (type){
+
+        while (type != -1 && mRunning) {
+            Log.d(LOG_TAG, "Listening for TCP Data, type is: " + type);
+
+            switch (type) {
                 case CONSTANTS.TCP_COMMAND_RETRANSMIT:
                     listenRetransmit();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SONG_START:
                     listenSongStart();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SONG_IN_PROGRESS:
                     listenSongInProgress();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_FRAME:
                     listenFrame();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_PAUSE:
                     listenPause();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_RESUME:
                     listenResume();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_END_SESSION:
                     endSession();
-                    hasRun = true;
                     break;
                 //This Slave is now the session master.
                 case CONSTANTS.TCP_ASSIGN_MASTER:
                     assignMaster();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SEEK:
                     listenSeek();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_SWITCH_MASTER:
                     switchMaster();
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_LAST_FRAME:
                     listenLastPacket();
-                    hasRun = true;
-                    break;
-                case CONSTANTS.TCP_END_FRAME:
-                    Log.d(LOG_TAG , "End Frame received");
-                    hasRun = true;
                     break;
                 case CONSTANTS.TCP_MASTER_CLOSE:
-                    Log.d(LOG_TAG , "Master Close Received");
-                    synchronized (mSocket){
+                    Log.d(LOG_TAG, "Master Close Received");
+                    synchronized (mSocket) {
                         try {
                             mSocket.close();
-                        } catch (IOException e){
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
                     return;
             }
 
-            if(!hasRun){
-                Log.d(LOG_TAG ,  "TCP overflow! Type not recognized: " + type);
-                int times = 0;
-                while(type != 15){
-                    try {
-                        synchronized (mInStream) {
-                            type = mInStream.readByte();
-                        }
-                    } catch (IOException e){
-                        Log.d(LOG_TAG , e.toString());
-                        e.printStackTrace();
-                    }
-                    Log.d(LOG_TAG , "Data is : " + type + " for time " + times);
-                    times++;
-                }
-                Log.d(LOG_TAG , "15 received! Now to see if it is actually another packet");
 
-                try {
-                    synchronized (mInStream) {
-                        type = mInStream.readByte();
-                    }
-                } catch (IOException e){
-                    Log.d(LOG_TAG , e.toString());
-                    e.printStackTrace();
+            try {
+                synchronized (mInStream) {
+                    type = mInStream.readByte();
                 }
-            } else {
-                try {
-                    synchronized (mInStream) {
-                        type = mInStream.readByte();
-                    }
-                } catch (IOException e) {
-                    Log.d(LOG_TAG, e.toString());
-                    e.printStackTrace();
-                }
+            } catch (IOException e) {
+                Log.d(LOG_TAG, e.toString());
+                e.printStackTrace();
             }
         }
-
 
     }
 
@@ -334,8 +296,10 @@ public class SlaveTCPHandler {
             }
         }
 
+
         synchronized (mPacketsToRequest) {
-            if (packetID > mTopPacket && mCanRequest && packetID < mTopPacket + 100) {
+
+            if (packetID > mTopPacket && mCanRequest && packetID < mTopPacket + 250) {
                 for (int i = mTopPacket; i < packetID; i++){
                     if (!mPacketsReceived.contains(i)){
                         mPacketsToRequest.put(i, System.currentTimeMillis());

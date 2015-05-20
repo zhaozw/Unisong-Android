@@ -24,6 +24,7 @@ public class TCPPausePacket {
         synchronized (stream) {
             try {
                 stream.write(CONSTANTS.TCP_PAUSE);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

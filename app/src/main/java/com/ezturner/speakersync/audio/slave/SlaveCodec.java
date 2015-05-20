@@ -136,7 +136,7 @@ public class SlaveCodec {
 
             //TODO: test/check this out
             while(!mFrames.containsKey(mCurrentFrame)){
-
+                if(mCurrentFrame == 4304) Log.d(LOG_TAG , "mCurrentFrame not found after seek");
                 if(mStop){
                     break;
                 }
@@ -179,6 +179,8 @@ public class SlaveCodec {
                 frame = mFrames.get(mCurrentFrame);
                 lastPlayTime = frame.getPlayTime() - mDecoder.getOffset() + mDecoder.getSongStartTime();
             }
+
+            if(mCurrentFrame == 4304) Log.d(LOG_TAG , "decoding mCurrentFrame");
 
 
             noOutputCounter++;

@@ -53,6 +53,7 @@ public class TCPSongInProgressPacket {
             try {
                 stream.write(CONSTANTS.TCP_SONG_IN_PROGRESS);
                 stream.write(data);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

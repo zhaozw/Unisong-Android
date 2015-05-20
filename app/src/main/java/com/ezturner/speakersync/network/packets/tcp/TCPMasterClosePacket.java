@@ -15,6 +15,7 @@ public class TCPMasterClosePacket {
         synchronized (stream){
             try{
                 stream.write(CONSTANTS.TCP_MASTER_CLOSE);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

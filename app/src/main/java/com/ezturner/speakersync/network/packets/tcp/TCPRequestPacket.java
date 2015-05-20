@@ -34,6 +34,7 @@ public class TCPRequestPacket {
             try {
                 stream.write(CONSTANTS.TCP_REQUEST);
                 stream.write(data);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

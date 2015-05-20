@@ -32,6 +32,7 @@ public class TCPRetransmitPacket {
             try {
                 stream.write(CONSTANTS.TCP_COMMAND_RETRANSMIT);
                 stream.write(arr);
+                stream.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }

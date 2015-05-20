@@ -16,6 +16,11 @@ import com.ezturner.speakersync.network.packets.tcp.TCPSeekPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,6 +48,12 @@ public class MasterTCPHandler {
     //The list of all of the TCP control sockets that are listening for reliability packets
     private Map<Slave ,Socket> mSockets;
 
+    //The list of all of the DataOutputStreams by slave
+    private Map<Slave , DataOutputStream> mOutputStreams;
+
+    //The list of all of the DataInputStreams by slave
+    private Map<Slave , DataInputStream> mInputStreams;
+
     //The AudioBroadcaster that this class interfaces with
     private AudioBroadcaster mBroadcaster;
 
@@ -65,6 +76,8 @@ public class MasterTCPHandler {
 
         mBroadcaster = broadcaster;
 
+        mInputStreams = new HashMap<>();
+        mOutputStreams = new HashMap<>();
         mRecentlyRebroadcasted = new HashMap<>();
 
         mRandom = new Random();
@@ -77,7 +90,7 @@ public class MasterTCPHandler {
             e.printStackTrace();
         }
 
-        mSockets = new HashMap<Slave, Socket>();
+        mSockets = new HashMap<>();
         mSocketThreads = new ArrayList<>();
 
         mServerSocketThread = startReliabilityConnectionListener();
@@ -107,12 +120,16 @@ public class MasterTCPHandler {
 
                     if(socket != null){
 
-                        if(mBroadcaster.isStreamRunning()) {
-                            sendSongInProgress(socket);
+                        try {
+                            DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                            DataInputStream inputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+
+                            Thread thread = startSocketListener(inputStream , outputStream , socket);
+                            mSocketThreads.add(thread);
+                            thread.start();
+                        } catch (IOException e){
+                            e.printStackTrace();
                         }
-                        Thread thread = startSocketListener(socket);
-                        mSocketThreads.add(thread);
-                        thread.start();
                     }
                 }
             }
@@ -120,35 +137,52 @@ public class MasterTCPHandler {
     }
 
     //Start listening for packets
-    private Thread startSocketListener(Socket socket){
+    private Thread startSocketListener(DataInputStream inStream , DataOutputStream outStream, Socket socket){
         class SocketRunnable implements Runnable {
+            DataInputStream inStream;
+            DataOutputStream outStream;
             Socket socket;
-            SocketRunnable(Socket s) { socket = s; }
+            SocketRunnable(DataInputStream inputStream , DataOutputStream outputStream , Socket ssocket) {
+                inStream = inputStream;
+                outStream = outputStream;
+                socket = ssocket;
+            }
             public void run(){
                 try {
-                    listenToReliabilitySocket(socket);
+                    listenToReliabilitySocket(inStream , outStream , socket);
                 } catch(IOException e){
                     e.printStackTrace();
                 }
             }
         };
 
-        return new Thread(new SocketRunnable(socket));
+        return new Thread(new SocketRunnable(inStream , outStream , socket));
     }
 
     //Handle new data coming in from a Reliability socket
-    private void listenToReliabilitySocket(Socket socket) throws IOException{
+    private void listenToReliabilitySocket(DataInputStream inputStream , DataOutputStream outputStream ,Socket socket) throws IOException{
         //TODO: see if we need to get rid of the port for this to work
         Slave slave = new Slave(socket.getRemoteSocketAddress().toString());
+
         mBroadcaster.addSlave(slave);
         mSockets.put(slave, socket);
-        InputStream is = socket.getInputStream();
+        mInputStreams.put(slave, inputStream);
+        mOutputStreams.put(slave , outputStream);
 
 
-        int identifier = is.read();
+        if(mBroadcaster.isStreamRunning()) {
+            sendSongInProgress(slave);
+        }
+
+        byte identifier;
+        synchronized (inputStream) {
+             identifier= inputStream.readByte();
+        }
         while(identifier != -1 && mRunning){
-            handleDataReceived(identifier, slave , is);
-            identifier = is.read();
+            handleDataReceived(identifier, slave , inputStream);
+            synchronized (inputStream) {
+                identifier = inputStream.readByte();
+            }
         }
 
         if(socket.isClosed()){
@@ -158,7 +192,7 @@ public class MasterTCPHandler {
 
 
     //Hanldes the identifying byte and redirects it to the right method
-    private void handleDataReceived(int identifier , Slave slave , InputStream inputStream){
+    private void handleDataReceived(int identifier , Slave slave , DataInputStream inputStream){
         switch (identifier){
             case CONSTANTS.TCP_REQUEST:
                 int packetID = new TCPRequestPacket(inputStream).getPacketRequested();
@@ -205,17 +239,15 @@ public class MasterTCPHandler {
 
         int index = mRandom.nextInt(havePacket.size());
 
-        Socket socket = mSockets.get(havePacket.get(index));
+        Slave slave = havePacket.get(index);
+        Log.d(LOG_TAG , "Telling "  + havePacket.get(index).toString() + " to rebroadcast frame #" + packetID);
 
-        try {
-            Log.d(LOG_TAG , "Telling "  + havePacket.get(index).toString() + " to rebroadcast frame #" + packetID);
-            OutputStream stream = socket.getOutputStream();
+        synchronized (mOutputStreams) {
+            OutputStream stream = mOutputStreams.get(slave);
             TCPRetransmitPacket.send(stream, packetID);
-
-            mRecentlyRebroadcasted.put(packetID , System.currentTimeMillis());
-        } catch (IOException e){
-            e.printStackTrace();
         }
+
+        mRecentlyRebroadcasted.put(packetID , System.currentTimeMillis());
         return true;
     }
 
@@ -276,91 +308,78 @@ public class MasterTCPHandler {
     }
 
     private void notifyOfSongStart(){
-        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+        Log.d(LOG_TAG , "Notifying all listeners of song start");
+        long begin = System.currentTimeMillis();
+        synchronized (mOutputStreams) {
+            for (Map.Entry<Slave, DataOutputStream> entry : mOutputStreams.entrySet()) {
 
-            Socket socket = entry.getValue();
-
-            try {
-                OutputStream outputStream = socket.getOutputStream();
-                TCPSongStartPacket.send(outputStream, mBroadcaster.getSongStartTime(),
+                TCPSongStartPacket.send(entry.getValue(), mBroadcaster.getSongStartTime(),
                         mBroadcaster.getChannels(), mBroadcaster.getStreamID());
-            } catch (IOException e){
-                e.printStackTrace();
             }
-
-
-
         }
+        Log.d(LOG_TAG , "Done notifying after :" + (System.currentTimeMillis() - begin) + "ms.");
     }
 
-    private void sendSongInProgress(Socket socket){
-        try{
-            Log.d(LOG_TAG , "Sending Song Start to ");
-            OutputStream stream = socket.getOutputStream();
+    private void sendSongInProgress(Slave slave) {
+        Log.d(LOG_TAG, "Sending Song Start to "  + slave.toString());
+        DataOutputStream outputStream;
+        synchronized (mOutputStreams) {
 
             //Send out the Song In Progress TCP packet.
-            TCPSongInProgressPacket.send(stream, mBroadcaster.getSongStartTime() , mBroadcaster.getChannels(),
-                    mBroadcaster.getNextPacketSendID() , mBroadcaster.getStreamID());
-
-        } catch (IOException e){
-            e.printStackTrace();
+            TCPSongInProgressPacket.send(mOutputStreams.get(slave), mBroadcaster.getSongStartTime(), mBroadcaster.getChannels(),
+                    mBroadcaster.getNextPacketSendID(), mBroadcaster.getStreamID());
         }
+
+
     }
 
     //Send a TCP packet to the one that needs it containing an AAC frame
     public void sendFrameTCP(AudioFrame frame , Slave slave){
-        OutputStream stream = null;
-        try {
-            stream = mSockets.get(slave).getOutputStream();
-        } catch (IOException e){
-            e.printStackTrace();
+        DataOutputStream stream;
+        synchronized (mOutputStreams) {
+             stream = mOutputStreams.get(slave);
+             TCPFramePacket.send(stream, frame, mBroadcaster.getStreamID());
         }
-
-
-        TCPFramePacket.send(stream, frame, mBroadcaster.getStreamID());
 
 
     }
 
-    public void pause(){
-        for(Slave slave : mBroadcaster.getSlaves()){
-
-            OutputStream stream = null;
-            try {
-                stream = mSockets.get(slave).getOutputStream();
-            } catch (IOException e){
-                e.printStackTrace();
+    public synchronized void pause(){
+        Log.d(LOG_TAG , "Pausing");
+        synchronized (mOutputStreams) {
+            for (Map.Entry<Slave, DataOutputStream> entry : mOutputStreams.entrySet()) {
+                DataOutputStream stream = entry.getValue();
+                TCPPausePacket.send(stream);
             }
-
-            TCPPausePacket.send(stream );
-
         }
+
     }
 
+    //Sends the resume command to all Slaves
     public void resume(long resumeTime, long newSongStartTime){
-        for(Slave slave : mBroadcaster.getSlaves()){
 
-            OutputStream stream = null;
-            try {
-                stream = mSockets.get(slave).getOutputStream();
-            } catch (IOException e){
-                e.printStackTrace();
+        synchronized (mOutputStreams){
+            for (Map.Entry<Slave, DataOutputStream> entry : mOutputStreams.entrySet()) {
+
+                DataOutputStream stream = entry.getValue();
+                TCPResumePacket.send(stream, resumeTime, newSongStartTime);
+
             }
-
-            TCPResumePacket.send(stream, resumeTime , newSongStartTime);
-
         }
+
     }
 
-    public synchronized void destroy(){
+    public void destroy(){
         mRunning = false;
         for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
 
             Socket socket = entry.getValue();
-            try {
-                socket.close();
-            } catch (IOException e){
-                e.printStackTrace();
+            synchronized (socket) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -374,17 +393,12 @@ public class MasterTCPHandler {
     }
 
     public void seek(long seekTime){
-        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+        synchronized (mOutputStreams) {
+            for (Map.Entry<Slave, DataOutputStream> entry : mOutputStreams.entrySet()) {
 
-            Socket socket = entry.getValue();
-            try {
-                OutputStream stream = socket.getOutputStream();
+                DataOutputStream stream = entry.getValue();
                 TCPSeekPacket.send(stream, seekTime);
-            } catch (IOException e){
-                e.printStackTrace();
             }
-
-
         }
     }
 
@@ -397,35 +411,27 @@ public class MasterTCPHandler {
         });
     }
 
+    //Sends all listeners a command indicating the ID of the last packet.
     public void lastPacket(int ID){
-
-        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
-
-            Socket socket = entry.getValue();
-            try {
-                OutputStream stream = socket.getOutputStream();
+        synchronized (mOutputStreams) {
+            for (Map.Entry<Slave, DataOutputStream> entry : mOutputStreams.entrySet()) {
+                DataOutputStream stream = entry.getValue();
                 TCPLastFramePacket.send(stream, ID);
-            } catch (IOException e){
-                e.printStackTrace();
             }
-
-
         }
+
     }
 
 
+    //Instructs a host to retransmit the 0 packet.
     public void retransmit(){
-        for (Map.Entry<Slave, Socket> entry : mSockets.entrySet()){
+        synchronized (mOutputStreams){
+            for (Map.Entry<Slave, DataOutputStream> entry : mOutputStreams.entrySet()){
 
-            Socket socket = entry.getValue();
-            try {
-                OutputStream stream = socket.getOutputStream();
+                DataOutputStream stream = entry.getValue();
                 TCPRetransmitPacket.send(stream, 0);
-            } catch (IOException e){
-                e.printStackTrace();
             }
-
-
         }
+
     }
 }

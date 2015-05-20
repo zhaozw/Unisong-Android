@@ -45,7 +45,7 @@ public class TCPFramePacket {
                 stream.write(CONSTANTS.TCP_FRAME);
                 stream.write(data);
                 stream.write(frame.getData());
-                stream.write(CONSTANTS.TCP_END_FRAME);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

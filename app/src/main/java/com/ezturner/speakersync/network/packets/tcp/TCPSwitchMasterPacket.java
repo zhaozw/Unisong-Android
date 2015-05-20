@@ -37,6 +37,7 @@ public class TCPSwitchMasterPacket {
             try {
                 stream.write(CONSTANTS.TCP_SWITCH_MASTER);
                 stream.write(address);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }

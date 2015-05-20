@@ -52,6 +52,7 @@ public class TCPSongStartPacket {
             try {
                 stream.write(CONSTANTS.TCP_SONG_START);
                 stream.write(data);
+                stream.flush();
             } catch (IOException e){
                 e.printStackTrace();
             }
