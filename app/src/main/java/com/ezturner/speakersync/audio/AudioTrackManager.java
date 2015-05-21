@@ -191,7 +191,7 @@ public class AudioTrackManager {
 
             mAudioTrack.write(data, 0, data.length);
 
-            synchronized (mFrames) {
+            synchronized (mFrames){
                 mFrames.remove(frame);
             }
         }

@@ -92,6 +92,7 @@ public class AudioListener {
 
     private AnalyticsSuite mAnalyticsSuite;
 
+    //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
     public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder, TimeManager manager , AnalyticsSuite suite){
 
         mAnalyticsSuite = suite;

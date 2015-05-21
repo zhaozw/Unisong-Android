@@ -1,9 +1,7 @@
 package com.ezturner.speakersync.network.master;
 
-import android.net.Network;
 import android.util.Log;
 
-import com.ezturner.speakersync.MyApplication;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.packets.MasterResponsePacket;
@@ -13,7 +11,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 
 /**
  * Created by ezturner on 2/13/2015.
@@ -34,7 +31,7 @@ public class MasterDiscoveryHandler {
     private AudioBroadcaster mParent;
 
     //Whether the master has been chosen and the class is now listening to it, or not.
-    private boolean mListening;
+    private boolean mRunning;
 
     //The boolean that tells whether the slave has recieved a master and is awaiting others
     private boolean mIsDeciding;
@@ -49,7 +46,7 @@ public class MasterDiscoveryHandler {
 
     public MasterDiscoveryHandler(AudioBroadcaster parent){
 
-        mListening = true;
+        mRunning = true;
         mParent = parent;
 
         try {
@@ -66,14 +63,55 @@ public class MasterDiscoveryHandler {
         mListenerThread.start();
     }
 
+    private Thread getBroadcastThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                broadcast();
+            }
+        });
+    }
 
+    private void broadcast(){
+        while(mRunning){
+
+            MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
+
+            byte[] data = resPacket.getData();
+
+            //Make the packet
+            DatagramPacket outPacket = new DatagramPacket(data, data.length, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_SLAVE_PORT);
+
+            //Send out packet
+            try {
+                synchronized (mSendSocket) {
+                    mSendSocket.send(outPacket);
+                }
+
+
+
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try{
+                synchronized (this){
+                    this.wait(100);
+                }
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+    }
     private Thread startPacketListener(){
         return new Thread(){
             public void run(){
                 //sendStartPacket();
                 Log.d(LOG_TAG, "Packet Listener engaged , " + mParent.isStreamRunning());
 
-                 while(mListening){
+                 while(mRunning){
                     listenForPacket();
                 }
             }
@@ -101,9 +139,8 @@ public class MasterDiscoveryHandler {
 
     //Takes in a packet, and sends back the port in use and
     private void handlePacket(DatagramPacket packet) {
-        InetAddress addr = packet.getAddress();
 
-        Log.d(LOG_TAG, "Packet received , from : " + addr.toString());
+        Log.d(LOG_TAG, "Packet received , from : " +  packet.getAddress().toString());
 
         MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
 
@@ -112,28 +149,30 @@ public class MasterDiscoveryHandler {
         //Make the packet
         DatagramPacket outPacket = new DatagramPacket(data, data.length, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_SLAVE_PORT);
 
-        //Send out packet
-        try {
-            mSendSocket.send(outPacket);
+        synchronized (mSendSocket) {
+            //Send out packet
+            try {
+                mSendSocket.send(outPacket);
 
-            try{
-                synchronized (this){
-                    this.wait(5);
+                try {
+                    synchronized (this) {
+                        this.wait(5);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException e){
+
+                mSendSocket.send(outPacket);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            mSendSocket.send(outPacket);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     public synchronized void destroy(){
-        mListening = false;
+        mRunning = false;
         mReceiveSocket.close();
         mSendSocket.close();
 

@@ -52,7 +52,14 @@ public class AACEncoder {
     //The Bridge that will be used to send the finished AAC frames to the broadcaster.
     private BroadcasterBridge mBroadcasterBridge;
 
-    public AACEncoder(BroadcasterBridge bridge, int lastFrame , byte streamID){
+    public AACEncoder(BroadcasterBridge bridge, int lastFrame , byte streamID, Map<Integer, AudioFrame> frames){
+
+        mFrames = frames;
+
+        if(frames.size() != 0){
+            Log.d(LOG_TAG , "Setting mFrames, size is : " + mFrames.size());
+        }
+
         mBroadcasterBridge = bridge;
         mCurrentOutputID = 0;
         mRunning = false;
@@ -64,7 +71,6 @@ public class AACEncoder {
         mCurrentInputFrame = currentInputFrame;
         mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
         mInputFormat = inputFormat;
-        mFrames = new HashMap<>();
         mEncodeThread = getEncode();
         mEncodeThread.start();
     }
@@ -279,6 +285,7 @@ public class AACEncoder {
                 data = Arrays.copyOfRange(data, mDataIndex, sampleSize);
                 mDataIndex = 0;
             }
+            mFrames.remove(frame.getID());
 //            Log.d(LOG_TAG , "1: Data is : " + data.length);
             mCurrentInputFrame++;
 
@@ -346,8 +353,10 @@ public class AACEncoder {
             }
         }
 
-        synchronized (mEncodeThread){
-            mEncodeThread.notify();
+        if(mEncodeThread != null) {
+            synchronized (mEncodeThread) {
+                mEncodeThread.notify();
+            }
         }
     }
 
@@ -371,10 +380,6 @@ public class AACEncoder {
         return mBroadcasterBridge;
     }
 
-    public void setFrames(Map<Integer , AudioFrame> frames){
-        Log.d(LOG_TAG , "Set Frames, Size is : " + frames.size());
-        mFrames = frames;
-    }
 
     public void lastFrame(int currentID){
         mLastFrame = currentID;

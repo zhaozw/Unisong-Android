@@ -191,10 +191,10 @@ public class MediaService extends Service{
 
 
                 if(mBroadcaster != null) {
-                    long time = mFileReader.seek(100000);
-                    mAudioTrackManager.seek(time);
-                    mBroadcaster.seek(time);
-                    mResumeTime = time;
+                    mFileReader.seek(100000);
+                    mAudioTrackManager.seek(100000);
+                    mBroadcaster.seek(100000);
+                    mResumeTime = 100000;
                 }
 
                 resume();

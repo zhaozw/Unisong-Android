@@ -47,8 +47,7 @@ public class ReaderToReaderBridge extends AbstractBridge {
 
         mEncoder.seek();
         Map<Integer, AudioFrame> frames = mEncoder.getFrames();
-        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge() , mEncoder.getLastFrame(), streamID);
-        mEncoder.setFrames(frames);
+        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge() , mEncoder.getLastFrame(), streamID, frames);
 
         mEncoder.encode(mInputFormat , currentID , seekTime);
         mSeek = false;
