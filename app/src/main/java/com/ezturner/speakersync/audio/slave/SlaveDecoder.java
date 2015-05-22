@@ -1,24 +1,13 @@
 package com.ezturner.speakersync.audio.slave;
 
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
-import android.util.Log;
-
 import com.ezturner.speakersync.Lame;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.TimeManager;
-import com.ezturner.speakersync.network.slave.NetworkInputStream;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
