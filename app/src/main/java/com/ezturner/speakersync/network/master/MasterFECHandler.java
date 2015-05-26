@@ -6,6 +6,10 @@ import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 
+import net.fec.openrq.ArrayDataEncoder;
+import net.fec.openrq.EncodingPacket;
+import net.fec.openrq.OpenRQ;
+import net.fec.openrq.encoder.SourceBlockEncoder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,6 +84,22 @@ public class MasterFECHandler {
                 byte[] srcData = createFrameArray();
 
 
+                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
+
+
+                // send all source symbols
+                for (EncodingPacket pac : sbEnc.sourcePacketsIterable()) {
+                    sendPacket(pac);
+                }
+
+                // number of repair symbols
+                int nr = numberOfRepairSymbols();
+
+                // send nr repair symbols
+                for (EncodingPacket pac : sbEnc.repairPacketsIterable(nr)) {
+                    sendPacket(pac);
+                }
+
 
             } else {
                 synchronized (mEncodeThread){
@@ -92,6 +112,13 @@ public class MasterFECHandler {
             }
         }
     }
+
+    /*
+    private static void sendPacket(EncodingPacket pac) {
+
+        // send the packet to the receiver
+    }*/
+
 
     //TODO: have this work with Dynamic Network Adaptation Technology to adapt to the network as we go
     private int numberOfRepairSymbols(){
