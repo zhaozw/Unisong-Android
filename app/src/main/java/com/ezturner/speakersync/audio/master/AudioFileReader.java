@@ -1,27 +1,16 @@
 package com.ezturner.speakersync.audio.master;
 
-import android.content.Context;
-import android.media.MediaCodec;
-import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import com.ezturner.speakersync.audio.AudioFileReaderEvents;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.ReaderToReaderBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
-import com.ezturner.speakersync.audio.master.AACEncoder;
 import com.ezturner.speakersync.network.CONSTANTS;
-import com.ezturner.speakersync.network.slave.AudioListener;
-import com.ezturner.speakersync.network.slave.NetworkInputStream;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * Created by Ethan on 2/12/2015.
@@ -162,7 +151,6 @@ public class AudioFileReader {
         mAACBridge.seek(mCurrentID , seekTime , mStreamID);
 
         mTimeAdjust = seekTime;
-
     }
 
     public void lastPacket(){

@@ -9,7 +9,6 @@ import com.ezturner.speakersync.network.packets.MasterResponsePacket;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 
 /**
@@ -28,7 +27,7 @@ public class MasterDiscoveryHandler {
     private Thread mListenerThread;
     
     //The AudioBroadcaster for when this is master side
-    private AudioBroadcaster mParent;
+    private Broadcaster mParent;
 
     //Whether the master has been chosen and the class is now listening to it, or not.
     private boolean mRunning;
@@ -44,7 +43,7 @@ public class MasterDiscoveryHandler {
 
 
 
-    public MasterDiscoveryHandler(AudioBroadcaster parent){
+    public MasterDiscoveryHandler(Broadcaster parent){
 
         mRunning = true;
         mParent = parent;

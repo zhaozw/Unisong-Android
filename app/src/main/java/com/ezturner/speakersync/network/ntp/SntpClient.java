@@ -2,11 +2,6 @@ package com.ezturner.speakersync.network.ntp;
 
 import android.util.Log;
 
-import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.network.TimeManager;
-import com.ezturner.speakersync.network.master.AudioBroadcaster;
-import com.ezturner.speakersync.network.slave.AudioListener;
-
 import org.xbill.DNS.Address;
 
 import java.io.IOException;

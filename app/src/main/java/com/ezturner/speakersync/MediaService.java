@@ -19,7 +19,7 @@ import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.TimeManager;
-import com.ezturner.speakersync.network.master.AudioBroadcaster;
+import com.ezturner.speakersync.network.master.Broadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.slave.AudioListener;
@@ -35,7 +35,7 @@ public class MediaService extends Service{
     private IBinder mBinder = new MediaServiceBinder();
 
     private AudioListener mListener;
-    private AudioBroadcaster mBroadcaster;
+    private Broadcaster mBroadcaster;
     private AudioTrackManager mAudioTrackManager;
     private AudioFileReader mFileReader;
 
@@ -141,7 +141,7 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
-            mBroadcaster = new AudioBroadcaster(mAudioTrackManager , mFileReader , mTimeManager, mAnalyticsSuite);
+            mBroadcaster = new Broadcaster(mAudioTrackManager , mFileReader , mTimeManager, mAnalyticsSuite);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
         }
     }

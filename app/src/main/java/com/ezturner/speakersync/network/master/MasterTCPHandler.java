@@ -19,16 +19,13 @@ import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +52,7 @@ public class MasterTCPHandler {
     private Map<Slave , DataInputStream> mInputStreams;
 
     //The AudioBroadcaster that this class interfaces with
-    private AudioBroadcaster mBroadcaster;
+    private Broadcaster mBroadcaster;
 
     //The thread that'll listen to reliability packets
     private Thread mServerSocketThread;
@@ -70,7 +67,7 @@ public class MasterTCPHandler {
 
     private AnalyticsSuite mAnalyticsSuite;
 
-    public MasterTCPHandler(AudioBroadcaster broadcaster, AnalyticsSuite analyticsSuite){
+    public MasterTCPHandler(Broadcaster broadcaster, AnalyticsSuite analyticsSuite){
 
         mAnalyticsSuite = analyticsSuite;
 

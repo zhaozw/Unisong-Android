@@ -21,7 +21,7 @@ public class MasterFECHandler {
 
     private final String LOG_TAG = MasterTCPHandler.class.getSimpleName();
 
-    private AudioBroadcaster mBroadcaster;
+    private Broadcaster mBroadcaster;
 
     private ArrayList<AudioFrame> mFrames;
     private ArrayList<byte[]> mFrameDatas;
@@ -38,7 +38,7 @@ public class MasterFECHandler {
 
     private boolean mRunning;
 
-    public MasterFECHandler(AudioBroadcaster broadcaster){
+    public MasterFECHandler(Broadcaster broadcaster){
         mBroadcaster =broadcaster;
         mFrames = new ArrayList<>();
         mFrameDatas = new ArrayList<>();

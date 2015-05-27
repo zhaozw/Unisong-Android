@@ -1,7 +1,6 @@
 package com.ezturner.speakersync.audio;
 
-import com.ezturner.speakersync.network.master.AudioBroadcaster;
-import com.ezturner.speakersync.network.master.MasterFECHandler;
+import com.ezturner.speakersync.network.master.Broadcaster;
 
 import java.util.ArrayList;
 
@@ -10,9 +9,9 @@ import java.util.ArrayList;
  */
 public class BroadcasterBridge extends AbstractBridge {
 
-    private AudioBroadcaster mBroadcaster;
+    private Broadcaster mBroadcaster;
 
-    public BroadcasterBridge(AudioBroadcaster broadcaster){
+    public BroadcasterBridge(Broadcaster broadcaster){
         super();
         mBroadcaster = broadcaster;
     }
