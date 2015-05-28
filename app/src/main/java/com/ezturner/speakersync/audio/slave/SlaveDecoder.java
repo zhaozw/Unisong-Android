@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * The parent class of SlaveCodec, it maintains data and creates and
+ * destroys SlaveCodec instances as needed.
+ * Handles the decoding of AAC data as needed by the AudioTrackManager class.
  * Created by ezturner on 4/6/2015.
  */
 public class SlaveDecoder {
@@ -50,8 +53,6 @@ public class SlaveDecoder {
         mTimeManager = manager;
         mStreamID = streamID;
 
-        mSlaveCodec = new SlaveCodec(this, channels , mFrames, mTimeManager);
-
     }
 
     public void decode(int frame){
@@ -61,6 +62,8 @@ public class SlaveDecoder {
         if(mSlaveCodec != null){
             mSlaveCodec.stopDecode();
         }
+
+        mSlaveCodec = new SlaveCodec(this , channels , mFrames , mTimeManager);
         mSlaveCodec.decode(frame);
     }
 

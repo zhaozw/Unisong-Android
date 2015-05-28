@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,9 +50,6 @@ public class Broadcaster {
     //Random object, used to randomize multicast stream IP
     static private Random random = new Random();
 
-    //ArrayList of packets made
-    private Map<Integer , NetworkPacket> mPackets;
-
     //The object that handles all reliability stuff
     private MasterTCPHandler mTCPHandler;
 
@@ -70,7 +68,7 @@ public class Broadcaster {
     private Handler mHandler;
 
     //The ID of the packet to be sent next
-    private int mNextPacketSendID;
+    private int mNextFrameSendID;
 
     //The ID of the last frame in this stream
     private int mLastFrameID;
@@ -96,7 +94,7 @@ public class Broadcaster {
 
     //The list of Audio Frames, exists for retransmission
     //TODO: get rid of old/unused ones
-    private List<AudioFrame> mFrames;
+    private Map<Integer , AudioFrame> mFrames;
 
     //The class that handles all of the offset stuff
     private TimeManager mTimeManager;
@@ -143,15 +141,12 @@ public class Broadcaster {
         //set the stream ID to zero
         mStreamID = -1;
 
-        //Make the map of the packets
-        mPackets = new HashMap<>();
-
-                //Makes the handler for broadcasting packets
+        //Makes the handler for broadcasting packets
         //TODO : delete if useless
         mHandler = new Handler();
 
         //Set the next packet to be created to be 0
-        mNextPacketSendID = 0;
+        mNextFrameSendID = 0;
         mLastFrameID = -1;
 
         mPacketsToRebroadcast = new ArrayList<>();
@@ -166,7 +161,7 @@ public class Broadcaster {
 
         mWorker = Executors.newSingleThreadScheduledExecutor();
 
-        mFrames = new ArrayList<>();
+        mFrames = new TreeMap<>();
 
         mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
     }
@@ -185,20 +180,11 @@ public class Broadcaster {
 
 //            Log.d(LOG_TAG , "Starting packet send!");
             NetworkPacket packet;
-            synchronized (mPackets){
-                packet = mPackets.get(mNextPacketSendID);
-                if(packet == null){
-                    Log.d(LOG_TAG , "Packet #" + mNextPacketSendID + " is null! mPackets size is: " + mPackets.size());
-//                    if(mPackets.containsKey(mNextPacketSendID + 1)){
-//                        packet = mPackets.get(mNextPacketSendID + 1);
-//                        mNextPacketSendID++;
-//                    }
-                }
-                //Log.d(LOG_TAG , packet.toString());
-            }
+            AudioFrame frame;
+            synchronized (mFrames){
 
-            if(packet == null){
-                while (!mPackets.containsKey(mNextPacketSendID)){
+                //Wait for mFrames to co
+                while (!mFrames.containsKey(mNextFrameSendID)){
                     synchronized (this){
                         try {
                             this.wait(1);
@@ -207,16 +193,16 @@ public class Broadcaster {
                         }
                     }
                 }
-                synchronized (mPackets) {
-                    packet = mPackets.get(mNextPacketSendID);
-                }
-                Log.d(LOG_TAG  ,"Packet #" + mNextPacketSendID + " found.");
+
+                frame = mFrames.get(mNextFrameSendID);
+                packet = createFramePacket(frame);
                 if(packet == null){
-                    Log.e(LOG_TAG , "Packet is still null!!!!");
+                    Log.d(LOG_TAG , "Packet #" + mNextFrameSendID + " is null! AudioFrame is : " + frame);
+
                 }
             }
 
-            mNextPacketSendID++;
+            mNextFrameSendID++;
 
 
 
@@ -226,7 +212,7 @@ public class Broadcaster {
                     DatagramPacket datagramPacket = packet.getPacket();
 
                     if(datagramPacket == null){
-                        Log.d(LOG_TAG , "The datagram packet is null for packet #" + (mNextPacketSendID -1));
+                        Log.d(LOG_TAG , "The datagram packet is null for packet #" + (mNextFrameSendID -1));
                     }
 
                     if(!mStreamRunning){
@@ -262,7 +248,7 @@ public class Broadcaster {
             }
 
 
-            if(mNextPacketSendID != mLastFrameID || !mEncodeDone) {
+            if(mNextFrameSendID != mLastFrameID || !mEncodeDone) {
                 mWorker.schedule(mPacketSender , delay , TimeUnit.MILLISECONDS);
             }
             mSendRunnableRunning = false;
@@ -300,18 +286,18 @@ public class Broadcaster {
         mTimeManager.setSongStartTime(mSongStartTime);
         mAudioTrackManager.startSong(mSongStartTime);
 
+        mFrames = new TreeMap<>();
+
         mStreamRunning = true;
         mEncodeDone = false;
 
-        mNextPacketSendID = 0;
+        mNextFrameSendID = 0;
 
         if(mStreamID == 240){
             mStreamID = 0;
         } else {
             mStreamID++;
         }
-
-        mPackets = new HashMap<>();
 
         try{
             mReader.readFile(MediaService.TEST_FILE_PATH);
@@ -323,33 +309,6 @@ public class Broadcaster {
         mIsBroadcasting = true;
         Log.d(LOG_TAG, "Schedule task time!");
         mWorker.schedule(mPacketSender, 500 , TimeUnit.MILLISECONDS);
-    }
-
-    //Broadcasts a streaming packet
-    private boolean broadcastStreamPacket(int packetID){
-        boolean contains;
-        NetworkPacket packet;
-        synchronized(mPackets){
-            contains = mPackets.size() <= packetID;
-            if(contains){
-                packet = mPackets.get(packetID);
-            }
-        }
-
-        if(contains){
-            try {
-                Log.d(LOG_TAG , "Packet to be sent is: " + packetID);
-                synchronized (mStreamSocket){
-                    mStreamSocket.send(mPackets.get(packetID).getPacket());
-                }
-                return true;
-            } catch (IOException e){
-                e.printStackTrace();
-                return false;
-            }
-        } else {
-            return false;
-        }
     }
 
     public void lastPacket(){
@@ -375,12 +334,12 @@ public class Broadcaster {
         return mPort;
     }
 
-    private void createFramePacket(AudioFrame frame){
+    private FramePacket createFramePacket(AudioFrame frame){
         FramePacket fp = new FramePacket(frame ,getStreamID() , frame.getID());
         if(fp == null){
             Log.d(LOG_TAG , "Frame Packet for frame #" + frame.getID() + " is null");
         }
-        mPackets.put(fp.getPacketID(), fp);
+        return fp;
     }
     /*Not in use atm
 
@@ -403,11 +362,10 @@ public class Broadcaster {
     }
 
     public void addFrames(ArrayList<AudioFrame> frames){
-        synchronized (mPackets){
+        synchronized (mFrames){
             for(AudioFrame frame : frames){
                 if(frame == null) Log.d(LOG_TAG , "Input AudioFrame # " +(mLastFrameID + 1) +" is null!");
-                createFramePacket(frame);
-                mFrames.add(frame);
+                mFrames.put(frame.getID(), frame);
                 mLastFrameID = frame.getID();
             }
         }
@@ -434,7 +392,7 @@ public class Broadcaster {
         }
     }
     public int getNextPacketSendID(){
-        return mNextPacketSendID;
+        return mNextFrameSendID;
     }
 
     public int getChannels(){
@@ -451,8 +409,9 @@ public class Broadcaster {
 
             synchronized (mPacketsToRebroadcast){
                 NetworkPacket packetl= null;
-                synchronized (mPackets) {
-                    packetl = mPackets.get(mPacketsToRebroadcast.get(0));
+                synchronized (mFrames) {
+                    AudioFrame frame = mFrames.get(mPacketsToRebroadcast.get(0));;
+                    packetl = createFramePacket(frame);
                 }
 
                 if(packetl == null){
@@ -524,8 +483,6 @@ public class Broadcaster {
                     }
                 }
             }
-
-
         }
     }
 
@@ -533,10 +490,6 @@ public class Broadcaster {
         synchronized (mFrames){
             return mFrames.get(ID);
         }
-    }
-
-    public void addPacket(NetworkPacket packet){
-        mPackets.put(packet.getPacketID() , packet);
     }
 
     public void pause(){
@@ -555,7 +508,7 @@ public class Broadcaster {
     public void seek(long seekTime){
         mSeek = true;
         mTCPHandler.seek(seekTime);
-        mNextPacketSendID = (int)(seekTime / (1024000.0 / 44100.0));
+        mNextFrameSendID = (int)(seekTime / (1024000.0 / 44100.0));
     }
 
     public void destroy(){

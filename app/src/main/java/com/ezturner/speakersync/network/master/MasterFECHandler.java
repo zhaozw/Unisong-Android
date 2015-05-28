@@ -84,9 +84,10 @@ public class MasterFECHandler {
                 byte[] srcData = createFrameArray();
 
 
-                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
+//                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
 
 
+                /*
                 // send all source symbols
                 for (EncodingPacket pac : sbEnc.sourcePacketsIterable()) {
                     sendPacket(pac);
@@ -98,7 +99,7 @@ public class MasterFECHandler {
                 // send nr repair symbols
                 for (EncodingPacket pac : sbEnc.repairPacketsIterable(nr)) {
                     sendPacket(pac);
-                }
+                }*/
 
 
             } else {
