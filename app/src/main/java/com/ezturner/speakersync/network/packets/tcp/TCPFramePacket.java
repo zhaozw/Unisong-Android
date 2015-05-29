@@ -57,7 +57,7 @@ public class TCPFramePacket {
 
         synchronized (stream) {
             try {
-                stream.read(data);
+                NetworkUtilities.readFromStream(stream, data);
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -77,7 +77,7 @@ public class TCPFramePacket {
 
         synchronized (stream) {
             try {
-                stream.read(aacData);
+                NetworkUtilities.readFromStream(stream, aacData);
             } catch (IOException e){
                 e.printStackTrace();
             }

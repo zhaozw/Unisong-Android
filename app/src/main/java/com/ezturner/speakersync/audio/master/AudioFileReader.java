@@ -66,6 +66,7 @@ public class AudioFileReader {
         //Set this for when we seek
         mFilePath = path;
 
+        createEncoder();
         mSeek = false;
         mStreamID++;
         if(mDecoder != null){
@@ -106,7 +107,7 @@ public class AudioFileReader {
 //        if()
 //        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime , mStreamID);
-//        Log.d(LOG_TAG , "Frame is : " + frame.toString());
+//        if(mSeek)   Log.d(LOG_TAG , "Frame is : " + frame.toString() + " mTimeAdjust " + mTimeAdjust + " mSamples: " + mSamples);
 
         mTrackManagerBridge.addFrame(frame);
         mAACBridge.addFrame(frame);
@@ -142,6 +143,7 @@ public class AudioFileReader {
         mSeek = true;
 
         mCurrentID = (int) (seekTime / (1024000.0 / 44100.0));
+        mSamples = 0l;
         mStartFrame = mCurrentID;
 
         mDecoder = new FileDecoder(mFilePath , this , seekTime);

@@ -1,6 +1,7 @@
 package com.ezturner.speakersync.audio;
 
 import android.media.MediaFormat;
+import android.util.Log;
 
 import com.ezturner.speakersync.audio.master.AACEncoder;
 
@@ -13,11 +14,13 @@ import java.util.Map;
  */
 public class ReaderToReaderBridge extends AbstractBridge {
 
+    private final String LOG_TAG = ReaderToReaderBridge.class.getSimpleName();
     private AACEncoder mEncoder;
     private MediaFormat mInputFormat;
     private boolean mSeek;
 
 
+    private boolean mHasSeek = false;
 
     public ReaderToReaderBridge(AACEncoder encoder){
         mEncoder = encoder;
@@ -44,10 +47,10 @@ public class ReaderToReaderBridge extends AbstractBridge {
 
     public void seek(int currentID, long seekTime, byte streamID){
         mSeek = true;
-
+        mHasSeek = true;
         mEncoder.seek();
         Map<Integer, AudioFrame> frames = mEncoder.getFrames();
-        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge() , mEncoder.getLastFrame(), streamID, frames);
+        mEncoder = new AACEncoder(mEncoder.getBroadcasterBridge(), mEncoder.getLastFrame(), streamID, frames);
 
         mEncoder.encode(mInputFormat , currentID , seekTime);
         mSeek = false;

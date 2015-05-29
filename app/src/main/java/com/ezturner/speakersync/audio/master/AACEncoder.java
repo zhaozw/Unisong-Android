@@ -158,24 +158,25 @@ public class AACEncoder {
         //TODO: deal with no data/end of stream
         while(!mStop){
 
-            if(!mFrames.containsKey(mCurrentInputFrame)){
-                Log.d(LOG_TAG , "Waiting for frame #" + mCurrentInputFrame);
+            while(!mFrames.containsKey(mCurrentInputFrame)){
+
                 if(mStop || mCurrentInputFrame == mLastFrame){
                     break;
                 }
                 try{
                     synchronized (this){
-                        this.wait();
+                        this.wait(10);
                     }
                 } catch (InterruptedException e){
                     Log.d(LOG_TAG , "We have more frames to decode!");
                 }
-                if(!mFrames.containsKey(mCurrentInputFrame) && mStop){
+
+                if(mStop){
                     break;
-                } else {
-                    continue;
                 }
+
             }
+
             AudioFrame frame;
             synchronized (mFrames){
                 frame = mFrames.get(mCurrentInputFrame);
@@ -352,12 +353,6 @@ public class AACEncoder {
                 }
             }
         }
-
-        if(mEncodeThread != null) {
-            synchronized (mEncodeThread) {
-                mEncodeThread.notify();
-            }
-        }
     }
 
     public void seek(){
@@ -368,6 +363,7 @@ public class AACEncoder {
         while (mRunning) {}
 
         Log.d(LOG_TAG , "Waiting for encode thread to finish , took " + (System.currentTimeMillis() - begin) + "ms");
+
 
 
     }
@@ -389,4 +385,7 @@ public class AACEncoder {
         return mLastFrame;
     }
 
+    public void destroy(){
+        mBroadcasterBridge.destroy();
+    }
 }

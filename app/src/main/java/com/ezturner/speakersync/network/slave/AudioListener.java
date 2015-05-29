@@ -361,6 +361,12 @@ public class AudioListener {
         mBridge.resume(resumeTime);
     }
 
+    //TODO: implement this
+    //Ends the current song, either in preparation for another or not
+    public void endSong(){
+
+    }
+
     public synchronized void destroy(){
         mSlaveTCPHandler.destroy();
         mSocket.close();

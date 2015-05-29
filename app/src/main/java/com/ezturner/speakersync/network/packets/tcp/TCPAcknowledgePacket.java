@@ -3,6 +3,7 @@ package com.ezturner.speakersync.network.packets.tcp;
 import android.util.Log;
 
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.NetworkUtilities;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +43,7 @@ public class TCPAcknowledgePacket {
 
         synchronized (stream){
             try{
-                stream.read(data);
+                NetworkUtilities.readFromStream(stream, data);
             } catch (IOException e){
                 e.printStackTrace();
             }

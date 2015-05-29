@@ -4,6 +4,8 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.audio.BroadcasterBridge;
+import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
@@ -181,26 +183,30 @@ public class Broadcaster {
 //            Log.d(LOG_TAG , "Starting packet send!");
             NetworkPacket packet;
             AudioFrame frame;
-            synchronized (mFrames){
 
-                //Wait for mFrames to co
-                while (!mFrames.containsKey(mNextFrameSendID)){
-                    synchronized (this){
-                        try {
-                            this.wait(1);
-                        } catch (InterruptedException e){
-                            e.printStackTrace();
-                        }
+            //Wait for mFrames to co
+            while (!mFrames.containsKey(mNextFrameSendID)){
+//                Log.d(LOG_TAG , "Frame " + mNextFrameSendID + " not found! mFrames size is :" + mFrames.size());
+                synchronized (this){
+                    try {
+                        this.wait(1);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
                     }
                 }
-
-                frame = mFrames.get(mNextFrameSendID);
-                packet = createFramePacket(frame);
-                if(packet == null){
-                    Log.d(LOG_TAG , "Packet #" + mNextFrameSendID + " is null! AudioFrame is : " + frame);
-
-                }
             }
+
+            synchronized (mFrames) {
+                frame = mFrames.get(mNextFrameSendID);
+            }
+
+            if(mNextFrameSendID == 4306)    Log.d(LOG_TAG , frame.toString());
+            packet = createFramePacket(frame);
+            if(packet == null){
+                Log.d(LOG_TAG , "Packet #" + mNextFrameSendID + " is null! AudioFrame is : " + frame);
+
+            }
+
 
             mNextFrameSendID++;
 
@@ -301,6 +307,9 @@ public class Broadcaster {
 
         try{
             mReader.readFile(MediaService.TEST_FILE_PATH);
+//            AudioFileReader reader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
+//            reader.setBroadcasterBridge(new BroadcasterBridge(this));
+//            reader.readFile(MediaService.TEST_FILE_PATH);
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -312,8 +321,9 @@ public class Broadcaster {
     }
 
     public void lastPacket(){
+        Log.d(LOG_TAG , "mLastFrameID is : " + mLastFrameID);
         mEncodeDone = true;
-        mTCPHandler.lastPacket(mLastFrameID);
+
     }
 
     public void rebroadcastPacket(int packetID){

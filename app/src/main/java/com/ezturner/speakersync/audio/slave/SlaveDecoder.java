@@ -55,7 +55,8 @@ public class SlaveDecoder {
 
     }
 
-    public void decode(int frame){
+    public void decode(int frame , long seekTime){
+        mTimeAdjust = seekTime;
         setCurrentFrame(frame);
 
         //If slave codec is not null, then get rid of the old one
@@ -69,7 +70,7 @@ public class SlaveDecoder {
 
     public void setCurrentFrame(int currentFrame){
         mSlaveCodec.setCurrentFrame(currentFrame);
-        mTimeAdjust = (long) (currentFrame * (1024.0 / 44100.0) * 1000);
+
     }
 
 
@@ -126,7 +127,9 @@ public class SlaveDecoder {
     }
 
     public void newSong(){
-        mSlaveCodec.destroy();
+        if(mSlaveCodec != null) {
+            mSlaveCodec.destroy();
+        }
         mFrames = new HashMap<>();
         mSlaveCodec = new SlaveCodec(this, channels ,  mFrames ,mTimeManager );
     }

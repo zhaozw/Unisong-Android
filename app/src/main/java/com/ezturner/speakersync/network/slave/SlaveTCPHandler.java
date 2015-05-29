@@ -8,7 +8,6 @@ import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
-import com.ezturner.speakersync.network.packets.tcp.TCPLastFramePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRequestPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
@@ -237,9 +236,6 @@ public class SlaveTCPHandler {
                 case CONSTANTS.TCP_SWITCH_MASTER:
                     switchMaster();
                     break;
-                case CONSTANTS.TCP_LAST_FRAME:
-                    listenLastPacket();
-                    break;
                 case CONSTANTS.TCP_MASTER_CLOSE:
                     Log.d(LOG_TAG, "Master Close Received");
                     synchronized (mSocket) {
@@ -250,6 +246,9 @@ public class SlaveTCPHandler {
                         }
                     }
                     return;
+                case CONSTANTS.TCP_END_SONG:
+                    listenSongEnd();
+                    break;
             }
 
 
@@ -390,11 +389,8 @@ public class SlaveTCPHandler {
 
     }
 
-    private void listenLastPacket(){
-        TCPLastFramePacket packet = new TCPLastFramePacket(mInStream);
-        Log.d(LOG_TAG , "Last Packet Received, is: " + packet.getLastFrame());
-
-        mListener.lastPacket(packet.getLastFrame());
+    private void listenSongEnd(){
+        mListener.endSong();
     }
 
     //Sets this as the master

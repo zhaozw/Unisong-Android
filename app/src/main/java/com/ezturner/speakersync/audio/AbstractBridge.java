@@ -15,7 +15,7 @@ public abstract class AbstractBridge {
 
 
 
-    private boolean mIsRunning;
+    protected boolean mIsRunning;
 
     public AbstractBridge(){
         mIsRunning = true;

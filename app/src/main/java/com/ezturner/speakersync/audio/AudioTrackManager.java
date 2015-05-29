@@ -133,9 +133,9 @@ public class AudioTrackManager {
             long difference = mTimeManager.getPCMDifference(frame);
 
 
-//            Log.d(LOG_TAG , frame.toString());
-//
-//            Log.d(LOG_TAG , "Difference is :" + difference);
+//            if(mSeek)   Log.d(LOG_TAG , frame.toString());
+
+//            if(mSeek)   Log.d(LOG_TAG , "Difference is :" + difference);
 
             if(difference <= -30){
                 long before = System.currentTimeMillis();

@@ -95,10 +95,8 @@ public class FileDecoder {
         // try to set the source, this might fail
         try {
             mExtractor.setDataSource(mCurrentFile.getPath());
-            mExtractor.seekTo((mSeekTime - 50) * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
-
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
             //TODO : Handle this exception
             return;
@@ -136,8 +134,13 @@ public class FileDecoder {
         ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
 
 
-        mReader.createEncoder();
+
         mExtractor.selectTrack(0);
+
+        if(mSeekTime != 0) {
+            mExtractor.seekTo((mSeekTime - 50) * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+            Log.d(LOG_TAG, "mExtractor sample time is :" + mExtractor.getSampleTime() + " from SeekTime : " + mSeekTime);
+        }
 
         // start decoding
         final long kTimeOutUs = 1000;
@@ -168,7 +171,7 @@ public class FileDecoder {
                     } else {
 
                         mPlayTime = mExtractor.getSampleTime() / 1000;
-//                        Log.d(LOG_TAG , "PlayTime is : " + mPlayTime);
+//                        if(mSeekTime == 100000) Log.d(LOG_TAG , "PlayTime is : " + mPlayTime);
 
                         presentationTimeUs = mExtractor.getSampleTime();
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);

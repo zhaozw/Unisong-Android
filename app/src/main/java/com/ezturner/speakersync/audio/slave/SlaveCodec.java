@@ -48,6 +48,7 @@ public class SlaveCodec {
 
     private TimeManager mTimeManager;
     private Map<Integer , AudioFrame> mFrames;
+    private int mStartFrame;
 
 
     public SlaveCodec(SlaveDecoder decoder, int channels, Map<Integer , AudioFrame> frames, TimeManager timeManager){
@@ -61,6 +62,7 @@ public class SlaveCodec {
     }
 
     public void decode(int startFrame){
+        mStartFrame = startFrame;
         mCurrentFrame = startFrame;
         mDecodeThread = getDecode();
         mDecodeThread.start();
@@ -136,7 +138,7 @@ public class SlaveCodec {
 
             //TODO: test/check this out
             while(!mFrames.containsKey(mCurrentFrame)){
-                if(mCurrentFrame == 4304) Log.d(LOG_TAG , "mCurrentFrame not found after seek");
+//                if(mStartFrame != 0)    Log.d(LOG_TAG , "Frame #" + mCurrentFrame + " not found.");
                 if(mStop){
                     break;
                 }
@@ -180,7 +182,7 @@ public class SlaveCodec {
                 lastPlayTime = frame.getPlayTime() - mDecoder.getOffset() + mDecoder.getSongStartTime();
             }
 
-            if(mCurrentFrame == 4304) Log.d(LOG_TAG , "decoding mCurrentFrame");
+            if(mCurrentFrame == 4306) Log.d(LOG_TAG , "decoding mCurrentFrame");
 
 
             noOutputCounter++;
@@ -299,7 +301,7 @@ public class SlaveCodec {
     }
 
     private void releaseCodec(){
-        if(mCodec != null) {
+        if(mCodec != null){
             mCodec.stop();
             mCodec.release();
             mCodec = null;

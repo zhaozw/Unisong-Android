@@ -72,13 +72,15 @@ public class CONSTANTS {
 
     public static final byte TCP_END_SESSION = 11;
 
-    public static final byte TCP_LAST_FRAME = 12;
+    public static final byte TCP_EMPTY_USE_AT_WILL = 12;
 
     public static final byte TCP_RESUME = 13;
 
     public static final byte TCP_LATENCY_TEST = 14;
 
     public static final byte TCP_MASTER_CLOSE = 15;
+
+    public static final byte TCP_END_SONG = 16;
 
     public static final int PCM_BITRATE = 1441200;
 

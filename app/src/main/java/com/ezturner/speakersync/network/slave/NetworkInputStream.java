@@ -48,6 +48,7 @@ public class NetworkInputStream extends InputStream {
             mArrIndex++;
             mIndex = 0;
         }
+        
         return data;
     }
 

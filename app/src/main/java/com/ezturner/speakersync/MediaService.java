@@ -51,6 +51,7 @@ public class MediaService extends Service{
     private SntpClient mSntpClient;
 
     public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
+    public static final String LARGE_TEST_FILE_PATH = "/storage/emulated/0/music/1hour.mp3";
 
     public PowerManager.WakeLock mWakeLock;
 
