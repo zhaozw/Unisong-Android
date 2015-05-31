@@ -12,6 +12,7 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
@@ -58,6 +59,8 @@ public class MediaService extends Service{
     private TimeManager mTimeManager;
 
     private AnalyticsSuite mAnalyticsSuite;
+
+    private AudioStatePublisher mAudioStatePublisher;
 
     //The time that we have paused at, relative to the Song start time.
     private long mResumeTime = 0;
@@ -119,7 +122,7 @@ public class MediaService extends Service{
         mSntpClient = new SntpClient();
         mTimeManager = new TimeManager(mSntpClient);
         mAudioTrackManager = new AudioTrackManager(mTimeManager);
-
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
 
 
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
@@ -161,49 +164,18 @@ public class MediaService extends Service{
     }
 
     public void pause(){
-        if(mBroadcaster != null) {
-            mResumeTime = mAudioTrackManager.pause();
-            mBroadcaster.pause();
-        }
+        mAudioStatePublisher.update(AudioStatePublisher.PAUSED);
     }
 
     public void resume(){
-        if(mBroadcaster != null) {
-            mBroadcaster.resume(mResumeTime);
-            mAudioTrackManager.resume(mResumeTime);
-            mResumeTime = -1;
-        }
+        mAudioStatePublisher.update(AudioStatePublisher.RESUME);
     }
 
     private Thread mSeekThread;
     public void seek() {
-        if (mBroadcaster != null){
-            mSeekThread = getSeekThread();
-            mSeekThread.start();
-        }
+        mAudioStatePublisher.setSeekTime(100000);
+        mAudioStatePublisher.update(AudioStatePublisher.SKIPPING);
     }
-
-    private Thread getSeekThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-                pause();
-
-
-
-                if(mBroadcaster != null) {
-                    mFileReader.seek(100000);
-                    mAudioTrackManager.seek(100000);
-                    mBroadcaster.seek(100000);
-                    mResumeTime = 100000;
-                }
-
-                resume();
-
-            }
-        });
-    }
-
 
     public void retransmit() {
         if (mBroadcaster != null){

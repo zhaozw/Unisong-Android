@@ -4,6 +4,8 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.audio.AudioObserver;
+import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.audio.master.AudioFileReader;
@@ -33,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Ethan on 2/8/2015.
  */
-public class Broadcaster {
+public class Broadcaster implements AudioObserver{
 
     public static final String LOG_TAG ="AudioBroadcaster";
 
@@ -111,6 +113,8 @@ public class Broadcaster {
 
     private boolean mEncodeDone = false;
 
+    private AudioStatePublisher mAudioStatePublisher;
+
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
     public Broadcaster(AudioTrackManager manager, AudioFileReader reader, TimeManager timeManager, AnalyticsSuite analyticsSuite){
@@ -151,6 +155,7 @@ public class Broadcaster {
         mNextFrameSendID = 0;
         mLastFrameID = -1;
 
+        mIsBroadcasting = false;
         mPacketsToRebroadcast = new ArrayList<>();
 
         mAudioTrackManager = manager;
@@ -166,6 +171,10 @@ public class Broadcaster {
         mFrames = new TreeMap<>();
 
         mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
+
+        //Get the AudioStatePublisher and then add ourselves to it
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
+        mAudioStatePublisher.attach(this);
     }
 
     //TODO: put in some code that will ensure that we haven't gotten off track due to rounding errors or  something like that
@@ -254,7 +263,7 @@ public class Broadcaster {
             }
 
 
-            if(mNextFrameSendID != mLastFrameID || !mEncodeDone) {
+            if(mNextFrameSendID != mLastFrameID || !mEncodeDone && mIsBroadcasting) {
                 mWorker.schedule(mPacketSender , delay , TimeUnit.MILLISECONDS);
             }
             mSendRunnableRunning = false;
@@ -551,6 +560,10 @@ public class Broadcaster {
         mMasterFECHandler = null;
     }
 
+    public void stopStream(){
+        mIsBroadcasting = false;
+    }
+
     //TODO implement a way to keep the buffer at a certain amount (say 1000ms)
     //TODO: implement and calculate this based on the bitrate and whatnot for the FEC
     private long getDelay(){
@@ -560,4 +573,33 @@ public class Broadcaster {
     public void retransmit(){
         mTCPHandler.retransmit();
     }
+
+    // The function that receives updates from the AudioStatePublisher
+    // This function is how we know what the user is doing in regards to pause/skip/resume
+    @Override
+    public void update(int state){
+        switch (state){
+
+            case AudioStatePublisher.IDLE:
+                stopStream();
+                break;
+
+            case AudioStatePublisher.RESUME:
+                long resumeTime = mAudioStatePublisher.getResumeTime();
+                resume(resumeTime);
+                break;
+
+            case AudioStatePublisher.PAUSED:
+                pause();
+                break;
+
+            case AudioStatePublisher.SKIPPING:
+                pause();
+                long seekTime = mAudioStatePublisher.getSeekTime();
+                seek(seekTime);
+                resume(mAudioStatePublisher.getResumeTime());
+                break;
+        }
+    }
+
 }

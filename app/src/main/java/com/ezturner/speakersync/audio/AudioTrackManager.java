@@ -16,7 +16,7 @@ import java.util.TreeMap;
 /**
  * Created by Ethan on 2/12/2015.
  */
-public class AudioTrackManager {
+public class AudioTrackManager implements AudioObserver {
 
     private String LOG_TAG = "AudioTrackManager";
 
@@ -53,7 +53,10 @@ public class AudioTrackManager {
     //The boolean telling us if we have received a seek command
     private boolean mSeek = false;
 
-    private long mLastFrameTime;
+    public static long getLastFrameTime(){return  mLastFrameTime;}
+    private static long mLastFrameTime;
+
+    private AudioStatePublisher mAudioStatePublisher;
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(TimeManager manager){
@@ -68,6 +71,10 @@ public class AudioTrackManager {
 
         mLastFrameID = -89;
         mLastFrameTime = 0;
+
+        //Get the AudioStatePublisher and then add ourselves to it
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
+        mAudioStatePublisher.attach(this);
 
         mHandler = new Handler();
     }
@@ -101,6 +108,44 @@ public class AudioTrackManager {
                 return;
             }
 
+            long difference = mTimeManager.getPCMDifference(mFrameToPlay);
+
+            if(difference <= -30){
+                long before = System.currentTimeMillis();
+                synchronized (this) {
+                    try {
+                        this.wait(Math.abs(difference));
+                    } catch (InterruptedException e) {
+
+                    }
+                }
+            } else {
+                int index = mFrameToPlay;
+
+                while (difference >= 30) {
+                    AudioFrame nextFrame = null;
+                    synchronized (mFrames) {
+                        nextFrame = mFrames.get(index);
+                    }
+                    if (nextFrame != null) {
+                        difference = mTimeManager.getPCMDifference(index);
+                        index++;
+//                        Log.d(LOG_TAG , "Difference v2 is : " + difference);
+                    } else if(nextFrame == null){
+                        synchronized (this){
+                            try {
+                                this.wait(4);
+                            } catch (InterruptedException e){
+
+                            }
+                            if(!isPlaying()){
+                                return;
+                            }
+                        }
+                    }
+                }
+                mFrameToPlay = index;
+            }
 
 
             AudioFrame frame;
@@ -130,49 +175,13 @@ public class AudioTrackManager {
             mFrameToPlay++;
 
 
-            long difference = mTimeManager.getPCMDifference(frame);
 
 
 //            if(mSeek)   Log.d(LOG_TAG , frame.toString());
 
 //            if(mSeek)   Log.d(LOG_TAG , "Difference is :" + difference);
 
-            if(difference <= -30){
-                long before = System.currentTimeMillis();
-                synchronized (this) {
-                    try {
-                        this.wait(Math.abs(difference));
-                    } catch (InterruptedException e) {
 
-                    }
-                }
-            } else {
-                int index = mFrameToPlay;
-
-                while (difference >= 30) {
-                    AudioFrame nextFrame = null;
-                    synchronized (mFrames) {
-                        nextFrame = mFrames.get(index);
-                    }
-                    if (nextFrame != null) {
-                        difference = mTimeManager.getPCMDifference(nextFrame);
-                        index++;
-//                        Log.d(LOG_TAG , "Difference v2 is : " + difference);
-                    } else if(nextFrame == null){
-                        synchronized (this){
-                            try {
-                                this.wait(4);
-                            } catch (InterruptedException e){
-
-                            }
-                            if(!isPlaying()){
-                                return;
-                            }
-                        }
-                    }
-                }
-                mFrameToPlay = index;
-            }
 
 
 
@@ -286,11 +295,13 @@ public class AudioTrackManager {
         mLastFrameID = mLastAddedFrameID;
     }
 
-    public long pause(){
-        Log.d(LOG_TAG , "Pausing AudioTrack");
-        mIsPlaying = false;
-        while(mThreadRunning){}
-        return mLastFrameTime;
+    public void pause(){
+        if(mIsPlaying) {
+            Log.d(LOG_TAG, "Pausing AudioTrack");
+            mIsPlaying = false;
+            while (mThreadRunning) {
+            }
+        }
     }
 
     private boolean containsFrame(long seekTime){
@@ -308,6 +319,34 @@ public class AudioTrackManager {
         return contains;
     }
 
+    // The function that receives updates from the AudioStatePublisher
+    // This function is how we know what the user is doing in regards to pause/skip/resume
+    @Override
+    public void update(int state){
+        switch (state){
+
+            case AudioStatePublisher.IDLE:
+                mIsPlaying = false;
+                break;
+
+            case AudioStatePublisher.RESUME:
+                long resumeTime = mAudioStatePublisher.getResumeTime();
+                resume(resumeTime);
+                break;
+
+            case AudioStatePublisher.PAUSED:
+                pause();
+                break;
+
+            case AudioStatePublisher.SKIPPING:
+                pause();
+                long seekTime = mAudioStatePublisher.getSeekTime();
+                seek(seekTime);
+
+                resume(mAudioStatePublisher.getResumeTime());
+                break;
+        }
+    }
 
     public void resume(long resumeTime){
         if(!mSeek){

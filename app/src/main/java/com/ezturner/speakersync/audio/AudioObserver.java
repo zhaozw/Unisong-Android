@@ -5,5 +5,5 @@ package com.ezturner.speakersync.audio;
  */
 public interface AudioObserver {
 
-    void update(int type);
+    void update(int state);
 }

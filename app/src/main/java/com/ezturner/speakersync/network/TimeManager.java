@@ -10,6 +10,7 @@ import com.ezturner.speakersync.network.ntp.SntpClient;
  */
 public class TimeManager {
 
+    private static TimeManager sIntance;
     private static final String LOG_TAG = TimeManager.class.getSimpleName();
     //The time offset returned by the SntpClient class
     private SntpClient mSntpClient;
@@ -35,8 +36,8 @@ public class TimeManager {
         return mSongStartTime - mSntpClient.getOffset() + (long)(((1024.0 * ID) / 44100.0) * 1000.0);
     }
 
-    public long getPCMDifference(AudioFrame frame){
-        return System.currentTimeMillis() - (frame.getPlayTime() + mSongStartTime - mSntpClient.getOffset());
+    public long getPCMDifference(int frameID){
+        return System.currentTimeMillis() - (getAACPlayTime(frameID) + mSongStartTime - mSntpClient.getOffset());
     }
 
     public long getOffset(){
