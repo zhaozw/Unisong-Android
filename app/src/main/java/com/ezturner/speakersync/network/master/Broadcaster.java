@@ -6,12 +6,9 @@ import android.util.Log;
 import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
-import com.ezturner.speakersync.audio.BroadcasterBridge;
-import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.TimeManager;
@@ -23,7 +20,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -108,21 +104,16 @@ public class Broadcaster implements AudioObserver{
 
     private MasterFECHandler mMasterFECHandler;
 
-    //The Analytics Suite that I use to help me get information about data transfer and whatnot
-    private AnalyticsSuite mAnalyticsSuite;
-
     private boolean mEncodeDone = false;
 
     private AudioStatePublisher mAudioStatePublisher;
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
-    public Broadcaster(AudioTrackManager manager, AudioFileReader reader, TimeManager timeManager, AnalyticsSuite analyticsSuite){
-
-        mAnalyticsSuite = analyticsSuite;
+    public Broadcaster(AudioTrackManager manager, AudioFileReader reader){
         mSlaves = new ArrayList<>();
 
-        mTimeManager = timeManager;
+        mTimeManager = TimeManager.getInstance();
 
         //TODO: When not testing, get rid of this comment
         mPort = CONSTANTS.STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
@@ -133,8 +124,7 @@ public class Broadcaster implements AudioObserver{
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(this);
-            mTCPHandler = new MasterTCPHandler(this , mAnalyticsSuite);
-
+            mTCPHandler = new MasterTCPHandler(this);
 
         } catch(IOException e){
             e.printStackTrace();
@@ -233,8 +223,6 @@ public class Broadcaster implements AudioObserver{
                     if(!mStreamRunning){
                         return;
                     }
-
-                    mAnalyticsSuite.packetSent(packet.getPacketID());
                     mStreamSocket.send(datagramPacket);
 
                     mPacketsSentCount++;

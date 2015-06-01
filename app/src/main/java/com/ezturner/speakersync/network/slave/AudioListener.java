@@ -4,18 +4,14 @@ import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
-import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
-import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -90,14 +86,11 @@ public class AudioListener {
     //The class that handles all of the time operations
     private TimeManager mTimeManager;
 
-    private AnalyticsSuite mAnalyticsSuite;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
-    public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder, TimeManager manager , AnalyticsSuite suite){
+    public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder){
 
-        mAnalyticsSuite = suite;
-
-        mTimeManager = manager;
+        mTimeManager = TimeManager.getInstance();
         mBridge = bridge;
 
         Log.d(LOG_TAG , "Audio Listener Started");
@@ -129,7 +122,7 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
-        mSlaveTCPHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this , mAnalyticsSuite);
+        mSlaveTCPHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this );
 
         mListenThread = getListenThread();
         mListenThread.start();

@@ -11,6 +11,10 @@ import com.ezturner.speakersync.network.ntp.SntpClient;
 public class TimeManager {
 
     private static TimeManager sIntance;
+    public static TimeManager getInstance(){
+        return sIntance;
+    }
+
     private static final String LOG_TAG = TimeManager.class.getSimpleName();
     //The time offset returned by the SntpClient class
     private SntpClient mSntpClient;
@@ -25,6 +29,7 @@ public class TimeManager {
     public TimeManager(SntpClient client){
         mSntpClient = client;
         mSeekTime = 0;
+        sIntance = this;
     }
 
     public void setSongStartTime(long songStartTime){

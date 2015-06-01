@@ -1,13 +1,8 @@
 package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
-
 import com.ezturner.speakersync.audio.AudioFrame;
-import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.CONSTANTS;
-import com.ezturner.speakersync.network.packets.tcp.TCPRetransmitPacket;
-
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -41,14 +36,11 @@ public class MasterTCPHandler {
     private Random mRandom;
     //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
-    private AnalyticsSuite mAnalyticsSuite;
-
     private MasterTCPHandler mThis;
 
-    public MasterTCPHandler(Broadcaster broadcaster, AnalyticsSuite analyticsSuite){
+    public MasterTCPHandler(Broadcaster broadcaster){
 
         mThis = this;
-        mAnalyticsSuite = analyticsSuite;
 
         mBroadcaster = broadcaster;
 

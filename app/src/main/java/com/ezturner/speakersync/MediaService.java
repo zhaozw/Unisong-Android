@@ -18,7 +18,6 @@ import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
-import com.ezturner.speakersync.network.AnalyticsSuite;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.Broadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
@@ -58,8 +57,6 @@ public class MediaService extends Service{
 
     private TimeManager mTimeManager;
 
-    private AnalyticsSuite mAnalyticsSuite;
-
     private AudioStatePublisher mAudioStatePublisher;
 
     //The time that we have paused at, relative to the Song start time.
@@ -76,7 +73,9 @@ public class MediaService extends Service{
     public void onCreate(){
         super.onCreate();
 
-        Log.d(LOG_TAG , "Starting MediaService");
+        mSntpClient = new SntpClient();
+        mTimeManager = new TimeManager(mSntpClient);
+        Log.d(LOG_TAG, "Starting MediaService");
 
         mMessageReceiver = new BroadcastReceiver() {
             @Override
@@ -118,9 +117,7 @@ public class MediaService extends Service{
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));
 
-        mAnalyticsSuite = new AnalyticsSuite();
-        mSntpClient = new SntpClient();
-        mTimeManager = new TimeManager(mSntpClient);
+
         mAudioTrackManager = new AudioTrackManager(mTimeManager);
         mAudioStatePublisher = AudioStatePublisher.getInstance();
 
@@ -145,7 +142,7 @@ public class MediaService extends Service{
     public void broadcaster() {
         if(mBroadcaster == null) {
             mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
-            mBroadcaster = new Broadcaster(mAudioTrackManager , mFileReader , mTimeManager, mAnalyticsSuite);
+            mBroadcaster = new Broadcaster(mAudioTrackManager , mFileReader);
             mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
         }
     }
@@ -154,7 +151,7 @@ public class MediaService extends Service{
     public void listener(){
         mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2, mTimeManager, (byte)0);
         ListenerBridge bridge = new ListenerBridge(mSlaveDecoder , mAudioTrackManager );
-        mListener = new AudioListener(this , bridge , mSlaveDecoder, mTimeManager , mAnalyticsSuite);
+        mListener = new AudioListener(this , bridge , mSlaveDecoder);
 
 
     }
