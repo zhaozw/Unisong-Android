@@ -9,20 +9,16 @@ import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.network.CONSTANTS;
-import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.TimeManager;
+import com.ezturner.speakersync.network.master.transmitter.Transmitter;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,32 +34,11 @@ public class Broadcaster implements AudioObserver{
     //The port that the stream will broadcast on
     public int mPort;
 
-    //The IP that the broadcast stream will be sent on
-    private InetAddress mStreamIP;
-
-    //The multicast listener for giving out the IP of the multicast stream
-    private DatagramSocket mStreamSocket;
-
     //True if the listeners are running, false otherwise
     private boolean mStreamRunning;
 
-    //Random object, used to randomize multicast stream IP
-    static private Random random = new Random();
-
-    //The object that handles all reliability stuff
-    private MasterTCPHandler mTCPHandler;
-
     //Stream ID, so that we can tell when we get packets from an old stream
     private byte mStreamID;
-
-    //Handles the network discovery
-    private MasterDiscoveryHandler mDiscoveryHandler;
-
-    //In microseconds , the length of a frame
-    private long mFrameLength;
-
-    //The time at which the current song either has or will start
-    private long mSongStartTime;
 
     private Handler mHandler;
 
@@ -72,12 +47,6 @@ public class Broadcaster implements AudioObserver{
 
     //The ID of the last frame in this stream
     private int mLastFrameID;
-
-    //The AudioTrackManager that handles the playback of the audio data on this device
-    private AudioTrackManager mAudioTrackManager;
-
-    //The object that handles the reading and decoding of all of dem music
-    private AudioFileReader mReader;
 
     //The boolean that lets us know if we are still broadcasting
     private boolean mIsBroadcasting;
@@ -102,11 +71,12 @@ public class Broadcaster implements AudioObserver{
     private boolean mSendRunnableRunning = false;
     private boolean mStartRunnableRunning = false;
 
-    private MasterFECHandler mMasterFECHandler;
-
     private boolean mEncodeDone = false;
 
     private AudioStatePublisher mAudioStatePublisher;
+
+    //The Transmitters that transmit the audio data to their relevant destinations
+    private List<Transmitter> mTransmitters;
 
     //Makes an AudioBroadcaster object
     //Creates the sockets, starts the NTP server and instantiates variables
@@ -114,25 +84,6 @@ public class Broadcaster implements AudioObserver{
         mSlaves = new ArrayList<>();
 
         mTimeManager = TimeManager.getInstance();
-
-        //TODO: When not testing, get rid of this comment
-        mPort = CONSTANTS.STREAM_PORT_BASE;// + random.nextInt(PORT_RANGE);
-        //TODO: Listen for other streams and ensure that you don't use the same port
-        try {
-            mStreamIP = NetworkUtilities.getBroadcastAddress();
-            //Start the socket for the actual stream
-            mStreamSocket = new DatagramSocket();
-
-            mDiscoveryHandler = new MasterDiscoveryHandler(this);
-            mTCPHandler = new MasterTCPHandler(this);
-
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-
-        mMasterFECHandler = new MasterFECHandler(this);
-
-        mReader = reader;
 
         //set the stream ID to zero
         mStreamID = -1;
@@ -147,10 +98,6 @@ public class Broadcaster implements AudioObserver{
 
         mIsBroadcasting = false;
         mPacketsToRebroadcast = new ArrayList<>();
-
-        mAudioTrackManager = manager;
-
-        mReader = reader;
 
         mStreamRunning = false;
 
@@ -543,9 +490,6 @@ public class Broadcaster implements AudioObserver{
 
         mDiscoveryHandler.destroy();
         mDiscoveryHandler = null;
-
-        mMasterFECHandler.destroy();
-        mMasterFECHandler = null;
     }
 
     public void stopStream(){

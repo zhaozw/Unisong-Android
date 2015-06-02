@@ -41,8 +41,7 @@ public class MasterFECHandler {
 
     private boolean mRunning;
 
-    public MasterFECHandler(Broadcaster broadcaster){
-        mBroadcaster =broadcaster;
+    public MasterFECHandler(){
         mFrames = new ArrayList<>();
         mFrameDatas = new ArrayList<>();
         mEncodeThread = getThread();
@@ -213,7 +212,6 @@ public class MasterFECHandler {
 
     public void destroy(){
         mRunning = false;
-        mBroadcaster = null;
     }
 
 }
