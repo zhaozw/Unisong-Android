@@ -10,11 +10,14 @@ import net.fec.openrq.ArrayDataEncoder;
 import net.fec.openrq.EncodingPacket;
 import net.fec.openrq.OpenRQ;
 import net.fec.openrq.encoder.SourceBlockEncoder;
+import net.fec.openrq.parameters.FECParameters;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
+ * This class encodes the Audio Frames into
  * Created by Ethan on 5/15/2015.
  */
 public class MasterFECHandler {
@@ -84,10 +87,13 @@ public class MasterFECHandler {
                 byte[] srcData = createFrameArray();
 
 
-//                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
+                FECParameters parameters = FECParameters.newParameters(CONSTANTS.FEC_DATA_LENGTH,
+                        CONSTANTS.FEC_SYMBOL_SIZE , CONSTANTS.FEC_DATA_LENGTH / CONSTANTS.FEC_SYMBOL_SIZE);
+                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
 
 
-                /*
+
+
                 // send all source symbols
                 for (EncodingPacket pac : sbEnc.sourcePacketsIterable()) {
                     sendPacket(pac);
@@ -99,7 +105,7 @@ public class MasterFECHandler {
                 // send nr repair symbols
                 for (EncodingPacket pac : sbEnc.repairPacketsIterable(nr)) {
                     sendPacket(pac);
-                }*/
+                }
 
 
             } else {
@@ -150,9 +156,12 @@ public class MasterFECHandler {
 
         int spaceLeft = CONSTANTS.FEC_DATA_LENGTH - dstDataIndex;
 
+        int endIndex = 0;
+        int startIndex = 0;
 
         //If we've got enough space for the whole rest of the frame, then use the rest of the frame
         if(spaceLeft > (sampleSize - mDataIndex)){
+            startIndex = mDataIndex;
             if(mDataIndex != 0){
                 srcData = Arrays.copyOfRange(srcData, mDataIndex, sampleSize);
                 mDataIndex = 0;
@@ -161,9 +170,9 @@ public class MasterFECHandler {
 
         } else {
             //If not, then let's put what we can
-            int endIndex = spaceLeft + mDataIndex;
+            endIndex = spaceLeft + mDataIndex;
 
-            int startIndex = mDataIndex;
+            startIndex = mDataIndex;
             //If the space left in the ByteBuffer is greater than the space left in the frame, then just put what's left
             if(endIndex >= srcData.length){
                 endIndex = srcData.length;
@@ -177,9 +186,9 @@ public class MasterFECHandler {
         }
 
         //Lets assign the data to the destination array
-        while(mDataIndex < srcData.length){
-            dstData[dstDataIndex] = srcData[mDataIndex];
-            mDataIndex++;
+        while(startIndex < endIndex){
+            dstData[dstDataIndex] = srcData[startIndex];
+            startIndex++;
             dstDataIndex++;
         }
 

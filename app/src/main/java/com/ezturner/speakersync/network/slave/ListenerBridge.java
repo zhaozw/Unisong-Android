@@ -22,11 +22,9 @@ public class ListenerBridge extends AbstractBridge {
         mManager = manager;
     }
 
-
-
     public AudioTrackManager getManager(){
         return mManager;
-    }
+    } 
 
     protected void sendOutFrames(ArrayList<AudioFrame> frames){
         if(mSlaveDecoder != null) {
