@@ -2,7 +2,10 @@ package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.TimeManager;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -32,13 +35,18 @@ public class MasterTCPHandler {
 
     private boolean mRunning;
 
+    private TimeManager mTimeManager;
+
     //The random number generator for choosing which slave to have as a rebroadcaster
     private Random mRandom;
     //TODO: Implement passive listening using AudioBroadcaster.DISOVERY_PASSIVE_PORT
 
     private MasterTCPHandler mThis;
 
+    //TODO: extend AudioObserver and implement
     public MasterTCPHandler(Broadcaster broadcaster){
+
+        mTimeManager = TimeManager.getInstance();
 
         mThis = this;
 
@@ -196,7 +204,7 @@ public class MasterTCPHandler {
     }
 
     public synchronized void pause(){
-        Log.d(LOG_TAG , "Pausing");
+        Log.d(LOG_TAG, "Pausing");
         for(Slave slave : mBroadcaster.getSlaves()){
             slave.pause();
         }
@@ -204,10 +212,10 @@ public class MasterTCPHandler {
     }
 
     //Sends the resume command to all Slaves
-    public void resume(long resumeTime, long newSongStartTime){
+    private void resume(long resumeTime){
 
         for(Slave slave : mBroadcaster.getSlaves()){
-            slave.resume(resumeTime, newSongStartTime);
+            slave.resume(resumeTime, mTimeManager.getSongStartTime());
         }
 
     }
@@ -244,6 +252,32 @@ public class MasterTCPHandler {
     public void rebroadcastPacket(int packetID){
         if(!checkSlaves(packetID)){
             mBroadcaster.rebroadcastPacket(packetID);
+        }
+    }
+
+    // The function that receives updates from the AudioStatePublisher
+    // This function is how we know what the user is doing in regards to pause/skip/resume
+    @Override
+    public void update(int state){
+        switch (state){
+
+            case AudioStatePublisher.IDLE:
+                stopStream();
+                break;
+
+            case AudioStatePublisher.RESUME:
+                long resumeTime = mAudioStatePublisher.getResumeTime();
+                resume(resumeTime);
+                break;
+
+            case AudioStatePublisher.PAUSED:
+                break;
+
+            case AudioStatePublisher.SKIPPING:
+                long seekTime = mAudioStatePublisher.getSeekTime();
+                seek(seekTime);
+                resume(mAudioStatePublisher.getResumeTime());
+                break;
         }
     }
 }

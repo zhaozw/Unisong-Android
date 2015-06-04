@@ -1,16 +1,21 @@
 package com.ezturner.speakersync.audio.master;
 
+import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.ReaderToReaderBridge;
+import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.slave.NetworkInputStream;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Created by ezturner on 5/20/2015.
@@ -19,6 +24,7 @@ public class FileDecoder {
 
     private static final String LOG_TAG = FileDecoder.class.getSimpleName();
 
+    private Map<Integer, AudioFrame> mFrames;
     private boolean mStop = false;
 
     //The file that is being read from.
@@ -42,15 +48,37 @@ public class FileDecoder {
     //The media codec object used to decode the files
     private MediaCodec mCodec;
 
-    private AudioFileReader mReader;
+    //The time adjust for the PCM frames.
+    private long mTimeAdjust = 0;
 
-    public FileDecoder(String path, AudioFileReader parent , long seekTime){
+    //The current ID of the audio frame
+    private Integer mCurrentID;
 
-        mReader = parent;
+    //The number of frames we should decode
+    private Integer mFramesToDecode;
+
+    private byte mStreamID;
+
+    //The parent AudioTrackManager, null if this is an AACEncoder extractor
+    private AudioTrackManager mManager;
+
+    //The parent AACEncoder object, null if this is an AudioTrackManager extractor
+    private AACEncoder mEncoder;
+
+
+    public FileDecoder(String path, Map<Integer, AudioFrame> frames , long seekTime, byte streamID){
+
+        mStreamID = streamID;
+        mFrames = frames;
         //Set the variables
         mHasSampleTime = false;
         mSeekTime = seekTime;
         mRunning = false;
+        mSamples = 0l;
+        mTimeAdjust = seekTime;
+
+        mFramesToDecode = 150;
+        mCurrentID = (int) (seekTime / (1024000.0 / 44100.0));
 
         //Create the file and start the Thread.
         mCurrentFile = new File(path);
@@ -58,6 +86,13 @@ public class FileDecoder {
         mDecodeThread.start();
     }
 
+    public void setAudioTrackManager(AudioTrackManager manager){
+        mManager = manager;
+    }
+
+    public void setAACEncoder(AACEncoder encoder){
+        mEncoder = encoder;
+    }
 
     private Thread getDecode(){
         return new Thread(new Runnable()  {
@@ -155,7 +190,6 @@ public class FileDecoder {
 
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
 
-
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
             if (!sawInputEOS) {
@@ -165,7 +199,6 @@ public class FileDecoder {
                     int sampleSize = mExtractor.readSampleData(dstBuf, 0);
                     if (sampleSize < 0){
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
-                        mReader.lastPacket();
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
@@ -175,7 +208,7 @@ public class FileDecoder {
 
                         presentationTimeUs = mExtractor.getSampleTime();
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
-                        //if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onPlayUpdate(percent, presentationTimeUs / 1000, duration / 1000);  } });
+//                        if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onPlayUpdate(percent, presentationTimeUs / 1000, duration / 1000);  } });
                     }
 
 
@@ -205,7 +238,22 @@ public class FileDecoder {
 
                     mSize += chunk.length;
 
-                    if(!mStop)  mReader.createPCMFrame(chunk);
+                    if(!mStop)  createPCMFrame(chunk);
+
+                    synchronized (mFramesToDecode) {
+                        mFramesToDecode--;
+                    }
+
+                    if(mFramesToDecode <= 0){
+                        synchronized (this){
+                            try {
+                                this.wait();
+                            } catch (InterruptedException e){
+                                //This should happen when we are instructed to decode more frames.
+                            }
+                        }
+                    }
+
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
             			state.set(PlayerStates.PLAYING);
@@ -235,13 +283,11 @@ public class FileDecoder {
                     mFirstOutputChange = false;
                     Log.d(LOG_TAG, "Starting AAC Encoder now");
 
-
-                    mReader.setAudioInfo(outputChannels);
                     Log.d(LOG_TAG, "Output channels are : " + outputChannels);
-                    mReader.createAudioTrack(outputSampleRate , outputChannels);
+                    createAudioTrack(outputSampleRate, outputChannels);
 
                     //TODO: Ensure that the output format is always 2 channels and 44100 sample rate
-                    mReader.setEncoderFormat(format);
+                    setEncoderFormat(format);
                 }
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
@@ -260,6 +306,17 @@ public class FileDecoder {
         Log.d(LOG_TAG , "Size is : " + mSize);
 
         releaseCodec();
+    }
+
+    private void createAudioTrack(int outputSampleRate , int outputChannels){
+        if(mManager != null)     mManager.setAudioInfo(outputSampleRate ,outputChannels);
+    }
+
+
+    public void frameUsed(){
+        synchronized (mFramesToDecode) {
+            mFramesToDecode++;
+        }
     }
 
     private void releaseCodec(){
@@ -282,5 +339,21 @@ public class FileDecoder {
 
     public boolean isRunning(){
         return mRunning;
+    }
+
+    private Long mSamples;
+
+
+    public void createPCMFrame(byte[] data ){
+        long playTime = (mSamples * 8000) / CONSTANTS.PCM_BITRATE + mTimeAdjust;
+        long length = (data.length * 8000) / CONSTANTS.PCM_BITRATE;
+//        if()
+//        Log.d(LOG_TAG , "playTime is : " + playTime + " for #" + mCurrentID);
+        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime , mStreamID);
+//        if(mSeek)   Log.d(LOG_TAG , "Frame is : " + frame.toString() + " mTimeAdjust " + mTimeAdjust + " mSamples: " + mSamples);
+
+
+        mSamples += data.length;
+        mCurrentID++;
     }
 }

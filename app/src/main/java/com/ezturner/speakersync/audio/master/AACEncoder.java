@@ -8,6 +8,7 @@ import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.BroadcasterBridge;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -52,7 +53,9 @@ public class AACEncoder {
     //The Bridge that will be used to send the finished AAC frames to the broadcaster.
     private BroadcasterBridge mBroadcasterBridge;
 
-    public AACEncoder(BroadcasterBridge bridge, int lastFrame , byte streamID, Map<Integer, AudioFrame> frames){
+    private FileDecoder mDecoder;
+
+    public AACEncoder(int lastFrame , byte streamID, Map<Integer, AudioFrame> frames){
 
         mFrames = frames;
 
@@ -60,7 +63,6 @@ public class AACEncoder {
             Log.d(LOG_TAG , "Setting mFrames, size is : " + mFrames.size());
         }
 
-        mBroadcasterBridge = bridge;
         mCurrentOutputID = 0;
         mRunning = false;
         mLastFrame = lastFrame;
@@ -237,6 +239,7 @@ public class AACEncoder {
                 codecOutputBuffers = mCodec.getOutputBuffers();
                 Log.d(LOG_TAG, "output buffers have changed.");
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
+                //TODO: inform AudioBroadcaster of this format.
                 MediaFormat outFormat = mCodec.getOutputFormat();
                 Log.d(LOG_TAG, "output format has changed to " + outFormat);
             } else {

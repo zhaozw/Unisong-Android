@@ -50,4 +50,7 @@ public class TimeManager {
         return offset;
     }
 
+    public long getSongStartTime(){
+        return mSongStartTime;
+    }
 }

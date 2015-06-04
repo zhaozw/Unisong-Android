@@ -204,6 +204,8 @@ public class AudioTrackManager implements AudioObserver {
                 mFrames.remove(frame);
             }
         }
+
+        mAudioTrack = null;
         Log.d(LOG_TAG , "Write Thread done");
         mThreadRunning = false;
     }
@@ -262,16 +264,14 @@ public class AudioTrackManager implements AudioObserver {
         return mIsPlaying;
     }
 
-    private void createAudioTrack(int sampleRate , int channels){
-        Log.d(LOG_TAG , "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
-        int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
+    public void createAudioTrack(int sampleRate , int channels){
+        if(mAudioTrack == null) {
+            Log.d(LOG_TAG, "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
+            int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
 
-        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
-    }
-
-    public void setAudioTrack(AudioTrack track){
-        mAudioTrack = track;
+            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
+                    AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+        }
     }
 
     public void release(){
