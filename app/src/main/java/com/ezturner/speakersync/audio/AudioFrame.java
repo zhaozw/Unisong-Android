@@ -52,6 +52,12 @@ public class AudioFrame {
         mStreamID = streamID;
     }
 
+    public AudioFrame(byte[] data, int ID, long playTime){
+        mPlayTime = playTime;
+        mData = data;
+        mID = ID;
+    }
+
     public AudioFrame(byte[] data, int ID, long playTime , byte streamID){
         mData = data;
         mID = ID;

@@ -9,9 +9,11 @@ import java.util.List;
  *
  * In practice this class is a mix between a publisher/subscriber class and facade.
  * Whenever an operation is to be performed regarding the audio state, this will allow for
- * a simple way to both propagate state changes and provide a simple interface to
+ * a simple way to both propagate state changes and provide a simple interface to provide all
+ * relevant information to the variety of classes that will need it, without having to modify large interfaces
+ * every time an architecture change is made.
  *
- * This class will handle the AudioState
+ * This class will handle the Audio State (playing, pausing, skipping, resuming, new song)
  * Created by ezturner on 5/27/2015.
  */
 public class AudioStatePublisher {
@@ -20,13 +22,16 @@ public class AudioStatePublisher {
 
     public static final int IDLE = 0;
     public static final int PAUSED = 1;
-    public static final int SKIPPING = 2;
+    public static final int SEEK = 2;
     public static final int PLAYING = 3;
     public static final int RESUME = 4;
+    public static final int NEW_SONG = 5;
+    public static final int END_SONG = 6;
 
     private long mSeekTime;
     private long mPauseTime;
     private int mState;
+    private byte mStreamID;
 
     //The boolean used to tell if a value has been updated (for pause time)
     private boolean mUpdated;
@@ -36,6 +41,7 @@ public class AudioStatePublisher {
     public AudioStatePublisher(){
         mState = IDLE;
         mObservers = new ArrayList<>();
+        mStreamID = -1;
     }
 
     public static AudioStatePublisher getInstance(){
@@ -55,24 +61,36 @@ public class AudioStatePublisher {
     }
 
     public void update(int state){
-        mState = state;
-        notifyObservers();
+        //Set the state
+        if(state == RESUME || state == SEEK || state == NEW_SONG){
+            mState = PLAYING;
+        } else if(state == END_SONG){
+            mState = IDLE;
+        } else {
+            mState = state;
+        }
+
+        if(mState == NEW_SONG){
+            if(mStreamID >= 254){
+                mStreamID = 0;
+            } else {
+                mStreamID++;
+            }
+        }
+        notifyObservers(state);
     }
 
-    public void notifyObservers(){
+    public void notifyObservers(int state){
 
-        if(mState == PAUSED || mState == SKIPPING){
+        if(mState == PAUSED || mState == SEEK){
             mPauseTime = AudioTrackManager.getLastFrameTime();
         }
 
         mUpdated = false;
         for(AudioObserver observer : mObservers){
-            observer.update(mState);
+            observer.update(state);
         }
 
-        if(mState == RESUME || mState == SKIPPING){
-            mState = PLAYING;
-        }
     }
 
     public void setPauseTime(long pauseTime){
@@ -82,6 +100,8 @@ public class AudioStatePublisher {
     public void setState(int state){
         mState = state;
     }
+
+    public int getState(){return mState;}
 
     public void setSeekTime(long time){
         mSeekTime = time;
@@ -94,5 +114,7 @@ public class AudioStatePublisher {
     public long getResumeTime(){
         return mPauseTime;
     }
+
+    public byte getStreamID(){return mStreamID;}
 }
 

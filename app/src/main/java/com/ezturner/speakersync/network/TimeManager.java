@@ -41,8 +41,8 @@ public class TimeManager {
         return mSongStartTime - mSntpClient.getOffset() + (long)(((1024.0 * ID) / 44100.0) * 1000.0);
     }
 
-    public long getPCMDifference(int frameID){
-        return System.currentTimeMillis() - (getAACPlayTime(frameID) + mSongStartTime - mSntpClient.getOffset());
+    public long getPCMDifference(long playTime){
+        return System.currentTimeMillis() - (mSongStartTime + playTime - mSntpClient.getOffset());
     }
 
     public long getOffset(){

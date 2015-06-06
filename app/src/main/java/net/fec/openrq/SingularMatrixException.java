@@ -27,12 +27,12 @@ final class SingularMatrixException extends Exception {
     public SingularMatrixException() {
 
         // no cause, suppression disabled and non-writable stack trace (for a lighter exception and higher performance)
-        super(msg, null, false, false);
+        super(msg);
     }
 
     public SingularMatrixException(String message) {
 
         // no cause, suppression disabled and non-writable stack trace (for a lighter exception and higher performance)
-        super(message, null, false, false);
+        super(message);
     }
 }

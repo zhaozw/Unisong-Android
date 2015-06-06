@@ -25,9 +25,6 @@ public class MasterDiscoveryHandler {
     private DatagramSocket mSendSocket;
 
     private Thread mListenerThread;
-    
-    //The AudioBroadcaster for when this is master side
-    private Broadcaster mParent;
 
     //Whether the master has been chosen and the class is now listening to it, or not.
     private boolean mRunning;
@@ -41,12 +38,12 @@ public class MasterDiscoveryHandler {
     //The socket for listening for discovery packets
     private DatagramSocket mDiscoverySocket;
 
+    private int mPort;
 
+    public MasterDiscoveryHandler(int port){
 
-    public MasterDiscoveryHandler(Broadcaster parent){
-
+        mPort = port;
         mRunning = true;
-        mParent = parent;
 
         try {
             mReceiveSocket = new DatagramSocket(CONSTANTS.DISCOVERY_MASTER_PORT);
@@ -74,7 +71,7 @@ public class MasterDiscoveryHandler {
     private void broadcast(){
         while(mRunning){
 
-            MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
+            MasterResponsePacket resPacket = new MasterResponsePacket(mPort);
 
             byte[] data = resPacket.getData();
 
@@ -108,7 +105,7 @@ public class MasterDiscoveryHandler {
         return new Thread(){
             public void run(){
                 //sendStartPacket();
-                Log.d(LOG_TAG, "Packet Listener engaged , " + mParent.isStreamRunning());
+                Log.d(LOG_TAG, "Discovery listener started.");
 
                  while(mRunning){
                     listenForPacket();
@@ -141,7 +138,7 @@ public class MasterDiscoveryHandler {
 
         Log.d(LOG_TAG, "Packet received , from : " +  packet.getAddress().toString());
 
-        MasterResponsePacket resPacket = new MasterResponsePacket(mParent.getPort());
+        MasterResponsePacket resPacket = new MasterResponsePacket(mPort);
 
         byte[] data = resPacket.getData();
 
@@ -168,6 +165,10 @@ public class MasterDiscoveryHandler {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void stop(){
+        mRunning = false;
     }
 
     public synchronized void destroy(){

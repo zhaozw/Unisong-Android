@@ -42,7 +42,7 @@ public class ListenerBridge extends AbstractBridge {
             mManager.newSong();
             mSlaveDecoder.decode(currentPacket , startTime);
             mSlaveDecoder.setSongStartTime(startTime);
-            mManager.startSong(startTime);
+            mManager.startSong();
         }
     }
 

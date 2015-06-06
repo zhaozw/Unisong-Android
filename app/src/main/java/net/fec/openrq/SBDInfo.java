@@ -1079,7 +1079,7 @@ public final class SBDInfo {
         InternalParsingException(String message) {
 
             // non-writable stack for lower exception creation cost
-            super(message, null, false, false);
+            super(message);
         }
     }
 }

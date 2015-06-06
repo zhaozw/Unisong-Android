@@ -88,22 +88,17 @@ public class AudioListener {
 
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
-    public AudioListener(Context context ,  ListenerBridge bridge , SlaveDecoder decoder){
+    public AudioListener(){
 
         mTimeManager = TimeManager.getInstance();
-        mBridge = bridge;
 
         Log.d(LOG_TAG , "Audio Listener Started");
-        mContext = context;
 
-        mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this , mContext);
+        mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this);
 
         mIsListening = false;
 
-        mSlaveDecoder = decoder;
-
-
-        mProcessingQueue = new LinkedList<DatagramPacket>();
+        mProcessingQueue = new LinkedList<>();
     }
 
 

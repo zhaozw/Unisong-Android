@@ -105,6 +105,8 @@ public class MusicDataHandler {
             while (artistCursor.moveToNext());
         }
 
+        artistCursor.close();
+
         //Get the album info
         Uri albumUri = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI;
         Cursor albumCursor = mContentResolver.query(albumUri, null, null, null, null);
@@ -136,6 +138,7 @@ public class MusicDataHandler {
             }
             while (albumCursor.moveToNext());
         }
+        albumCursor.close();
 
         //Get all of the music
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -145,14 +148,18 @@ public class MusicDataHandler {
             //get columns
             int titleColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.TITLE);
+
             int idColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media._ID);
 
             int artistColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.ARTIST);
 
-            int albumIdColumn = artistColumn=musicCursor.getColumnIndex
+            int albumIdColumn =musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.ALBUM_ID);
+
+            int dataColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DATA);
 
             //add songs to list
             do {
@@ -164,16 +171,19 @@ public class MusicDataHandler {
                 String thisArtist = artistNameMap.get(thisArtistId);
 
                 long albumId = musicCursor.getLong(albumIdColumn);
+
+                String data = musicCursor.getString(dataColumn);
                 Log.d(LOG_TAG , "Album ID : " + albumId);
                 String albumArt = artMap.get(albumId);
 
                 Log.d(LOG_TAG , "Album Art String : " + albumArt);
 
-                mSongs.add(new Song(thisId, thisTitle, thisArtist , albumArt));
+                mSongs.add(new Song(thisId, thisTitle, thisArtist , albumArt, data));
             }
             while (musicCursor.moveToNext());
         }
 
+        musicCursor.close();
 
         //Get all the playlist info
         Uri playlistUri = MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI;
@@ -195,5 +205,6 @@ public class MusicDataHandler {
             }
             while (playlistCursor.moveToNext());
         }
+        playlistCursor.close();
     }
 }

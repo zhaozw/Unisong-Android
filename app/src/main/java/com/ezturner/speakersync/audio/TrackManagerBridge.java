@@ -28,7 +28,7 @@ public class TrackManagerBridge extends AbstractBridge {
     }
 
     public void startSong(long startTime){
-        mManager.startSong(startTime);
+        mManager.startSong();
     }
 
     public void lastPacket(){

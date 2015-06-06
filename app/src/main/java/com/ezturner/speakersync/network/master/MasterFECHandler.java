@@ -88,10 +88,11 @@ public class MasterFECHandler {
 
                 FECParameters parameters = FECParameters.newParameters(CONSTANTS.FEC_DATA_LENGTH,
                         CONSTANTS.FEC_SYMBOL_SIZE , CONSTANTS.FEC_DATA_LENGTH / CONSTANTS.FEC_SYMBOL_SIZE);
-                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
+//                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
 
 
 
+                /*
 
                 // send all source symbols
                 for (EncodingPacket pac : sbEnc.sourcePacketsIterable()) {
@@ -104,7 +105,7 @@ public class MasterFECHandler {
                 // send nr repair symbols
                 for (EncodingPacket pac : sbEnc.repairPacketsIterable(nr)) {
                     sendPacket(pac);
-                }
+                }*/
 
 
             } else {

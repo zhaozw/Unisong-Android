@@ -13,9 +13,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioStatePublisher;
-import com.ezturner.speakersync.audio.master.AudioFileReader;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.BroadcasterBridge;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.TimeManager;
@@ -37,7 +35,6 @@ public class MediaService extends Service{
     private AudioListener mListener;
     private Broadcaster mBroadcaster;
     private AudioTrackManager mAudioTrackManager;
-    private AudioFileReader mFileReader;
 
     private BroadcastReceiver mMessageReceiver ;
 
@@ -105,9 +102,6 @@ public class MediaService extends Service{
                 }  else if(command.equals("destroy")){
                     Log.d(LOG_TAG , "Destroy received!");
                     onDestroy();
-                }  else if(command.equals("retransmit")){
-                    Log.d(LOG_TAG , "Retransmit received!");
-                    retransmit();
                 }
 
             }
@@ -125,35 +119,17 @@ public class MediaService extends Service{
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
         mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
         mWakeLock.acquire();
-
-
-    }
-
-
-
-    public void togglePlay(){
-
-
-
-
-
     }
 
     public void broadcaster() {
         if(mBroadcaster == null) {
-            mFileReader = new AudioFileReader(new TrackManagerBridge(mAudioTrackManager));
-            mBroadcaster = new Broadcaster(mAudioTrackManager , mFileReader);
-            mFileReader.setBroadcasterBridge(new BroadcasterBridge(mBroadcaster));
+            mBroadcaster = new Broadcaster();
         }
     }
 
 
     public void listener(){
-        mSlaveDecoder = new SlaveDecoder(new TrackManagerBridge(mAudioTrackManager ), 2, mTimeManager, (byte)0);
-        ListenerBridge bridge = new ListenerBridge(mSlaveDecoder , mAudioTrackManager );
-        mListener = new AudioListener(this , bridge , mSlaveDecoder);
-
-
+        mListener = new AudioListener(this);
     }
 
     public void play(){
@@ -171,13 +147,7 @@ public class MediaService extends Service{
     private Thread mSeekThread;
     public void seek() {
         mAudioStatePublisher.setSeekTime(100000);
-        mAudioStatePublisher.update(AudioStatePublisher.SKIPPING);
-    }
-
-    public void retransmit() {
-        if (mBroadcaster != null){
-            mBroadcaster.retransmit();
-        }
+        mAudioStatePublisher.update(AudioStatePublisher.SEEK);
     }
 
     public IBinder onBind(Intent arg0){
@@ -216,11 +186,6 @@ public class MediaService extends Service{
         mAudioTrackManager.destroy();
         mAudioTrackManager = null;
 
-
-        if(mFileReader != null){
-            mFileReader.destroy();
-            mFileReader = null;
-        }
 
         if(mSntpClient != null){
             mSntpClient.destroy();

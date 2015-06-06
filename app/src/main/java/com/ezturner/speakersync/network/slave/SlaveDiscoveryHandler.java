@@ -54,10 +54,8 @@ public class SlaveDiscoveryHandler {
 
 
     //TODO: ensure that this works with multiple masters
-    public SlaveDiscoveryHandler(AudioListener parent, Context context){
-        mContext = context;
+    public SlaveDiscoveryHandler(AudioListener parent){
         mParent = parent;
-
 
         mTempMasters = new ArrayList<>();
 

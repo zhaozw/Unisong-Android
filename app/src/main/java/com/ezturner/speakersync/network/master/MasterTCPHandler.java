@@ -2,9 +2,11 @@ package com.ezturner.speakersync.network.master;
 
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.TimeManager;
+import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,24 +20,21 @@ import java.util.Random;
 /**
  * Created by Ethan on 2/11/2015.
  */
-public class MasterTCPHandler {
+public class MasterTCPHandler implements AudioObserver {
 
     private String LOG_TAG = MasterTCPHandler.class.getSimpleName();
+
+    //The singleton objects
+    private TimeManager mTimeManager;
+    private AudioStatePublisher mAudioStatePublisher;
 
     //The listener for when a client joins the session and starts a TCP handshake
     private ServerSocket mServerSocket;
 
-    //The AudioBroadcaster that this class interfaces with
-    private Broadcaster mBroadcaster;
-
     //The thread that'll listen to reliability packets
     private Thread mServerSocketThread;
 
-    private List<Thread> mSocketThreads;
-
     private boolean mRunning;
-
-    private TimeManager mTimeManager;
 
     //The random number generator for choosing which slave to have as a rebroadcaster
     private Random mRandom;
@@ -43,14 +42,21 @@ public class MasterTCPHandler {
 
     private MasterTCPHandler mThis;
 
+    private List<Slave> mSlaves;
+
+    private LANTransmitter mLANTransmitter;
+
+
     //TODO: extend AudioObserver and implement
-    public MasterTCPHandler(Broadcaster broadcaster){
+    public MasterTCPHandler(LANTransmitter transmitter){
+
+        mLANTransmitter = transmitter;
+
+        mSlaves = new ArrayList<>();
 
         mTimeManager = TimeManager.getInstance();
-
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
         mThis = this;
-
-        mBroadcaster = broadcaster;
 
         mRecentlyRebroadcasted = new HashMap<>();
 
@@ -63,7 +69,6 @@ public class MasterTCPHandler {
         } catch(IOException e){
             e.printStackTrace();
         }
-        mSocketThreads = new ArrayList<>();
 
         mServerSocketThread = startReliabilityConnectionListener();
 
@@ -77,39 +82,33 @@ public class MasterTCPHandler {
             public void run(){
                 Log.d(LOG_TAG , "Starting to listen for sockets");
                 while(mRunning){
-                    Socket socket = null;
+                    Socket socket;
 
                     try {
                         socket = mServerSocket.accept();
                     } catch(IOException e){
+                        Log.d(LOG_TAG , "");
                         e.printStackTrace();
                         return;
                     }
-                    //TODO: uncomment after you
-//                    if(socket == null){
-//                        break;
-//                    }
+
+                    if(socket == null){
+                        break;
+                    }
                     Log.d(LOG_TAG , "Socket connected : " + socket.getInetAddress());
 
-                    if(socket != null){
-                        Slave newSlave = new Slave(socket.getRemoteSocketAddress().toString() , socket , mThis, mBroadcaster);
-                        mBroadcaster.addSlave(newSlave);
-                    }
+                    Slave newSlave = new Slave(socket.getRemoteSocketAddress().toString() , socket , mThis, mLANTransmitter);
+                    mSlaves.add(newSlave);
                 }
             }
         };
     }
 
-
-
-
-
-
+    //The packets that have recently been re-broadcasted.
     private Map<Integer, Long> mRecentlyRebroadcasted;
 
     //Checks to see if any of the slaves have the packet in question.
     public boolean checkSlaves(int packetID){
-        List<Slave> slaves = mBroadcaster.getSlaves();
         //The list of slaves that have the packet in question
         List<Slave> havePacket = new ArrayList<>();
 
@@ -117,20 +116,18 @@ public class MasterTCPHandler {
             return true;
         }
 
-        synchronized (slaves){
-            for(Slave slave : slaves) {
+        synchronized (mSlaves){
+            for(Slave slave : mSlaves) {
                 if(slave.hasPacket(packetID)) {
                     havePacket.add(slave);
 
                 }
             }
 
-
-
             //If no slaves have the packet return false, but if they all have it return true.
             if(havePacket.size() == 0){
                 return false;
-            } else if( havePacket.size() == slaves.size()){
+            } else if( havePacket.size() == mSlaves.size()){
                 return true;
             }
         }
@@ -148,11 +145,13 @@ public class MasterTCPHandler {
         return true;
     }
 
+    // This method checks to see if a packet has been recently rebroadcasted
     private boolean checkRecentlyRebroadcasted(int packetID){
         synchronized (mRecentlyRebroadcasted) {
+            //Remove any that have been sent more than 45ms ago.
             ArrayList<Integer> toRemove = new ArrayList<>();
             for (Map.Entry<Integer, Long> entry : mRecentlyRebroadcasted.entrySet()) {
-                if (System.currentTimeMillis() - entry.getValue() >= 25) {
+                if (System.currentTimeMillis() - entry.getValue() >= 45) {
                     toRemove.add(entry.getKey());
                 }
             }
@@ -160,24 +159,8 @@ public class MasterTCPHandler {
                 mRecentlyRebroadcasted.remove(i);
             }
         }
-        if (mRecentlyRebroadcasted.containsKey(packetID)) {
-            return true;
-        }
-        return false;
-    }
 
-    private long mSongStart;
-    private int mChannels;
-    private byte mStreamID;
-
-    public void startSong(long songStart, int channels ,byte streamID ){
-        mSongStart = songStart;
-        mChannels = channels;
-        //TODO: see about if deleting this is neccessary
-        mChannels = 2;
-        mStreamID = streamID;
-
-        getStartThread().start();
+        return mRecentlyRebroadcasted.containsKey(packetID);
     }
 
     private Thread getStartThread(){
@@ -192,7 +175,7 @@ public class MasterTCPHandler {
     private void notifyOfSongStart(){
         Log.d(LOG_TAG , "Notifying all listeners of song start");
         long begin = System.currentTimeMillis();
-        for(Slave slave : mBroadcaster.getSlaves()){
+        for(Slave slave : mSlaves){
             slave.notifyOfSongStart();
         }
         Log.d(LOG_TAG, "Done notifying after :" + (System.currentTimeMillis() - begin) + "ms.");
@@ -205,7 +188,7 @@ public class MasterTCPHandler {
 
     public synchronized void pause(){
         Log.d(LOG_TAG, "Pausing");
-        for(Slave slave : mBroadcaster.getSlaves()){
+        for(Slave slave : mSlaves){
             slave.pause();
         }
 
@@ -214,7 +197,7 @@ public class MasterTCPHandler {
     //Sends the resume command to all Slaves
     private void resume(long resumeTime){
 
-        for(Slave slave : mBroadcaster.getSlaves()){
+        for(Slave slave : mSlaves){
             slave.resume(resumeTime, mTimeManager.getSongStartTime());
         }
 
@@ -222,7 +205,7 @@ public class MasterTCPHandler {
 
     public void destroy(){
         mRunning = false;
-        for (Slave slave : mBroadcaster.getSlaves()){
+        for (Slave slave : mSlaves){
             slave.destroy();
         }
 
@@ -231,27 +214,20 @@ public class MasterTCPHandler {
         } catch (IOException e){
             e.printStackTrace();
         }
-
-
     }
 
     public void seek(long seekTime){
-        for(Slave slave : mBroadcaster.getSlaves()){
+        for(Slave slave : mSlaves){
             slave.seek(seekTime);
         }
     }
 
-
-    //Instructs a slave to retransmit the 0 packet.
-    public void retransmit(){
-        mBroadcaster.getSlaves().get(0).retransmitPacket(0);
-    }
-
     // Checks to see if any of the other Slaves can rebroadcast the packet, and if not, then
     // Tells the stream to
-    public void rebroadcastPacket(int packetID){
-        if(!checkSlaves(packetID)){
-            mBroadcaster.rebroadcastPacket(packetID);
+    public void rebroadcastFrame(int frameID){
+        //TODO: figure out an elegant/reusable way to handle retransmissions
+        if(!checkSlaves(frameID)){
+            mLANTransmitter.rebroadcastFrame(frameID);
         }
     }
 
@@ -260,11 +236,6 @@ public class MasterTCPHandler {
     @Override
     public void update(int state){
         switch (state){
-
-            case AudioStatePublisher.IDLE:
-                stopStream();
-                break;
-
             case AudioStatePublisher.RESUME:
                 long resumeTime = mAudioStatePublisher.getResumeTime();
                 resume(resumeTime);
@@ -273,11 +244,18 @@ public class MasterTCPHandler {
             case AudioStatePublisher.PAUSED:
                 break;
 
-            case AudioStatePublisher.SKIPPING:
+            case AudioStatePublisher.SEEK:
                 long seekTime = mAudioStatePublisher.getSeekTime();
                 seek(seekTime);
                 resume(mAudioStatePublisher.getResumeTime());
                 break;
+            case AudioStatePublisher.NEW_SONG:
+                getStartThread().start();
+                break;
         }
+    }
+
+    public List<Slave> getSlaves(){
+        return mSlaves;
     }
 }

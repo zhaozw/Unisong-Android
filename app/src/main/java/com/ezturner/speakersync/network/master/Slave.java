@@ -3,7 +3,11 @@ package com.ezturner.speakersync.network.master;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioStatePublisher;
+import com.ezturner.speakersync.audio.master.CurrentSongInfo;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.TimeManager;
+import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPEndSongPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
@@ -48,11 +52,24 @@ public class Slave {
     private boolean mThreadRunning;
     private Thread mListenThread;
     private MasterTCPHandler mMasterTCPHandler;
-    private Broadcaster mBroadcaster;
 
-    public Slave(String ip, Socket socket , MasterTCPHandler parent, Broadcaster broadcaster){
+    //The Singletons
+    private AudioStatePublisher mAudioStatePublisher;
+    private TimeManager mTimeManager;
+    private CurrentSongInfo mCurrentSongInfo;
 
-        mBroadcaster = broadcaster;
+    private LANTransmitter mTransmitter;
+
+
+    public Slave(String ip, Socket socket , MasterTCPHandler parent, LANTransmitter transmitter){
+
+        mTransmitter = transmitter;
+
+        //Get the singleton objects.
+        mTimeManager = TimeManager.getInstance();
+        mCurrentSongInfo = CurrentSongInfo.getInstance();
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
+
         mMasterTCPHandler = parent;
         mSocket = socket;
 
@@ -138,9 +155,27 @@ public class Slave {
         //Handle new data coming in from a Reliability socket
         //TODO: see if we need to get rid of the port for this to work
 
+        //If we are playing, then just tell the client that we are playing a song in progress
+        if(mAudioStatePublisher.getState() == AudioStatePublisher.PLAYING) {
 
+            sendSongInProgress();
 
-        if(mBroadcaster.isStreamRunning()) {
+        } else if(mAudioStatePublisher.getState() == AudioStatePublisher.PAUSED){
+
+            //If we are paused, tell the client we are playing a song in progress and then pause
+            sendSongInProgress();
+            pause();
+
+        } else if(mAudioStatePublisher.getState() == AudioStatePublisher.RESUME){
+
+            //If we are in the resume stage, then wait 10ms and notify of a song in progress
+            try {
+                synchronized (this) {
+                    this.wait(10);
+                }
+            } catch (InterruptedException e){
+
+            }
             sendSongInProgress();
         }
 
@@ -173,7 +208,7 @@ public class Slave {
         switch (type){
             case CONSTANTS.TCP_REQUEST:
                 int packetID = new TCPRequestPacket(mInputStream).getPacketRequested();
-                if(packetID != -1)  mMasterTCPHandler.rebroadcastPacket(packetID);
+                if(packetID != -1)  mMasterTCPHandler.rebroadcastFrame(packetID);
                 break;
             case CONSTANTS.TCP_ACK:
                 int ID = new TCPAcknowledgePacket(mInputStream).getPacketAcknowledged();
@@ -189,8 +224,8 @@ public class Slave {
         synchronized (mOutputStream) {
 
             //Send out the Song In Progress TCP packet.
-            TCPSongInProgressPacket.send(mOutputStream, mBroadcaster.getSongStartTime(), mBroadcaster.getChannels(),
-                    mBroadcaster.getNextPacketSendID(), mBroadcaster.getStreamID());
+            TCPSongInProgressPacket.send(mOutputStream, mTimeManager.getSongStartTime(), mCurrentSongInfo.getChannels(),
+                    mTransmitter.getNextPacketSendID(), mAudioStatePublisher.getStreamID());
         }
 
 
@@ -199,7 +234,7 @@ public class Slave {
     //Notifies this slave that a song is starting
     public void notifyOfSongStart(){
         synchronized (mOutputStream){
-            TCPSongStartPacket.send(mOutputStream , mBroadcaster.getSongStartTime() , mBroadcaster.getChannels() , mBroadcaster.getStreamID() );
+            TCPSongStartPacket.send(mOutputStream , mTimeManager.getSongStartTime() , mCurrentSongInfo.getChannels() , mAudioStatePublisher.getStreamID() );
         }
     }
 
@@ -211,7 +246,7 @@ public class Slave {
 
     public void sendFrame(AudioFrame frame){
         synchronized (mOutputStream){
-            TCPFramePacket.send(mOutputStream , frame, mBroadcaster.getStreamID());
+            TCPFramePacket.send(mOutputStream , frame, mAudioStatePublisher.getStreamID());
         }
     }
 
@@ -246,7 +281,7 @@ public class Slave {
     public void destroy(){
         mConnected = false;
         while(mThreadRunning){}
-        mBroadcaster = null;
+        mTransmitter = null;
         mMasterTCPHandler = null;
     }
 

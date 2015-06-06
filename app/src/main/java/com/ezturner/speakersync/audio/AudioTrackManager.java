@@ -6,6 +6,8 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.util.Log;
 
+import com.ezturner.speakersync.MediaService;
+import com.ezturner.speakersync.audio.master.FileDecoder;
 import com.ezturner.speakersync.network.TimeManager;
 
 import java.util.ArrayList;
@@ -41,9 +43,6 @@ public class AudioTrackManager implements AudioObserver {
     //The handler for scheduling resyncs and the song start
     private Handler mHandler;
 
-    //The time that the current or next song will start at
-    private long mSongStartTime;
-
     //The last frame added's ID
     private int mLastAddedFrameID;
 
@@ -58,9 +57,11 @@ public class AudioTrackManager implements AudioObserver {
 
     private AudioStatePublisher mAudioStatePublisher;
 
+    private FileDecoder mDecoder;
+
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(TimeManager manager){
-        mFrames = new TreeMap<Integer , AudioFrame>();
+        mFrames = new TreeMap<>();
 
         mThreadRunning = false;
         mIsPlaying = false;
@@ -69,7 +70,7 @@ public class AudioTrackManager implements AudioObserver {
 
         mTimeManager = manager;
 
-        mLastFrameID = -89;
+        mLastFrameID = -1;
         mLastFrameTime = 0;
 
         //Get the AudioStatePublisher and then add ourselves to it
@@ -103,15 +104,49 @@ public class AudioTrackManager implements AudioObserver {
         mThreadRunning = true;
         Log.d(LOG_TAG , "Starting Write");
         while(isPlaying()) {
+
             if (mFrameToPlay == mLastFrameID) {
                 mIsPlaying = false;
                 return;
             }
 
-            long difference = mTimeManager.getPCMDifference(mFrameToPlay);
+            /*
+            if(!mFrames.containsKey(mFrameToPlay)){
 
+                String set = "";
+                for (Integer name: mFrames.keySet()) {
+
+                    set += name.toString() + " , ";
+
+                }
+                Log.d(LOG_TAG , set.substring(0 , set.length() -1));
+                Log.d(LOG_TAG , "mFrames size is :" + mFrames.size());
+
+            }*/
+
+            while (!mFrames.containsKey(mFrameToPlay)) {
+                try {
+                    synchronized (this) {
+                        this.wait(1);
+                    }
+                } catch (InterruptedException e) {
+
+                }
+                if(!isPlaying()){
+                    return;
+                }
+            }
+
+            AudioFrame frame;
+            synchronized (mFrames){
+                frame = mFrames.get(mFrameToPlay);
+                mFrames.remove(mFrameToPlay);
+            }
+            long difference = mTimeManager.getPCMDifference(frame.getPlayTime());
+
+            //TODO :take a look at this code and see if we can improve it to limit audio skips/the artifacts I hear sometimes
             if(difference <= -30){
-                long before = System.currentTimeMillis();
+
                 synchronized (this) {
                     try {
                         this.wait(Math.abs(difference));
@@ -123,86 +158,41 @@ public class AudioTrackManager implements AudioObserver {
                 int index = mFrameToPlay;
 
                 while (difference >= 30) {
+                    index++;
+
                     AudioFrame nextFrame = null;
                     synchronized (mFrames) {
                         nextFrame = mFrames.get(index);
+                        mFrames.remove(index);
                     }
+
                     if (nextFrame != null) {
-                        difference = mTimeManager.getPCMDifference(index);
-                        index++;
-//                        Log.d(LOG_TAG , "Difference v2 is : " + difference);
-                    } else if(nextFrame == null){
+                        difference = mTimeManager.getPCMDifference(nextFrame.getPlayTime());
+
+                    } else {
                         synchronized (this){
                             try {
                                 this.wait(4);
                             } catch (InterruptedException e){
 
                             }
-                            if(!isPlaying()){
-                                return;
-                            }
                         }
+
+                        if(!isPlaying())    return;
+
+
                     }
                 }
                 mFrameToPlay = index;
             }
 
-
-            AudioFrame frame;
-            synchronized (mFrames) {
-                frame = mFrames.get(mFrameToPlay);
-            }
-
-            if (frame == null) {
-                Log.d(LOG_TAG, "Frame ID is: " + mFrameToPlay + " , waiting");
-                synchronized (this) {
-                    while (!mFrames.containsKey(mFrameToPlay)) {
-                        try {
-                            this.wait(1);
-                        } catch (InterruptedException e) {
-
-                        }
-                        if(!isPlaying()){
-                            return;
-                        }
-                    }
-                }
-                frame = mFrames.get(mFrameToPlay);
-                Log.d(LOG_TAG , "Frame #" + mFrameToPlay + " found.");
-            }
-
             mLastFrameTime = frame.getPlayTime();
             mFrameToPlay++;
 
-
-
-
-//            if(mSeek)   Log.d(LOG_TAG , frame.toString());
-
-//            if(mSeek)   Log.d(LOG_TAG , "Difference is :" + difference);
-
-
-
-
-
-
-            //TODO: handle it when this is null AND when the stream is over
             byte[] data = frame.getData();
-
-            mTest++;
-
-//            if (mTest >= 100) {
-//                mTest = 0;
-//                difference = mTimeManager.getPCMDifference(frame);
-//                Log.d(LOG_TAG, "Time difference is : " + difference);
-//            }
 
 
             mAudioTrack.write(data, 0, data.length);
-
-            synchronized (mFrames){
-                mFrames.remove(frame);
-            }
         }
 
         mAudioTrack = null;
@@ -240,18 +230,16 @@ public class AudioTrackManager implements AudioObserver {
         mIsPlaying = false;
     }
 
-    public void startSong(long songStart){
-
-
-        mFrames = new HashMap<>();
-        mSongStartTime = songStart;
-        double millisTillSongStart =  (songStart - mTimeManager.getOffset()) - System.currentTimeMillis();
+    public void startSong(){
+        mFrames = new TreeMap<>();
+        mDecoder = new FileDecoder(MediaService.TEST_FILE_PATH , mFrames , 0 , this);
+        double millisTillSongStart =  (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
         Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mTimeManager.getOffset() is :" + mTimeManager.getOffset());
         mHandler.post(mStartSong);
     }
 
     private void startPlaying(){
-        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mSongStartTime - mTimeManager.getOffset()))+ " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
+        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mTimeManager.getSongStartTime() - mTimeManager.getOffset()))+ " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
 
         createAudioTrack(44100 , 2);
         mAudioTrack.play();
@@ -284,6 +272,8 @@ public class AudioTrackManager implements AudioObserver {
     public void seek(long seekTime){
         mSeek = true;
         mFrameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
+        mDecoder.destroy();
+        mDecoder = new FileDecoder(MediaService.TEST_FILE_PATH , mFrames , seekTime , this);
         Log.d(LOG_TAG , "mFrameToPlay is : " + mFrameToPlay);
     }
 
@@ -338,12 +328,15 @@ public class AudioTrackManager implements AudioObserver {
                 pause();
                 break;
 
-            case AudioStatePublisher.SKIPPING:
+            case AudioStatePublisher.SEEK:
                 pause();
                 long seekTime = mAudioStatePublisher.getSeekTime();
                 seek(seekTime);
 
                 resume(mAudioStatePublisher.getResumeTime());
+                break;
+            case AudioStatePublisher.NEW_SONG:
+                startSong();
                 break;
         }
     }

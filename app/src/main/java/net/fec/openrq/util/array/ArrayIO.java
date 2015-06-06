@@ -19,7 +19,6 @@ package net.fec.openrq.util.array;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.NetworkChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -151,7 +150,7 @@ public final class ArrayIO {
 
         final ByteBuffer buf;
 
-        if (ch instanceof NetworkChannel || ch instanceof FileChannel || ch instanceof SinkChannel) {
+        if (ch instanceof FileChannel || ch instanceof SinkChannel) {
             buf = CACHED_DIRECT_BUFFER.get();
         }
         else {
@@ -166,7 +165,7 @@ public final class ArrayIO {
 
         final ByteBuffer buf;
 
-        if (ch instanceof NetworkChannel || ch instanceof FileChannel || ch instanceof SourceChannel) {
+        if ( ch instanceof FileChannel || ch instanceof SourceChannel) {
             buf = CACHED_DIRECT_BUFFER.get();
         }
         else {

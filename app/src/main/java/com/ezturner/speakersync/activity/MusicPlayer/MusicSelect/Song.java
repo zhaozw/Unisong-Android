@@ -9,16 +9,20 @@ public class Song implements MusicData{
     private String mName;
     private String mArtist;
     private String mArt;
+    private String mData;
 
     //The class for storing song data
-    public Song(long songID, String songTitle, String songArtist, String albumart){
+    public Song(long songID, String songTitle, String songArtist, String albumart, String data){
         mID = songID;
         mName = songTitle;
         mArtist = songArtist;
         mArt = albumart;
+        mData = data;
     }
 
     public long getID () {return mID;}
+
+    public String getData(){return mData;}
 
     public String getPrimaryText () {return mName;}
 
@@ -27,7 +31,7 @@ public class Song implements MusicData{
 
     public String getArtist () {return mArtist;}
 
-    public String getArt(){return mArt;};
+    public String getArt(){return mArt;}
 
     public int getType(){return 3;}
 }

@@ -6,16 +6,15 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
-import com.ezturner.speakersync.audio.BroadcasterBridge;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by Ethan on 4/27/2015.
@@ -24,7 +23,7 @@ public class AACEncoder {
     private static final String LOG_TAG = "AACEncoder";
 
     //The current ID of the audio frame
-    private Integer mCurrentOutputID;
+    private int mCurrentOutputID;
 
     //The media codec object used to decode the files
     private MediaCodec mCodec;
@@ -43,36 +42,45 @@ public class AACEncoder {
     private InputStream mInputStream;
     private MediaFormat mInputFormat;
 
-    private Map<Integer , AudioFrame> mFrames;
+    //The output and input frames
+    private Map<Integer , AudioFrame> mOutputFrames;
+    private Map<Integer, AudioFrame> mInputFrames;
 
-    private int mCurrentInputFrame = 0;
+    private int mCurrentInputFrameID = 0;
 
     //The last frame, a signal that the input is ending
     private int mLastFrame;
 
-    //The Bridge that will be used to send the finished AAC frames to the broadcaster.
-    private BroadcasterBridge mBroadcasterBridge;
-
+    //The FileDecoder that turns our source file into
     private FileDecoder mDecoder;
 
-    public AACEncoder(int lastFrame , byte streamID, Map<Integer, AudioFrame> frames){
+    private CurrentSongInfo mCurrentSongInfo;
 
-        mFrames = frames;
+    //The highest frame # used.
+    private int mHighestFrameUsed;
 
+    public AACEncoder(byte streamID, Map<Integer, AudioFrame> frames){
+
+        mHighestFrameUsed = 0;
+        mCurrentSongInfo = CurrentSongInfo.getInstance();
+        mOutputFrames = frames;
+
+        mInputFrames = new TreeMap<>();
+
+        mLastFrame = -1;
         if(frames.size() != 0){
-            Log.d(LOG_TAG , "Setting mFrames, size is : " + mFrames.size());
+            Log.d(LOG_TAG, "Setting mOutputFrames, size is : " + mOutputFrames.size());
         }
 
         mCurrentOutputID = 0;
+        mCurrentInputFrameID = 0;
         mRunning = false;
-        mLastFrame = lastFrame;
         mStreamID = streamID;
     }
 
-    public void encode(MediaFormat inputFormat, int currentInputFrame , long startTime){
-        mCurrentInputFrame = currentInputFrame;
+    public void encode(long startTime){
         mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
-        mInputFormat = inputFormat;
+        mDecoder = new FileDecoder(mCurrentSongInfo.getFilePath() , mInputFrames , startTime , this);
         mEncodeThread = getEncode();
         mEncodeThread.start();
     }
@@ -92,7 +100,6 @@ public class AACEncoder {
     protected int inputBufIndex;
     protected int bufIndexCheck;
     protected int lastInputBufIndex;
-    private int mRuns = 0;
     private boolean mSeek = false;
     private boolean isRunning = false;
 
@@ -121,6 +128,16 @@ public class AACEncoder {
 
         mOutputBitrate = 1441200;
 
+        //If mInputFormat is null, then lets wait until it is no longer null
+        while (mInputFormat == null){
+            try {
+                synchronized (this){
+                    this.wait(2);
+                }
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
         channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         sampleRate = mInputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
         mime = "audio/mp4a-latm";
@@ -160,9 +177,9 @@ public class AACEncoder {
         //TODO: deal with no data/end of stream
         while(!mStop){
 
-            while(!mFrames.containsKey(mCurrentInputFrame)){
+            while(!mInputFrames.containsKey(mCurrentInputFrameID)){
 
-                if(mStop || mCurrentInputFrame == mLastFrame){
+                if(mStop || mCurrentInputFrameID == mLastFrame){
                     break;
                 }
                 try{
@@ -179,17 +196,31 @@ public class AACEncoder {
 
             }
 
-            AudioFrame frame;
-            synchronized (mFrames){
-                frame = mFrames.get(mCurrentInputFrame);
+
+            while(mHighestFrameUsed + 20 <= mCurrentOutputID){
+                try{
+                    synchronized (this){
+                        this.wait(10);
+                    }
+                } catch (InterruptedException e){
+
+                }
+
             }
+
+
+            AudioFrame frame;
+            synchronized (mInputFrames){
+                frame = mInputFrames.get(mCurrentInputFrameID);
+            }
+
 //            Log.d(LOG_TAG , frame.toString());
             long playTime = -1;
             long length = -1;
 
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
-            if (mCurrentInputFrame != mLastFrame){
+            if (mCurrentInputFrameID != mLastFrame){
                 int inputBufIndex = mCodec.dequeueInputBuffer(kTimeOutUs);
                 if (inputBufIndex >= 0){
                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
@@ -209,7 +240,8 @@ public class AACEncoder {
                 mStop = true;
             }
 
-            // encode to AAC and then put in mFrames
+
+            // encode to AAC and then put in mOutputFrames
             int outputBufIndex = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
 
 
@@ -245,10 +277,12 @@ public class AACEncoder {
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
+
+
         }
 
         if(!mSeek){
-            mBroadcasterBridge.lastFrame();
+            mLastFrame = mCurrentOutputID;
         } else {
             mSeek = false;
         }
@@ -257,6 +291,7 @@ public class AACEncoder {
         Log.d(LOG_TAG, "stopping...");
 
         releaseCodec();
+        mDecoder.destroy();
 
         // clear source and the other globals
         //sourcePath = null;
@@ -278,7 +313,7 @@ public class AACEncoder {
     private int setData(AudioFrame frame , ByteBuffer dstBuf){
         byte[] data = frame.getData();
         int sampleSize = data.length;
-//        Log.d(LOG_TAG , "Data size is: " + sampleSize + " mOldDataIndex: " + mDataIndex  + " , and currentFrame is " + mCurrentInputFrame);
+//        Log.d(LOG_TAG , "Data size is: " + sampleSize + " mOldDataIndex: " + mDataIndex  + " , and currentFrame is " + mCurrentInputFrameID);
 
         int spaceLeft = dstBuf.capacity() - dstBuf.position();
 
@@ -289,9 +324,10 @@ public class AACEncoder {
                 data = Arrays.copyOfRange(data, mDataIndex, sampleSize);
                 mDataIndex = 0;
             }
-            mFrames.remove(frame.getID());
+
+            mInputFrames.remove(frame.getID());
 //            Log.d(LOG_TAG , "1: Data is : " + data.length);
-            mCurrentInputFrame++;
+            mCurrentInputFrameID++;
 
         } else {
             //If not, then let's put what we can
@@ -301,7 +337,8 @@ public class AACEncoder {
             //If the space left in the ByteBuffer is greater than the space left in the frame, then just put what's left
             if(endIndex >= data.length){
                 endIndex = data.length;
-                mCurrentInputFrame++;
+                mCurrentInputFrameID++;
+                mInputFrames.remove(frame.getID());
                 mDataIndex = 0;
             } else {
                 mDataIndex = endIndex;
@@ -315,7 +352,6 @@ public class AACEncoder {
 
         return data.length;
     }
-
 
     private void releaseCodec(){
         if(mCodec != null) {
@@ -342,41 +378,44 @@ public class AACEncoder {
         AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mStreamID);
         mCurrentOutputID++;
 
-        mBroadcasterBridge.addFrame(frame);
+        mOutputFrames.put(frame.getID() , frame);
 
     }
 
-
-    //This is called to add the frames to the input queue
-    public void addFrames(ArrayList<AudioFrame> frames){
-        synchronized (mFrames){
-            for(AudioFrame frame : frames){
-                if(!mFrames.containsKey(frame.getID())) {
-                    mFrames.put(frame.getID(), frame);
-                }
-            }
-        }
-    }
-
-    public void seek(){
+    public void stop(){
         mStop = true;
         mSeek = true;
         long begin = System.currentTimeMillis();
 
         while (mRunning) {}
 
-        Log.d(LOG_TAG , "Waiting for encode thread to finish , took " + (System.currentTimeMillis() - begin) + "ms");
+        Log.d(LOG_TAG, "Waiting for encode thread to finish , took " + (System.currentTimeMillis() - begin) + "ms");
+    }
 
 
+    public void seek(long seekTime){
+        mDecoder.destroy();
+        synchronized (mInputFrames){
+            mInputFrames = new TreeMap<>();
+        }
 
+    }
+
+    public void setInputFormat(MediaFormat format){
+        mInputFormat = format;
+    }
+
+    /**
+     * This method tells the AAC Encoder that a frame has been used, and
+     * it will use that information to figure out how many frames to encode.
+     * @param frameID
+     */
+    public void frameUsed(int frameID){
+        if(frameID > mHighestFrameUsed) mHighestFrameUsed = frameID;
     }
 
     public Map<Integer , AudioFrame> getFrames(){
-        return mFrames;
-    }
-
-    public BroadcasterBridge getBroadcasterBridge(){
-        return mBroadcasterBridge;
+        return mOutputFrames;
     }
 
 
@@ -389,6 +428,6 @@ public class AACEncoder {
     }
 
     public void destroy(){
-        mBroadcasterBridge.destroy();
+
     }
 }
