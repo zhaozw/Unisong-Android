@@ -15,6 +15,8 @@ import net.fec.openrq.parameters.FECParameters;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * This class encodes the Audio Frames into
@@ -26,8 +28,8 @@ public class MasterFECHandler {
 
     private Broadcaster mBroadcaster;
 
-    private ArrayList<AudioFrame> mFrames;
-    private ArrayList<byte[]> mFrameDatas;
+    private Map<Integer, AudioFrame> mFrames;
+    private int mTopFrame = 0;
 
     //The Index for mFrames
     private int mCurrentFrame = 0;
@@ -42,8 +44,7 @@ public class MasterFECHandler {
     private boolean mRunning;
 
     public MasterFECHandler(){
-        mFrames = new ArrayList<>();
-        mFrameDatas = new ArrayList<>();
+        mFrames = new TreeMap<>();
         mEncodeThread = getThread();
         mEncodeThread.start();
         mRunning = true;
@@ -51,12 +52,11 @@ public class MasterFECHandler {
 
     public void addFrames(ArrayList<AudioFrame> frames){
         synchronized (mFrames){
-            synchronized (mFrameDatas) {
+            synchronized (mFrames) {
                 for (AudioFrame frame : frames) {
-                    mFrames.add(frame);
-                    byte[] data = createFrameData(frame);
-                    mFrameDatas.add(data);
-                    mDataAvailable += data.length;
+                    if(frame.getID() > mTopFrame)   mTopFrame = frame.getID();
+                    mFrames.put(frame.getID(), frame);
+                    mDataAvailable += frame.getData().length + 8;
                 }
             }
         }
@@ -139,10 +139,11 @@ public class MasterFECHandler {
         int dstDataIndex = 0;
 
         synchronized (mFrames) {
-            for (int i = 0; mCurrentFrame < mFrameDatas.size() && dstDataIndex != dstData.length - 1; mCurrentFrame++) {
+            for (int i = 0; mCurrentFrame < mTopFrame && dstDataIndex != dstData.length - 1; mCurrentFrame++) {
 
-                byte[] frameData = mFrameDatas.get(mCurrentFrame);
+                AudioFrame frame = mFrames.get(mCurrentFrame);
 
+                byte[] frameData = createFrameData(frame);
                 mDataAvailable -= setData(frameData, dstDataIndex, dstData);
             }
         }
@@ -151,48 +152,45 @@ public class MasterFECHandler {
         return dstData;
     }
 
+    //TODO: test this 
     private int setData(byte[] srcData , int dstDataIndex, byte[] dstData){
-        int sampleSize = srcData.length;
 
         int spaceLeft = CONSTANTS.FEC_DATA_LENGTH - dstDataIndex;
 
-        int endIndex = 0;
         int startIndex = 0;
+        int endIndex = 0;
 
         //If we've got enough space for the whole rest of the frame, then use the rest of the frame
-        if(spaceLeft > (sampleSize - mDataIndex)){
+        if(spaceLeft > (srcData.length - mDataIndex)){
+
             startIndex = mDataIndex;
             if(mDataIndex != 0){
-                srcData = Arrays.copyOfRange(srcData, mDataIndex, sampleSize);
+                endIndex = srcData.length;
                 mDataIndex = 0;
             }
             mCurrentFrame++;
 
         } else {
-            //If not, then let's put what we can
-            endIndex = spaceLeft + mDataIndex;
-
+            //If there isn't enough space left in the destination data, then let's copy what we can.
             startIndex = mDataIndex;
-            //If the space left in the ByteBuffer is greater than the space left in the frame, then just put what's left
-            if(endIndex >= srcData.length){
-                endIndex = srcData.length;
-                mCurrentFrame++;
-                mDataIndex = 0;
-            } else {
-                mDataIndex = endIndex;
+
+            if(spaceLeft >= srcData.length - mDataIndex){
+                mDataIndex += spaceLeft;
+                endIndex = startIndex += spaceLeft;
             }
 
-            srcData = Arrays.copyOfRange(srcData, startIndex , endIndex);
         }
 
+        int numBytes = 0;
         //Lets assign the data to the destination array
         while(startIndex < endIndex){
+            numBytes++;
             dstData[dstDataIndex] = srcData[startIndex];
             startIndex++;
             dstDataIndex++;
         }
 
-        return srcData.length;
+        return numBytes;
     }
 
     private byte[] createFrameData(AudioFrame frame){
