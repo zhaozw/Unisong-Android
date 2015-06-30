@@ -21,7 +21,7 @@ import java.util.ArrayList;
 /**
  * Created by ezturner on 2/16/2015.
  */
-public class SlaveDiscoveryHandler {
+public class ClientDiscoveryHandler {
 
     private static final String LOG_TAG = "SlaveDiscoveryHandler";
     //The active listening socket
@@ -54,7 +54,7 @@ public class SlaveDiscoveryHandler {
 
 
     //TODO: ensure that this works with multiple masters
-    public SlaveDiscoveryHandler(AudioListener parent){
+    public ClientDiscoveryHandler(AudioListener parent){
         mParent = parent;
 
         mTempMasters = new ArrayList<>();
