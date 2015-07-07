@@ -15,13 +15,11 @@ import android.util.Log;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
-import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.Broadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.SntpClient;
-import com.ezturner.speakersync.network.slave.AudioListener;
-import com.ezturner.speakersync.network.slave.ListenerBridge;
+import com.ezturner.speakersync.network.client.AudioListener;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -129,7 +127,7 @@ public class MediaService extends Service{
 
 
     public void listener(){
-        mListener = new AudioListener(this);
+        mListener = new AudioListener();
     }
 
     public void play(){

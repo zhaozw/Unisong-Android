@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.network.slave;
+package com.ezturner.speakersync.network.client;
 
 import android.content.Context;
 import android.util.Log;
@@ -49,10 +49,10 @@ public class AudioListener {
     private ListenerBridge mBridge;
 
     //The discovery handler, which will handle finding and choosing the
-    private SlaveDiscoveryHandler mSlaveDiscoveryHandler;
+    private ClientDiscoveryHandler mSlaveDiscoveryHandler;
 
     //The Slave reliability handler which handles packet reliability
-    private SlaveTCPHandler mSlaveTCPHandler;
+    private ClientTCPHandler mClientTCPHandler;
 
     //The activity context
     private Context mContext;
@@ -94,7 +94,7 @@ public class AudioListener {
 
         Log.d(LOG_TAG , "Audio Listener Started");
 
-        mSlaveDiscoveryHandler = new SlaveDiscoveryHandler(this);
+        mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
 
         mIsListening = false;
 
@@ -117,7 +117,7 @@ public class AudioListener {
 
         mSocket = master.getSocket();
 
-        mSlaveTCPHandler = new SlaveTCPHandler(master.getIP() , master.getPort() , this );
+        mClientTCPHandler = new ClientTCPHandler(master.getIP() , master.getPort() , this );
 
         mListenThread = getListenThread();
         mListenThread.start();
@@ -262,7 +262,7 @@ public class AudioListener {
         //}
         if(networkPacket != null) {
 //            Log.d(LOG_TAG , networkPacket.toString());
-            mSlaveTCPHandler.packetReceived(networkPacket.getPacketID());
+            mClientTCPHandler.packetReceived(networkPacket.getPacketID());
             if(!mPackets.containsKey(networkPacket.getPacketID())){
 
                 mCounter++;
@@ -356,7 +356,7 @@ public class AudioListener {
     }
 
     public synchronized void destroy(){
-        mSlaveTCPHandler.destroy();
+        mClientTCPHandler.destroy();
         mSocket.close();
         mSlaveDiscoveryHandler.destroy();
         mSlaveDecoder.destroy();

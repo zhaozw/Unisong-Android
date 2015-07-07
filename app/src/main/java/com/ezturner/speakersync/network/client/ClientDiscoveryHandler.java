@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.network.slave;
+package com.ezturner.speakersync.network.client;
 
 import android.content.Context;
 import android.os.Handler;
@@ -7,7 +7,6 @@ import android.util.Log;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
-import com.ezturner.speakersync.network.ntp.SntpClient;
 import com.ezturner.speakersync.network.packets.MasterResponsePacket;
 
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**

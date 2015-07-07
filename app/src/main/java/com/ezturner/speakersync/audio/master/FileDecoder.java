@@ -260,6 +260,7 @@ public class FileDecoder {
                     int outputChannels = outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
                     int outputSampleRate = outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
 
+
                     mFirstOutputChange = false;
                     Log.d(LOG_TAG, "Starting AAC Encoder now");
 

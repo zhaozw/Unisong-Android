@@ -2,7 +2,6 @@ package com.ezturner.speakersync.audio.slave;
 
 
 import com.ezturner.speakersync.audio.AudioFrame;
-import com.ezturner.speakersync.audio.TrackManagerBridge;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.TimeManager;
 
@@ -29,9 +28,6 @@ public class SlaveDecoder {
 
     private Map<Integer , AudioFrame> mFrames;
 
-    //The Bridge that will be used to send the finished AAC frames to the broadcaster.
-    private TrackManagerBridge mTrackManagerBridge;
-
     //The adjust to playTime used to adjust time when we have done a seek command or when we have joined mid-session
     private long mTimeAdjust = 0;
 
@@ -46,8 +42,7 @@ public class SlaveDecoder {
 
     private byte mStreamID;
 
-    public SlaveDecoder(TrackManagerBridge bridge , int channels, TimeManager manager , byte streamID){
-        mTrackManagerBridge = bridge;
+    public SlaveDecoder(int channels, TimeManager manager , byte streamID){
         mCurrentID = 0;
         mFrames = new HashMap<>();
         mTimeManager = manager;
@@ -86,7 +81,6 @@ public class SlaveDecoder {
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime , mStreamID);
         mCurrentID++;
 
-        mTrackManagerBridge.addFrame(frame);
         mSamples += data.length;
 
     }
@@ -121,8 +115,6 @@ public class SlaveDecoder {
         mSlaveCodec.destroy();
         mSlaveCodec = null;
         mTimeManager = null;
-        mTrackManagerBridge.destroy();
-        mTrackManagerBridge = null;
 
     }
 

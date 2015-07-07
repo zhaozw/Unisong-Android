@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.network.slave;
+package com.ezturner.speakersync.network.client;
 
 
 import android.os.Handler;
@@ -32,9 +32,9 @@ import java.util.Map;
 /**
  * Created by ezturner on 2/16/2015.
  */
-public class SlaveTCPHandler {
+public class ClientTCPHandler {
 
-    private String LOG_TAG = SlaveTCPHandler.class.getSimpleName();
+    private String LOG_TAG = ClientTCPHandler.class.getSimpleName();
 
     //The address of the Master that we will connect to.
     private InetAddress mMasterAddress;
@@ -73,7 +73,7 @@ public class SlaveTCPHandler {
     //Whether we can request packets. Is false until
     private boolean mCanRequest;
 
-    public SlaveTCPHandler(InetAddress address, int broadcastPort, AudioListener listener ){
+    public ClientTCPHandler(InetAddress address, int broadcastPort, AudioListener listener){
         mMasterAddress = address;
 
         mListener = listener;

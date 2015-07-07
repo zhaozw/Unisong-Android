@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.network.slave.receiver;
+package com.ezturner.speakersync.network.client.receiver;
 
 import com.ezturner.speakersync.audio.AudioFrame;
 
