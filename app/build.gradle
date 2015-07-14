@@ -26,6 +26,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile 'com.android.support:recyclerview-v7:22.0.0'
     compile 'dnsjava:dnsjava:2.1.1'
+    compile 'com.iangclifton.android:floatlabel:1.0.4'
 
 }
 

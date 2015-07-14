@@ -8,6 +8,6 @@
     <color name="divider">#B6B6B6</color>
     <color name="white">#FFFFFF</color>
     <color name="primaryColorLight">#C5CAE9</color>
-    <color name="accentColor">#00BCD4</color>
+    <color name="accent">#00BCD4</color>
 
 </resources>
