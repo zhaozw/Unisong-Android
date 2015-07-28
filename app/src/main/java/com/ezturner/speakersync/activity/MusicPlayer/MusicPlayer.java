@@ -104,7 +104,7 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerLayout.closeDrawers();
         //TODO: Make a settings screen so this does something
-        if(v.findViewById(R.id.listImage).getTag() == 1){
+        if(v.findViewById(R.id.listImage).getTag().equals(1)){
             //TODO:
         }
     }

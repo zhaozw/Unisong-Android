@@ -2,6 +2,8 @@ package com.ezturner.speakersync.network;
 
 import android.util.Log;
 
+import com.squareup.okhttp.MediaType;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Inet4Address;
@@ -16,8 +18,8 @@ import java.util.Enumeration;
  * Created by ezturner on 3/2/2015.
  */
 public class NetworkUtilities {
-
     private final static String LOG_TAG = NetworkUtilities.class.getSimpleName();
+    public final static String EC2_INSTANCE = "http://ec2-52-25-84-220.us-west-2.compute.amazonaws.com:8000";
 
     //Returns the IP address of the local interface. Code is from online.
     public static String getLocalIpAddress() {

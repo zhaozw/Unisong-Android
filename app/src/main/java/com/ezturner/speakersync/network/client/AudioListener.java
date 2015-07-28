@@ -3,6 +3,7 @@ package com.ezturner.speakersync.network.client;
 import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
@@ -45,9 +46,6 @@ public class AudioListener {
     //The port that the stream will be on
     private int mPort;
 
-    //The bridge between this and the AudioTrackManager
-    private ListenerBridge mBridge;
-
     //The discovery handler, which will handle finding and choosing the
     private ClientDiscoveryHandler mSlaveDiscoveryHandler;
 
@@ -86,9 +84,11 @@ public class AudioListener {
     //The class that handles all of the time operations
     private TimeManager mTimeManager;
 
+    private AudioTrackManager mAudioTrackManager;
+
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
-    public AudioListener(){
+    public AudioListener(AudioTrackManager audioTrackManager){
 
         mTimeManager = TimeManager.getInstance();
 
@@ -99,6 +99,7 @@ public class AudioListener {
         mIsListening = false;
 
         mProcessingQueue = new LinkedList<>();
+
     }
 
 
@@ -281,6 +282,7 @@ public class AudioListener {
     }
 
 
+    private ListenerBridge mBridge;
     private NetworkPacket handleFramePacket(DatagramPacket packet){
 
         FramePacket fp = new FramePacket(packet);

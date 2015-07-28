@@ -16,6 +16,7 @@ import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.network.TimeManager;
+import com.ezturner.speakersync.network.client.ListenerBridge;
 import com.ezturner.speakersync.network.master.Broadcaster;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.SntpClient;
@@ -127,7 +128,7 @@ public class MediaService extends Service{
 
 
     public void listener(){
-        mListener = new AudioListener();
+        mListener = new AudioListener(mAudioTrackManager);
     }
 
     public void play(){
