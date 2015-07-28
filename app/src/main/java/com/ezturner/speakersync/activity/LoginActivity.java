@@ -52,6 +52,7 @@ public class LoginActivity extends ActionBarActivity {
         if(!mLoginInProgress){
             mLoginInProgress = true;
             mLoginThread  = getLoginThread();
+            mLoginThread.start();
         }
 
     }
@@ -91,6 +92,7 @@ public class LoginActivity extends ActionBarActivity {
         }
 
         Log.d(LOG_TAG , result);
+        mLoginInProgress = false;
     }
 
     public void register(View view){

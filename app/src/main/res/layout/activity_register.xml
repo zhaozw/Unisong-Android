@@ -15,7 +15,7 @@
         android:textColorHint="@color/secondaryText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/username"
+        android:id="@+id/registerUsername"
         android:hint="@string/username"
         android:layout_marginTop="@dimen/activity_vertical_margin"
         android:layout_marginRight="@dimen/activity_vertical_margin"
@@ -23,9 +23,9 @@
         android:layout="@layout/custom_float_label"/>
 
     <com.iangclifton.android.floatlabel.FloatLabel
-        android:id="@+id/password"
+        android:id="@+id/registerPassword"
         android:textColorHint="@color/secondaryText"
-        android:layout_below="@+id/username"
+        android:layout_below="@+id/registerUsername"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
@@ -36,9 +36,9 @@
         android:layout="@layout/custom_float_label"/>
 
     <com.iangclifton.android.floatlabel.FloatLabel
-        android:id="@+id/passwordVerify"
+        android:id="@+id/registerPasswordVerify"
         android:textColorHint="@color/secondaryText"
-        android:layout_below="@+id/password"
+        android:layout_below="@+id/registerPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
@@ -49,9 +49,9 @@
         android:layout="@layout/custom_float_label"/>
 
     <com.iangclifton.android.floatlabel.FloatLabel
-        android:id="@+id/phone"
+        android:id="@+id/registerPhoneNumber"
         android:textColorHint="@color/secondaryText"
-        android:layout_below="@+id/passwordVerify"
+        android:layout_below="@+id/registerPasswordVerify"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
