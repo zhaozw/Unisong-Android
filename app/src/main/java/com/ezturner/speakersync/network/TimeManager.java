@@ -3,12 +3,13 @@ package com.ezturner.speakersync.network;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.network.ntp.SntpClient;
 
 /**
  * Created by Ethan on 5/8/2015.
  */
-public class TimeManager {
+public class TimeManager implements AudioObserver{
 
     private static TimeManager sIntance;
     public static TimeManager getInstance(){
@@ -52,5 +53,10 @@ public class TimeManager {
 
     public long getSongStartTime(){
         return mSongStartTime;
+    }
+
+    @Override
+    public void update(int state) {
+        //TODO : update mSongStartTime on resume
     }
 }

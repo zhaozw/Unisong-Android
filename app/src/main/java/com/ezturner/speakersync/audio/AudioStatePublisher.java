@@ -14,6 +14,8 @@ import java.util.List;
  * every time an architecture change is made.
  *
  * This class will handle the Audio State (playing, pausing, skipping, resuming, new song)
+ *
+ * To use this class, first update any relevant information with the setter methods and then call update()
  * Created by ezturner on 5/27/2015.
  */
 public class AudioStatePublisher {
@@ -28,8 +30,14 @@ public class AudioStatePublisher {
     public static final int NEW_SONG = 5;
     public static final int END_SONG = 6;
 
+    //The time that we are seeking to
     private long mSeekTime;
+
+    //The time that the song was paused at
     private long mPauseTime;
+
+    //The time that the song was resumed at
+    private long mResumeTime;
     private int mState;
     private byte mStreamID;
 
@@ -94,6 +102,7 @@ public class AudioStatePublisher {
     }
 
     public void setPauseTime(long pauseTime){
+        mResumeTime = pauseTime;
         mPauseTime = pauseTime;
     }
 
@@ -105,6 +114,9 @@ public class AudioStatePublisher {
 
     public void setSeekTime(long time){
         mSeekTime = time;
+        if(getState() == PAUSED){
+            mResumeTime = time;
+        }
     }
 
     public long getSeekTime(){
@@ -112,7 +124,7 @@ public class AudioStatePublisher {
     }
 
     public long getResumeTime(){
-        return mPauseTime;
+        return mResumeTime;
     }
 
     public byte getStreamID(){return mStreamID;}

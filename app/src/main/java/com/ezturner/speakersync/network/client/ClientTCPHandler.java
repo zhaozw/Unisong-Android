@@ -3,6 +3,8 @@ package com.ezturner.speakersync.network.client;
 
 import android.os.Handler;
 import android.util.Log;
+
+import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPFramePacket;
@@ -70,10 +72,14 @@ public class ClientTCPHandler {
     //The list of packets that need to be retransmit
     private List<Integer> mPacketsToRetransmit;
 
-    //Whether we can request packets. Is false until
+    //Whether we can request packets. Is false until - ??? why didn't I finish this comment
     private boolean mCanRequest;
 
+    private AudioStatePublisher mAudioStatePublisher;
+
     public ClientTCPHandler(InetAddress address, int broadcastPort, AudioListener listener){
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
+
         mMasterAddress = address;
 
         mListener = listener;
@@ -318,7 +324,8 @@ public class ClientTCPHandler {
         long seekTime = seekPacket.getSeekTime();
         Log.d(LOG_TAG , "Seek Time is : " + seekTime);
 
-        mListener.seek(seekTime);
+        mAudioStatePublisher.setSeekTime(seekTime);
+        mAudioStatePublisher.update(AudioStatePublisher.SEEK);
 
         mTopPacket = (int) (seekTime / (1024000.0 / 44100.0));
     }

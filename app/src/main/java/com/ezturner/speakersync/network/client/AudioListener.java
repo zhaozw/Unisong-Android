@@ -3,6 +3,8 @@ package com.ezturner.speakersync.network.client;
 import android.content.Context;
 import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.AudioObserver;
+import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.network.CONSTANTS;
@@ -26,7 +28,7 @@ import java.util.Queue;
  * discovery, and the reliability handler handles reliability
  *
  */
-public class AudioListener {
+public class AudioListener implements AudioObserver{
 
 
     private final static String LOG_TAG = "AudioListener";
@@ -84,13 +86,20 @@ public class AudioListener {
     //The class that handles all of the time operations
     private TimeManager mTimeManager;
 
-    private AudioTrackManager mAudioTrackManager;
+    //The class that tells us what the current audio state is
+    private AudioStatePublisher mAudioStatePublisher;
 
+    //The bridge that handles communication between this class and the slave decoder and audio manager
+    //TODO : get rid of this.
+    private ListenerBridge mBridge;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
-    public AudioListener(AudioTrackManager audioTrackManager){
+    public AudioListener(){
 
         mTimeManager = TimeManager.getInstance();
+
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
+        mAudioStatePublisher.attach(this);
 
         Log.d(LOG_TAG , "Audio Listener Started");
 
@@ -281,8 +290,6 @@ public class AudioListener {
         return networkPacket;
     }
 
-
-    private ListenerBridge mBridge;
     private NetworkPacket handleFramePacket(DatagramPacket packet){
 
         FramePacket fp = new FramePacket(packet);
@@ -299,9 +306,6 @@ public class AudioListener {
 
     public void startSong(long startTime , int channels , byte streamID , int currentPacket){
 
-        if(streamID == 0){
-
-        }
         //TODO: get rid of this, it's just test code
         if(!songStarted){
             songStarted = true;
@@ -342,13 +346,9 @@ public class AudioListener {
         mCounter++;
     }
 
-    public void pause(){
-        mBridge.pause();
-    }
-
     public void resume(long resumeTime , long newSongStartTime){
         mTimeManager.setSongStartTime(newSongStartTime);
-        mBridge.resume(resumeTime);
+        mAudioStatePublisher.
     }
 
     //TODO: implement this
@@ -357,7 +357,7 @@ public class AudioListener {
 
     }
 
-    public synchronized void destroy(){
+    public synchronized void destroy() {
         mClientTCPHandler.destroy();
         mSocket.close();
         mSlaveDiscoveryHandler.destroy();
@@ -367,11 +367,8 @@ public class AudioListener {
         mBridge.destroy();
     }
 
-    public void seek(long seekTime){
-        mBridge.seek(seekTime);
-    }
+    @Override
+    public void update(int state) {
 
-    public void lastPacket(int packetID){
-        mLastPacket = packetID;
     }
 }

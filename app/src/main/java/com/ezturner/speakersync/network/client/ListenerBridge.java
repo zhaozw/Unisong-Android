@@ -50,25 +50,10 @@ public class ListenerBridge extends AbstractBridge {
         mManager.lastPacket();
     }
 
-    public void pause(){
-        mManager.pause();
-    }
-
-    public void resume(long resumeTime){
-        mManager.resume(resumeTime);
-    }
-
     public void destroy(){
         mSlaveDecoder = null;
         mManager = null;
         super.destroy();
-    }
-
-    public void seek(long seekTime){
-        mSlaveDecoder.seek(seekTime);
-        if(mManager != null){
-            mManager.seek(seekTime);
-        }
     }
 
 
