@@ -83,12 +83,11 @@ public class LoginActivity extends ActionBarActivity {
         }
         String json = object.toString();
 
-        String result;
+        String result = "Error!";
         try {
             result = client.post(URL, json);
         } catch (IOException e){
             e.printStackTrace();
-            return;
         }
 
         Log.d(LOG_TAG , result);

@@ -348,7 +348,7 @@ public class AudioListener implements AudioObserver{
 
     public void resume(long resumeTime , long newSongStartTime){
         mTimeManager.setSongStartTime(newSongStartTime);
-        mAudioStatePublisher.
+//        mAudioStatePublisher.
     }
 
     //TODO: implement this
@@ -368,7 +368,7 @@ public class AudioListener implements AudioObserver{
     }
 
     @Override
-    public void update(int state) {
+    public void update(int state){
 
     }
 }

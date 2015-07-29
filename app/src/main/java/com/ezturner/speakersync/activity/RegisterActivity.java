@@ -100,14 +100,12 @@ public class RegisterActivity extends ActionBarActivity {
         }
 
         String json = object.toString();
-        String result;
+        String result = "Error!";
 
         try {
             result = client.post(URL, json);
         } catch (IOException e) {
             e.printStackTrace();
-            mRegisterInProgress = false;
-            return;
         }
 
         Log.d(LOG_TAG , result);

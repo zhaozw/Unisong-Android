@@ -374,7 +374,7 @@ public class ClientTCPHandler {
 
     private void listenPause(){
         Log.d(LOG_TAG, "Pause Received");
-        mListener.pause();
+//        mListener.pause();
         //TODO: handle pause
     }
 
