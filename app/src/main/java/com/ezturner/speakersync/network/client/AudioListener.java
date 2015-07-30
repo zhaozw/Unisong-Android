@@ -93,15 +93,23 @@ public class AudioListener implements AudioObserver{
     //TODO : get rid of this.
     private ListenerBridge mBridge;
 
+    private AudioTrackManager mManager;
+
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
-    public AudioListener(){
+    public AudioListener(AudioTrackManager manager){
 
         mTimeManager = TimeManager.getInstance();
+
+        mManager = manager;
+
+        mSlaveDecoder = new SlaveDecoder(2, (byte)0);
+
+        mBridge = new ListenerBridge(mSlaveDecoder , mManager);
 
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mAudioStatePublisher.attach(this);
 
-        Log.d(LOG_TAG , "Audio Listener Started");
+        Log.d(LOG_TAG, "Audio Listener Started");
 
         mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
 

@@ -42,10 +42,10 @@ public class SlaveDecoder {
 
     private byte mStreamID;
 
-    public SlaveDecoder(int channels, TimeManager manager , byte streamID){
+    public SlaveDecoder(int channels , byte streamID){
         mCurrentID = 0;
         mFrames = new HashMap<>();
-        mTimeManager = manager;
+        mTimeManager = TimeManager.getInstance();
         mStreamID = streamID;
 
     }

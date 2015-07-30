@@ -33,10 +33,7 @@ public class AudioStatePublisher {
     //The time that we are seeking to
     private long mSeekTime;
 
-    //The time that the song was paused at
-    private long mPauseTime;
-
-    //The time that the song was resumed at
+    //The time that the song will be resumed at
     private long mResumeTime;
     private int mState;
     private byte mStreamID;
@@ -90,20 +87,11 @@ public class AudioStatePublisher {
 
     public void notifyObservers(int state){
 
-        if(mState == PAUSED || mState == SEEK){
-            mPauseTime = AudioTrackManager.getLastFrameTime();
-        }
-
         mUpdated = false;
         for(AudioObserver observer : mObservers){
             observer.update(state);
         }
 
-    }
-
-    public void setPauseTime(long pauseTime){
-        mResumeTime = pauseTime;
-        mPauseTime = pauseTime;
     }
 
     public void setState(int state){

@@ -128,7 +128,7 @@ public class MediaService extends Service{
 
 
     public void listener(){
-        mListener = new AudioListener();
+        mListener = new AudioListener(mAudioTrackManager);
     }
 
     public void play(){

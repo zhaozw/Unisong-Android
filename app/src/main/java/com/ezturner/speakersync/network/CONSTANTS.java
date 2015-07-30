@@ -92,7 +92,7 @@ public class CONSTANTS {
     public static final int FEC_DATA_LENGTH = FEC_SYMBOL_SIZE * FEC_NUM_SRC_BLOCKS;
 
     public static final int PACKET_SEND_DELAY = 500;
-    public static final int SONG_START_DELAY = 1000 + PACKET_SEND_DELAY;
+    public static final int SONG_START_DELAY = 2000 + PACKET_SEND_DELAY;
 
 
 }

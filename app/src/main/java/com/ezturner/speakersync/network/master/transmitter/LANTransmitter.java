@@ -107,7 +107,7 @@ public class LANTransmitter implements Transmitter{
         }
 
         mWorker = Executors.newSingleThreadScheduledExecutor();
-        mWorker.schedule(mSongStreamStart, 2500, TimeUnit.MILLISECONDS);
+        mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
 
     }
 
@@ -366,7 +366,7 @@ public class LANTransmitter implements Transmitter{
     //TODO implement a way to keep the buffer at a certain amount (say 1000ms)
     //TODO: implement and calculate this based on the bitrate and whatnot for the FEC
     private long getDelay(){
-        return 20;
+        return 17;
     }
 
 

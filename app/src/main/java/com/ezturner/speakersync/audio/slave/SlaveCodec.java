@@ -201,8 +201,14 @@ public class SlaveCodec {
             }
 
             //TODO : check for illegal state exception?
+            //TODO: This throws an illegal state exception pretty often, try to fix it.
             // encode to AAC and then put in mFrames
-            int outputBufIndex = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
+            int outputBufIndex = 0;
+            try {
+                 outputBufIndex = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
+            } catch (IllegalStateException e){
+                e.printStackTrace();
+            }
 
 
             if (outputBufIndex >= 0){
