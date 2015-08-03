@@ -8,10 +8,10 @@ import com.ezturner.speakersync.audio.master.AACEncoder;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.TimeManager;
+import com.ezturner.speakersync.network.master.Client;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.master.MasterFECHandler;
 import com.ezturner.speakersync.network.master.MasterTCPHandler;
-import com.ezturner.speakersync.network.master.Slave;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
 import java.io.IOException;
@@ -106,10 +106,10 @@ public class LANTransmitter implements Transmitter{
             e.printStackTrace();
         }
 
-        mWorker = Executors.newSingleThreadScheduledExecutor();
-        mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
 
+        mWorker = Executors.newSingleThreadScheduledExecutor();
     }
+
 
     Runnable mSongStreamStart = new Runnable() {
         @Override
@@ -237,13 +237,13 @@ public class LANTransmitter implements Transmitter{
                 Log.d(LOG_TAG, "packet to be rebroadcast is: " + packet.toString());
 
                 int count = 0;
-                Slave oneSlave = null;
-                List<Slave> slaves = mTCPHandler.getSlaves();
-                synchronized (slaves) {
-                    for (Slave slave : slaves){
-                        if (!slave.hasPacket(packet.getPacketID())) {
+                Client oneClient = null;
+                List<Client> clients = mTCPHandler.getSlaves();
+                synchronized (clients) {
+                    for (Client client : clients){
+                        if (!client.hasPacket(packet.getPacketID())) {
                             count++;
-                            oneSlave = slave;
+                            oneClient = client;
                         }
                     }
                 }
@@ -255,7 +255,7 @@ public class LANTransmitter implements Transmitter{
                     rebroadcast();
                     return;
                 } else if(count == 1){
-                    mTCPHandler.sendFrameTCP(((FramePacket) packet).getFrame(), oneSlave);
+                    mTCPHandler.sendFrameTCP(((FramePacket) packet).getFrame(), oneClient);
                     synchronized (mPacketsToRebroadcast) {
                         mPacketsToRebroadcast.remove(0);
                     }
@@ -264,13 +264,13 @@ public class LANTransmitter implements Transmitter{
                     return;
                 }
 
-                for(Slave slave : mTCPHandler.getSlaves()){
-                    slave.packetHasBeenRebroadcasted(packet.getPacketID());
+                for(Client client : mTCPHandler.getSlaves()){
+                    client.packetHasBeenRebroadcasted(packet.getPacketID());
                 }
 
-                synchronized (slaves) {
-                    for (Slave slave : slaves) {
-                        List<Integer> packets = slave.getPacketsToBeReSent();
+                synchronized (clients) {
+                    for (Client client : clients) {
+                        List<Integer> packets = client.getPacketsToBeReSent();
                         for (Integer i : packets) {
                             if (!mPacketsToRebroadcast.contains(i)) {
                                 mPacketsToRebroadcast.add(i);
@@ -307,9 +307,13 @@ public class LANTransmitter implements Transmitter{
         }
     }
 
-    private void startStream(){
+    public void startStream(){
         mStreamIP = NetworkUtilities.getBroadcastAddress();
         mStreamSocket.connect(mStreamIP, getPort());
+
+        for(Client client : mTCPHandler.getSlaves()){
+            client.notifyOfSongStart();
+        }
 
         mStreamRunning = true;
         mWorker.schedule(mPacketSender, CONSTANTS.PACKET_SEND_DELAY, TimeUnit.MILLISECONDS);
@@ -349,7 +353,7 @@ public class LANTransmitter implements Transmitter{
                 resume(mAudioStatePublisher.getResumeTime());
                 break;
             case AudioStatePublisher.NEW_SONG:
-                startStream();
+//                startStream();
                 break;
 
         }

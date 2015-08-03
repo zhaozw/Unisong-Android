@@ -11,17 +11,17 @@ import com.ezturner.speakersync.network.TimeManager;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
+ * A decoder class that decodes a single song.
  * Created by ezturner on 5/6/2015.
  */
-public class SlaveCodec {
+public class SongDecoder {
 
-    private final String LOG_TAG = SlaveCodec.class.getSimpleName();
+    private final String LOG_TAG = SongDecoder.class.getSimpleName();
     //The parent SlaveDecoder object that we will be sending our output data to
-    private SlaveDecoder mDecoder;
+    private SlaveDecoder mParentDecoder;
 
     protected int inputBufIndex;
     protected int bufIndexCheck;
@@ -51,9 +51,9 @@ public class SlaveCodec {
     private int mStartFrame;
 
 
-    public SlaveCodec(SlaveDecoder decoder, int channels, Map<Integer , AudioFrame> frames, TimeManager timeManager){
-        mDecoder = decoder;
-        mTimeManager = timeManager;
+    public SongDecoder(SlaveDecoder decoder, int channels, Map<Integer, AudioFrame> frames){
+        mParentDecoder = decoder;
+        mTimeManager = TimeManager.getInstance();
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
         sampleRate = 44100;
@@ -85,7 +85,7 @@ public class SlaveCodec {
         long startTime = System.currentTimeMillis();
 
 
-        Log.d(LOG_TAG, "Creating mCodec : OMX.google.aac.encoder");
+//        Log.d(LOG_TAG, "Creating mCodec : OMX.google.aac.decoder");
         // create the actual decoder, using the mime to select
         try{
             //TODO: see if this works on all devices.
@@ -98,9 +98,6 @@ public class SlaveCodec {
             Log.d(LOG_TAG , "mCodec is null ):");
             return;
         }
-
-
-
 
         MediaFormat format = new MediaFormat();
         format.setString(MediaFormat.KEY_MIME, mime);
@@ -144,11 +141,13 @@ public class SlaveCodec {
                 }
                 long diff = mTimeManager.getAACPlayTime(mCurrentFrame) - System.currentTimeMillis();
 
-                if(diff <= 50 && !mStop){
+//                Log.d(LOG_TAG , "Diff is : " + diff + " for frame #" + mCurrentFrame);
+
+                if(diff <= 50 && !mStop && false){
 
                     Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + " which should be played in " + (diff)  + "ms" );
 
-                    mDecoder.createFrame(new byte[info.size]);
+                    mParentDecoder.createFrame(new byte[info.size]);
                     mCurrentFrame++;
 
                     if(!mFrames.containsKey(mCurrentFrame)){
@@ -173,13 +172,15 @@ public class SlaveCodec {
                 }
             }
 
+            Log.d(LOG_TAG , mFrames.size() + " frames in mFrames.");
             if(mStop)   break;
 
 
             AudioFrame frame;
             synchronized (mFrames){
+                Log.d(LOG_TAG , "Getting frame #" + mCurrentFrame);
                 frame = mFrames.get(mCurrentFrame);
-                lastPlayTime = frame.getPlayTime() - mDecoder.getOffset() + mDecoder.getSongStartTime();
+                lastPlayTime = frame.getPlayTime() - mParentDecoder.getOffset() + mParentDecoder.getSongStartTime();
             }
 
             if(mCurrentFrame == 4306) Log.d(LOG_TAG , "decoding mCurrentFrame");
@@ -220,7 +221,7 @@ public class SlaveCodec {
                 buf.get(chunk);
                 buf.clear();
                 if(chunk.length > 0 && !mStop){
-                    mDecoder.createFrame(chunk);
+                    mParentDecoder.createFrame(chunk);
                 }
 
                 try {
@@ -319,14 +320,8 @@ public class SlaveCodec {
     }
 
     public void destroy(){
-        mDecodeThread = null;
-        mStop = true;
-    }
-
-    public void seek(long seekTime){
         mStop = true;
         while(mRunning){}
-        long begin = System.currentTimeMillis();
-
+        mDecodeThread = null;
     }
 }

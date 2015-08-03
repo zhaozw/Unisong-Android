@@ -42,7 +42,7 @@ public class MasterTCPHandler implements AudioObserver {
 
     private MasterTCPHandler mThis;
 
-    private List<Slave> mSlaves;
+    private List<Client> mClients;
 
     private LANTransmitter mLANTransmitter;
 
@@ -52,7 +52,7 @@ public class MasterTCPHandler implements AudioObserver {
 
         mLANTransmitter = transmitter;
 
-        mSlaves = new ArrayList<>();
+        mClients = new ArrayList<>();
 
         mTimeManager = TimeManager.getInstance();
         mAudioStatePublisher = AudioStatePublisher.getInstance();
@@ -97,8 +97,8 @@ public class MasterTCPHandler implements AudioObserver {
                     }
                     Log.d(LOG_TAG , "Socket connected : " + socket.getInetAddress());
 
-                    Slave newSlave = new Slave(socket.getRemoteSocketAddress().toString() , socket , mThis, mLANTransmitter);
-                    mSlaves.add(newSlave);
+                    Client newClient = new Client(socket.getRemoteSocketAddress().toString() , socket , mThis, mLANTransmitter);
+                    mClients.add(newClient);
                 }
             }
         };
@@ -110,16 +110,16 @@ public class MasterTCPHandler implements AudioObserver {
     //Checks to see if any of the slaves have the packet in question.
     public boolean checkSlaves(int packetID){
         //The list of slaves that have the packet in question
-        List<Slave> havePacket = new ArrayList<>();
+        List<Client> havePacket = new ArrayList<>();
 
         if(checkRecentlyRebroadcasted(packetID)){
             return true;
         }
 
-        synchronized (mSlaves){
-            for(Slave slave : mSlaves) {
-                if(slave.hasPacket(packetID)) {
-                    havePacket.add(slave);
+        synchronized (mClients){
+            for(Client client : mClients) {
+                if(client.hasPacket(packetID)) {
+                    havePacket.add(client);
 
                 }
             }
@@ -127,7 +127,7 @@ public class MasterTCPHandler implements AudioObserver {
             //If no slaves have the packet return false, but if they all have it return true.
             if(havePacket.size() == 0){
                 return false;
-            } else if( havePacket.size() == mSlaves.size()){
+            } else if( havePacket.size() == mClients.size()){
                 return true;
             }
         }
@@ -136,10 +136,10 @@ public class MasterTCPHandler implements AudioObserver {
 
         int index = mRandom.nextInt(havePacket.size());
 
-        Slave slave = havePacket.get(index);
+        Client client = havePacket.get(index);
         Log.d(LOG_TAG , "Telling "  + havePacket.get(index).toString() + " to rebroadcast frame #" + packetID);
 
-        slave.retransmitPacket(packetID);
+        client.retransmitPacket(packetID);
 
         mRecentlyRebroadcasted.put(packetID , System.currentTimeMillis());
         return true;
@@ -175,21 +175,21 @@ public class MasterTCPHandler implements AudioObserver {
     private void notifyOfSongStart(){
         Log.d(LOG_TAG , "Notifying all listeners of song start");
         long begin = System.currentTimeMillis();
-        for(Slave slave : mSlaves){
-            slave.notifyOfSongStart();
+        for(Client client : mClients){
+            client.notifyOfSongStart();
         }
         Log.d(LOG_TAG, "Done notifying after :" + (System.currentTimeMillis() - begin) + "ms.");
     }
 
     //Send a TCP packet to the one that needs it containing an AAC frame
-    public void sendFrameTCP(AudioFrame frame , Slave slave){
-        slave.sendFrame(frame);
+    public void sendFrameTCP(AudioFrame frame , Client client){
+        client.sendFrame(frame);
     }
 
     public synchronized void pause(){
         Log.d(LOG_TAG, "Pausing");
-        for(Slave slave : mSlaves){
-            slave.pause();
+        for(Client client : mClients){
+            client.pause();
         }
 
     }
@@ -197,16 +197,16 @@ public class MasterTCPHandler implements AudioObserver {
     //Sends the resume command to all Slaves
     private void resume(long resumeTime){
 
-        for(Slave slave : mSlaves){
-            slave.resume(resumeTime, mTimeManager.getSongStartTime());
+        for(Client client : mClients){
+            client.resume(resumeTime, mTimeManager.getSongStartTime());
         }
 
     }
 
     public void destroy(){
         mRunning = false;
-        for (Slave slave : mSlaves){
-            slave.destroy();
+        for (Client client : mClients){
+            client.destroy();
         }
 
         try{
@@ -217,8 +217,8 @@ public class MasterTCPHandler implements AudioObserver {
     }
 
     public void seek(long seekTime){
-        for(Slave slave : mSlaves){
-            slave.seek(seekTime);
+        for(Client client : mClients){
+            client.seek(seekTime);
         }
     }
 
@@ -242,12 +242,13 @@ public class MasterTCPHandler implements AudioObserver {
                 break;
 
             case AudioStatePublisher.PAUSED:
+                pause();
                 break;
 
             case AudioStatePublisher.SEEK:
                 long seekTime = mAudioStatePublisher.getSeekTime();
                 seek(seekTime);
-                resume(mAudioStatePublisher.getResumeTime());
+                resume(seekTime);
                 break;
             case AudioStatePublisher.NEW_SONG:
                 getStartThread().start();
@@ -255,7 +256,7 @@ public class MasterTCPHandler implements AudioObserver {
         }
     }
 
-    public List<Slave> getSlaves(){
-        return mSlaves;
+    public List<Client> getSlaves(){
+        return mClients;
     }
 }

@@ -226,7 +226,7 @@ public class ClientTCPHandler {
                 case CONSTANTS.TCP_END_SESSION:
                     endSession();
                     break;
-                //This Slave is now the session master.
+                //This Client is now the session master.
                 case CONSTANTS.TCP_ASSIGN_MASTER:
                     assignMaster();
                     break;
@@ -324,8 +324,7 @@ public class ClientTCPHandler {
         long seekTime = seekPacket.getSeekTime();
         Log.d(LOG_TAG , "Seek Time is : " + seekTime);
 
-        mAudioStatePublisher.setSeekTime(seekTime);
-        mAudioStatePublisher.update(AudioStatePublisher.SEEK);
+        mAudioStatePublisher.seek(seekTime);
 
         mTopPacket = (int) (seekTime / (1024000.0 / 44100.0));
     }

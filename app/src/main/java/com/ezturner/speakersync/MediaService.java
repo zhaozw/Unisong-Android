@@ -33,17 +33,8 @@ public class MediaService extends Service{
 
     private AudioListener mListener;
     private Broadcaster mBroadcaster;
-    private AudioTrackManager mAudioTrackManager;
 
     private BroadcastReceiver mMessageReceiver ;
-
-    private SlaveDecoder mSlaveDecoder;
-    private MasterDiscoveryHandler mDiscovery;
-
-    //Objects for enabling multicast
-    private static WifiManager wifiManager;
-    private static WifiManager.MulticastLock mCastLock;
-
     private SntpClient mSntpClient;
 
     public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
@@ -54,6 +45,8 @@ public class MediaService extends Service{
     private TimeManager mTimeManager;
 
     private AudioStatePublisher mAudioStatePublisher;
+
+    private AudioTrackManager mAudioTrackManager;
 
     //The time that we have paused at, relative to the Song start time.
     private long mResumeTime = 0;
@@ -68,10 +61,9 @@ public class MediaService extends Service{
     @Override
     public void onCreate(){
         super.onCreate();
+        Log.d(LOG_TAG, "Starting MediaService");
 
         mSntpClient = new SntpClient();
-        mTimeManager = new TimeManager(mSntpClient);
-        Log.d(LOG_TAG, "Starting MediaService");
 
         mMessageReceiver = new BroadcastReceiver() {
             @Override
@@ -110,9 +102,11 @@ public class MediaService extends Service{
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));
 
-
-        mAudioTrackManager = new AudioTrackManager(mTimeManager);
         mAudioStatePublisher = AudioStatePublisher.getInstance();
+
+        mTimeManager = new TimeManager(SntpClient.getInstance());
+        //The instanatiation of AudioTrackManager needs to be after that of TimeManager!
+        mAudioTrackManager = new AudioTrackManager();
 
 
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
@@ -128,7 +122,7 @@ public class MediaService extends Service{
 
 
     public void listener(){
-        mListener = new AudioListener(mAudioTrackManager);
+        mListener = new AudioListener();
     }
 
     public void play(){
@@ -143,10 +137,8 @@ public class MediaService extends Service{
         mAudioStatePublisher.update(AudioStatePublisher.RESUME);
     }
 
-    private Thread mSeekThread;
     public void seek() {
-        mAudioStatePublisher.setSeekTime(100000);
-        mAudioStatePublisher.update(AudioStatePublisher.SEEK);
+        mAudioStatePublisher.seek(100000);
     }
 
     public IBinder onBind(Intent arg0){
@@ -182,8 +174,6 @@ public class MediaService extends Service{
         }
 
         Log.d(LOG_TAG , "Destroying mAudioTrackManager");
-        mAudioTrackManager.destroy();
-        mAudioTrackManager = null;
 
 
         if(mSntpClient != null){

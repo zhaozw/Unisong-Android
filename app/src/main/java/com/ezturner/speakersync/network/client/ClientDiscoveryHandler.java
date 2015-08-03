@@ -21,7 +21,7 @@ import java.util.ArrayList;
  */
 public class ClientDiscoveryHandler {
 
-    private static final String LOG_TAG = "SlaveDiscoveryHandler";
+    private static final String LOG_TAG = ClientDiscoveryHandler.class.getSimpleName();
     //The active listening socket
     private DatagramSocket mSendSocket;
 
@@ -69,7 +69,7 @@ public class ClientDiscoveryHandler {
         } catch(SocketException e){
             e.printStackTrace();
         }
-        Log.d(LOG_TAG , "Slave Discovery Handler started");
+        Log.d(LOG_TAG , "Client Discovery Handler started");
         findMasters();
     }
 

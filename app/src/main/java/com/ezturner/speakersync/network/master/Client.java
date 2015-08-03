@@ -36,9 +36,9 @@ import java.util.Map;
 /**
  * Created by ezturner on 4/29/2015.
  */
-public class Slave {
+public class Client {
 
-    private static final String LOG_TAG = Slave.class.getSimpleName();
+    private static final String LOG_TAG = Client.class.getSimpleName();
     private InetAddress mAddress;
 
     //A list of all of the packets that this slave has received and has in memory.
@@ -61,7 +61,8 @@ public class Slave {
     private LANTransmitter mTransmitter;
 
 
-    public Slave(String ip, Socket socket , MasterTCPHandler parent, LANTransmitter transmitter){
+    //TODO : Add mode for server connection
+    public Client(String ip, Socket socket, MasterTCPHandler parent, LANTransmitter transmitter){
 
         mTransmitter = transmitter;
 
@@ -115,7 +116,7 @@ public class Slave {
     }
 
     public String toString(){
-        return "Slave, IP: " + mAddress.toString();
+        return "Client, IP: " + mAddress.toString();
     }
 
     public List<Integer> getPacketsToBeReSent(){

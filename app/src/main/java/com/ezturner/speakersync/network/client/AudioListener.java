@@ -51,7 +51,7 @@ public class AudioListener implements AudioObserver{
     //The discovery handler, which will handle finding and choosing the
     private ClientDiscoveryHandler mSlaveDiscoveryHandler;
 
-    //The Slave reliability handler which handles packet reliability
+    //The Client reliability handler which handles packet reliability
     private ClientTCPHandler mClientTCPHandler;
 
     //The activity context
@@ -96,11 +96,11 @@ public class AudioListener implements AudioObserver{
     private AudioTrackManager mManager;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
-    public AudioListener(AudioTrackManager manager){
+    public AudioListener(){
+
+        mManager = AudioTrackManager.getInstance();
 
         mTimeManager = TimeManager.getInstance();
-
-        mManager = manager;
 
         mSlaveDecoder = new SlaveDecoder(2, (byte)0);
 

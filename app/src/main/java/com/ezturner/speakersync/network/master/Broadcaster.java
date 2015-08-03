@@ -2,6 +2,7 @@ package com.ezturner.speakersync.network.master;
 
 import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
+import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.master.AACEncoder;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
@@ -13,6 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Ethan on 2/8/2015.
@@ -38,6 +42,11 @@ public class Broadcaster implements AudioObserver{
 
     private AACEncoder mEncoder;
 
+    //The Scheduler that handles packet send delays.
+    private ScheduledExecutorService mWorker;
+
+    private LANTransmitter mLANTransmitter;
+
     //Makes an Broadcaster object
     public Broadcaster(){
         //Get the singleton objects.
@@ -48,12 +57,12 @@ public class Broadcaster implements AudioObserver{
 
         //TODO: check to see if we're on wifi. If not, then don't start LANTransmitter
         mTransmitters = new ArrayList<>();
-        LANTransmitter transmitter = new LANTransmitter(false);
-        mTransmitters.add(transmitter);
+        mLANTransmitter = new LANTransmitter(false);
+        mTransmitters.add(mLANTransmitter);
 
-        //TODO: delete
-        startSongStream();
+        mWorker = Executors.newSingleThreadScheduledExecutor();
 
+        mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
     }
 
     Runnable mSongStreamStart = new Runnable() {
@@ -80,6 +89,8 @@ public class Broadcaster implements AudioObserver{
         for(Transmitter transmitter : mTransmitters){
             transmitter.setAACEncoder(mEncoder);
         }
+
+        mLANTransmitter.startStream();
 
         mStreamRunning = true;
     }

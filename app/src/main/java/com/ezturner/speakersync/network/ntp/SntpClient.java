@@ -45,6 +45,12 @@ public class SntpClient
 
     private final String LOG_TAG = SntpClient.class.getSimpleName();
 
+    private static SntpClient sInstance;
+
+    public static SntpClient getInstance(){
+        return sInstance;
+    }
+
     //The current server IP
     private String mServerIP = "";
 
@@ -83,6 +89,7 @@ public class SntpClient
 
         mHasOffset = false;
 
+        sInstance = this;
     }
 
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.

@@ -29,7 +29,6 @@
             android:layout_height="wrap_content"
             android:text="New Button"
             android:id="@+id/slaveButton"
-            android:src="@drawable/slave"
             android:layout_centerInParent="true"
             android:background="@null"
             android:layout_gravity="center_horizontal" />

@@ -42,6 +42,8 @@ public class AudioStatePublisher {
     private boolean mUpdated;
     private List<AudioObserver> mObservers;
 
+    private AudioTrackManager mManager;
+
     //Sets the state for Idle and instantiates the Observers arraylist
     public AudioStatePublisher(){
         mState = IDLE;
@@ -75,7 +77,16 @@ public class AudioStatePublisher {
             mState = state;
         }
 
-        if(mState == NEW_SONG){
+        if(state == PAUSED){
+            // If I put this into the constructor it causes a loop of instantiation between
+            // AudioTrackManager and this class due to their dual singleton design pattern.
+            if(mManager == null){
+                mManager = AudioTrackManager.getInstance();
+            }
+            mResumeTime = mManager.getLastFrameTime();
+        }
+
+        if(state == NEW_SONG){
             if(mStreamID >= 254){
                 mStreamID = 0;
             } else {
@@ -86,35 +97,35 @@ public class AudioStatePublisher {
     }
 
     public void notifyObservers(int state){
-
         mUpdated = false;
-        for(AudioObserver observer : mObservers){
+        for(AudioObserver observer : mObservers) {
             observer.update(state);
         }
-
     }
 
     public void setState(int state){
         mState = state;
     }
 
-    public int getState(){return mState;}
-
-    public void setSeekTime(long time){
-        mSeekTime = time;
-        if(getState() == PAUSED){
-            mResumeTime = time;
-        }
+    public long getResumeTime(){
+        return mResumeTime;
     }
 
     public long getSeekTime(){
         return mSeekTime;
     }
 
-    public long getResumeTime(){
-        return mResumeTime;
-    }
+    public int getState(){return mState;}
 
     public byte getStreamID(){return mStreamID;}
+
+    /**
+     * The Seek method. It updates the seek time and then executes an update()
+     */
+    public void seek(long time){
+        mSeekTime = time;
+        mResumeTime = time;
+        update(AudioStatePublisher.SEEK);
+    }
 }
 

@@ -47,8 +47,7 @@ public class TimeManager implements AudioObserver{
     }
 
     public long getOffset(){
-        long offset = mSntpClient.getOffset();
-        return offset;
+        return mSntpClient.getOffset();
     }
 
     public long getSongStartTime(){

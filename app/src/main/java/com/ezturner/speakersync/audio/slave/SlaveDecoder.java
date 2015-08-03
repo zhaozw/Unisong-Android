@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The parent class of SlaveCodec, it maintains data and creates and
- * destroys SlaveCodec instances as needed.
+ * The parent class of SongDecoder, it maintains data and creates and
+ * destroys SongDecoder instances as needed.
  * Handles the decoding of AAC data as needed by the AudioTrackManager class.
  * Created by ezturner on 4/6/2015.
  */
@@ -36,7 +36,7 @@ public class SlaveDecoder {
     //The time that the song starts at
     private long mSongStartTime;
 
-    private SlaveCodec mSlaveCodec;
+    private SongDecoder mSongDecoder;
 
     private TimeManager mTimeManager;
 
@@ -55,17 +55,16 @@ public class SlaveDecoder {
         setCurrentFrame(frame);
 
         //If slave codec is not null, then get rid of the old one
-        if(mSlaveCodec != null){
-            mSlaveCodec.stopDecode();
+        if(mSongDecoder != null){
+            mSongDecoder.stopDecode();
         }
 
-        mSlaveCodec = new SlaveCodec(this , channels , mFrames , mTimeManager);
-        mSlaveCodec.decode(frame);
+//        mSongDecoder = new SongDecoder(this , channels , mFrames);
+//        mSongDecoder.decode(frame);
     }
 
     public void setCurrentFrame(int currentFrame){
-        mSlaveCodec.setCurrentFrame(currentFrame);
-
+        mSongDecoder.setCurrentFrame(currentFrame);
     }
 
 
@@ -112,27 +111,27 @@ public class SlaveDecoder {
 
     //TODO: keep this updated.
     public void destroy(){
-        mSlaveCodec.destroy();
-        mSlaveCodec = null;
+        mSongDecoder.destroy();
+        mSongDecoder = null;
         mTimeManager = null;
 
     }
 
     public void newSong(){
-        if(mSlaveCodec != null) {
-            mSlaveCodec.destroy();
+        if(mSongDecoder != null) {
+            mSongDecoder.destroy();
         }
         mFrames = new HashMap<>();
-        mSlaveCodec = new SlaveCodec(this, channels ,  mFrames ,mTimeManager );
+        mSongDecoder = new SongDecoder(this, channels ,  mFrames);
     }
 
     private boolean mSeek = false;
     public void seek(long seekTime){
-        mSlaveCodec.seek(seekTime);
+        mSongDecoder.destroy();
         mTimeAdjust = seekTime;
-        mSlaveCodec = new SlaveCodec(this ,2, mFrames , mTimeManager);
+        mSongDecoder = new SongDecoder(this ,2, mFrames);
         mSeek = true;
 
-        mSlaveCodec.decode((int)(seekTime / (1024000.0 / 44100.0)));
+        mSongDecoder.decode((int)(seekTime / (1024000.0 / 44100.0)));
     }
 }
