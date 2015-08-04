@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -14,13 +13,10 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.slave.SlaveDecoder;
 import com.ezturner.speakersync.network.TimeManager;
-import com.ezturner.speakersync.network.client.ListenerBridge;
+import com.ezturner.speakersync.network.client.Listener;
 import com.ezturner.speakersync.network.master.Broadcaster;
-import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.ntp.SntpClient;
-import com.ezturner.speakersync.network.client.AudioListener;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -31,7 +27,7 @@ public class MediaService extends Service{
 
     private IBinder mBinder = new MediaServiceBinder();
 
-    private AudioListener mListener;
+    private Listener mListener;
     private Broadcaster mBroadcaster;
 
     private BroadcastReceiver mMessageReceiver ;
@@ -55,7 +51,7 @@ public class MediaService extends Service{
 
     public void startToListen(){
         //TODO: uncomment after compile
-        //mListener = new AudioListener(this);
+        //mListener = new Listener(this);
     }
 
     @Override
@@ -122,7 +118,7 @@ public class MediaService extends Service{
 
 
     public void listener(){
-        mListener = new AudioListener();
+        mListener = new Listener();
     }
 
     public void play(){

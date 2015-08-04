@@ -66,8 +66,8 @@ public class ClientTCPHandler {
     //The socket for retransmitting packets that need to be sent over the network
     private DatagramSocket mDatagramSocket;
 
-    //The parent AudioListener object, used to get packets to be retransmitted
-    private AudioListener mListener;
+    //The parent Listener object, used to get packets to be retransmitted
+    private Listener mListener;
 
     //The list of packets that need to be retransmit
     private List<Integer> mPacketsToRetransmit;
@@ -77,7 +77,7 @@ public class ClientTCPHandler {
 
     private AudioStatePublisher mAudioStatePublisher;
 
-    public ClientTCPHandler(InetAddress address, int broadcastPort, AudioListener listener){
+    public ClientTCPHandler(InetAddress address, int broadcastPort, Listener listener){
         mAudioStatePublisher = AudioStatePublisher.getInstance();
 
         mMasterAddress = address;

@@ -175,6 +175,7 @@ public class MainActivity extends ActionBarActivity {
         intent.putExtra("command" , "broadcaster");
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        //Call google analytics, and tell them they did this action
     }
 
 

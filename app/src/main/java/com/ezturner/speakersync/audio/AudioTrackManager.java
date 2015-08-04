@@ -172,6 +172,7 @@ public class AudioTrackManager implements AudioObserver {
 
             /*
             //TODO :take a look at this code and see if we can improve it to limit audio skips/the artifacts I hear sometimes
+            // note : this was causing the artifacts, and it looks like they stay in sync pretty well. Revisit this if they at times get out of sync.
             mRunCount++;
             if (mRunCount > 10) {
                 mRunCount = 0;
@@ -368,10 +369,6 @@ public class AudioTrackManager implements AudioObserver {
                 seek(seekTime);
 
                 resume(mAudioStatePublisher.getResumeTime());
-                break;
-            case AudioStatePublisher.NEW_SONG:
-                Log.d(LOG_TAG , "New Song Update Received");
-                startSong();
                 break;
         }
     }

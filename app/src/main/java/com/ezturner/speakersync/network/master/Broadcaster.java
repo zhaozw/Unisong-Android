@@ -78,13 +78,13 @@ public class Broadcaster implements AudioObserver{
 
         mFrames = new TreeMap<>();
 
-        mEncoder = new AACEncoder(mAudioStatePublisher.getStreamID() , mFrames);
+        mEncoder = new AACEncoder((byte)0 , mFrames);
         mEncoder.encode(0);
 
         //The start time in milliseconds
         mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
 
-        mAudioStatePublisher.update(AudioStatePublisher.NEW_SONG);
+        mWorker.schedule(mNotifyAudioPublisher , CONSTANTS.SONG_START_DELAY, TimeUnit.MILLISECONDS);
 
         for(Transmitter transmitter : mTransmitters){
             transmitter.setAACEncoder(mEncoder);
@@ -94,6 +94,12 @@ public class Broadcaster implements AudioObserver{
 
         mStreamRunning = true;
     }
+    Runnable mNotifyAudioPublisher = new Runnable() {
+        @Override
+        public void run() {
+            mAudioStatePublisher.update(AudioStatePublisher.PLAYING);
+        }
+    };
 
     //TODO: fix this up when rearchitecturing is done
     public void destroy(){
@@ -107,9 +113,10 @@ public class Broadcaster implements AudioObserver{
     @Override
     public void update(int state) {
         switch (state){
-            case AudioStatePublisher.NEW_SONG:
-                startSongStream();
-                break;
+            //TODO: write a good way to switch songs
+//            case AudioStatePublisher.NEW_SONG:
+//                startSongStream();
+//                break;
             case AudioStatePublisher.SEEK:
                 seek();
                 break;

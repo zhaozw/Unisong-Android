@@ -27,8 +27,6 @@ public class AudioStatePublisher {
     public static final int SEEK = 2;
     public static final int PLAYING = 3;
     public static final int RESUME = 4;
-    public static final int NEW_SONG = 5;
-    public static final int END_SONG = 6;
 
     //The time that we are seeking to
     private long mSeekTime;
@@ -36,7 +34,6 @@ public class AudioStatePublisher {
     //The time that the song will be resumed at
     private long mResumeTime;
     private int mState;
-    private byte mStreamID;
 
     //The boolean used to tell if a value has been updated (for pause time)
     private boolean mUpdated;
@@ -48,7 +45,6 @@ public class AudioStatePublisher {
     public AudioStatePublisher(){
         mState = IDLE;
         mObservers = new ArrayList<>();
-        mStreamID = -1;
     }
 
     public static AudioStatePublisher getInstance(){
@@ -69,10 +65,8 @@ public class AudioStatePublisher {
 
     public void update(int state){
         //Set the state
-        if(state == RESUME || state == SEEK || state == NEW_SONG){
+        if(state == RESUME || state == SEEK ){
             mState = PLAYING;
-        } else if(state == END_SONG){
-            mState = IDLE;
         } else {
             mState = state;
         }
@@ -86,13 +80,6 @@ public class AudioStatePublisher {
             mResumeTime = mManager.getLastFrameTime();
         }
 
-        if(state == NEW_SONG){
-            if(mStreamID >= 254){
-                mStreamID = 0;
-            } else {
-                mStreamID++;
-            }
-        }
         notifyObservers(state);
     }
 
@@ -116,8 +103,6 @@ public class AudioStatePublisher {
     }
 
     public int getState(){return mState;}
-
-    public byte getStreamID(){return mStreamID;}
 
     /**
      * The Seek method. It updates the seek time and then executes an update()

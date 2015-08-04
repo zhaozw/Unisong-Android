@@ -44,15 +44,15 @@ public class ClientDiscoveryHandler {
     //The handler for choosing a master
     private Handler mHandler;
 
-    //The AudioListener parent
-    private AudioListener mParent;
+    //The Listener parent
+    private Listener mParent;
 
     private boolean mRunnableRunning = false;
 
 
 
     //TODO: ensure that this works with multiple masters
-    public ClientDiscoveryHandler(AudioListener parent){
+    public ClientDiscoveryHandler(Listener parent){
         mParent = parent;
 
         mTempMasters = new ArrayList<>();
