@@ -7,18 +7,20 @@ import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioTrackManager;
+import com.ezturner.speakersync.audio.Decoder;
 import com.ezturner.speakersync.network.CONSTANTS;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Created by ezturner on 5/20/2015.
  */
-public class FileDecoder {
+public class FileDecoder implements Decoder{
 
     private static final String LOG_TAG = FileDecoder.class.getSimpleName();
 
@@ -56,8 +58,7 @@ public class FileDecoder {
     private AACEncoder mEncoder;
 
 
-    public FileDecoder(String path, Map<Integer, AudioFrame> frames , long seekTime){
-        mFrames = frames;
+    public FileDecoder(String path, long seekTime){
         //Set the variables
         mSeekTime = seekTime;
         mRunning = false;
@@ -72,17 +73,17 @@ public class FileDecoder {
         mDecodeThread.start();
     }
 
-    public FileDecoder(String path, Map<Integer , AudioFrame> frames , long seekTime, AACEncoder encoder) {
-        this(path, frames, seekTime);
+    public FileDecoder(String path, long seekTime, AACEncoder encoder) {
+        this(path, seekTime);
         mEncoder = encoder;
     }
 
-    public FileDecoder(String path, Map<Integer , AudioFrame> frames , long seekTime, AudioTrackManager manager) {
-        this(path, frames, seekTime);
+    public FileDecoder(String path, long seekTime, AudioTrackManager manager) {
+        this(path, seekTime);
         mManager = manager;
     }
 
-        private Thread getDecode(){
+    private Thread getDecode(){
         return new Thread(new Runnable()  {
             public void run() {
                 try {
@@ -101,6 +102,7 @@ public class FileDecoder {
     private Long mPlayTime = 0l;
 
     private void decode() throws IOException {
+        mFrames = new HashMap<>();
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
@@ -223,6 +225,7 @@ public class FileDecoder {
 
 
                     while(mFrames.size() > 25){
+                        if(mStop)   break;
                         synchronized (this){
                             try {
                                 this.wait(5);
@@ -316,14 +319,18 @@ public class FileDecoder {
 
     }
 
+    @Override
+    public Map<Integer, AudioFrame> getFrames() {
+        return null;
+    }
+
     public boolean isRunning(){
         return mRunning;
     }
 
     private Long mSamples;
 
-
-    public void createPCMFrame(byte[] data ){
+    private void createPCMFrame(byte[] data ){
         long playTime = (mSamples * 8000) / CONSTANTS.PCM_BITRATE + mTimeAdjust;
 
         AudioFrame frame = new AudioFrame(data, mCurrentFrameID, playTime);
@@ -334,5 +341,31 @@ public class FileDecoder {
 
         mSamples += data.length;
         mCurrentFrameID++;
+    }
+
+    @Override
+    public AudioFrame getFrame(int ID){
+        AudioFrame frame;
+        synchronized (mFrames){
+            frame = mFrames.get(ID);
+            mFrames.remove(ID);
+        }
+        return frame;
+    }
+
+    @Override
+    public void seek(long seekTime) {
+        mStop = true;
+        while (mRunning){}
+        mSeekTime = seekTime;
+        mDecodeThread = getDecode();
+        mDecodeThread.start();
+    }
+
+    @Override
+    public boolean hasFrame(int ID) {
+        synchronized (mFrames) {
+            return mFrames.containsKey(ID);
+        }
     }
 }

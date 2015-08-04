@@ -7,6 +7,7 @@ import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.master.AACEncoder;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.Session;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.Client;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
@@ -79,7 +80,7 @@ public class LANTransmitter implements Transmitter{
 
 
     //TODO: implement multicast
-    public LANTransmitter(boolean multicast){
+    public LANTransmitter(boolean multicast, Session session){
         Random random = new Random();
         mPort = CONSTANTS.STREAM_PORT_BASE + random.nextInt(CONSTANTS.PORT_RANGE);
         //TODO: Listen for other streams and ensure that you don't use the same port
@@ -100,7 +101,7 @@ public class LANTransmitter implements Transmitter{
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(mPort);
-            mTCPHandler = new MasterTCPHandler(this);
+            mTCPHandler = new MasterTCPHandler(this, session);
 
         } catch(IOException e){
             e.printStackTrace();
@@ -352,9 +353,6 @@ public class LANTransmitter implements Transmitter{
                 seek(seekTime);
                 resume(mAudioStatePublisher.getResumeTime());
                 break;
-            case AudioStatePublisher.NEW_SONG:
-//                startStream();
-                break;
 
         }
     }
@@ -402,5 +400,11 @@ public class LANTransmitter implements Transmitter{
 
     public void setLastFrame(int lastFrame){
         mLastFrameID = lastFrame;
+    }
+
+    @Override
+    public void startSong(){
+        mTCPHandler.startSong();
+        startStream();
     }
 }

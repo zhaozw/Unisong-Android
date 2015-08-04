@@ -94,12 +94,6 @@ public class FECDataPacket implements NetworkPacket {
 
 
     @Override
-    public byte getStreamID(){
-        return mStreamID;
-    }
-
-
-    @Override
     public DatagramPacket getPacket() {
         return mPacket;
     }

@@ -7,6 +7,7 @@ import android.util.Log;
 import com.ezturner.speakersync.network.Master;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.packets.DiscoveryPacket;
 import com.ezturner.speakersync.network.packets.MasterResponsePacket;
 
 import java.io.IOException;
@@ -183,21 +184,24 @@ public class ClientDiscoveryHandler {
     }
 
     //Sends a request
-    private synchronized void sendDiscoveryRequest(){
+    private void sendDiscoveryRequest(){
 
-        DatagramPacket packet = new DatagramPacket(new byte[8], 8, NetworkUtilities.getBroadcastAddress(), CONSTANTS.DISCOVERY_MASTER_PORT);
-
+        DiscoveryPacket packet = new DiscoveryPacket();
 
         try {
-            mSendSocket.send(packet);
+            synchronized (mSendSocket) {
+                mSendSocket.send(packet.getPacket());
+            }
             synchronized (this){
                 try {
-                    this.wait(10);
+                    this.wait(20);
                 } catch (InterruptedException e){
-                    //Not terribly important
+                    e.printStackTrace();
                 }
             }
-            mSendSocket.send(packet);
+            synchronized (mSendSocket) {
+                mSendSocket.send(packet.getPacket());
+            }
             Log.d(LOG_TAG, "Packet sent");
         } catch(IOException e){
             e.printStackTrace();

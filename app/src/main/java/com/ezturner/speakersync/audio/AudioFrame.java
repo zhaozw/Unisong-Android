@@ -41,15 +41,15 @@ public class AudioFrame {
     private int mPacketID;
 
     //The stream that this frame belongs to
-    private byte mStreamID;
+    private int mSongID;
 
     private short[] mAudioData;
 
     //The constructor, sets all of the data
-    public AudioFrame(byte[] data, int ID, byte streamID){
+    public AudioFrame(byte[] data, int ID, int songID){
         mData = data;
         mID = ID;
-        mStreamID = streamID;
+        mSongID = songID;
     }
 
     public AudioFrame(byte[] data, int ID, long playTime){
@@ -58,11 +58,11 @@ public class AudioFrame {
         mID = ID;
     }
 
-    public AudioFrame(byte[] data, int ID, long playTime , byte streamID){
+    public AudioFrame(byte[] data, int ID, long playTime , int songID){
         mData = data;
         mID = ID;
         mPlayTime = playTime;
-        mStreamID = streamID;
+        mSongID = songID;
     }
 
     //Adds some data to recreate the original data
@@ -108,12 +108,12 @@ public class AudioFrame {
         return mLength / 1000;
     }
 
-    public byte getStreamID(){
-        return mStreamID;
+    public int getSongmID(){
+        return mSongID;
     }
 
-    public void setStreamID(byte streamID){
-        mStreamID = streamID;
+    public void setSongID(int songID){
+        mSongID = songID;
     }
 
     public String toString(){

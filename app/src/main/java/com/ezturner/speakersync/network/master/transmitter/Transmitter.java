@@ -14,4 +14,5 @@ public interface Transmitter extends AudioObserver {
 
     void setAACEncoder(AACEncoder encoder);
     void setLastFrame(int lastFrame);
+    void startSong();
 }

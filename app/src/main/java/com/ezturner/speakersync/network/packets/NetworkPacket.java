@@ -7,12 +7,10 @@ import java.net.DatagramPacket;
  */
 public interface NetworkPacket {
 
-    public byte[] getData();
+    byte[] getData();
 
-    public byte getStreamID();
+    int getPacketID();
 
-    public int getPacketID();
-
-    public DatagramPacket getPacket();
+    DatagramPacket getPacket();
 
 }

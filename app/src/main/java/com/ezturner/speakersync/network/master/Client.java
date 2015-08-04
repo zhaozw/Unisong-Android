@@ -226,7 +226,7 @@ public class Client {
 
             //Send out the Song In Progress TCP packet.
             TCPSongInProgressPacket.send(mOutputStream, mTimeManager.getSongStartTime(), mCurrentSongInfo.getChannels(),
-                    mTransmitter.getNextPacketSendID(), mAudioStatePublisher.getStreamID());
+                    mTransmitter.getNextPacketSendID(), (byte) 0);
         }
 
 
@@ -235,7 +235,7 @@ public class Client {
     //Notifies this slave that a song is starting
     public void notifyOfSongStart(){
         synchronized (mOutputStream){
-            TCPSongStartPacket.send(mOutputStream , mTimeManager.getSongStartTime() , mCurrentSongInfo.getChannels() , mAudioStatePublisher.getStreamID() );
+            TCPSongStartPacket.send(mOutputStream , mTimeManager.getSongStartTime() , mCurrentSongInfo.getChannels() , (byte) 0 );
         }
     }
 
@@ -247,7 +247,7 @@ public class Client {
 
     public void sendFrame(AudioFrame frame){
         synchronized (mOutputStream){
-            TCPFramePacket.send(mOutputStream , frame, mAudioStatePublisher.getStreamID());
+            TCPFramePacket.send(mOutputStream , frame, (byte) 0);
         }
     }
 

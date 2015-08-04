@@ -32,6 +32,11 @@ public class TCPTransmitter implements Transmitter {
     }
 
     @Override
+    public void startSong() {
+
+    }
+
+    @Override
     public void update(int state) {
 
     }

@@ -112,5 +112,13 @@ public class AudioStatePublisher {
         mResumeTime = time;
         update(AudioStatePublisher.SEEK);
     }
+
+    /**
+     * The Resume method, which updates the resume time and then executes an update()
+     */
+    public void resume(long resumeTime){
+        mResumeTime = resumeTime;
+        update(AudioStatePublisher.RESUME);
+    }
 }
 

@@ -43,7 +43,7 @@ public class MasterResponsePacket implements NetworkPacket {
         byte[] portArr =  ByteBuffer.allocate(4).putInt(port).array();
         //Get port
         data = NetworkUtilities.combineArrays( data , portArr);
-        //Get phone number TODO: implement phone number shit
+        //Get phone number TODO: implement phone number stuff
         //byte[] number = MyApplication.getPhoneNumber().getBytes();
 
         //combine the two arrays
@@ -62,11 +62,6 @@ public class MasterResponsePacket implements NetworkPacket {
         byte[] portArr = Arrays.copyOfRange(mData , 1 , 5);
 
         mPort = ByteBuffer.wrap(portArr).getInt();
-    }
-
-    @Override
-    public byte getStreamID(){
-        return mStreamID;
     }
 
     public int getPort(){

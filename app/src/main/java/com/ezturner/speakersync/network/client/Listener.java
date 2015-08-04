@@ -6,21 +6,13 @@ import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.AudioTrackManager;
-import com.ezturner.speakersync.audio.slave.SlaveDecoder;
-import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.audio.client.SongDecoder;
 import com.ezturner.speakersync.network.Master;
+import com.ezturner.speakersync.network.Session;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.client.receiver.LANReceiver;
-import com.ezturner.speakersync.network.packets.FramePacket;
-import com.ezturner.speakersync.network.packets.NetworkPacket;
-import java.io.IOException;
+
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
 
 
 /**
@@ -29,7 +21,7 @@ import java.util.Queue;
  * discovery, and the reliability handler handles reliability
  *
  */
-public class Listener implements AudioObserver{
+public class Listener{
 
 
     private final static String LOG_TAG = "Listener";
@@ -46,47 +38,34 @@ public class Listener implements AudioObserver{
     //The stream ID
     private byte mStreamID;
 
-    private SlaveDecoder mSlaveDecoder;
-
     //The class that handles all of the time operations
     private TimeManager mTimeManager;
 
     //The class that tells us what the current audio state is
     private AudioStatePublisher mAudioStatePublisher;
 
-    //The bridge that handles communication between this class and the slave decoder and audio manager
-    //TODO : get rid of this.
-    private ListenerBridge mBridge;
-
     private AudioTrackManager mManager;
 
     private LANReceiver mLANReceiver;
 
+    private SongDecoder mSongDecoder;
+
+    private Session mCurrentSession;
+
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
     public Listener(){
-
         mManager = AudioTrackManager.getInstance();
 
         mTimeManager = TimeManager.getInstance();
 
-        mSlaveDecoder = new SlaveDecoder(2, (byte)0);
-
-        mBridge = new ListenerBridge(mSlaveDecoder , mManager);
-
-        mAudioStatePublisher = AudioStatePublisher.getInstance();
-        mAudioStatePublisher.attach(this);
-
         Log.d(LOG_TAG, "Audio Listener Started");
 
         mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
-
     }
 
 
     //Start playing from a master, start listening to the stream
     public void playFromMaster(Master master){
-
-        mStartSongReceived = false;
         mClientTCPHandler = new ClientTCPHandler(master.getIP() , master.getPort() , this );
 
         if(mLANReceiver != null){
@@ -103,10 +82,6 @@ public class Listener implements AudioObserver{
         mSlaveDiscoveryHandler.findMasters();
     }
 
-
-
-
-
     private boolean songStarted = false;
 
     public void startSong(long startTime , int channels , byte streamID , int currentPacket){
@@ -118,21 +93,13 @@ public class Listener implements AudioObserver{
             Log.d(LOG_TAG , "Song is being started a second time!");
         }
 
+        mSongDecoder = new SongDecoder(channels);
+        mSongDecoder.decode(startTime);
+
         mTimeManager.setSongStartTime(startTime);
-        mStartSongReceived = true;
         mStreamID = streamID;
 
-        mStartSongReceived = true;
-
-        mBridge.startSong(startTime, currentPacket);
-    }
-
-
-    private boolean mStartSongReceived = false;
-
-
-    public void setTrackBridge(ListenerBridge bridge){
-        mBridge = bridge;
+        mManager.startSong(mSongDecoder);
     }
 
     public DatagramPacket getPacket(int ID){
@@ -140,12 +107,12 @@ public class Listener implements AudioObserver{
     }
 
     public void addFrame(AudioFrame frame){
-        mBridge.addFrame(frame);
+        mSongDecoder.addInputFrame(frame);
     }
 
-    public void resume(long resumeTime , long newSongStartTime){
+    public void resume(long resumeTime,  long newSongStartTime){
         mTimeManager.setSongStartTime(newSongStartTime);
-//        mAudioStatePublisher.
+        mAudioStatePublisher.resume(resumeTime);
     }
 
     //TODO: implement this
@@ -157,17 +124,10 @@ public class Listener implements AudioObserver{
     public synchronized void destroy() {
         mClientTCPHandler.destroy();
         mSlaveDiscoveryHandler.destroy();
-        mSlaveDecoder.destroy();
 
         if(mLANReceiver != null){
             mLANReceiver.destroy();
         }
-
-        mBridge.destroy();
     }
 
-    @Override
-    public void update(int state){
-
-    }
 }

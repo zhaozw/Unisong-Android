@@ -1,11 +1,13 @@
 package com.ezturner.speakersync.network.master;
 
+import com.ezturner.speakersync.MediaService;
 import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.AudioTrackManager;
 import com.ezturner.speakersync.audio.master.AACEncoder;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.Session;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;
 import com.ezturner.speakersync.network.master.transmitter.Transmitter;
@@ -28,10 +30,6 @@ public class Broadcaster implements AudioObserver{
     //True if the listeners are running, false otherwise
     private boolean mStreamRunning;
 
-    //The list of Audio Frames, exists for retransmission
-    //TODO: get rid of old/unused ones
-    private Map<Integer , AudioFrame> mFrames;
-
     //The class that handles song start times and offsets.
     private TimeManager mTimeManager;
 
@@ -47,22 +45,27 @@ public class Broadcaster implements AudioObserver{
 
     private LANTransmitter mLANTransmitter;
 
+    private int mCurrentSongID;
+
+    private Session mSession;
+
     //Makes an Broadcaster object
     public Broadcaster(){
         //Get the singleton objects.
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mTimeManager = TimeManager.getInstance();
 
-        mFrames = new TreeMap<>();
+        mSession = new Session();
 
         //TODO: check to see if we're on wifi. If not, then don't start LANTransmitter
         mTransmitters = new ArrayList<>();
-        mLANTransmitter = new LANTransmitter(false);
+        mLANTransmitter = new LANTransmitter(false , mSession);
         mTransmitters.add(mLANTransmitter);
 
         mWorker = Executors.newSingleThreadScheduledExecutor();
 
         mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
+
     }
 
     Runnable mSongStreamStart = new Runnable() {
@@ -76,10 +79,9 @@ public class Broadcaster implements AudioObserver{
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     public void startSongStream(){
 
-        mFrames = new TreeMap<>();
-
-        mEncoder = new AACEncoder((byte)0 , mFrames);
-        mEncoder.encode(0);
+        mEncoder = new AACEncoder();
+        mEncoder.encode(0, mSession.getCurrentSongID() , MediaService.TEST_FILE_PATH);
+        //TODO: actually switch the songs
 
         //The start time in milliseconds
         mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
@@ -88,9 +90,8 @@ public class Broadcaster implements AudioObserver{
 
         for(Transmitter transmitter : mTransmitters){
             transmitter.setAACEncoder(mEncoder);
+            transmitter.startSong();
         }
-
-        mLANTransmitter.startStream();
 
         mStreamRunning = true;
     }

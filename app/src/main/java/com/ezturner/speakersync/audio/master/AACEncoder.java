@@ -29,7 +29,7 @@ public class AACEncoder {
     private MediaCodec mCodec;
 
     private boolean mStop = false;
-    private byte mStreamID;
+    private int mSongID;
 
     String mime = null;
     int sampleRate = 0, channels = 0, bitrate = 0;
@@ -59,28 +59,24 @@ public class AACEncoder {
     //The highest frame # used.
     private int mHighestFrameUsed;
 
-    public AACEncoder(byte streamID, Map<Integer, AudioFrame> frames){
+    public AACEncoder(){
 
         mHighestFrameUsed = 0;
         mCurrentSongInfo = CurrentSongInfo.getInstance();
-        mOutputFrames = frames;
 
         mInputFrames = new TreeMap<>();
 
         mLastFrame = -1;
-        if(frames.size() != 0){
-            Log.d(LOG_TAG, "Setting mOutputFrames, size is : " + mOutputFrames.size());
-        }
 
         mCurrentOutputID = 0;
         mCurrentInputFrameID = 0;
         mRunning = false;
-        mStreamID = streamID;
     }
 
-    public void encode(long startTime){
+    public void encode(long startTime, int songID, String filePath){
+        mSongID = songID;
         mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
-        mDecoder = new FileDecoder(mCurrentSongInfo.getFilePath() , mInputFrames , startTime , this);
+        mDecoder = new FileDecoder(filePath, startTime , this);
         mEncodeThread = getEncode();
         mEncodeThread.start();
     }
@@ -375,7 +371,7 @@ public class AACEncoder {
         //TODO : figure out what this ^^ is referencing?
         long playTime = mLastTime;
 
-        AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mStreamID);
+        AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mSongID);
         mCurrentOutputID++;
 
         mOutputFrames.put(frame.getID() , frame);

@@ -1,4 +1,4 @@
-package com.ezturner.speakersync.audio.slave;
+package com.ezturner.speakersync.audio.client;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -6,22 +6,23 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
+import com.ezturner.speakersync.audio.Decoder;
+import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.TimeManager;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A decoder class that decodes a single song.
  * Created by ezturner on 5/6/2015.
  */
-public class SongDecoder {
+public class SongDecoder implements Decoder {
 
     private final String LOG_TAG = SongDecoder.class.getSimpleName();
-    //The parent SlaveDecoder object that we will be sending our output data to
-    private SlaveDecoder mParentDecoder;
 
     protected int inputBufIndex;
     protected int bufIndexCheck;
@@ -47,23 +48,32 @@ public class SongDecoder {
     long presentationTimeUs = 0, duration = 0;
 
     private TimeManager mTimeManager;
-    private Map<Integer , AudioFrame> mFrames;
-    private int mStartFrame;
+    private Map<Integer , AudioFrame> mInputFrames;
+    private Map<Integer , AudioFrame> mOutputFrames;
+
+    private int mSamples;
+
+    private long mTimeAdjust;
+
+    private int mCurrentID;
+
+    private int mLastFrameRequested;
 
 
-    public SongDecoder(SlaveDecoder decoder, int channels, Map<Integer, AudioFrame> frames){
-        mParentDecoder = decoder;
+    public SongDecoder(int channels){
         mTimeManager = TimeManager.getInstance();
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
         sampleRate = 44100;
-        mFrames = frames;
         mRunning = false;
     }
 
-    public void decode(int startFrame){
-        mStartFrame = startFrame;
-        mCurrentFrame = startFrame;
+    public void decode(long startTime){
+        mLastFrameRequested = -1;
+        mInputFrames = new HashMap<>();
+        mOutputFrames = new HashMap<>();
+        mCurrentID = (int) (startTime / 23.21995464852608);
+        mCurrentFrame = 0;
         mDecodeThread = getDecode();
         mDecodeThread.start();
     }
@@ -131,60 +141,18 @@ public class SongDecoder {
         //TODO: deal with no data/end of stream
         while(!mStop){
 
+            waitForFrame(info.size);
 
+            checkBuffer();
 
-            //TODO: test/check this out
-            while(!mFrames.containsKey(mCurrentFrame)){
-//                if(mStartFrame != 0)    Log.d(LOG_TAG , "Frame #" + mCurrentFrame + " not found.");
-                if(mStop){
-                    break;
-                }
-                long diff = mTimeManager.getAACPlayTime(mCurrentFrame) - System.currentTimeMillis();
-
-//                Log.d(LOG_TAG , "Diff is : " + diff + " for frame #" + mCurrentFrame);
-
-                if(diff <= 50 && !mStop && false){
-
-                    Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + " which should be played in " + (diff)  + "ms" );
-
-                    mParentDecoder.createFrame(new byte[info.size]);
-                    mCurrentFrame++;
-
-                    if(!mFrames.containsKey(mCurrentFrame)){
-                        synchronized (this){
-                            try{
-                                this.wait(5);
-                            } catch (InterruptedException e){
-
-                            }
-                        }
-                    }
-
-
-                } else {
-                    synchronized (this){
-                        try{
-                            this.wait(20);
-                        } catch (InterruptedException e){
-
-                        }
-                    }
-                }
-            }
-
-            Log.d(LOG_TAG , mFrames.size() + " frames in mFrames.");
             if(mStop)   break;
 
 
             AudioFrame frame;
-            synchronized (mFrames){
-                Log.d(LOG_TAG , "Getting frame #" + mCurrentFrame);
-                frame = mFrames.get(mCurrentFrame);
-                lastPlayTime = frame.getPlayTime() - mParentDecoder.getOffset() + mParentDecoder.getSongStartTime();
+            synchronized (mInputFrames){
+                frame = mInputFrames.get(mCurrentFrame);
+                lastPlayTime = frame.getPlayTime() - mTimeManager.getOffset() + mTimeManager.getSongStartTime();
             }
-
-            if(mCurrentFrame == 4306) Log.d(LOG_TAG , "decoding mCurrentFrame");
-
 
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
@@ -203,7 +171,7 @@ public class SongDecoder {
 
             //TODO : check for illegal state exception?
             //TODO: This throws an illegal state exception pretty often, try to fix it.
-            // encode to AAC and then put in mFrames
+            // encode to AAC and then put in mInputFrames
             int outputBufIndex = 0;
             try {
                  outputBufIndex = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
@@ -221,7 +189,7 @@ public class SongDecoder {
                 buf.get(chunk);
                 buf.clear();
                 if(chunk.length > 0 && !mStop){
-                    mParentDecoder.createFrame(chunk);
+                    createPCMFrame(chunk);
                 }
 
                 try {
@@ -315,13 +283,115 @@ public class SongDecoder {
         }
     }
 
-    public void setCurrentFrame(int currentFrame){
-        mCurrentFrame = currentFrame;
-    }
-
     public void destroy(){
         mStop = true;
         while(mRunning){}
         mDecodeThread = null;
     }
+
+    @Override
+    public Map<Integer, AudioFrame> getFrames() {
+        return null;
+    }
+
+    public void seek(long seekTime){
+        mTimeAdjust = seekTime;
+        mStop = true;
+        while(mRunning){}
+
+    }
+
+    @Override
+    public boolean hasFrame(int ID) {
+        return false;
+    }
+
+    public void addInputFrame(AudioFrame frame){
+        synchronized (mInputFrames){
+            mInputFrames.put(frame.getID() , frame);
+        }
+    }
+
+    private void createPCMFrame(byte[] data){
+        long bitsProcessed = mSamples * 8000;
+        long playTime = bitsProcessed  / CONSTANTS.PCM_BITRATE + mTimeAdjust;
+
+
+        AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
+        mCurrentID++;
+
+        mSamples += data.length;
+
+        mOutputFrames.put(frame.getID() , frame);
+    }
+
+    public AudioFrame getFrame(int ID){
+        mLastFrameRequested = ID > mLastFrameRequested ? ID : mLastFrameRequested;
+
+        AudioFrame frame;
+        synchronized (mOutputFrames){
+            frame = mOutputFrames.get(ID);
+            mOutputFrames.remove(ID);
+        }
+        return frame;
+    }
+
+    private void waitForFrame(int size){
+        //TODO: test/check this out
+        while(!mInputFrames.containsKey(mCurrentFrame)){
+//                if(mStartFrame != 0)    Log.d(LOG_TAG , "Frame #" + mCurrentFrame + " not found.");
+            if(mStop){
+                break;
+            }
+            long diff = mTimeManager.getAACPlayTime(mCurrentFrame) - System.currentTimeMillis();
+
+//                Log.d(LOG_TAG , "Diff is : " + diff + " for frame #" + mCurrentFrame);
+
+            if(diff <= 50 && !mStop && false){
+
+                Log.d(LOG_TAG , "Creating blank PCM frame for frame #" + mCurrentFrame + " which should be played in " + (diff)  + "ms" );
+
+                createPCMFrame(new byte[size]);
+                mCurrentFrame++;
+
+                if(!mInputFrames.containsKey(mCurrentFrame)){
+                    synchronized (this){
+                        try{
+                            this.wait(5);
+                        } catch (InterruptedException e){
+
+                        }
+                    }
+                }
+
+
+            } else {
+                synchronized (this){
+                    try{
+                        this.wait(20);
+                    } catch (InterruptedException e){
+
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks to see that we don't have too many frames decoded.
+     * If we do, it'll wait until more are used up to decode additional ones.
+     */
+    private void checkBuffer(){
+        while(mOutputFrames.size() > 25){
+            if(mStop)   return;
+            synchronized (this){
+                try{
+                    this.wait(5);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 }

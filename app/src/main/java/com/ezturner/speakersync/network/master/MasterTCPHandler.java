@@ -5,6 +5,7 @@ import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.Session;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;
 
@@ -46,11 +47,15 @@ public class MasterTCPHandler implements AudioObserver {
 
     private LANTransmitter mLANTransmitter;
 
+    private Session mSession;
+
 
     //TODO: extend AudioObserver and implement
-    public MasterTCPHandler(LANTransmitter transmitter){
+    public MasterTCPHandler(LANTransmitter transmitter, Session session){
 
         mLANTransmitter = transmitter;
+
+        mSession = session;
 
         mClients = new ArrayList<>();
 
@@ -250,10 +255,11 @@ public class MasterTCPHandler implements AudioObserver {
                 seek(seekTime);
                 resume(seekTime);
                 break;
-            case AudioStatePublisher.NEW_SONG:
-                getStartThread().start();
-                break;
         }
+    }
+
+    public void startSong(){
+        getStartThread().start();
     }
 
     public List<Client> getSlaves(){

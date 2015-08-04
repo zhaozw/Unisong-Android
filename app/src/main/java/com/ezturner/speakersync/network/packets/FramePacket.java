@@ -104,12 +104,8 @@ public class FramePacket implements NetworkPacket{
 //        Log.d(LOG_TAG , "Data Length is is : " + dataEnd + " so end position is: " + (dataEnd + 30) + "for frame #" + mFrameID);
 
         mData = Arrays.copyOfRange(mData , 14 ,dataLength + 14);
-
-
     }
 
-
-    @Override
     public byte getStreamID(){
         return mStreamID;
     }
