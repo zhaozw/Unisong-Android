@@ -11,6 +11,7 @@ import com.ezturner.speakersync.R;
 import com.ezturner.speakersync.network.HttpClient;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.iangclifton.android.floatlabel.FloatLabel;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,13 +103,25 @@ public class RegisterActivity extends ActionBarActivity {
         String json = object.toString();
         String result = "Error!";
 
+        Response response;
         try {
-            result = client.post(URL, json);
-        } catch (IOException e) {
+            response = client.post(URL, json);
+        } catch (IOException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG, "Request Failed");
+            return;
+        }
+
+        Log.d(LOG_TAG , "Login Request Done.");
+        Log.d(LOG_TAG , response.toString());
+        try {
+            Log.d(LOG_TAG, response.body().string());
+        } catch (IOException e){
             e.printStackTrace();
         }
 
-        Log.d(LOG_TAG , result);
+
+        Log.d(LOG_TAG , client.getCookies());
         mRegisterInProgress = false;
     }
 }
