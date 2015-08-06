@@ -11,16 +11,6 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    sourceSets {
-        main {
-            res.srcDirs =
-                    [
-                            'src/main/res/layouts/layouts_category2',
-                            'src/main/res/layouts',
-                            'src/main/res'
-                    ]
-        }
-    }
 
     buildTypes {
         release {
@@ -39,7 +29,6 @@ dependencies {
     compile 'com.iangclifton.android:floatlabel:1.0.4'
     compile 'com.squareup.okhttp:okhttp:2.4.0'
     compile 'com.squareup.okio:okio:1.5.0'
-    compile 'org.json:json:20090211'
 
 }
 
