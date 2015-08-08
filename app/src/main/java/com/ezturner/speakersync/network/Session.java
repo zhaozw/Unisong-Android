@@ -1,7 +1,5 @@
 package com.ezturner.speakersync.network;
 
-import com.ezturner.speakersync.network.master.Client;
-
 import java.util.LinkedList;
 import java.util.Queue;
 

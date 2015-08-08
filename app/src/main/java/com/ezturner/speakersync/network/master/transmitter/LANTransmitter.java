@@ -9,7 +9,7 @@ import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 import com.ezturner.speakersync.network.Session;
 import com.ezturner.speakersync.network.TimeManager;
-import com.ezturner.speakersync.network.master.Client;
+import com.ezturner.speakersync.network.Client;
 import com.ezturner.speakersync.network.master.MasterDiscoveryHandler;
 import com.ezturner.speakersync.network.master.MasterFECHandler;
 import com.ezturner.speakersync.network.master.MasterTCPHandler;

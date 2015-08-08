@@ -5,6 +5,7 @@ import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioObserver;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.network.CONSTANTS;
+import com.ezturner.speakersync.network.Client;
 import com.ezturner.speakersync.network.Session;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;

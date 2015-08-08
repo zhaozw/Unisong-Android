@@ -1,12 +1,11 @@
-package com.ezturner.speakersync.network.master;
+package com.ezturner.speakersync.network;
 
 import android.util.Log;
 
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.audio.AudioStatePublisher;
 import com.ezturner.speakersync.audio.master.CurrentSongInfo;
-import com.ezturner.speakersync.network.CONSTANTS;
-import com.ezturner.speakersync.network.TimeManager;
+import com.ezturner.speakersync.network.master.MasterTCPHandler;
 import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;
 import com.ezturner.speakersync.network.packets.tcp.TCPAcknowledgePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPEndSongPacket;
@@ -61,6 +60,14 @@ public class Client {
     private LANTransmitter mTransmitter;
 
 
+    /**
+     * This is a constructor for a locally connected client, from the master to client
+     * this constructor will be called by the master
+     * @param ip The device IP
+     * @param socket the socket that it is connected to
+     * @param parent the TCP handler that holds us as its parent
+     * @param transmitter the LANTransmitter that we are using for this session
+     */
     //TODO : Add mode for server connection
     public Client(String ip, Socket socket, MasterTCPHandler parent, LANTransmitter transmitter){
 
@@ -96,6 +103,15 @@ public class Client {
 
         mListenThread = getListenThread();
         mListenThread.start();
+    }
+
+
+    /**
+     * The constructor for client information for a client
+     *
+     */
+    public Client(String ip, String name, String phonenumber){
+
     }
 
     public void packetReceived(int ID){
@@ -222,14 +238,11 @@ public class Client {
     public void sendSongInProgress() {
         Log.d(LOG_TAG, "Sending Song Start to "  + toString());
         DataOutputStream outputStream;
-        synchronized (mOutputStream) {
-
+        synchronized (mOutputStream){
             //Send out the Song In Progress TCP packet.
             TCPSongInProgressPacket.send(mOutputStream, mTimeManager.getSongStartTime(), mCurrentSongInfo.getChannels(),
                     mTransmitter.getNextPacketSendID(), (byte) 0);
         }
-
-
     }
 
     //Notifies this slave that a song is starting
