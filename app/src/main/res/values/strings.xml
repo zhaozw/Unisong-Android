@@ -40,5 +40,18 @@
         <item>SONGS</item>
         <item>GENRES</item>
     </string-array>
+    
+    
+    <string-array name = "drawer_text">
+        <item>My Library</item>
+        <item>Friends</item>
+        <item>Settings</item>
+    </string-array>
+
+    <string-array name = "drawer_icons">
+        <item>gmd-my-library-mus</item>
+        <item>gmd-group</item>
+        <item>gmd-settings</item>
+    </string-array>
 
 </resources>

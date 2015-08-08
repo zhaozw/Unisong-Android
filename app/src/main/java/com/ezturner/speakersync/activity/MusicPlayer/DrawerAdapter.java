@@ -1,7 +1,9 @@
 package com.ezturner.speakersync.activity.MusicPlayer;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,19 +11,31 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ezturner.speakersync.R;
+import com.thedazzler.droidicon.Droidicon;
+import com.thedazzler.droidicon.IconicFontDrawable;
+import com.thedazzler.droidicon.badges.DroidiconBadge;
+
+import net.fec.openrq.util.io.Resources;
+
+import java.util.List;
 
 /**
  * Created by Work on 4/9/2015.
  */
 public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerViewHolder>{
 
+    private static final String LOG_TAG = DrawerAdapter.class.getSimpleName();
+
     private LayoutInflater mInflater;
+    private List<DrawerInformation> mData;
+    private Context mContext;
 
-
-    public DrawerAdapter(Context context){
-
+    public DrawerAdapter(Context context, List<DrawerInformation> data){
+        mContext = context;
         mInflater = LayoutInflater.from(context);
+        mData = data;
     }
+
     @Override
     public DrawerViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         View view = mInflater.inflate(R.layout.drawer_row , viewGroup , false);
@@ -31,25 +45,41 @@ public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerVie
         return holder;
     }
 
+    /**
+     * Sets the image and text for a navigation drawer row
+     * @param viewHolder - The R.layout.drawer_row
+     * @param i - The # row it is, starting at 0
+     */
     @Override
     public void onBindViewHolder(DrawerViewHolder viewHolder, int i) {
-        String title = "";
-        int id = 0;
-        if(i == 0){
-            title = "My Library";
-            id = R.drawable.ic_my_library_music;
-        } else if(i == 1){
-            title = "Settings";
-            id = R.drawable.ic_settings_black;
-        }
-        viewHolder.mText.setText(title);
-        viewHolder.mImage.setImageResource(id);
+
+        //Get the values from DrawerInformation
+        String text = mData.get(i).getText();
+        String icon = mData.get(i).getIcon();
+
+        //Set the text and icon
+        viewHolder.mText.setText(text);
         viewHolder.mImage.setTag(i);
+
+
+        IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(mContext);
+        iconicFontDrawable.setIcon(icon);
+        iconicFontDrawable.setIconColor(mContext.getResources().getColor(R.color.accent));
+
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int pixels = (int) (mContext.getResources().getDimension(R.dimen.drawer_icon_size) * scale + 0.5f);
+
+        //TODO: find a way to adjust this if necessary
+        //OR...set the width and height to the icon and use it as bounded drawables
+        iconicFontDrawable.setIntrinsicWidth(pixels);
+        iconicFontDrawable.setIntrinsicHeight(pixels);
+        //setImageDrawable to ImageView
+        viewHolder.mImage.setImageDrawable(iconicFontDrawable);
     }
 
     @Override
     public int getItemCount() {
-        return 2;
+        return mData.size();
     }
 
     class DrawerViewHolder extends RecyclerView.ViewHolder{
@@ -60,9 +90,9 @@ public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerVie
         public DrawerViewHolder(View itemView) {
             super(itemView);
 
-            mText = (TextView) itemView.findViewById(R.id.listText);
+            mText = (TextView) itemView.findViewById(R.id.drawerRowText);
 
-            mImage = (ImageView) itemView.findViewById(R.id.listImage);
+            mImage = (ImageView) itemView.findViewById(R.id.drawerRowImage);
 
         }
     }

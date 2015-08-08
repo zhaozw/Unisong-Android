@@ -17,6 +17,10 @@ import android.view.ViewGroup;
 
 import com.ezturner.speakersync.R;
 import com.ezturner.speakersync.activity.MusicPlayer.DrawerAdapter;
+import com.ezturner.speakersync.activity.MusicPlayer.DrawerInformation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -99,8 +103,17 @@ public class NavigationDrawerFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View layout = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
-        mRecyclerView = (RecyclerView) layout.findViewById(R.id.drawer_list);
-        mAdapter = new DrawerAdapter(getActivity());
+        mRecyclerView = (RecyclerView) layout.findViewById(R.id.drawerList);
+
+        List<DrawerInformation> info = new ArrayList<>();
+        String[] drawerText = getResources().getStringArray(R.array.drawer_text);
+        String[] drawerIcons = getResources().getStringArray(R.array.drawer_icons);
+
+        for(int i = 0; i < drawerText.length; i++){
+            info.add(new DrawerInformation(drawerIcons[i] , drawerText[i]));
+        }
+
+        mAdapter = new DrawerAdapter(getActivity() , info);
 
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

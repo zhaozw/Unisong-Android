@@ -3,6 +3,11 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="navigation_drawer_width">280dp</dimen>
+    <dimen name="navigation_drawer_image_height">160dp</dimen>
     <dimen name="music_grid_element_bar_height">48dp</dimen>
     <dimen name="action_bar_size">56dp</dimen>
+    <dimen name="drawer_margin_bottom">16dp</dimen>
+    <dimen name="drawer_margin_top">16dp</dimen>
+    <dimen name="drawer_icon_size">16dp</dimen>
+
 </resources>

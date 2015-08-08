@@ -315,6 +315,7 @@ public class ClientTCPHandler {
     }
 
     private void acknowledgePacket(int packetID){
+        //TODO: look into if sending ACK packets is too much TCP load, and see about requesting instead
         TCPAcknowledgePacket.send(mOutStream, packetID);
     }
 
