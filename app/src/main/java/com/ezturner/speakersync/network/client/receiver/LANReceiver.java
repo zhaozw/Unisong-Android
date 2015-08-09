@@ -5,7 +5,6 @@ import android.util.Log;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Master;
-import com.ezturner.speakersync.network.client.ClientTCPHandler;
 import com.ezturner.speakersync.network.client.Listener;
 import com.ezturner.speakersync.network.packets.FramePacket;
 import com.ezturner.speakersync.network.packets.NetworkPacket;
@@ -195,7 +194,7 @@ public class LANReceiver {
         //if(packet.getData()[1] == mStreamID) {
         byte packetType = packet.getData()[0];
         switch (packetType) {
-            case CONSTANTS.FRAME_PACKET_ID:
+            case CONSTANTS.UDP_FRAME_PACKET_ID:
                 networkPacket = handleFramePacket(packet);
                 break;
         }

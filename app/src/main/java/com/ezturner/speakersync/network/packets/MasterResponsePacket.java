@@ -1,8 +1,5 @@
 package com.ezturner.speakersync.network.packets;
 
-import android.util.Log;
-
-import com.ezturner.speakersync.MyApplication;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
 
@@ -38,7 +35,7 @@ public class MasterResponsePacket implements NetworkPacket {
 
     public MasterResponsePacket(int port){
         //Set the packet type
-        byte[] data = new byte[]{CONSTANTS.MASTER_RESPONSE_PACKET};
+        byte[] data = new byte[]{CONSTANTS.UDP_MASTER_RESPONSE_PACKET};
 
         byte[] portArr =  ByteBuffer.allocate(4).putInt(port).array();
         //Get port

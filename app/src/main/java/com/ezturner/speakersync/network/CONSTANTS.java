@@ -20,14 +20,11 @@ public class CONSTANTS {
 
     public static final int RELIABILITY_PORT = 55990;
 
-    //The packet ID for starting a new song
-    public static final byte SONG_START_PACKET_ID = 1;
-
     //The packet ID for a master discovery packet
     public static final byte MASTER_START_PACKET = 2;
 
     //The packet ID for a response packet to a discovery request
-    public static final byte MASTER_RESPONSE_PACKET = 3;
+    public static final byte UDP_MASTER_RESPONSE_PACKET = 3;
 
     //The packet ID for streaming data packets
     public static final byte FRAME_INFO_PACKET_ID= 4;
@@ -35,12 +32,12 @@ public class CONSTANTS {
     //The packet ID for streaming data packets
     public static final byte FRAME_DATA_PACKET_ID= 5;
 
-    public static final byte FRAME_PACKET_ID = 6;
+    public static final byte UDP_FRAME_PACKET_ID = 6;
 
 
-    public static final byte MIME_PACKET_ID = 7;
+    public static final byte UDP_MIME_PACKET_ID = 7;
 
-    public static final byte FEC_DATA_PACKET_ID = 8;
+    public static final byte UDP_FEC_DATA_PACKET_ID = 8;
 
     public static final int AUDIO_CHUNK_SIZE = 1024;
 
@@ -48,6 +45,7 @@ public class CONSTANTS {
 
     public static final int DELAY = 500;
 
+    //TODO: switch these to short
     //The flag bytes for the TCP packets/communications
     public static final byte TCP_ACK = 1;
 
@@ -81,6 +79,8 @@ public class CONSTANTS {
     public static final byte TCP_MASTER_CLOSE = 15;
 
     public static final byte TCP_END_SONG = 16;
+
+    public static final byte TCP_CLIENT_INFO = 17;
 
     public static final int PCM_BITRATE = 1441200;
 

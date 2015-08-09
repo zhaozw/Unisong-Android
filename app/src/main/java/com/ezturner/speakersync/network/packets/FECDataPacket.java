@@ -56,7 +56,7 @@ public class FECDataPacket implements NetworkPacket {
         mPacketID = packetID;
 
         //turn packet type into a byte array for combination , and put the stream ID in there
-        byte[] packetType = new byte[]{CONSTANTS.FEC_DATA_PACKET_ID , streamID};
+        byte[] packetType = new byte[]{CONSTANTS.UDP_FEC_DATA_PACKET_ID, streamID};
 
         byte[] packetIDByte = ByteBuffer.allocate(4).putInt(packetID).array();
 

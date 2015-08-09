@@ -16,6 +16,7 @@ import com.ezturner.speakersync.network.packets.tcp.TCPResumePacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSeekPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongInProgressPacket;
 import com.ezturner.speakersync.network.packets.tcp.TCPSongStartPacket;
+import com.ezturner.speakersync.network.user.User;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -24,10 +25,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +41,8 @@ import java.util.Map;
  */
 public class Client {
 
+    private final byte ADDRESS = 0;
+    private final byte USER = 1;
     private static final String LOG_TAG = Client.class.getSimpleName();
     private InetAddress mAddress;
 
@@ -58,7 +64,10 @@ public class Client {
     private CurrentSongInfo mCurrentSongInfo;
 
     private LANTransmitter mTransmitter;
+    private User mUser;
 
+
+    //TODO: add a way to connect a user
 
     /**
      * This is a constructor for a locally connected client, from the master to client
@@ -107,10 +116,107 @@ public class Client {
 
 
     /**
-     * The constructor for client information for a client
+     * The constructor for client information for a non-master
+     * This constructor is used when a client is discovered through the UDP discovery process
      *
      */
-    public Client(String ip, String name, String phonenumber){
+    public Client(String ip, User user){
+        mConnected = false;
+
+
+    }
+
+    /**
+     * The constructor used to obtain information about a client from a TCP
+     * connection.
+     * @param stream the network input stream that we will read this client from
+     */
+    public Client(InputStream stream){
+        byte[] sizeArr = new byte[4];
+
+        try {
+            NetworkUtilities.readFromStream(stream, sizeArr);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        int size = ByteBuffer.wrap(sizeArr).getInt();
+
+        byte[] data = new byte[size];
+
+        try{
+            NetworkUtilities.readFromStream(stream , data);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        decode(data , 0);
+    }
+
+    /**
+     * This is a recursive method to decode a byte array into a Client object
+     *
+     * @param data the raw network data for this client object
+     * @param index the index at which we are currently operating
+     */
+    //TODO: test and make sure this recursion works.
+    private void decode(byte[] data , int index){
+        //Increment the index for the switch statement
+        index++;
+        switch (data[index - 1]){
+            case USER:
+                decodeUser(data , index);
+                break;
+            case ADDRESS:
+                decodeAddress(data , index);
+                break;
+        }
+
+        // If the index is either greater than the data length or at the end of the data, then
+        // return and don't recursively call
+        if(index< data.length -1 ){
+            decode(data , index);
+        }
+    }
+
+    private void decodeUser(byte[] data , int index){
+        byte[] sizeArr = Arrays.copyOfRange(data , index , index + 4);
+        index += 4;
+
+        int size = ByteBuffer.wrap(sizeArr).getInt();
+
+        byte[] usrDataArr = Arrays.copyOfRange(data , index, index + size);
+        index += size;
+
+        mUser = new User(usrDataArr);
+
+    }
+
+    private void decodeAddress(byte[] data, int index){
+        byte[] sizeArr = Arrays.copyOfRange(data , index , index + 4);
+        index += 4;
+
+        int size = ByteBuffer.wrap(sizeArr).getInt();
+
+        byte[] addrArr = Arrays.copyOfRange(data, index, index + size);
+        index += size;
+
+        //If the byte array is 4 byes long then
+        if(addrArr.length == 4){
+            try {
+                mAddress = Inet4Address.getByAddress(addrArr);
+            } catch (UnknownHostException e){
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                mAddress = Inet6Address.getByAddress(addrArr);
+            } catch (UnknownHostException e){
+                e.printStackTrace();
+            }
+        }
+
+
 
     }
 
@@ -297,6 +403,61 @@ public class Client {
         while(mThreadRunning){}
         mTransmitter = null;
         mMasterTCPHandler = null;
+    }
+
+    public InetAddress getAddress(){
+        return mAddress;
+    }
+
+    //Checks if there is a user associated with this client
+    public boolean hasUser(){
+        if(mUser == null){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Parses all of this client's information and any relevant flags into a
+     * byte array, to be decoded and reconstructed on the target device.
+     *
+     * The format is as follows:
+     * DATA_ID
+     * DATA_LENGTH (if variable)
+     * DATA
+     *
+     * And then repeat
+     * @return returns this client object represented by a byte array
+     */
+    public byte[] getBytes(){
+        byte[] addressHeaderArr = new byte[]{ADDRESS};
+        byte[] addressLengthArr;
+        byte[] addressArr = getAddress().getAddress();
+
+        addressLengthArr = ByteBuffer.allocate(4).putInt(addressArr.length).array();
+
+        byte[] data = NetworkUtilities.combineArrays(addressHeaderArr , addressLengthArr);
+
+        data = NetworkUtilities.combineArrays(data , addressArr);
+
+
+        return data;
+    }
+
+    /**
+     * Check whether this client is equal to another
+     * This method is used to ensure that we do not get duplicates through
+     * @param client
+     */
+    public boolean equals(Client client){
+        //TODO: improve this as this class expands.
+        //Check to see if the addresses are different
+        if(getAddress() != null && client.getAddress() != null &&
+            !getAddress().equals(client.getAddress())){
+            return false;
+        }
+        return true;
     }
 
 

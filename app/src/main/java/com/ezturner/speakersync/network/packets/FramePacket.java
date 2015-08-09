@@ -1,7 +1,5 @@
 package com.ezturner.speakersync.network.packets;
 
-import android.util.Log;
-
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.NetworkUtilities;
@@ -60,7 +58,7 @@ public class FramePacket implements NetworkPacket{
         mPacketID = packetID;
 
         //turn packet type into a byte array for combination , and put the stream ID in there
-        byte[] packetType = new byte[]{CONSTANTS.FRAME_PACKET_ID , streamID};
+        byte[] packetType = new byte[]{CONSTANTS.UDP_FRAME_PACKET_ID, streamID};
 
         byte[] packetIDByte = ByteBuffer.allocate(4).putInt(packetID).array();
 

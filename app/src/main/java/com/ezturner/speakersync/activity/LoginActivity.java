@@ -102,6 +102,7 @@ public class LoginActivity extends ActionBarActivity {
             e.printStackTrace();
         }
         mLoginInProgress = false;
+        //TODO: save credentials with AccountManager
     }
 
     public void register(View view){

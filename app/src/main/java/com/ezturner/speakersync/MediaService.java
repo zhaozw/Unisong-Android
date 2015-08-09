@@ -17,6 +17,7 @@ import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.client.Listener;
 import com.ezturner.speakersync.network.master.Broadcaster;
 import com.ezturner.speakersync.network.ntp.SntpClient;
+import com.ezturner.speakersync.network.user.Contacts;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -27,6 +28,7 @@ public class MediaService extends Service{
 
     private IBinder mBinder = new MediaServiceBinder();
 
+    private Contacts mContacts;
     private Listener mListener;
     private Broadcaster mBroadcaster;
 
@@ -56,6 +58,8 @@ public class MediaService extends Service{
 
     @Override
     public void onCreate(){
+        //TODO : check server to see if this is the current application version ,and disable the app if its not
+        //TODO : make sure we are IPv6 compatible
         super.onCreate();
         Log.d(LOG_TAG, "Starting MediaService");
 
@@ -94,11 +98,13 @@ public class MediaService extends Service{
             }
         };
 
+        mContacts = new Contacts(this);
         //Register the broadcast reciever
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));
 
         mAudioStatePublisher = AudioStatePublisher.getInstance();
+
 
         mTimeManager = new TimeManager(SntpClient.getInstance());
         //The instanatiation of AudioTrackManager needs to be after that of TimeManager!

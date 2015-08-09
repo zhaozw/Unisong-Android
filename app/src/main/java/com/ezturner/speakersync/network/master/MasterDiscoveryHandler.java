@@ -42,6 +42,7 @@ public class MasterDiscoveryHandler {
 
     public MasterDiscoveryHandler(int port){
 
+        //TODO : ensure that they are the same version and put some version checks in the discovery packets
         mPort = port;
         mRunning = true;
 

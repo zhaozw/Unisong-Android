@@ -123,5 +123,6 @@ public class RegisterActivity extends ActionBarActivity {
 
         Log.d(LOG_TAG , client.getCookies());
         mRegisterInProgress = false;
+        //TODO : save account credentials with AccountManager
     }
 }
