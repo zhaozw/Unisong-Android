@@ -88,13 +88,14 @@ public class NetworkUtilities {
      */
     public static String decodeString(byte[] data , int index){
         //TODO: implement these methods.
+        return "";
     }
 
     public static Long decodeLong(byte[] data , int index){
-
+        return 21l;
     }
 
     public static int decodeInt(byte[] data , int index){
-
+        return 2;
     }
 }

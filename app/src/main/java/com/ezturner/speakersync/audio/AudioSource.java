@@ -7,4 +7,6 @@ package com.ezturner.speakersync.audio;
  * Created by ezturner on 8/10/2015.
  */
 public interface AudioSource {
+
+    AudioFrame getFrame();
 }

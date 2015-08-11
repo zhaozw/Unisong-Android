@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:padding="@dimen/friend_row_padding"
+    android:onClick="friendRowClick">
+
+    <ImageView
+        android:id="@+id/friendImage"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="12dp"
+        android:layout_marginRight="12dp"
+        android:src="@drawable/ic_launcher" />
+
+    <TextView
+        android:id="@+id/friendSecondLine"
+        android:layout_width="fill_parent"
+        android:layout_height="26dip"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_toRightOf="@id/friendImage"
+        android:layout_toEndOf="@id/friendImage"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="@color/secondaryText"
+        android:textSize="@dimen/text_size_row_secondary" />
+
+    <TextView
+        android:id="@+id/friendFirstLine"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/friendSecondLine"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_toRightOf="@id/friendImage"
+        android:layout_toEndOf="@id/friendImage"
+        android:gravity="center_vertical"
+        android:textColor="@color/primaryText"
+        android:textSize="@dimen/text_size_row_primary" />
+
+</RelativeLayout>

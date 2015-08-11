@@ -95,8 +95,9 @@ public class Song {
         return mDuration;
     }
 
+    //TODO: implement this
     public byte[] getBytes(){
-
+        return new byte[1];
     }
 
 }

@@ -10,4 +10,8 @@
     <dimen name="drawer_margin_top">16dp</dimen>
     <dimen name="drawer_icon_size">16dp</dimen>
 
+    <dimen name="text_size_row_primary">16sp</dimen>
+    <dimen name="text_size_row_secondary">12sp</dimen>
+
+    <dimen name="friend_row_padding">6dp</dimen>
 </resources>
