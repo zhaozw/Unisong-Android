@@ -8,6 +8,7 @@ import com.ezturner.speakersync.audio.master.AACEncoder;
 import com.ezturner.speakersync.audio.AudioFrame;
 import com.ezturner.speakersync.network.CONSTANTS;
 import com.ezturner.speakersync.network.Session;
+import com.ezturner.speakersync.network.Song;
 import com.ezturner.speakersync.network.TimeManager;
 import com.ezturner.speakersync.network.master.transmitter.LANTransmitter;
 import com.ezturner.speakersync.network.master.transmitter.Transmitter;
@@ -44,8 +45,6 @@ public class Broadcaster implements AudioObserver{
     private ScheduledExecutorService mWorker;
 
     private LANTransmitter mLANTransmitter;
-
-    private int mCurrentSongID;
 
     private Session mSession;
 
@@ -107,20 +106,21 @@ public class Broadcaster implements AudioObserver{
 
     }
 
-    private void seek(){
+    private void seek(long time){
         //TODO: figure out how to handle seek with the new AACEncoder/FileDecoder system.
     }
+
 
     @Override
     public void update(int state) {
         switch (state){
-            //TODO: write a good way to switch songs
-//            case AudioStatePublisher.NEW_SONG:
-//                startSongStream();
-//                break;
             case AudioStatePublisher.SEEK:
-                seek();
+                seek(mAudioStatePublisher.getSeekTime());
                 break;
         }
+    }
+
+    public void startSong(Song song){
+
     }
 }

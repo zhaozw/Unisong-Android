@@ -80,4 +80,21 @@ public class NetworkUtilities {
             res += stream.read(data , res , (data.length - res));
         }
     }
+
+    /**
+     * Decodes a string from a byte array
+     * @param data the raw data
+     * @param index the index at which we start
+     */
+    public static String decodeString(byte[] data , int index){
+        //TODO: implement these methods.
+    }
+
+    public static Long decodeLong(byte[] data , int index){
+
+    }
+
+    public static int decodeInt(byte[] data , int index){
+
+    }
 }

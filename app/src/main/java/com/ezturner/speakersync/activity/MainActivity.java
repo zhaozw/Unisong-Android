@@ -53,15 +53,6 @@ public class MainActivity extends ActionBarActivity {
 
         boolean hasStarted = false;
 
-
-        //Get the phone number
-        TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-        MyApplication.setPhoneNumber(tMgr.getLine1Number());
-
-        //TODO: Set a placeholder number for when the above method doesn't work
-        if(MyApplication.getPhoneNumber() == null){
-            MyApplication.setPhoneNumber("");
-        }
         //Create the activity and set the layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);

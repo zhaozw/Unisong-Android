@@ -9,19 +9,7 @@ import com.ezturner.speakersync.network.user.User;
  */
 public class MyApplication extends Application {
 
-    //The phone's phone number
-    private static String sPhoneNumber;
-
-    public static void setPhoneNumber(String number){
-        sPhoneNumber = number;
-    }
-
-    public static String getPhoneNumber(){
-        return sPhoneNumber;
-    }
-
     private static boolean activityVisible;
-
 
     public static boolean isActivityVisible() {
         return activityVisible;

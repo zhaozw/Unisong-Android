@@ -21,8 +21,6 @@ public class Master implements Serializable{
     //The packets that are received while deciding which master to use
     private ArrayList<DatagramPacket> mPackets;
 
-    private SntpClient mClient;
-
     public Master(int port, String number, InetAddress IP ){
         mPort = port;
         mPhoneNumber = number;
@@ -36,14 +34,6 @@ public class Master implements Serializable{
 
     public ArrayList<DatagramPacket> getPackets(){
         return mPackets;
-    }
-
-    public SntpClient getClient(){
-        return mClient;
-    }
-
-    public void addClient(SntpClient client){
-        mClient = client;
     }
 
     public int getPort(){

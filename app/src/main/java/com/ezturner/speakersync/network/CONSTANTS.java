@@ -82,6 +82,8 @@ public class CONSTANTS {
 
     public static final byte TCP_CLIENT_INFO = 17;
 
+    public static final byte TCP_SONG_INFO_PACKET = 18;
+
     public static final int PCM_BITRATE = 1441200;
 
     //The packet size for FEC data
