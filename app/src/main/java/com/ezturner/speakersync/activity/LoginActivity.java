@@ -1,5 +1,6 @@
 package com.ezturner.speakersync.activity;
 
+import android.accounts.AccountManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -7,10 +8,13 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.ezturner.speakersync.R;
+import com.ezturner.speakersync.activity.Friends.FriendsListActivity;
 import com.ezturner.speakersync.network.HttpClient;
 import com.ezturner.speakersync.network.NetworkUtilities;
+import com.ezturner.speakersync.network.user.FriendsList;
 import com.iangclifton.android.floatlabel.FloatLabel;
 import com.squareup.okhttp.Response;
 
@@ -95,14 +99,39 @@ public class LoginActivity extends ActionBarActivity {
         }
 
         Log.d(LOG_TAG , "Login Request Done.");
-        Log.d(LOG_TAG , response.toString());
+        String responseString = response.toString();
+        JSONObject jsonResponse;
+
         try {
-            Log.d(LOG_TAG, response.body().string());
-        } catch (IOException e){
+            jsonResponse = new JSONObject(response.body().string());
+            //TODO: make code for various exceptions
+            if(jsonResponse.getString("message").equals("OK")){
+                loginSuccess(username , password);
+            } else {
+                loginFailure(response);
+            }
+        } catch (Exception e){
             e.printStackTrace();
         }
+
+        Log.d(LOG_TAG, responseString);
+
+
         mLoginInProgress = false;
         //TODO: save credentials with AccountManager
+    }
+
+    private void loginSuccess(String username , String password){
+        AccountManager manager = AccountManager.get(this);
+        manager.addAccount("")
+        Intent intent = new Intent(this, FriendsListActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void loginFailure(Response response){
+        Toast toast = Toast.makeText(this , "Login Failed!" , Toast.LENGTH_LONG);
+        toast.show();
     }
 
     public void register(View view){
