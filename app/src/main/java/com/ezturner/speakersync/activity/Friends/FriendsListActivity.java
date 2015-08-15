@@ -21,7 +21,13 @@ import com.ezturner.speakersync.activity.MusicPlayer.MusicPlayer;
 import com.ezturner.speakersync.activity.MusicPlayer.MusicPlaying;
 import com.ezturner.speakersync.activity.MusicPlayer.Tabs.SlidingTabLayout;
 import com.ezturner.speakersync.activity.NavigationDrawerFragment;
+import com.ezturner.speakersync.network.HttpClient;
+import com.ezturner.speakersync.network.NetworkUtilities;
+import com.squareup.okhttp.Response;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -31,6 +37,7 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
 
     private final static String LOG_TAG = FriendsListActivity.class.getSimpleName();
 
+    private Thread mFriendsThread;
     private Toolbar mToolbar;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
@@ -63,6 +70,10 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         // specify an adapter (see also next example)
         mAdapter = new FriendsAdapter(myDataset);
         mRecyclerView.setAdapter(mAdapter);
+
+        Log.d(LOG_TAG , "Starting thread");
+        mFriendsThread = getFriendsThread();
+        mFriendsThread.start();
 
 
         mToolbar = (Toolbar) findViewById(R.id.music_bar);
@@ -101,12 +112,33 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
     }
 
 
+    private Thread getFriendsThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                Log.d(LOG_TAG , "Sent GET to /user/friends");
+                HttpClient client = HttpClient.getInstance();
+                String URL = NetworkUtilities.EC2_INSTANCE + "/user/friends";
+
+                Response response;
+                try {
+                    response = client.get(URL);
+                } catch (IOException e){
+                    e.printStackTrace();
+                    Log.d(LOG_TAG, "Request Failed");
+                    return;
+                }
+            }
+        });
+    }
+
     public void onClick(View v){
 
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
+    public void onFragmentInteraction(Uri uri){
         //TODO: Make this do something
     }
 
@@ -122,6 +154,7 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
 
     public void friendRowClick(View v){
         Log.d(LOG_TAG, "Friend Row Clicked!");
+        getFriendsThread().start();
     }
 
 

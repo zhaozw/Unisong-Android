@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.ezturner.speakersync.PrefUtils;
 import com.ezturner.speakersync.R;
 import com.ezturner.speakersync.activity.Friends.FriendsListActivity;
 import com.ezturner.speakersync.network.HttpClient;
@@ -100,12 +101,12 @@ public class LoginActivity extends ActionBarActivity {
 
         Log.d(LOG_TAG , "Login Request Done.");
         String responseString = response.toString();
-        JSONObject jsonResponse;
+
 
         try {
-            jsonResponse = new JSONObject(response.body().string());
+
             //TODO: make code for various exceptions
-            if(jsonResponse.getString("message").equals("OK")){
+            if(responseString.contains("message=OK")){
                 loginSuccess(username , password);
             } else {
                 loginFailure(response);
@@ -123,7 +124,8 @@ public class LoginActivity extends ActionBarActivity {
 
     private void loginSuccess(String username , String password){
         AccountManager manager = AccountManager.get(this);
-        manager.addAccount("")
+        PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_USERNAME_KEY , username);
+        PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , password);
         Intent intent = new Intent(this, FriendsListActivity.class);
         startActivity(intent);
         finish();

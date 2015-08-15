@@ -43,6 +43,15 @@ public class HttpClient {
         return response;
     }
 
+    public Response get(String url) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+        Response response = mClient.newCall(request).execute();
+        return response;
+    }
+
     public String getCookies(){
         return mManager.getCookieStore().getCookies().get(0).toString();
     }
