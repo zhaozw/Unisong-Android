@@ -129,6 +129,9 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
                     Log.d(LOG_TAG, "Request Failed");
                     return;
                 }
+
+                Log.d(LOG_TAG , "Done Sending");
+                Log.d(LOG_TAG , response.toString());
             }
         });
     }
