@@ -8,17 +8,21 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 /**
+ * The class for containing user information.
  * Created by Ethan on 8/9/2015.
  */
 public class User {
 
     private final static byte USERNAME = 0;
     private final static byte PHONE_NUMBER = 1;
+    private final static byte ID = 2;
 
     private String mUsername;
+    private int mID;
     private String mPhoneNumber;
 
-    public User(String username, String phonenumber){
+    public User(String username, String phonenumber, int id){
+        mID = id;
         mUsername = username;
         mPhoneNumber = phonenumber;
     }
@@ -37,6 +41,10 @@ public class User {
 
     public String getPhoneNumber(){
         return mPhoneNumber;
+    }
+
+    public int getID(){
+        return mID;
     }
 
     /**
@@ -71,6 +79,18 @@ public class User {
 
         data = NetworkUtilities.combineArrays(data , tempArr);
 
+
+        byte[] idHeaderArr = new byte[]{ID};
+        byte[] idLengthArr = ByteBuffer.allocate(4).putInt(phoneLength).array();
+
+
+        tempArr = NetworkUtilities.combineArrays(idHeaderArr , idLengthArr);
+
+        byte[] idDataArr = ByteBuffer.allocate(4).putInt(getID()).array();
+
+        tempArr = NetworkUtilities.combineArrays(tempArr , idDataArr);
+
+        data = NetworkUtilities.combineArrays(data, tempArr);
         return data;
     }
 }
