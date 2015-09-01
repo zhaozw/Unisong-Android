@@ -115,7 +115,11 @@ public class RegisterActivity extends ActionBarActivity {
         Log.d(LOG_TAG , "Login Request Done.");
         Log.d(LOG_TAG , response.toString());
         try {
-            Log.d(LOG_TAG, response.body().string());
+            String body = response.body().string();
+            Log.d(LOG_TAG, body);
+            if(body.contains("code=200")){
+                registerSuccess(username , password);
+            }
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -123,6 +127,10 @@ public class RegisterActivity extends ActionBarActivity {
 
         Log.d(LOG_TAG , client.getCookies());
         mRegisterInProgress = false;
-        //TODO : save account credentials with AccountManager
+    }
+
+    private void registerSuccess(String username , String password){
+        //TODO : save account credentials with AccountManager/shared prefs/something
+
     }
 }

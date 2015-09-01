@@ -106,7 +106,7 @@ public class LoginActivity extends ActionBarActivity {
         try {
 
             //TODO: make code for various exceptions
-            if(responseString.contains("message=OK")){
+            if(responseString.contains("code=200")){
                 loginSuccess(username , password);
             } else {
                 loginFailure(response);
