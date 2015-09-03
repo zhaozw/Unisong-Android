@@ -95,7 +95,7 @@ public class RegisterActivity extends ActionBarActivity {
         try {
             object.put("username", username);
             object.put("password", password);
-            object.put("phonenumber" , phonenumber);
+            object.put("phone_number" , phonenumber);
         } catch (JSONException e) {
             e.printStackTrace();
         }
