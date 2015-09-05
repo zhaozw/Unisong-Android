@@ -18,7 +18,7 @@
             layout="@layout/music_bar">
         </include>
 
-        <com.ezturner.speakersync.activity.MusicPlayer.Tabs.SlidingTabLayout
+        <io.unisong.android.activity.MusicPlayer.Tabs.SlidingTabLayout
             android:id="@+id/player_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
@@ -35,6 +35,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:layout="@layout/fragment_navigation_drawer"
-        android:name="com.ezturner.speakersync.activity.NavigationDrawerFragment"/>
+        android:name="io.unisong.android.activity.NavigationDrawerFragment"/>
 
 </android.support.v4.widget.DrawerLayout>
