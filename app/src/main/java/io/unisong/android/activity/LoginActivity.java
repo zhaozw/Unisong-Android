@@ -31,6 +31,8 @@ public class LoginActivity extends ActionBarActivity {
 
     private Toolbar mToolbar;
 
+    private HttpClient mClient;
+
     private FloatLabel mUsername;
     private FloatLabel mPassword;
 
@@ -50,6 +52,7 @@ public class LoginActivity extends ActionBarActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         mLoginInProgress = false;
+        mClient = HttpClient.getInstance();
     }
 
     public void login(View view){
@@ -76,44 +79,23 @@ public class LoginActivity extends ActionBarActivity {
         String username = mUsername.getEditText().getText().toString();
         String password = mPassword.getEditText().getText().toString();
 
-        String URL = NetworkUtilities.EC2_INSTANCE + "/login";
-        JSONObject object = new JSONObject();
-
+        mClient.login(username , password);
         try {
-            object.put("username", username);
-            object.put("password", password);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-        String json = object.toString();
-
-        Log.d(LOG_TAG , "Sending Login Request");
-        Response response;
-        try {
-            response = client.post(URL, json);
-        } catch (IOException e){
-            e.printStackTrace();
-            Log.d(LOG_TAG, "Request Failed");
-            return;
-        }
-
-        Log.d(LOG_TAG , "Login Request Done.");
-        String responseString = response.toString();
-
-
-        try {
-
-            //TODO: make code for various exceptions
-            if(responseString.contains("code=200")){
-                loginSuccess(username , password);
-            } else {
-                loginFailure(response);
+            synchronized (this) {
+                this.wait(100);
             }
-        } catch (Exception e){
+        } catch (InterruptedException e){
             e.printStackTrace();
         }
+        Log.d(LOG_TAG , "Login Request Done.");
 
-        Log.d(LOG_TAG, responseString);
+        //TODO: make code for various exceptions
+        if(mClient.isLoggedIn()){
+            loginSuccess(username , password);
+        } else {
+            loginFailure();
+        }
+
 
 
         mLoginInProgress = false;
@@ -129,7 +111,7 @@ public class LoginActivity extends ActionBarActivity {
         finish();
     }
 
-    private void loginFailure(Response response){
+    private void loginFailure(){
         Toast toast = Toast.makeText(this , "Login Failed!" , Toast.LENGTH_LONG);
         toast.show();
     }

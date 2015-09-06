@@ -5,7 +5,7 @@
     android:layout_height="@dimen/action_bar_size"
     android:background="@color/primaryColor"
     android:paddingTop = "0dp"
-    android:theme="@style/SpeakerSyncTheme"
+    android:theme="@style/UnisongTheme"
     app:popupTheme="@style/Theme.AppCompat.Light">
 
 

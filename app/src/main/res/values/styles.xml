@@ -1,13 +1,13 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="SpeakerSyncTheme" parent="SpeakerSyncTheme.Base">
+    <style name="UnisongTheme" parent="UnisongTheme.Base">
 
         <!-- Customize your theme here. -->
     </style>
 
 
-    <style name="SpeakerSyncTheme.Base" parent="Theme.AppCompat.NoActionBar">
+    <style name="UnisongTheme.Base" parent="Theme.AppCompat.NoActionBar">
         <item name="colorControlNormal">#c5c5c5</item>
         <item name="colorControlActivated">@color/accent</item>
         <item name="colorControlHighlight">@color/accent</item>

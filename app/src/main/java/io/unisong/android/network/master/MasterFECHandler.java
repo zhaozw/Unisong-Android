@@ -6,8 +6,6 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.NetworkUtilities;
 
-import net.fec.openrq.parameters.FECParameters;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Map;
@@ -81,8 +79,6 @@ public class MasterFECHandler {
                 byte[] srcData = createFrameArray();
 
 
-                FECParameters parameters = FECParameters.newParameters(CONSTANTS.FEC_DATA_LENGTH,
-                        CONSTANTS.FEC_SYMBOL_SIZE , CONSTANTS.FEC_DATA_LENGTH / CONSTANTS.FEC_SYMBOL_SIZE);
 //                ArrayDataEncoder encoder = OpenRQ.newEncoder(srcData, );
 
 

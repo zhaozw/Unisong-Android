@@ -5,7 +5,7 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "com.ezturner.speakersync"
+        applicationId "io.unisong.android"
         minSdkVersion 16
         targetSdkVersion 21
         versionCode 1
@@ -30,6 +30,7 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.4.0'
     compile 'com.squareup.okio:okio:1.5.0'
     compile 'com.github.theDazzler:droidicon:0.1.6'
+    compile 'io.socket:socket.io-client:0.6.1'
 
 }
 
