@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.SocketIOClient;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -46,7 +47,29 @@ public class SocketIOTestActivity extends ActionBarActivity {
 
 
         mClient = HttpClient.getInstance();
+        mClient.login("anoaz" , "pass");
 
+
+        testThread().start();
+
+    }
+
+    private Thread testThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (this){
+                    try {
+                        this.wait(1050);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+
+                    SocketIOClient client = new SocketIOClient();
+
+                }
+            }
+        });
     }
 
     public void resume(View view){
@@ -58,18 +81,18 @@ public class SocketIOTestActivity extends ActionBarActivity {
             e.printStackTrace();
         }
 
-        mSocket.emit("resume", obj);
+//        mSocket.emit("resume", obj);
     }
 
     public void pause(View view){
         JSONObject obj = new JSONObject();
 
-        mSocket.emit("pause", obj);
+//        mSocket.emit("pause", obj);
     }
 
     public void joinSession(View view){
-        Log.d(LOG_TAG , "Attempting to join session " + mSessionID.getText().toString());
-        mSocket.emit("join session", mSessionID.getText().toString());
+        Log.d(LOG_TAG, "Attempting to join session " + mSessionID.getText().toString());
+//        mSocket.emit("join session", mSessionID.getText().toString());
     }
 
     public void createSession(View view){
@@ -116,7 +139,7 @@ public class SocketIOTestActivity extends ActionBarActivity {
             e.printStackTrace();
         }
 
-        mSocket.emit("create session", obj);
+//        mSocket.emit("create session", obj);
     }
 
 

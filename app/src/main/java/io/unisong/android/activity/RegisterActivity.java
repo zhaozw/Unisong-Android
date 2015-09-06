@@ -125,7 +125,7 @@ public class RegisterActivity extends ActionBarActivity {
         }
 
 
-        Log.d(LOG_TAG , client.getCookies());
+//        Log.d(LOG_TAG , client.getCookies());
         mRegisterInProgress = false;
     }
 

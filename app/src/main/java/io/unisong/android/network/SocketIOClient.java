@@ -1,5 +1,8 @@
 package io.unisong.android.network;
 
+import android.util.Log;
+
+import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.socket.client.IO;
@@ -14,6 +17,7 @@ import io.socket.emitter.Emitter;
  */
 public class SocketIOClient {
 
+    private final String LOG_TAG = SocketIOClient.class.getSimpleName();
 
     private HttpClient mHttpClient;
     private Socket mSocket;
@@ -26,15 +30,19 @@ public class SocketIOClient {
         try{
             IO.Options options = new IO.Options();
 
-            options.query = "connect.sid=" + mHttpClient.getCookies().get("connect.sid");
+            //TODO: figure out how to get a specific cookie.
+            Log.d(LOG_TAG,"Cookies : " + mHttpClient.getCookieManager().getCookieStore().getCookies().size()  );
+            options.query = mHttpClient.getCookieManager().getCookieStore()
+                                .get(new URI(NetworkUtilities.EC2_INSTANCE)).get(0).toString();
             mSocket = IO.socket(NetworkUtilities.SOCKETIO_URL);
-            mSocket.
+//            mSocket.
         } catch (URISyntaxException e){
             e.printStackTrace();
         }
 
-        mSocket.on(Socket.EVENT_DISCONNECT, );
+//        mSocket.on(Socket.EVENT_DISCONNECT, );
 
+        connect();
         mIsLoggedIn = false;
     }
 
@@ -50,9 +58,9 @@ public class SocketIOClient {
      * This method will authenticate the user over the socket if the socket is connected.
      *
      */
-    public boolean login(){
-
-    }
+//    public boolean login(){
+//
+//    }
 
 
     /**

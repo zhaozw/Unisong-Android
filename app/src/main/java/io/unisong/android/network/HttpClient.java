@@ -16,6 +16,9 @@ import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.CookieStore;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Created by Ethan on 7/28/2015.
@@ -75,9 +78,25 @@ public class HttpClient {
                     return;
                 }
 
+                List<URI> cookieList = mManager.getCookieStore().getURIs();
+                try {
+                    String cookie = mManager.getCookieStore().get(new URI(NetworkUtilities.EC2_INSTANCE)).get(0).toString();
+                    Log.d(LOG_TAG , cookie);
+                } catch (URISyntaxException e){
+                    e.printStackTrace();
+                }
+
+                for (URI uri:
+                        cookieList) {
+                    Log.d(LOG_TAG , uri.toString());
+                }
+
+
                 if(response.toString().contains("code=200")) {
+                    Log.d(LOG_TAG , "Login Success");
                     mIsLoggedIn = true;
                 } else {
+                    Log.d(LOG_TAG , "Login Failure");
                     mIsLoggedIn = false;
                 }
 
@@ -104,8 +123,8 @@ public class HttpClient {
         return response;
     }
 
-    public CookieStore getCookies(){
-        return mManager.getCookieStore();
+    public CookieManager getCookieManager(){
+        return mManager;
     }
 
     public static HttpClient getInstance(){
