@@ -9,6 +9,7 @@ import io.unisong.android.network.Session;
 import io.unisong.android.network.Song;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.master.transmitter.LANTransmitter;
+import io.unisong.android.network.master.transmitter.ServerTransmitter;
 import io.unisong.android.network.master.transmitter.Transmitter;
 
 import java.util.ArrayList;
@@ -44,6 +45,8 @@ public class Broadcaster implements AudioObserver {
 
     private Session mSession;
 
+    private ServerTransmitter mServerTransmitter;
+
     //Makes an Broadcaster object
     public Broadcaster(){
         //Get the singleton objects.
@@ -54,8 +57,12 @@ public class Broadcaster implements AudioObserver {
 
         //TODO: check to see if we're on wifi. If not, then don't start LANTransmitter
         mTransmitters = new ArrayList<>();
-        mLANTransmitter = new LANTransmitter(false , mSession);
-        mTransmitters.add(mLANTransmitter);
+        // TODO : uncomment after server tests
+        //mLANTransmitter = new LANTransmitter(false , mSession);
+        //mTransmitters.add(mLANTransmitter);
+
+        mServerTransmitter = new ServerTransmitter();
+        mTransmitters.add(mServerTransmitter);
 
         mWorker = Executors.newSingleThreadScheduledExecutor();
 

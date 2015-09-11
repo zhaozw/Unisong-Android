@@ -63,6 +63,7 @@ public class AACEncoder {
         mCurrentSongInfo = CurrentSongInfo.getInstance();
 
         mInputFrames = new TreeMap<>();
+        mOutputFrames = new TreeMap<>();
 
         mLastFrame = -1;
 
@@ -171,6 +172,7 @@ public class AACEncoder {
         //TODO: deal with no data/end of stream
         while(!mStop){
 
+
             while(!mInputFrames.containsKey(mCurrentInputFrameID)){
 
                 if(mStop || mCurrentInputFrameID == mLastFrame){
@@ -187,6 +189,11 @@ public class AACEncoder {
                 if(mStop){
                     break;
                 }
+
+                if(mDecoder.hasFrame(mCurrentInputFrameID)){
+                    mInputFrames.put(mCurrentInputFrameID , mDecoder.getFrame(mCurrentInputFrameID));
+                }
+
 
             }
 

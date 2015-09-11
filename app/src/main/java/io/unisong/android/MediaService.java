@@ -114,6 +114,13 @@ public class MediaService extends Service{
         PowerManager mgr = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
         mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
         mWakeLock.acquire();
+
+//        AudioFileReader reader = new AudioFileReader();
+//        try {
+//            reader.readFile(TEST_FILE_PATH);
+//        } catch (IOException e){
+//            e.printStackTrace();
+//        }
     }
 
     public void broadcaster() {

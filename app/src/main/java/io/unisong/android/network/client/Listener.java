@@ -6,10 +6,12 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.audio.client.SongDecoder;
+import io.unisong.android.network.HttpClient;
 import io.unisong.android.network.Master;
 import io.unisong.android.network.Session;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.receiver.LANReceiver;
+import io.unisong.android.network.client.receiver.ServerReceiver;
 
 import java.net.DatagramPacket;
 
@@ -46,6 +48,7 @@ public class Listener{
     private AudioTrackManager mManager;
 
     private LANReceiver mLANReceiver;
+    private ServerReceiver mServerReceiever;
 
     private SongDecoder mSongDecoder;
 
@@ -59,7 +62,18 @@ public class Listener{
 
         Log.d(LOG_TAG, "Audio Listener Started");
 
-        mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
+//        mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
+
+        HttpClient httpClient = HttpClient.getInstance();
+        httpClient.login("anoaz" , "pass");
+        synchronized (this){
+            try{
+                this.wait(500);
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+        mServerReceiever = new ServerReceiver();
     }
 
 

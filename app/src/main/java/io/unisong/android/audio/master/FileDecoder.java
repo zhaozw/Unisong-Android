@@ -89,6 +89,8 @@ public class FileDecoder implements Decoder{
                     decode();
                 } catch (IOException e){
                     e.printStackTrace();
+                } catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         });
@@ -152,12 +154,12 @@ public class FileDecoder implements Decoder{
 
 
 
-        mExtractor.selectTrack(0);
 
         if(mSeekTime != 0) {
             mExtractor.seekTo((mSeekTime - 50) * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
             Log.d(LOG_TAG, "mExtractor sample time is :" + mExtractor.getSampleTime() + " from SeekTime : " + mSeekTime);
         }
+        mExtractor.selectTrack(0);
 
         // start decoding
         final long kTimeOutUs = 1000;
@@ -224,7 +226,11 @@ public class FileDecoder implements Decoder{
 
 
                     while(mFrames.size() > 25){
-                        if(mStop)   break;
+                        if(mStop){
+                            Log.d(LOG_TAG , "mStop is true, exiting loop.");
+                            break;
+                        }
+
                         synchronized (this){
                             try {
                                 this.wait(5);
@@ -240,11 +246,13 @@ public class FileDecoder implements Decoder{
                 	}*/
 
                 }
+
                 try {
                     mCodec.releaseOutputBuffer(outputBufIndex, false);
                 } catch(IllegalStateException e){
                     e.printStackTrace();
                 }
+
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0){
                     Log.d(LOG_TAG, "saw output EOS.");
                     if(mEncoder != null)    mEncoder.lastFrame(mCurrentFrameID);
@@ -271,6 +279,7 @@ public class FileDecoder implements Decoder{
 
                     //TODO: Ensure that the output format is always 2 channels and 44100 sample rate
                     setEncoderFormat(format);
+
                 }
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
@@ -285,6 +294,9 @@ public class FileDecoder implements Decoder{
 
         Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
         Log.d(LOG_TAG , "Size is : " + mSize);
+
+        Log.d(LOG_TAG , "mStop : "  +mStop);
+        Log.d(LOG_TAG , "No Output Index: " + noOutputCounter);
 
         releaseCodec();
     }
@@ -320,7 +332,7 @@ public class FileDecoder implements Decoder{
 
     @Override
     public Map<Integer, AudioFrame> getFrames() {
-        return null;
+        return mFrames;
     }
 
     public boolean isRunning(){

@@ -6,6 +6,7 @@ import android.util.Log;
 
 import io.unisong.android.network.Master;
 import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.packets.DiscoveryPacket;
 import io.unisong.android.network.packets.MasterResponsePacket;
 
@@ -185,7 +186,8 @@ public class ClientDiscoveryHandler {
     //Sends a request
     private void sendDiscoveryRequest(){
 
-        DiscoveryPacket packet = new DiscoveryPacket();
+        // TODO : disable this if not connected to wifi
+        DiscoveryPacket packet = new DiscoveryPacket(NetworkUtilities.getBroadcastAddress().getAddress());
 
         try {
             synchronized (mSendSocket) {
