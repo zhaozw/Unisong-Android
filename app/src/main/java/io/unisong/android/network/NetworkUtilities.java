@@ -9,6 +9,8 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
@@ -20,6 +22,8 @@ public class NetworkUtilities {
     public final static String EC2_INSTANCE = "http://ec2-52-27-241-102.us-west-2.compute.amazonaws.com";
     public final static String HTTP_URL = EC2_INSTANCE + ":8000";
     public final static String SOCKETIO_URL = EC2_INSTANCE + ":8005";
+    public static URI SOCKETIO_URI;
+
 
     //Returns the IP address of the local interface. Code is from online.
     public static String getLocalIpAddress() {
@@ -97,5 +101,17 @@ public class NetworkUtilities {
 
     public static int decodeInt(byte[] data , int index){
         return 2;
+    }
+
+
+    public static URI getSocketIOUri(){
+        if(SOCKETIO_URI == null) {
+            try {
+                SOCKETIO_URI = new URI(SOCKETIO_URL);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        return SOCKETIO_URI;
     }
 }

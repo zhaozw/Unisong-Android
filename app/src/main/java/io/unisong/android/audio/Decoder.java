@@ -17,4 +17,6 @@ public interface Decoder {
     void destroy();
 
     Map<Integer, AudioFrame> getFrames();
+
+    void addInputFrame(AudioFrame frame);
 }

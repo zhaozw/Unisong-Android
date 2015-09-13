@@ -335,6 +335,13 @@ public class FileDecoder implements Decoder{
         return mFrames;
     }
 
+    @Override
+    public void addInputFrame(AudioFrame frame) {
+        synchronized (mFrames){
+            mFrames.put(frame.getID() , frame);
+        }
+    }
+
     public boolean isRunning(){
         return mRunning;
     }

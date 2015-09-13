@@ -347,7 +347,7 @@ public class ClientTCPHandler {
 
         mCanRequest = true;
 
-        mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID(), 0);
+        mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID());
         Log.d(LOG_TAG, "Song Starting!");
     }
 
@@ -358,7 +358,7 @@ public class ClientTCPHandler {
         mCanRequest = true;
 
 
-        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID() , packet.getCurrentPacket());
+        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID());
 
         mTopPacket = packet.getCurrentPacket();
 

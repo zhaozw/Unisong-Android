@@ -6,7 +6,7 @@ import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.Client;
-import io.unisong.android.network.Session;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.master.transmitter.LANTransmitter;
 
@@ -48,15 +48,15 @@ public class MasterTCPHandler implements AudioObserver {
 
     private LANTransmitter mLANTransmitter;
 
-    private Session mSession;
+    private UnisongSession mUnisongSession;
 
 
     //TODO: extend AudioObserver and implement
-    public MasterTCPHandler(LANTransmitter transmitter, Session session){
+    public MasterTCPHandler(LANTransmitter transmitter, UnisongSession unisongSession){
 
         mLANTransmitter = transmitter;
 
-        mSession = session;
+        mUnisongSession = unisongSession;
 
         mClients = new ArrayList<>();
 

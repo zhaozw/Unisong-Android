@@ -61,6 +61,8 @@ public class SongDecoder implements Decoder {
 
 
     public SongDecoder(int channels){
+        mOutputFrames = new HashMap<>();
+        mInputFrames = new HashMap<>();
         mTimeManager = TimeManager.getInstance();
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
@@ -69,9 +71,7 @@ public class SongDecoder implements Decoder {
     }
 
     public void decode(long startTime){
-        mLastFrameRequested = -1;
-        mInputFrames = new HashMap<>();
-        mOutputFrames = new HashMap<>();
+        Log.d(LOG_TAG , "SongDecoder decode started at time: " + startTime);
         mCurrentID = (int) (startTime / 23.21995464852608);
         mCurrentFrame = 0;
         mDecodeThread = getDecode();
@@ -94,6 +94,7 @@ public class SongDecoder implements Decoder {
 
         long startTime = System.currentTimeMillis();
 
+        Log.d(LOG_TAG , "Setting up decodeMain()");
 
 //        Log.d(LOG_TAG, "Creating mCodec : OMX.google.aac.decoder");
         // create the actual decoder, using the mime to select
@@ -138,6 +139,7 @@ public class SongDecoder implements Decoder {
         boolean firstOutputChange = true;
         long lastPlayTime = System.currentTimeMillis();
 
+        Log.d(LOG_TAG , "Starting decode loop.");
         //TODO: deal with no data/end of stream
         while(!mStop){
 
@@ -178,7 +180,6 @@ public class SongDecoder implements Decoder {
             } catch (IllegalStateException e){
                 e.printStackTrace();
             }
-
 
             if (outputBufIndex >= 0){
                 if (info.size > 0)  noOutputCounter = 0;
@@ -291,7 +292,7 @@ public class SongDecoder implements Decoder {
 
     @Override
     public Map<Integer, AudioFrame> getFrames() {
-        return null;
+        return mOutputFrames;
     }
 
     public void seek(long seekTime){
@@ -303,7 +304,7 @@ public class SongDecoder implements Decoder {
 
     @Override
     public boolean hasFrame(int ID) {
-        return false;
+        return mOutputFrames.containsKey(ID);
     }
 
     public void addInputFrame(AudioFrame frame){
@@ -318,6 +319,7 @@ public class SongDecoder implements Decoder {
 
 
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
+        Log.d(LOG_TAG , "Frame #" + mCurrentID + " created.");
         mCurrentID++;
 
         mSamples += data.length;
@@ -337,8 +339,9 @@ public class SongDecoder implements Decoder {
     }
 
     private void waitForFrame(int size){
-        //TODO: test/check this out
+        //TODO: Rewrite this to feed blank AAC frames instead of creating an empty PCM one
         while(!mInputFrames.containsKey(mCurrentFrame)){
+            Log.d(LOG_TAG , "Current frame # is :" + mCurrentFrame + " and input frames size is : " + mInputFrames.size());
 //                if(mStartFrame != 0)    Log.d(LOG_TAG , "Frame #" + mCurrentFrame + " not found.");
             if(mStop){
                 break;

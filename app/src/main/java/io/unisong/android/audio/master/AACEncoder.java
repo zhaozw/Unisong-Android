@@ -6,6 +6,7 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioSource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +18,7 @@ import java.util.TreeMap;
 /**
  * Created by Ethan on 4/27/2015.
  */
-public class AACEncoder {
+public class AACEncoder implements AudioSource{
     private static final String LOG_TAG = "AACEncoder";
 
     //The current ID of the audio frame
@@ -52,15 +53,12 @@ public class AACEncoder {
     //The FileDecoder that turns our source file into
     private FileDecoder mDecoder;
 
-    private CurrentSongInfo mCurrentSongInfo;
-
     //The highest frame # used.
     private int mHighestFrameUsed;
 
     public AACEncoder(){
 
         mHighestFrameUsed = 0;
-        mCurrentSongInfo = CurrentSongInfo.getInstance();
 
         mInputFrames = new TreeMap<>();
         mOutputFrames = new TreeMap<>();
@@ -73,11 +71,13 @@ public class AACEncoder {
     }
 
     public void encode(long startTime, int songID, String filePath){
+        Log.d(LOG_TAG , "Starting encode()");
         mSongID = songID;
         mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
         mDecoder = new FileDecoder(filePath, startTime , this);
         mEncodeThread = getEncode();
         mEncodeThread.start();
+        Log.d(LOG_TAG , "Done with encode()");
     }
 
     private Thread getEncode(){
@@ -379,6 +379,9 @@ public class AACEncoder {
         AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mSongID);
         mCurrentOutputID++;
 
+        if(frame == null){
+            Log.d(LOG_TAG , "FRAME IS ALSO NULL WTF");
+        }
         mOutputFrames.put(frame.getID() , frame);
 
     }
@@ -399,7 +402,6 @@ public class AACEncoder {
         synchronized (mInputFrames){
             mInputFrames = new TreeMap<>();
         }
-
     }
 
     public void setInputFormat(MediaFormat format){
@@ -430,5 +432,15 @@ public class AACEncoder {
 
     public void destroy(){
 
+    }
+
+    public boolean hasFrame(int ID){
+        return mOutputFrames.containsKey(ID);
+    }
+
+    public AudioFrame getFrame(int ID){
+        synchronized (mOutputFrames){
+            return mOutputFrames.get(ID);
+        }
     }
 }

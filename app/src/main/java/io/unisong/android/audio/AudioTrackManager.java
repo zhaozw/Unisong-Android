@@ -185,6 +185,7 @@ public class AudioTrackManager implements AudioObserver {
 
     public void startSong(Decoder decoder){
 
+        // TODO : have the AudioTrackManage instantialize its own decoder.
         //TODO: fix this so that we have a decent way of configuring this differently for client/master
         mDecoder = decoder;
         double millisTillSongStart =  (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
@@ -377,5 +378,9 @@ public class AudioTrackManager implements AudioObserver {
                     mFrameToPlay = index;
                 }
             }*/
+    }
+
+    public void addInputFrame(AudioFrame frame){
+        mDecoder.addInputFrame(frame);
     }
 }

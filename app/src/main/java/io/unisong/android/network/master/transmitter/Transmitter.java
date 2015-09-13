@@ -1,6 +1,7 @@
 package io.unisong.android.network.master.transmitter;
 
 import io.unisong.android.audio.AudioObserver;
+import io.unisong.android.audio.AudioSource;
 import io.unisong.android.audio.master.AACEncoder;
 
 /**
@@ -8,7 +9,7 @@ import io.unisong.android.audio.master.AACEncoder;
  */
 public interface Transmitter extends AudioObserver {
 
-    void setAACEncoder(AACEncoder encoder);
+    void setAudioSource(AudioSource source);
     void setLastFrame(int lastFrame);
-    void startSong();
+    void startSong(long songStartTime, int channels, int songID);
 }

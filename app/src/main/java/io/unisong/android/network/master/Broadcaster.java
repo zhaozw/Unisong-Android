@@ -1,11 +1,15 @@
 package io.unisong.android.network.master;
 
+import android.util.Log;
+
 import io.unisong.android.MediaService;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.audio.master.AACEncoder;
+import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.Session;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.Song;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.master.transmitter.LANTransmitter;
@@ -43,9 +47,11 @@ public class Broadcaster implements AudioObserver {
 
     private LANTransmitter mLANTransmitter;
 
-    private Session mSession;
+    private UnisongSession mUnisongSession;
 
     private ServerTransmitter mServerTransmitter;
+
+    private AudioTrackManager mAudioTrackManager;
 
     //Makes an Broadcaster object
     public Broadcaster(){
@@ -53,12 +59,14 @@ public class Broadcaster implements AudioObserver {
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mTimeManager = TimeManager.getInstance();
 
-        mSession = new Session();
+        mAudioTrackManager = AudioTrackManager.getInstance();
+
+        mUnisongSession = new UnisongSession();
 
         //TODO: check to see if we're on wifi. If not, then don't start LANTransmitter
         mTransmitters = new ArrayList<>();
         // TODO : uncomment after server tests
-        //mLANTransmitter = new LANTransmitter(false , mSession);
+        //mLANTransmitter = new LANTransmitter(false , mUnisongSession);
         //mTransmitters.add(mLANTransmitter);
 
         mServerTransmitter = new ServerTransmitter();
@@ -66,7 +74,7 @@ public class Broadcaster implements AudioObserver {
 
         mWorker = Executors.newSingleThreadScheduledExecutor();
 
-        mWorker.schedule(mSongStreamStart, 5000, TimeUnit.MILLISECONDS);
+        mWorker.schedule(mSongStreamStart, 500, TimeUnit.MILLISECONDS);
 
     }
 
@@ -80,23 +88,37 @@ public class Broadcaster implements AudioObserver {
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     public void startSongStream(){
+        mUnisongSession.startSong(0);
 
         mEncoder = new AACEncoder();
-        mEncoder.encode(0, mSession.getCurrentSongID() , MediaService.TEST_FILE_PATH);
-        //TODO: actually switch the songs
 
-        //The start time in milliseconds
+
+        mEncoder.encode(0, mUnisongSession.getCurrentSongID() , MediaService.TEST_FILE_PATH);
+        // TODO: actually switch the songs
+
+
+        // The start time in milliseconds
         mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
 
-        mWorker.schedule(mNotifyAudioPublisher , CONSTANTS.SONG_START_DELAY, TimeUnit.MILLISECONDS);
+        mWorker.schedule(mNotifyAudioPublisher, CONSTANTS.SONG_START_DELAY, TimeUnit.MILLISECONDS);
+
 
         for(Transmitter transmitter : mTransmitters){
-            transmitter.setAACEncoder(mEncoder);
-            transmitter.startSong();
+            transmitter.setAudioSource(mEncoder);
+            // TODO : make sure that we can get the channels and songID dynamically
+            transmitter.startSong(mTimeManager.getSongStartTime() , 2, 0);
         }
 
+
         mStreamRunning = true;
+
+        FileDecoder decoder = new FileDecoder(MediaService.TEST_FILE_PATH , 0 , mAudioTrackManager);
+
+        mAudioTrackManager.startSong(decoder);
+
+        Log.d(LOG_TAG , "Starting broadcaster succeeded.");
     }
+
     Runnable mNotifyAudioPublisher = new Runnable() {
         @Override
         public void run() {

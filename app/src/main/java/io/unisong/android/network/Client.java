@@ -4,7 +4,6 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.master.CurrentSongInfo;
 import io.unisong.android.network.master.MasterTCPHandler;
 import io.unisong.android.network.master.transmitter.LANTransmitter;
 import io.unisong.android.network.packets.tcp.TCPAcknowledgePacket;
@@ -16,6 +15,7 @@ import io.unisong.android.network.packets.tcp.TCPResumePacket;
 import io.unisong.android.network.packets.tcp.TCPSeekPacket;
 import io.unisong.android.network.packets.tcp.TCPSongInProgressPacket;
 import io.unisong.android.network.packets.tcp.TCPSongStartPacket;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.User;
 
 import java.io.BufferedInputStream;
@@ -61,10 +61,12 @@ public class Client {
     //The Singletons
     private AudioStatePublisher mAudioStatePublisher;
     private TimeManager mTimeManager;
-    private CurrentSongInfo mCurrentSongInfo;
 
     private LANTransmitter mTransmitter;
     private User mUser;
+
+    // The Unisong Session we're currently in
+    private UnisongSession mSession;
 
 
     //TODO: add a way to connect a user
@@ -80,11 +82,11 @@ public class Client {
     //TODO : Add mode for server connection
     public Client(String ip, Socket socket, MasterTCPHandler parent, LANTransmitter transmitter){
 
+        mSession = UnisongSession.getInstance();
         mTransmitter = transmitter;
 
         //Get the singleton objects.
         mTimeManager = TimeManager.getInstance();
-        mCurrentSongInfo = CurrentSongInfo.getInstance();
         mAudioStatePublisher = AudioStatePublisher.getInstance();
 
         mMasterTCPHandler = parent;
@@ -346,7 +348,7 @@ public class Client {
         DataOutputStream outputStream;
         synchronized (mOutputStream){
             //Send out the Song In Progress TCP packet.
-            TCPSongInProgressPacket.send(mOutputStream, mTimeManager.getSongStartTime(), mCurrentSongInfo.getChannels(),
+            TCPSongInProgressPacket.send(mOutputStream, mTimeManager.getSongStartTime(), mSession.getCurrentSong().getChannels(),
                     mTransmitter.getNextPacketSendID(), (byte) 0);
         }
     }
@@ -354,7 +356,7 @@ public class Client {
     //Notifies this slave that a song is starting
     public void notifyOfSongStart(){
         synchronized (mOutputStream){
-            TCPSongStartPacket.send(mOutputStream , mTimeManager.getSongStartTime() , mCurrentSongInfo.getChannels() , (byte) 0 );
+            TCPSongStartPacket.send(mOutputStream , mTimeManager.getSongStartTime() , mSession.getCurrentSong().getChannels() , (byte) 0 );
         }
     }
 

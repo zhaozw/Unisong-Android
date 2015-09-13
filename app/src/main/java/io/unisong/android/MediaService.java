@@ -17,6 +17,7 @@ import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.master.Broadcaster;
 import io.unisong.android.network.ntp.SntpClient;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.Contacts;
 
 /**
@@ -121,6 +122,10 @@ public class MediaService extends Service{
 //        } catch (IOException e){
 //            e.printStackTrace();
 //        }
+
+        if(UnisongSession.getInstance() == null){
+            UnisongSession session = new UnisongSession();
+        }
     }
 
     public void broadcaster() {

@@ -2,13 +2,15 @@ package io.unisong.android.network.client;
 
 import android.content.Context;
 import android.util.Log;
+
+import io.unisong.android.MediaService;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.audio.client.SongDecoder;
-import io.unisong.android.network.HttpClient;
+import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.Master;
-import io.unisong.android.network.Session;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.receiver.LANReceiver;
 import io.unisong.android.network.client.receiver.ServerReceiver;
@@ -51,8 +53,9 @@ public class Listener{
     private ServerReceiver mServerReceiever;
 
     private SongDecoder mSongDecoder;
+    private UnisongSession mSession;
 
-    private Session mCurrentSession;
+    private UnisongSession mCurrentUnisongSession;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
     public Listener(){
@@ -64,8 +67,6 @@ public class Listener{
 
 //        mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
 
-        HttpClient httpClient = HttpClient.getInstance();
-        httpClient.login("anoaz" , "pass");
         synchronized (this){
             try{
                 this.wait(500);
@@ -73,7 +74,9 @@ public class Listener{
                 e.printStackTrace();
             }
         }
-        mServerReceiever = new ServerReceiver();
+        mServerReceiever = new ServerReceiver(this);
+
+        mSession = UnisongSession.getInstance();
     }
 
 
@@ -97,7 +100,7 @@ public class Listener{
 
     private boolean songStarted = false;
 
-    public void startSong(long startTime , int channels , byte streamID , int currentPacket){
+    public void startSong(long startTime , int channels , int songID){
 
         //TODO: get rid of this, it's just test code
         if(!songStarted){
@@ -106,11 +109,14 @@ public class Listener{
             Log.d(LOG_TAG , "Song is being started a second time!");
         }
 
+        //TODO : calculate the current frame to play?
         mSongDecoder = new SongDecoder(channels);
-        mSongDecoder.decode(startTime);
+
+        // TODO : seek time
+        mSongDecoder.decode(0);
 
         mTimeManager.setSongStartTime(startTime);
-        mStreamID = streamID;
+        mSession.startSong(songID);
 
         mManager.startSong(mSongDecoder);
     }
@@ -120,7 +126,7 @@ public class Listener{
     }
 
     public void addFrame(AudioFrame frame){
-        mSongDecoder.addInputFrame(frame);
+        mManager.addInputFrame(frame);
     }
 
     public void resume(long resumeTime,  long newSongStartTime){

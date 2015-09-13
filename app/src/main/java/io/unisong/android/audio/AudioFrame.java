@@ -103,7 +103,7 @@ public class AudioFrame {
         return mLength / 1000;
     }
 
-    public int getSongmID(){
+    public int getSongID(){
         return mSongID;
     }
 

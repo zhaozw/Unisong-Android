@@ -2,10 +2,17 @@ package io.unisong.android.network.master.transmitter;
 
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.CharArrayReader;
+import java.sql.Time;
 import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioObserver;
+import io.unisong.android.audio.AudioSource;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.network.HttpClient;
 import io.unisong.android.network.SocketIOClient;
@@ -14,22 +21,22 @@ import io.unisong.android.network.SocketIOClient;
  * The class to handle transmissions to my python/HTTP server
  * Created by Ethan on 5/22/2015.
  */
-public class ServerTransmitter implements Transmitter {
+public class ServerTransmitter implements Transmitter, AudioObserver {
 
     private final static String LOG_TAG = ServerTransmitter.class.getSimpleName();
 
     private SocketIOClient mClient;
     private boolean mTransmitting;
-    private AACEncoder mEncoder;
-    private Map<Integer, AudioFrame> mFrames;
+    private AudioSource mSource;
     private Thread mBroadcastThread;
 
     public ServerTransmitter(){
         mTransmitting = true;
-        mBroadcastThread = getBroadcastThread();
-        mBroadcastThread.start();
-        HttpClient httpClient = HttpClient.getInstance();
-        httpClient.login("anoaz" , "pass");
+        //HttpClient httpClient = HttpClient.getInstance();
+        //httpClient.login("anoaz" , "pass");
+
+        mClient = new SocketIOClient();
+        mClient.joinSession(5);
     }
 
     private Thread getBroadcastThread(){
@@ -42,53 +49,53 @@ public class ServerTransmitter implements Transmitter {
     }
 
     private void broadcast(){
-        while(mEncoder == null || mFrames == null){
-            synchronized (this){
-                try{
-                    this.wait(50);
-                } catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-            }
+        int currentFrame = 0;
 
-            if(mEncoder != null && mFrames == null){
-                mFrames = mEncoder.getFrames();
-            }
-        }
-        mClient = new SocketIOClient();
-        mClient.joinSession(5);
-        int i = 0;
         while(mTransmitting){
-            AudioFrame frame;
+            if(!mSource.hasFrame(currentFrame)){
 
-            synchronized (mFrames) {
-                frame  = mFrames.get(i);
-            }
-
-            if(frame == null){
                 synchronized (this){
                     try{
-                        this.wait(50);
+                        this.wait(10);
                     } catch (InterruptedException e){
                         e.printStackTrace();
                     }
                 }
                 continue;
             }
-            i++;
 
-            Log.d(LOG_TAG, "sending frame.");
-            mClient.upload(frame);
-            // TODO : implement a better solution other than raw mFrames access.
-            mEncoder.frameUsed(i - 1);
-            return;
+            AudioFrame frame = mSource.getFrame(currentFrame);
+
+            // TODO : figure out why frame is null
+            if(frame == null){
+                Log.d(LOG_TAG , "FRAME IS NULL WTF :"  + mSource.hasFrame(currentFrame) );
+                continue;
+            }
+            mSource.frameUsed(currentFrame);
+
+            currentFrame++;
+
+            uploadFrame(frame);
         }
     }
 
+    private void uploadFrame(AudioFrame frame){
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.put("dataID", frame.getID());
+            obj.put("data", frame.getData());
+            obj.put("songID", 5);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        mClient.emit("upload data", obj);
+    }
+
     @Override
-    public void setAACEncoder(AACEncoder encoder) {
-        mFrames = encoder.getFrames();
-        mEncoder = encoder;
+    public void setAudioSource(AudioSource source) {
+        mSource = source;
     }
 
     @Override
@@ -97,12 +104,33 @@ public class ServerTransmitter implements Transmitter {
     }
 
     @Override
-    public void startSong() {
+    public void startSong(long songStartTime, int channels, int songID) {
 
+        JSONObject startSongJSON = new JSONObject();
+
+        try {
+            startSongJSON.put("songStartTime", songStartTime);
+            startSongJSON.put("songID", songID);
+            startSongJSON.put("channels", channels);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        mClient.emit("start song" , startSongJSON);
+
+        mBroadcastThread = getBroadcastThread();
+        mBroadcastThread.start();
     }
 
     @Override
     public void update(int state) {
-
+        switch (state){
+            case AudioStatePublisher.PAUSED:
+                break;
+            case AudioStatePublisher.RESUME:
+                break;
+            case AudioStatePublisher.SEEK:
+                break;
+        }
     }
 }

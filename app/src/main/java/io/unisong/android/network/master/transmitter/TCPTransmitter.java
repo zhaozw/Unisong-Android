@@ -1,5 +1,6 @@
 package io.unisong.android.network.master.transmitter;
 
+import io.unisong.android.audio.AudioSource;
 import io.unisong.android.audio.master.AACEncoder;
 
 /**
@@ -17,9 +18,8 @@ public class TCPTransmitter implements Transmitter {
 
     }
 
-
     @Override
-    public void setAACEncoder(AACEncoder encoder) {
+    public void setAudioSource(AudioSource source) {
 
     }
 
@@ -29,6 +29,11 @@ public class TCPTransmitter implements Transmitter {
     }
 
     @Override
+    public void startSong(long songStartTime, int channels, int songID) {
+
+    }
+
+
     public void startSong() {
 
     }

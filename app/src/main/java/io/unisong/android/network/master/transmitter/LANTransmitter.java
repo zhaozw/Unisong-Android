@@ -3,11 +3,11 @@ package io.unisong.android.network.master.transmitter;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioSource;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.Session;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.master.MasterDiscoveryHandler;
@@ -75,12 +75,12 @@ public class LANTransmitter implements Transmitter{
 
     private List<Integer> mPacketsToRebroadcast;
 
-    //The AAC Encoder, we will use that we have broadcasted frames.
-    private AACEncoder mEncoder;
+    //The Audio source we are receiving encoded audio data from.
+    private AudioSource mSource;
 
 
     //TODO: implement multicast
-    public LANTransmitter(boolean multicast, Session session){
+    public LANTransmitter(boolean multicast, UnisongSession unisongSession){
         Random random = new Random();
         mPort = CONSTANTS.STREAM_PORT_BASE + random.nextInt(CONSTANTS.PORT_RANGE);
         //TODO: Listen for other streams and ensure that you don't use the same port
@@ -101,7 +101,7 @@ public class LANTransmitter implements Transmitter{
             mStreamSocket = new DatagramSocket();
 
             mDiscoveryHandler = new MasterDiscoveryHandler(mPort);
-            mTCPHandler = new MasterTCPHandler(this, session);
+            mTCPHandler = new MasterTCPHandler(this, unisongSession);
 
         } catch(IOException e){
             e.printStackTrace();
@@ -200,7 +200,7 @@ public class LANTransmitter implements Transmitter{
 
                 Log.d(LOG_TAG, "mPacketsSentCount :" + mPacketsSentCount + " , delay is : " + delay);
             }
-            mEncoder.frameUsed(mNextFrameSendID - 1);
+            mSource.frameUsed(mNextFrameSendID - 1);
 
 
             if(mNextFrameSendID != mLastFrameID && mStreamRunning) {
@@ -393,9 +393,8 @@ public class LANTransmitter implements Transmitter{
     }
 
     @Override
-    public void setAACEncoder(AACEncoder encoder) {
-        mEncoder = encoder;
-        mFrames = mEncoder.getFrames();
+    public void setAudioSource(AudioSource source) {
+        mSource = source;
     }
 
     public void setLastFrame(int lastFrame){
@@ -403,6 +402,10 @@ public class LANTransmitter implements Transmitter{
     }
 
     @Override
+    public void startSong(long songStartTime, int channels, int songID) {
+
+    }
+
     public void startSong(){
         mTCPHandler.startSong();
         startStream();
