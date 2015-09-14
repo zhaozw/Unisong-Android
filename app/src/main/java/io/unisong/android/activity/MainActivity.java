@@ -18,6 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.facebook.appevents.AppEventsLogger;
+
 import io.unisong.android.MediaService;
 import io.unisong.android.MyApplication;
 import io.unisong.android.R;
@@ -203,12 +205,18 @@ public class MainActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         MyApplication.activityResumed();
+
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         MyApplication.activityPaused();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 
     public void pause(View v){
