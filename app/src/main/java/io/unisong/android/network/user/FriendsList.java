@@ -1,5 +1,6 @@
 package io.unisong.android.network.user;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.squareup.okhttp.Response;
@@ -17,26 +18,47 @@ import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 
 /**
+ * The class that holds the Friends List. Implements the Singleton design pattern.
+ *
  * Created by Ethan on 8/9/2015.
  */
 public class FriendsList {
 
     private final static String LOG_TAG = FriendsList.class.getSimpleName();
 
+    private FriendsList sInstance;
+
+    public FriendsList getInstance(){
+        if(sInstance == null){
+            sInstance = new FriendsList();
+        }
+        return sInstance;
+    }
+
     private List<User> mFriends;
     private List<User> mIncomingRequests;
     private List<User> mOutgoingRequests;
 
+    private Context context;
+
     private Thread mFriendsThread;
 
+    /**
+     * Instantiates the FriendsList, adnd loads the relevant data from disk if available
+     * and the network if not.
+     * Also checks to see if the data on disk is up to date.
+     */
     public FriendsList(){
+        // TODO : handle not being logged in and having no data on disk.
+        // TODO : implement storage with file system not Prefs.
         mFriends = new ArrayList<>();
         mIncomingRequests = new ArrayList<>();
         mOutgoingRequests = new ArrayList<>();
         // TODO : get friends from server.
         // TODO : store and only update.
-        mFriendsThread = getFriendsThread();
-        mFriendsThread.start();
+        // TODO : reenable after testing FB integration.
+        // mFriendsThread = getFriendsThread();
+        // mFriendsThread.start();
     }
 
 
@@ -56,7 +78,17 @@ public class FriendsList {
 
                 Log.d(LOG_TAG, "Sent GET to /user/friends");
                 HttpClient client = HttpClient.getInstance();
-                String URL = NetworkUtilities.HTTP_URL + "/user/friends";
+
+                while(!client.isLoggedIn()){
+                    synchronized (this){
+                        try{
+                            this.wait(20);
+                        }catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                String URL = "/user/friends";
 
                 Response response;
                 try {

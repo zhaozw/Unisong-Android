@@ -22,7 +22,13 @@ public class CurrentUser {
         return sInstance;
     }
 
-    public CurrentUser(Context context){
+    /**
+     * Provides a Context from which to load user data. This will load the user data and instantiate
+     *
+     * @param context
+     * @param accountType
+     */
+    public CurrentUser(Context context, String accountType){
         String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
         mCurrentUser = new User(username);
         mFriendsList = new FriendsList();

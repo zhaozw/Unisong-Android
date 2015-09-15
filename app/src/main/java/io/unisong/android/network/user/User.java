@@ -1,8 +1,19 @@
 package io.unisong.android.network.user;
 
-import io.unisong.android.network.NetworkUtilities;
+import android.util.Log;
 
+import com.facebook.AccessToken;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -11,24 +22,40 @@ import java.util.UUID;
  */
 public class User {
 
+    private final static String LOG_TAG = User.class.getSimpleName();
+
     private final static byte USERNAME = 0;
     private final static byte PHONE_NUMBER = 1;
     private final static byte ID = 2;
 
+    private HttpClient mClient;
     private String mUsername;
     private int mID;
     private String mPhoneNumber;
     private UUID mUUID;
 
+    // The access token for facebook users.
+
+    /**
+     * Instantiate
+     */
+    private User(){
+        mClient = HttpClient.getInstance();
+    }
+
+
     public User(String username){
+        this();
         mUsername = username;
 
         // TODO : load rest of info from server and save.
     }
 
     public User(UUID uuid){
+        this();
         mUUID = uuid;
     }
+
 
     /**
      * Creates an User object from a set of bytes, ususally used by

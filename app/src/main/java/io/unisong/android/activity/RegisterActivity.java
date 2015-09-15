@@ -90,17 +90,16 @@ public class RegisterActivity extends ActionBarActivity {
             //TODO: tell the user that this is not a valid phone number
         }
         String URL = NetworkUtilities.EC2_INSTANCE + "/register";
-        JSONObject object = new JSONObject();
+        JSONObject json = new JSONObject();
 
         try {
-            object.put("username", username);
-            object.put("password", password);
-            object.put("phone_number" , phonenumber);
+            json.put("username", username);
+            json.put("password", password);
+            json.put("phone_number", phonenumber);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        String json = object.toString();
         String result = "Error!";
 
         Response response;

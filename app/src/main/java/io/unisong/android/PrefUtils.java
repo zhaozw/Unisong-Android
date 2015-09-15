@@ -11,6 +11,7 @@ import android.preference.PreferenceManager;
 public class PrefUtils {
     public static final String PREFS_LOGIN_USERNAME_KEY = "__USERNAME__" ;
     public static final String PREFS_LOGIN_PASSWORD_KEY = "__PASSWORD__" ;
+    public static final String PREFS_HAS_OPENED_APP_KEY = "__OPENED__" ;
 
     /**
      * Called to save supplied value in shared preferences against given key.

@@ -110,7 +110,7 @@ public class SerializableHttpCookie implements Serializable {
         out.writeInt(cookie.getVersion());
         out.writeBoolean(cookie.getSecure());
         out.writeBoolean(cookie.getDiscard());
-        out.writeBoolean(getHttpOnly());
+        //out.writeBoolean(getHttpOnly());
     }
 
     private void readObject(ObjectInputStream in) throws IOException,
@@ -127,7 +127,7 @@ public class SerializableHttpCookie implements Serializable {
         cookie.setVersion(in.readInt());
         cookie.setSecure(in.readBoolean());
         cookie.setDiscard(in.readBoolean());
-        setHttpOnly(in.readBoolean());
+        //setHttpOnly(in.readBoolean());
     }
 
     /**

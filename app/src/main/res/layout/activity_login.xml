@@ -39,8 +39,8 @@
     <Button
         android:layout_below="@id/loginPassword"
         android:background="@drawable/button_border"
-        android:layout_marginLeft="32dp"
-        android:layout_marginRight="32dp"
+        android:layout_marginLeft="@dimen/login_button_margin"
+        android:layout_marginRight="@dimen/login_button_margin"
 
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,8 +56,8 @@
     <Button
         android:background="@drawable/button_border"
         android:layout_alignParentBottom="true"
-        android:layout_marginLeft="32dp"
-        android:layout_marginRight="32dp"
+        android:layout_marginLeft="@dimen/login_button_margin"
+        android:layout_marginRight="@dimen/login_button_margin"
 
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -69,5 +69,16 @@
         android:layout_centerHorizontal="true"
         android:id="@+id/register_button"
         style="?android:attr/borderlessButtonStyle" />
+
+    <com.facebook.login.widget.LoginButton
+        android:id="@+id/facebook_login_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="30dp"
+        android:layout_marginLeft="@dimen/login_button_margin"
+        android:layout_marginRight="@dimen/login_button_margin"
+        android:layout_above="@id/register_button"/>
 
 </RelativeLayout>

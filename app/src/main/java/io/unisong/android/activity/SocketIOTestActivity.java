@@ -100,7 +100,8 @@ public class SocketIOTestActivity extends ActionBarActivity {
             public void run() {
                 final Response response;
                 try {
-                    response = mClient.post(NetworkUtilities.HTTP_URL + "/session/", "");
+                    // wtf is this
+                    response = mClient.post(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
                 } catch (IOException e){
                     e.printStackTrace();
                     return;

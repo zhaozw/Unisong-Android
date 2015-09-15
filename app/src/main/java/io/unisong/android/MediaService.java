@@ -67,8 +67,6 @@ public class MediaService extends Service{
 
         mSntpClient = new SntpClient();
 
-        new HttpClient(this);
-
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
