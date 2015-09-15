@@ -15,6 +15,7 @@ import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.Listener;
+import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.master.Broadcaster;
 import io.unisong.android.network.ntp.SntpClient;
 import io.unisong.android.network.session.UnisongSession;
@@ -65,6 +66,8 @@ public class MediaService extends Service{
         Log.d(LOG_TAG, "Starting MediaService");
 
         mSntpClient = new SntpClient();
+
+        new HttpClient(this);
 
         mMessageReceiver = new BroadcastReceiver() {
             @Override

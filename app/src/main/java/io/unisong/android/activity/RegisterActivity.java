@@ -8,7 +8,7 @@ import android.util.Log;
 import android.view.View;
 
 import io.unisong.android.R;
-import io.unisong.android.network.HttpClient;
+import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.NetworkUtilities;
 import com.iangclifton.android.floatlabel.FloatLabel;
 import com.squareup.okhttp.Response;

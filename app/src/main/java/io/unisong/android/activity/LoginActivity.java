@@ -11,16 +11,9 @@ import android.widget.Toast;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.activity.Friends.FriendsListActivity;
-import io.unisong.android.network.HttpClient;
-import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
 
 import com.iangclifton.android.floatlabel.FloatLabel;
-import com.squareup.okhttp.Response;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 
 /**
  * Created by ezturner on 7/14/2015.
@@ -41,6 +34,18 @@ public class LoginActivity extends ActionBarActivity {
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        if(HttpClient.getInstance() == null) {
+            mClient = new HttpClient(this);
+        } else {
+            mClient = HttpClient.getInstance();
+        }
+
+        if(mClient.isLoggedIn()){
+            startFriendActivity();
+            return;
+        }
+
+
         setContentView(io.unisong.android.R.layout.activity_login);
 
         mUsername = (FloatLabel) findViewById(io.unisong.android.R.id.loginUsername);
@@ -52,7 +57,8 @@ public class LoginActivity extends ActionBarActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         mLoginInProgress = false;
-        mClient = HttpClient.getInstance();
+        setCredentials();
+
     }
 
     public void login(View view){
@@ -80,12 +86,14 @@ public class LoginActivity extends ActionBarActivity {
         String password = mPassword.getEditText().getText().toString();
 
         mClient.login(username , password);
-        try {
-            synchronized (this) {
-                this.wait(100);
+        while (!mClient.isLoginDone()) {
+            try {
+                synchronized (this) {
+                    this.wait(20);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch (InterruptedException e){
-            e.printStackTrace();
         }
         Log.d(LOG_TAG , "Login Request Done.");
 
@@ -96,6 +104,7 @@ public class LoginActivity extends ActionBarActivity {
             loginFailure();
         }
 
+        Log.d(LOG_TAG , "# cookies: " + mClient.getCookieManager().getCookieStore().getCookies().size());
 
 
         mLoginInProgress = false;
@@ -106,19 +115,39 @@ public class LoginActivity extends ActionBarActivity {
         AccountManager manager = AccountManager.get(this);
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , password);
+    }
+
+    private void startFriendActivity(){
         Intent intent = new Intent(this, FriendsListActivity.class);
         startActivity(intent);
         finish();
     }
 
     private void loginFailure(){
-        Toast toast = Toast.makeText(this , "Login Failed!" , Toast.LENGTH_LONG);
-        toast.show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast toast = Toast.makeText(getApplicationContext(), "Login Failed!", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        });
     }
 
     public void register(View view){
         Intent intent = new Intent(this, RegisterActivity.class);
         startActivity(intent);
+    }
+
+    private void setCredentials(){
+        String username = PrefUtils.getFromPrefs(this, PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+        String password = PrefUtils.getFromPrefs(this, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+
+        if(!username.equals("")){
+            mUsername.setText(username);
+        }
+        if(!password.equals("")){
+            mPassword.setText(password);
+        }
     }
 
 }

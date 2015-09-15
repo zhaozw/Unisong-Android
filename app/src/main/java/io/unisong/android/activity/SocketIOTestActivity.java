@@ -1,6 +1,5 @@
 package io.unisong.android.activity;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -9,20 +8,16 @@ import android.widget.EditText;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.R;
-import io.unisong.android.network.HttpClient;
+import io.unisong.android.network.http.HttpClient;
 import com.squareup.okhttp.Response;
-import io.unisong.android.network.HttpClient;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import io.socket.client.IO;
-import io.socket.client.Socket;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-
 
 
 /**

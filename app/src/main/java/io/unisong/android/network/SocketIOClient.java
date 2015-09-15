@@ -1,13 +1,12 @@
 package io.unisong.android.network;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.client.receiver.ServerReceiver;
+import io.unisong.android.network.http.HttpClient;
 
 /**
  * This class handles all communication between the android client

@@ -15,7 +15,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import io.unisong.android.activity.NavigationDrawerFragment;
-import io.unisong.android.network.HttpClient;
+import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.NetworkUtilities;
 import com.squareup.okhttp.Response;
 
@@ -29,7 +29,6 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
 
     private final static String LOG_TAG = FriendsListActivity.class.getSimpleName();
 
-    private Thread mFriendsThread;
     private Toolbar mToolbar;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
@@ -64,8 +63,6 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         mRecyclerView.setAdapter(mAdapter);
 
         Log.d(LOG_TAG , "Starting thread");
-        mFriendsThread = getFriendsThread();
-        mFriendsThread.start();
 
 
         mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
@@ -103,31 +100,6 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         return super.onOptionsItemSelected(item);
     }
 
-
-    private Thread getFriendsThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                Log.d(LOG_TAG , "Sent GET to /user/friends");
-                HttpClient client = HttpClient.getInstance();
-                String URL = NetworkUtilities.EC2_INSTANCE + "/user/friends";
-
-                Response response;
-                try {
-                    response = client.get(URL);
-                } catch (IOException e){
-                    e.printStackTrace();
-                    Log.d(LOG_TAG, "Request Failed");
-                    return;
-                }
-
-                Log.d(LOG_TAG , "Done Sending");
-                Log.d(LOG_TAG , response.toString());
-            }
-        });
-    }
-
     public void onClick(View v){
 
     }
@@ -148,8 +120,7 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
     }
 
     public void friendRowClick(View v){
-        Log.d(LOG_TAG, "Friend Row Clicked!");
-        getFriendsThread().start();
+
     }
 
 

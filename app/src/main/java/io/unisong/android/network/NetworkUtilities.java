@@ -22,8 +22,8 @@ public class NetworkUtilities {
     public final static String EC2_INSTANCE = "http://ec2-52-27-241-102.us-west-2.compute.amazonaws.com";
     public final static String HTTP_URL = EC2_INSTANCE + ":8000";
     public final static String SOCKETIO_URL = EC2_INSTANCE + ":8005";
-    public static URI SOCKETIO_URI;
-
+    private static URI SOCKETIO_URI;
+    private static URI HTTP_URI;
 
     //Returns the IP address of the local interface. Code is from online.
     public static String getLocalIpAddress() {
@@ -113,5 +113,16 @@ public class NetworkUtilities {
             }
         }
         return SOCKETIO_URI;
+    }
+
+    public static URI getHttpURI(){
+        if(HTTP_URI == null){
+            try {
+                HTTP_URI = new URI(HTTP_URL);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        return HTTP_URI;
     }
 }

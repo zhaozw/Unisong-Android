@@ -1,6 +1,7 @@
-package io.unisong.android.network;
+package io.unisong.android.network.http;
 
 
+import android.content.Context;
 import android.util.Log;
 
 import com.squareup.okhttp.MediaType;
@@ -16,9 +17,13 @@ import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.CookieStore;
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * Created by Ethan on 7/28/2015.
@@ -36,17 +41,29 @@ public class HttpClient {
     private CookieManager mManager;
 
     private OkHttpClient mClient;
+    private boolean mLoginDone;
+    private Context mContext;
 
-    public HttpClient(){
+    public HttpClient(Context context){
         mClient = new OkHttpClient();
-        mManager = new CookieManager();
-        mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        mManager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
+        //mManager = new CookieManager();
+        //mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
         mClient.setCookieHandler(mManager);
         mIsLoggedIn = false;
+        sInstance = this;
+        mContext = context;
+
+        checkIfLoggedIn();
     }
 
     public void login(String username, String password){
+        mLoginDone = false;
         getLoginThread(username , password).start();
+    }
+
+    public boolean isLoginDone(){
+        return mLoginDone;
     }
 
     public boolean isLoggedIn(){
@@ -69,28 +86,16 @@ public class HttpClient {
                 String json = object.toString();
 
                 Log.d(LOG_TAG, "Sending Login Request");
-                Response response = null;
+                Response response;
                 try {
                     response = post(URL, json);
                 } catch (IOException e){
                     e.printStackTrace();
                     Log.d(LOG_TAG, "Request Failed");
+                    mIsLoggedIn = false;
+                    mLoginDone = true;
                     return;
                 }
-
-                List<URI> cookieList = mManager.getCookieStore().getURIs();
-                try {
-                    String cookie = mManager.getCookieStore().get(new URI(NetworkUtilities.EC2_INSTANCE)).get(0).toString();
-                    Log.d(LOG_TAG , cookie);
-                } catch (URISyntaxException e){
-                    e.printStackTrace();
-                }
-
-                for (URI uri:
-                        cookieList) {
-                    Log.d(LOG_TAG , uri.toString());
-                }
-
 
                 if(response.toString().contains("code=200")) {
                     Log.d(LOG_TAG , "Login Success");
@@ -99,6 +104,8 @@ public class HttpClient {
                     Log.d(LOG_TAG , "Login Failure");
                     mIsLoggedIn = false;
                 }
+
+                mLoginDone = true;
 
             }
         });
@@ -128,9 +135,18 @@ public class HttpClient {
     }
 
     public static HttpClient getInstance(){
-        if(sInstance == null){
-            sInstance = new HttpClient();
-        }
         return sInstance;
+    }
+
+    private void checkIfLoggedIn(){
+
+        List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
+
+        for(HttpCookie cookie : cookies){
+            if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
+                mIsLoggedIn = true;
+                CurrentUser user = new CurrentUser(mContext);
+            }
+        }
     }
 }

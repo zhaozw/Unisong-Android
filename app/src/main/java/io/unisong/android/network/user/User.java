@@ -3,6 +3,7 @@ package io.unisong.android.network.user;
 import io.unisong.android.network.NetworkUtilities;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 /**
  * The class for containing user information.
@@ -17,11 +18,16 @@ public class User {
     private String mUsername;
     private int mID;
     private String mPhoneNumber;
+    private UUID mUUID;
 
-    public User(String username, String phonenumber, int id){
-        mID = id;
+    public User(String username){
         mUsername = username;
-        mPhoneNumber = phonenumber;
+
+        // TODO : load rest of info from server and save.
+    }
+
+    public User(UUID uuid){
+        mUUID = uuid;
     }
 
     /**
@@ -36,12 +42,12 @@ public class User {
         return mUsername;
     }
 
-    public String getPhoneNumber(){
-        return mPhoneNumber;
+    public UUID getUUID(){
+        return mUUID;
     }
 
-    public int getID(){
-        return mID;
+    public String getPhoneNumber(){
+        return mPhoneNumber;
     }
 
     /**
@@ -83,11 +89,14 @@ public class User {
 
         tempArr = NetworkUtilities.combineArrays(idHeaderArr , idLengthArr);
 
-        byte[] idDataArr = ByteBuffer.allocate(4).putInt(getID()).array();
-
-        tempArr = NetworkUtilities.combineArrays(tempArr , idDataArr);
-
         data = NetworkUtilities.combineArrays(data, tempArr);
         return data;
+    }
+
+    public boolean equals(User user){
+        if(user.getUsername().equals(mUsername) || user.getUUID().equals(mUUID)){
+            return true;
+        }
+        return false;
     }
 }

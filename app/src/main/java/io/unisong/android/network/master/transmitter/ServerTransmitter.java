@@ -5,16 +5,10 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.CharArrayReader;
-import java.sql.Time;
-import java.util.Map;
-
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioSource;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.master.AACEncoder;
-import io.unisong.android.network.HttpClient;
 import io.unisong.android.network.SocketIOClient;
 
 /**
