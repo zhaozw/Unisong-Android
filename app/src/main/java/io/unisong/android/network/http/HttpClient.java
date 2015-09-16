@@ -27,10 +27,13 @@ import java.util.Random;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 7/28/2015.
- * This is the class where all of the Http communication is handled
+ * This is the class where a sizeable portion of the HTTP communication is handled. Other classes
+ * can use the interface to do their own requests.
+ * This handles session state and login information.
  * It uses the Singleton design pattern.
  */
 public class HttpClient {
@@ -42,7 +45,6 @@ public class HttpClient {
     private String mEmail;
     private boolean mIsLoggedIn;
     private static HttpClient sInstance;
-    private boolean mIsDoneCheckingLoginStatus;
 
     private CookieManager mManager;
 
@@ -51,13 +53,14 @@ public class HttpClient {
     private Context mContext;
 
     public HttpClient(Context context){
-        mIsDoneCheckingLoginStatus = false;
         mClient = new OkHttpClient();
-        mManager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
-        //mManager = new CookieManager();
-        //mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        // TODO : reenable session persistence.
+        //mManager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
+        mManager = new CookieManager();
+        mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
         mClient.setCookieHandler(mManager);
         mIsLoggedIn = false;
+        mLoginDone = false;
         sInstance = this;
         mContext = context;
 
@@ -113,11 +116,6 @@ public class HttpClient {
 
                 mLoginDone = true;
 
-                // If we're auto-logging in then say we're done checking login status.
-                if(!mIsDoneCheckingLoginStatus){
-                    mIsDoneCheckingLoginStatus = true;
-                }
-
             }
         });
     }
@@ -136,7 +134,7 @@ public class HttpClient {
         Request request = new Request.Builder()
                 .url(NetworkUtilities.HTTP_URL + url)
                 .get()
-                .build();
+        .build();
         Response response = mClient.newCall(request).execute();
         return response;
     }
@@ -168,10 +166,8 @@ public class HttpClient {
         return sInstance;
     }
 
-    public boolean isDoneCheckingLoginStatus(){
-        return mIsDoneCheckingLoginStatus;
-    }
     private void checkIfLoggedIn(){
+
 
         List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
 
@@ -179,8 +175,9 @@ public class HttpClient {
             if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
                 Log.d(LOG_TAG , "Cookie found, we are logged in.");
                 mIsLoggedIn = true;
+                mLoginDone = true;
+
                 CurrentUser user = new CurrentUser(mContext, "unisong");
-                mIsDoneCheckingLoginStatus = true;
                 return;
             }
         }
@@ -190,9 +187,12 @@ public class HttpClient {
         if(!username.equals("") && !password.equals("")){
             login(username , password);
         }
+
+        mLoginDone = true;
     }
 
     public void loginFacebook(AccessToken token, String email){
+        //AccessToken tokenld = new AccessToken();
         mFBAccessToken = token;
         mEmail = email;
         getFBLoginThread().start();
@@ -228,6 +228,7 @@ public class HttpClient {
 
                 if(response.toString().contains("code=200")) {
                     Log.d(LOG_TAG , "Facebook Login Success");
+                    CurrentUser user = new CurrentUser(new User(mFBAccessToken));
                     mIsLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Facebook Login Failure");

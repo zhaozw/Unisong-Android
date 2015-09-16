@@ -25,10 +25,12 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.iangclifton.android.floatlabel.FloatLabel;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,8 +67,6 @@ public class LoginActivity extends ActionBarActivity {
         }
 
 
-
-
         Log.d(LOG_TAG, "LoginActivity onCreate called");
         mUsername = (FloatLabel) findViewById(R.id.loginUsername);
         mPassword = (FloatLabel) findViewById(R.id.loginPassword);
@@ -90,29 +90,23 @@ public class LoginActivity extends ActionBarActivity {
                 Log.d(LOG_TAG, loginResult.getAccessToken().toString());
                 Log.d(LOG_TAG, "Login Success!");
 
+                GraphRequest.GraphJSONObjectCallback callback = new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(
+                            JSONObject object,
+                            GraphResponse response) {
+                        // Application code
+
+
+                        getLoginFBThread(response , loginResult).start();
+
+
+
+                    }
+                };
 
                 GraphRequest request = GraphRequest.newMeRequest(
-                        loginResult.getAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(
-                                    JSONObject object,
-                                    GraphResponse response) {
-                                // Application code
-                                Log.v("LoginActivity", response.toString());
-
-                                try {
-                                     mClient.loginFacebook(loginResult.getAccessToken(), response.getJSONObject().getString("email"));
-                                } catch (JSONException e){
-                                    e.printStackTrace();
-                                    return;
-                                }
-
-                                Intent intent = new Intent(getApplicationContext(), FriendsListActivity.class);
-                                startActivity(intent);
-                                finish();
-                            }
-                        });
+                        loginResult.getAccessToken(),callback);
 
                 Bundle parameters = new Bundle();
                 parameters.putString("fields", "email");
@@ -144,6 +138,50 @@ public class LoginActivity extends ActionBarActivity {
 
     }
 
+    public void loginFB(GraphResponse response, LoginResult loginResult){
+        getLoginFBThread(response , loginResult).start();
+
+    }
+
+    private Thread getLoginFBThread(final GraphResponse response, final LoginResult loginResult){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.v("LoginActivity", response.toString());
+
+                Response httpResponse;
+
+                try {
+                    httpResponse = mClient.get("/auth/facebook/userexists/" + loginResult.getAccessToken().getUserId());
+                } catch (IOException e){
+                    e.printStackTrace();
+                    return;
+                }
+
+                if(httpResponse.toString().contains("message=404")){
+                    // If no user exists with that FB ID then we will proceed to the PhoneNumberInputFBActivity
+
+
+
+                } else if(httpResponse.toString().contains("message=200")){
+                    //If a user exists with that FB ID then we can proceed straight to FriendsActivity
+
+                    try {
+                        mClient.loginFacebook(loginResult.getAccessToken(), response.getJSONObject().getString("email"));
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                        return;
+                    }
+
+
+                    Intent intent = new Intent(getApplicationContext(), FBPhoneNumberInputActivity.class );
+                    
+                    startActivity(intent);
+                    finish();
+                }
+            }
+        });
+    }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -205,10 +243,11 @@ public class LoginActivity extends ActionBarActivity {
         AccountManager manager = AccountManager.get(this);
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , password);
+        startActivity(FriendsListActivity.class);
     }
 
-    private void startFriendActivity(){
-        Intent intent = new Intent(this, FriendsListActivity.class);
+    private void startActivity(Class classToStart){
+        Intent intent = new Intent(this, classToStart);
         startActivity(intent);
         finish();
     }
@@ -217,6 +256,7 @@ public class LoginActivity extends ActionBarActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                // Todo : tell the user if they got the password or username wrong.
                 Toast toast = Toast.makeText(getApplicationContext(), "Login Failed!", Toast.LENGTH_LONG);
                 toast.show();
             }
@@ -235,6 +275,7 @@ public class LoginActivity extends ActionBarActivity {
         if(!username.equals("")){
             mUsername.setText(username);
         }
+
         if(!password.equals("")){
             mPassword.setText(password);
         }

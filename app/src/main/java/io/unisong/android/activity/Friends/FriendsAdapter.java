@@ -7,14 +7,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import io.unisong.android.R;
+import io.unisong.android.network.user.User;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by ezturner on 8/11/2015.
  */
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
-    private ArrayList<String> mDataset;
+    private List<User> mDataset;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -31,19 +33,19 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         }
     }
 
-    public void add(int position, String item) {
-        mDataset.add(position, item);
+    public void add(int position, User user) {
+        mDataset.add(position, user);
         notifyItemInserted(position);
     }
 
-    public void remove(String item) {
-        int position = mDataset.indexOf(item);
+    public void remove(User user) {
+        int position = mDataset.indexOf(user);
         mDataset.remove(position);
         notifyItemRemoved(position);
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public FriendsAdapter(ArrayList<String> myDataset) {
+    public FriendsAdapter(List<User> myDataset) {
         mDataset = myDataset;
     }
 
@@ -60,15 +62,15 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
     // Replace the contents of a view (invoked by the layout manager)
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, final int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        final String name = mDataset.get(position);
-        holder.txtHeader.setText(mDataset.get(position));
+        final String name = mDataset.get(position).getName();
+        holder.txtHeader.setText(mDataset.get(position).getName());
         holder.txtHeader.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                remove(name);
+                remove(mDataset.get(position));
             }
         });
 

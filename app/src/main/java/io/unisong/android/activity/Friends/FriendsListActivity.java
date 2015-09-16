@@ -17,6 +17,8 @@ import android.widget.Toast;
 import io.unisong.android.activity.NavigationDrawerFragment;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.user.FriendsList;
+
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
@@ -33,6 +35,7 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private FriendsAdapter mAdapter;
+    private FriendsList mFriendsList;
 
 
     protected void onCreate(Bundle savedInstanceState){
@@ -48,22 +51,13 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        ArrayList<String> myDataset = new ArrayList<>();
-        myDataset.add("Ethan");
-        myDataset.add("Swahg");
-        myDataset.add("Ethan");
-        myDataset.add("Swahg");
-        myDataset.add("Ethan");
-        myDataset.add("Swahg");
-        myDataset.add("Ethan");
-        myDataset.add("Swahg");
+        mFriendsList = FriendsList.getInstance();
 
         // specify an adapter (see also next example)
-        mAdapter = new FriendsAdapter(myDataset);
+        mAdapter = new FriendsAdapter(mFriendsList.getFriends());
         mRecyclerView.setAdapter(mAdapter);
 
         Log.d(LOG_TAG , "Starting thread");
-
 
         mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
 

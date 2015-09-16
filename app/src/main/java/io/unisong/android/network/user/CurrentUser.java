@@ -3,6 +3,7 @@ package io.unisong.android.network.user;
 import android.content.Context;
 
 import io.unisong.android.PrefUtils;
+import io.unisong.android.network.http.HttpClient;
 
 /**
  * This class stores information about the current user, including friends list
@@ -15,6 +16,7 @@ public class CurrentUser {
 
     private User mCurrentUser;
     private FriendsList mFriendsList;
+    private HttpClient mClient;
 
     private static CurrentUser sInstance;
 
@@ -40,6 +42,8 @@ public class CurrentUser {
         mFriendsList = new FriendsList();
         sInstance = this;
     }
+
+
 
 
 }
