@@ -42,7 +42,6 @@ public class HttpClient {
     private static final String LOG_TAG = HttpClient.class.getSimpleName();
 
     private AccessToken mFBAccessToken;
-    private String mEmail;
     private boolean mIsLoggedIn;
     private static HttpClient sInstance;
 
@@ -72,6 +71,10 @@ public class HttpClient {
         getLoginThread(username , password).start();
     }
 
+    public OkHttpClient getClient(){
+        return mClient;
+    }
+
     public boolean isLoginDone(){
         return mLoginDone;
     }
@@ -97,7 +100,7 @@ public class HttpClient {
                 Log.d(LOG_TAG, "Sending Login Request");
                 Response response;
                 try {
-                    response = post("/login", object);
+                    response = post(NetworkUtilities.HTTP_URL + "/login", object);
                 } catch (IOException e){
                     e.printStackTrace();
                     Log.d(LOG_TAG, "Request Failed");
@@ -123,7 +126,7 @@ public class HttpClient {
     public Response post(String url, JSONObject json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
-                .url(NetworkUtilities.HTTP_URL + url)
+                .url(url)
                 .post(body)
                 .build();
         Response response = mClient.newCall(request).execute();
@@ -132,7 +135,7 @@ public class HttpClient {
 
     public Response get(String url) throws IOException {
         Request request = new Request.Builder()
-                .url(NetworkUtilities.HTTP_URL + url)
+                .url(url)
                 .get()
         .build();
         Response response = mClient.newCall(request).execute();
@@ -142,7 +145,7 @@ public class HttpClient {
     public Response put(String url, JSONObject json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
-                .url(NetworkUtilities.HTTP_URL + url)
+                .url( url)
                 .put(body)
                 .build();
         Response response = mClient.newCall(request).execute();
@@ -151,7 +154,7 @@ public class HttpClient {
 
     public Response delete(String url) throws IOException {
         Request request = new Request.Builder()
-                .url(NetworkUtilities.HTTP_URL + url)
+                .url(url)
                 .delete()
                 .build();
         Response response = mClient.newCall(request).execute();
@@ -191,10 +194,24 @@ public class HttpClient {
         mLoginDone = true;
     }
 
-    public void loginFacebook(AccessToken token, String email){
+    // Fields used for facebook login/register
+    // TODO : refractor and reorganize
+
+    private String mEmail;
+    private String mUsername;
+    private String mPhoneNumber;
+
+    public void loginFacebook(AccessToken token, String email, String username, String phonnenumber){
+        //AccessToken tokenld = new AccessToken();
+        mEmail = email;
+        mPhoneNumber = phonnenumber;
+        mUsername = username;
+        loginFacebook(token);
+    }
+
+    public void loginFacebook(AccessToken token){
         //AccessToken tokenld = new AccessToken();
         mFBAccessToken = token;
-        mEmail = email;
         getFBLoginThread().start();
     }
 
@@ -205,11 +222,11 @@ public class HttpClient {
                 JSONObject loginObject = new JSONObject();
                 try {
                     loginObject.put("access_token", mFBAccessToken.getToken());
-                    if(mEmail != null){
+                    if(mEmail != null && mPhoneNumber != null && mUsername != null){
                         loginObject.put("email" , mEmail);
+                        loginObject.put("phone_number" , mPhoneNumber);
+                        loginObject.put("username" , mUsername);
                         // TODO : get rid of this and have a phone number verification step.
-                        loginObject.put("username" , "fbuser" + new Random().nextInt(500000));
-                        loginObject.put("phone_number" , "2399244923");
                     }
                 } catch (JSONException e){
                     e.printStackTrace();
@@ -218,7 +235,7 @@ public class HttpClient {
 
                 Response response;
                 try {
-                    response = post("/auth/facebook", loginObject);
+                    response = post(NetworkUtilities.HTTP_URL + "/auth/facebook", loginObject);
                 } catch (IOException e){
                     // TODO : handle
                     e.printStackTrace();

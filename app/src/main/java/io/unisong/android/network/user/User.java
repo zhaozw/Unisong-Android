@@ -8,7 +8,11 @@ import android.os.AsyncTask;
 import android.widget.ImageView;
 
 import com.facebook.AccessToken;
+import com.squareup.okhttp.OkHttpClient;
+
 import io.unisong.android.network.http.HttpClient;
+import com.squareup.okhttp.HttpUrl;
+import com.squareup.okhttp.OkUrlFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,6 +39,7 @@ public class User implements Serializable {
     private transient final static String LOG_TAG = User.class.getSimpleName();
 
     private transient AccessToken mFBAccessToken;
+    private String mFacebookID;
     private transient HttpClient mClient;
     private String mUsername;
     private String mPhoneNumber;
@@ -74,6 +79,7 @@ public class User implements Serializable {
      */
     public User(AccessToken accessToken){
         mFBAccessToken = accessToken;
+        mFacebookID = accessToken.getUserId();
     }
 
 
@@ -110,10 +116,8 @@ public class User implements Serializable {
         return false;
     }
 
-    public void setProfilePicture(ImageView view){
-        mImageView = view;
-
-        getSetImageThread().start();
+    public Bitmap getProfilePicture(){
+        return getFacebookProfilePicture();
     }
 
     private class DownloadFilesTask extends AsyncTask<URL, Integer, Long> {
@@ -128,14 +132,27 @@ public class User implements Serializable {
     private ImageView mImageView;
 
 
-    private void getFacebookProfilePicture(){
-        URL img_value = null;
-        try {
-            img_value = new URL("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=small");
-        } catch (MalformedURLException e){
-            e.printStackTrace();
-            return;
+    private Bitmap getFacebookProfilePicture(){
+        HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=small");
+
+        // If we don't parse the url correctly return null
+        // TODO : handle error?
+        if(imageUrl == null){
+            return null;
         }
+        OkUrlFactory factory = new OkUrlFactory(mClient.getClient());
+
+//        Response response = mClient.get(imageUrl)
+
+        Bitmap bitmap = null;
+        try {
+             bitmap = BitmapFactory.decodeStream(factory.open(imageUrl.url()).getInputStream());
+        } catch (IOException e){
+            e.printStackTrace();
+
+        }
+
+        return bitmap;
     }
 
     /**
@@ -197,6 +214,7 @@ public class User implements Serializable {
         out.writeObject(mProfilePictureCachePath);
         out.writeObject(mProfilePictureS3Key);
         out.writeObject(mName);
+        out.writeObject(mFacebookID);
     }
 
     // reads an object using an output stream
@@ -206,6 +224,15 @@ public class User implements Serializable {
         mProfilePictureCachePath = (String) in.readObject();
         mProfilePictureS3Key = (String) in.readObject();
         mName = (String) in.readObject();
+        mFacebookID = (String) in.readObject();
+    }
+
+    public boolean isFacebookUser(){
+        if(mFacebookID != null ){
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

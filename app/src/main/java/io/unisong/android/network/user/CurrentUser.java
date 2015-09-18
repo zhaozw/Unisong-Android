@@ -33,17 +33,20 @@ public class CurrentUser {
     public CurrentUser(Context context, String accountType){
         String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
         mCurrentUser = new User(username);
-        mFriendsList = new FriendsList();
+        mFriendsList = FriendsList.getInstance();
         sInstance = this;
     }
 
     public CurrentUser(User user){
         mCurrentUser = user;
-        mFriendsList = new FriendsList();
+        mFriendsList = FriendsList.getInstance();
         sInstance = this;
     }
 
 
+    public User getUser(){
+        return mCurrentUser;
+    }
 
 
 }

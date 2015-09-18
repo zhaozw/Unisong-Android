@@ -141,6 +141,9 @@ public class MainActivity extends ActionBarActivity {
             }
         }
 
+        if(AccessToken.getCurrentAccessToken() != null) {
+            Log.d(LOG_TAG, AccessToken.getCurrentAccessToken().toString());
+        }
 
         // Check our current cookie-based login status
         if (mClient.isLoggedIn()) {
@@ -153,10 +156,7 @@ public class MainActivity extends ActionBarActivity {
             // TODO : investigate facebook token expirations. They might autorenew.
             Log.d(LOG_TAG , "Our HTTP cookie has expired, but our facebook access token is still good.");
 
-            // TODO : see if setting email to "" will cause problems
-            // I don't think it will since, you know, we can't have a user that has already logged in
-            // that has never registered an account. god knows it'll probably bite me in the ass later though
-            mClient.loginFacebook(AccessToken.getCurrentAccessToken() , "");
+            mClient.loginFacebook(AccessToken.getCurrentAccessToken() );
 
 
         } else {

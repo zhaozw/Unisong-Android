@@ -11,10 +11,12 @@ import android.widget.Toast;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.activity.Friends.FriendsListActivity;
+import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 
+import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -90,28 +92,7 @@ public class LoginActivity extends ActionBarActivity {
                 Log.d(LOG_TAG, loginResult.getAccessToken().toString());
                 Log.d(LOG_TAG, "Login Success!");
 
-                GraphRequest.GraphJSONObjectCallback callback = new GraphRequest.GraphJSONObjectCallback() {
-                    @Override
-                    public void onCompleted(
-                            JSONObject object,
-                            GraphResponse response) {
-                        // Application code
-
-
-                        getLoginFBThread(response , loginResult).start();
-
-
-
-                    }
-                };
-
-                GraphRequest request = GraphRequest.newMeRequest(
-                        loginResult.getAccessToken(),callback);
-
-                Bundle parameters = new Bundle();
-                parameters.putString("fields", "email");
-                request.setParameters(parameters);
-                request.executeAsync();
+                loginFB(loginResult);
 
                 // App code
             }
@@ -138,46 +119,74 @@ public class LoginActivity extends ActionBarActivity {
 
     }
 
-    public void loginFB(GraphResponse response, LoginResult loginResult){
-        getLoginFBThread(response , loginResult).start();
+    public void loginFB(LoginResult loginResult){
+        getLoginFBThread( loginResult).start();
 
     }
 
-    private Thread getLoginFBThread(final GraphResponse response, final LoginResult loginResult){
+    private Thread getLoginFBThread(final LoginResult loginResult){
         return new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.v("LoginActivity", response.toString());
 
                 Response httpResponse;
 
                 try {
-                    httpResponse = mClient.get("/auth/facebook/userexists/" + loginResult.getAccessToken().getUserId());
+                    httpResponse = mClient.get(NetworkUtilities.HTTP_URL + "/auth/facebook/userexists/" + loginResult.getAccessToken().getUserId());
                 } catch (IOException e){
                     e.printStackTrace();
                     return;
                 }
 
-                if(httpResponse.toString().contains("message=404")){
+                if(httpResponse.toString().contains("code=404")){
                     // If no user exists with that FB ID then we will proceed to the PhoneNumberInputFBActivity
 
+                    GraphRequest.GraphJSONObjectCallback callback = new GraphRequest.GraphJSONObjectCallback() {
+                        @Override
+                        public void onCompleted(
+                                JSONObject object,
+                                GraphResponse response) {
+                            // Application code
+
+                            Log.d(LOG_TAG , "GraphRequest is done, email has been received.");
+
+                            Intent intent = new Intent(getApplicationContext(), FBPhoneNumberInputActivity.class );
+
+                            try {
+                                intent.putExtra("email", response.getJSONObject().getString("email").toCharArray());
+                                startActivity(intent);
+
+                            } catch (JSONException e){
+                                e.printStackTrace();
+                            }
 
 
-                } else if(httpResponse.toString().contains("message=200")){
+                        }
+
+
+                    };
+
+                    GraphRequest request = GraphRequest.newMeRequest(
+                            AccessToken.getCurrentAccessToken(),callback);
+
+                    Log.d(LOG_TAG, "Response contained 404, sending GraphRequest for email.");
+                    Bundle parameters = new Bundle();
+                    parameters.putString("fields", "email");
+                    request.setParameters(parameters);
+                    //request.executeAsync();
+
+                    // TODO : investigate why executeAsync wasn't working.
+                    request.executeAndWait();
+
+
+
+                } else if(httpResponse.toString().contains("code=200")){
                     //If a user exists with that FB ID then we can proceed straight to FriendsActivity
 
-                    try {
-                        mClient.loginFacebook(loginResult.getAccessToken(), response.getJSONObject().getString("email"));
-                    } catch (JSONException e){
-                        e.printStackTrace();
-                        return;
-                    }
+                    mClient.loginFacebook(loginResult.getAccessToken());
 
+                    startActivity(FriendsListActivity.class);
 
-                    Intent intent = new Intent(getApplicationContext(), FBPhoneNumberInputActivity.class );
-                    
-                    startActivity(intent);
-                    finish();
                 }
             }
         });

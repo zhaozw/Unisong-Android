@@ -79,6 +79,11 @@
             android:label="@string/app_name" />
 
 
+        <activity android:name=".activity.FBPhoneNumberInputActivity"
+            android:label="@string/app_name"
+            >
+        </activity>
+
     </application>
 
 </manifest>

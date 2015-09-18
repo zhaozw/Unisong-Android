@@ -97,7 +97,7 @@ public class SntpClient
 
         mNumberDone = 0;
 
-        for(int i = 0; i < 20; i++){
+        for(int i = 0; i < 5; i++){
             getOneOffset();
             if(i == 0){
                 mTimeOffset = list.get(i);
@@ -187,7 +187,7 @@ public class SntpClient
         // Get response
         Log.d(LOG_TAG , "NTP request sent to : " + mServerIP +" , waiting for response...\n");
         packet = new DatagramPacket(buf, buf.length);
-        mSocket.setSoTimeout(150);
+        mSocket.setSoTimeout(500);
         try {
             mSocket.receive(packet);
         } catch (SocketTimeoutException e){
@@ -215,6 +215,8 @@ public class SntpClient
 
 
         // Display response
+
+
         Log.d(LOG_TAG , "NTP server: " + mServerIP);
         //Log.d(LOG_TAG , msg.toString());
 

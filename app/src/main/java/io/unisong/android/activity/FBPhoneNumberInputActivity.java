@@ -1,9 +1,18 @@
 package io.unisong.android.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.telephony.PhoneNumberFormattingTextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+
+import com.facebook.AccessToken;
 
 import io.unisong.android.R;
+import io.unisong.android.activity.Friends.FriendsListActivity;
+import io.unisong.android.network.http.HttpClient;
 
 /**
  * This activity is presented after a user logs in with facebook for the first time.
@@ -14,9 +23,53 @@ import io.unisong.android.R;
  */
 public class FBPhoneNumberInputActivity extends ActionBarActivity{
 
+    private static final String LOG_TAG = FBPhoneNumberInputActivity.class.getSimpleName();
+    private EditText mPhoneNumber;
+    private EditText mUsername;
+
+    private HttpClient mClient;
+    private String mEmail;
+
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_phone_number_input_fb);
+
+        mPhoneNumber = (EditText) findViewById(R.id.facebook_phone_number_input);
+        mUsername = (EditText) findViewById(R.id.facebook_username_input);
+
+        mPhoneNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
+
+        mEmail = getIntent().getCharArrayExtra("email").toString();
+
+        mClient = HttpClient.getInstance();
     }
+
+    public void onRegister(View view){
+        Log.d(LOG_TAG, "onRegister called, starting register thread.");
+        getRegisterThread().start();
+    }
+
+    private Thread getRegisterThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                register();
+            }
+        });
+    }
+
+    private void register(){
+        // TODO : add error handling?
+        // TODO : input validation and checking against server.
+        String username = mUsername.getText().toString();
+        String phonenumber = mPhoneNumber.getText().toString();
+
+        mClient.loginFacebook(AccessToken.getCurrentAccessToken() , mEmail , username, phonenumber);
+
+        Intent intent = new Intent(getApplicationContext() , FriendsListActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
 }

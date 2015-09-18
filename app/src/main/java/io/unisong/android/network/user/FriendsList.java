@@ -93,7 +93,7 @@ public class FriendsList implements Serializable{
     private void waitForLogin(){
         // Wait until we're logged in and have a CurrentUser to get info from.
         // TODO : can the httpclient be null here? Are there situations in which we should handle this?
-        while(!mClient.isLoginDone()){
+        while(!mClient.isLoginDone() && !mClient.isLoggedIn()){
             // TODO : see if we're waiting forever
             synchronized (this){
                 try{
@@ -267,7 +267,6 @@ public class FriendsList implements Serializable{
         // See if there are any duplicates
 
         for(int i = 0; i < userList.size(); i++){
-
             // If there are, remove them.
             if(user.equals(userList.get(i))){
                 mUpdated = true;
