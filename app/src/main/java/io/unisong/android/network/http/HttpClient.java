@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Random;
 
+import io.unisong.android.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.user.CurrentUser;
@@ -172,26 +173,42 @@ public class HttpClient {
     private void checkIfLoggedIn(){
 
 
-        List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
 
-        for(HttpCookie cookie : cookies){
-            if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
-                Log.d(LOG_TAG , "Cookie found, we are logged in.");
-                mIsLoggedIn = true;
+        String accountType = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "");
+
+        if(accountType.equals("facebook")){
+            AccessToken token = FacebookAccessToken.loadFacebookAccessToken(mContext);
+
+            if(token != null){
+                mFBAccessToken = token;
+            } else {
                 mLoginDone = true;
+            }
+        } else {
 
-                CurrentUser user = new CurrentUser(mContext, "unisong");
+            List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
+
+            for(HttpCookie cookie : cookies){
+                if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
+                    Log.d(LOG_TAG , "Cookie found, we are logged in.");
+                    mIsLoggedIn = true;
+                    mLoginDone = true;
+
+                    CurrentUser user = new CurrentUser(mContext, "unisong");
+                    return;
+                }
+            }
+
+            String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+            String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+            if(!username.equals("") && !password.equals("")){
+                login(username , password);
                 return;
             }
+
+            mLoginDone = true;
         }
 
-        String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
-        String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
-        if(!username.equals("") && !password.equals("")){
-            login(username , password);
-        }
-
-        mLoginDone = true;
     }
 
     // Fields used for facebook login/register
@@ -245,7 +262,7 @@ public class HttpClient {
 
                 if(response.toString().contains("code=200")) {
                     Log.d(LOG_TAG , "Facebook Login Success");
-                    CurrentUser user = new CurrentUser(new User(mFBAccessToken));
+                    CurrentUser user = new CurrentUser(mContext , new User(mFBAccessToken));
                     mIsLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Facebook Login Failure");

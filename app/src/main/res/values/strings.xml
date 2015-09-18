@@ -46,12 +46,14 @@
     
     <string-array name = "drawer_text">
         <item>My Library</item>
+        <item>Profile</item>
         <item>Friends</item>
         <item>Settings</item>
     </string-array>
 
     <string-array name = "drawer_icons">
         <item>gmd-my-library-mus</item>
+        <item>gmd-person</item>
         <item>gmd-group</item>
         <item>gmd-settings</item>
     </string-array>

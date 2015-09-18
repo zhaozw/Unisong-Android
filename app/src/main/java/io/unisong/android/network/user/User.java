@@ -3,30 +3,31 @@ package io.unisong.android.network.user;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.os.AsyncTask;
+import android.util.Base64;
 import android.widget.ImageView;
 
 import com.facebook.AccessToken;
-import com.squareup.okhttp.OkHttpClient;
 
+import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkUrlFactory;
+import com.squareup.okhttp.Response;
 
-import java.io.BufferedReader;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.io.Writer;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -47,6 +48,7 @@ public class User implements Serializable {
     private String mProfilePictureCachePath;
     private String mProfilePictureS3Key;
     private String mName;
+    private Bitmap mProfilePicture;
 
     // The access token for facebook users.
 
@@ -61,6 +63,7 @@ public class User implements Serializable {
     public User(String username){
         this();
         mUsername = username;
+        getUserInfoThread().start();
 
         // TODO : load rest of info from server and save.
     }
@@ -68,6 +71,7 @@ public class User implements Serializable {
     public User(UUID uuid){
         this();
         mUUID = uuid;
+        getUserInfoThread().start();
     }
 
 
@@ -80,6 +84,7 @@ public class User implements Serializable {
     public User(AccessToken accessToken){
         mFBAccessToken = accessToken;
         mFacebookID = accessToken.getUserId();
+        getUserInfoThread().start();
     }
 
 
@@ -117,7 +122,7 @@ public class User implements Serializable {
     }
 
     public Bitmap getProfilePicture(){
-        return getFacebookProfilePicture();
+        return mProfilePicture;
     }
 
     private class DownloadFilesTask extends AsyncTask<URL, Integer, Long> {
@@ -132,14 +137,12 @@ public class User implements Serializable {
     private ImageView mImageView;
 
 
-    private Bitmap getFacebookProfilePicture(){
+    private void getFacebookProfilePicture(){
         HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=small");
 
         // If we don't parse the url correctly return null
         // TODO : handle error?
-        if(imageUrl == null){
-            return null;
-        }
+
         OkUrlFactory factory = new OkUrlFactory(mClient.getClient());
 
 //        Response response = mClient.get(imageUrl)
@@ -152,7 +155,7 @@ public class User implements Serializable {
 
         }
 
-        return bitmap;
+        mProfilePicture = bitmap;
     }
 
     /**
@@ -180,31 +183,58 @@ public class User implements Serializable {
         return true;
     }
 
+    private void cacheProfilePicture(){
+        File file = new File(getProfilePictureCachePath());
+
+        OutputStream out;
+        try {
+            out = new FileOutputStream(file);
+        } catch (FileNotFoundException e){
+            e.printStackTrace();
+            return ;
+        }
+        if(mProfilePicture != null){
+            mProfilePicture.compress(Bitmap.CompressFormat.PNG, 100, out);
+        }
+    }
+
     /**
      * Retrieves the Unisong profile picture for this user.
      */
     private void getUnisongProfilePicture(){
-//        AmazonS3Client s3Client = new AmazonS3Client();
+        try {
+            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/ " + mUUID.toString() + " /profile/picture/");
 
-//        S3Object object = s3Client.getObject(new GetObjectRequest(
-//                "unisongprofilepictures", mProfilePictureS3Key));
+            String data;
 
-//        Bitmap bitmap = BitmapFactory.decodeStream(object.getObjectContent());
+            try{
+                JSONObject object = new JSONObject(response.body().string());
+                data = object.getString("data");
+            } catch (JSONException e){
+                e.printStackTrace();
+                return;
+            }
 
-//        mImageView.setImageBitmap(bitmap);
+            byte[] bitmapArr = Base64.decode(data, Base64.DEFAULT);
+            mProfilePicture = BitmapFactory.decodeByteArray(bitmapArr , 0, 0);
+
+            cacheProfilePicture();
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
-    private Thread getSetImageThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if(mFBAccessToken != null){
-                    getFacebookProfilePicture();
-                } else if(!getCachedPicture()){
-                    getUnisongProfilePicture();
-                }
-            }
-        });
+    private String getProfilePictureCachePath(){
+        return mUsername + ".profile_picture.png";
+    }
+
+    private void loadProfilePicture(){
+        if(mFacebookID != null){
+            getFacebookProfilePicture();
+        } else if(!getCachedPicture()){
+            getUnisongProfilePicture();
+        }
     }
 
     // writes the object using an output stream
@@ -233,6 +263,56 @@ public class User implements Serializable {
         } else {
             return false;
         }
+    }
+
+    private Thread getUserInfoThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getUserInfo();
+                loadProfilePicture();
+            }
+        });
+    }
+
+    private void getUserInfo(){
+        Response response;
+        try {
+            if (mUsername != null) {
+                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + mUsername);
+            } else if (mUUID != null) {
+                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID);
+            } else if (mFacebookID != null) {
+                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebook/" + mFacebookID);
+            } else {
+                return;
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+            return;
+        }
+        JSONObject object;
+        try {
+            object = new JSONObject(response.body().string());
+            mUUID = UUID.fromString(object.getString("userID"));
+            mUsername = object.getString("username");
+            mPhoneNumber = object.getString("phone_number");
+            mName = object.getString("name");
+            mFacebookID = object.getLong("facebookID") + "";
+            if(mFacebookID.equals("0")){
+                mFacebookID = null;
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+            // TODO : retry
+            return;
+        } catch (JSONException e){
+            e.printStackTrace();
+            // TODO : investigate when this could happen
+            return;
+        }
+
+
     }
 
 }

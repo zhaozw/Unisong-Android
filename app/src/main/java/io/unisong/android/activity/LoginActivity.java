@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import io.unisong.android.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.NetworkUtilities;
@@ -92,6 +93,10 @@ public class LoginActivity extends ActionBarActivity {
                 Log.d(LOG_TAG, loginResult.getAccessToken().toString());
                 Log.d(LOG_TAG, "Login Success!");
 
+                Log.d(LOG_TAG , "Facebook expiration date is : " + AccessToken.getCurrentAccessToken().getExpires());
+
+                PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
+                FacebookAccessToken.saveFacebookAccessToken(getApplicationContext());
                 loginFB(loginResult);
 
                 // App code
@@ -132,12 +137,13 @@ public class LoginActivity extends ActionBarActivity {
                 Response httpResponse;
 
                 try {
-                    httpResponse = mClient.get(NetworkUtilities.HTTP_URL + "/auth/facebook/userexists/" + loginResult.getAccessToken().getUserId());
+                    httpResponse = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebook/" + loginResult.getAccessToken().getUserId());
                 } catch (IOException e){
                     e.printStackTrace();
                     return;
                 }
 
+                // TODO : try to see if the response says "User not found." instead of just a 404 code.
                 if(httpResponse.toString().contains("code=404")){
                     // If no user exists with that FB ID then we will proceed to the PhoneNumberInputFBActivity
 
@@ -199,6 +205,7 @@ public class LoginActivity extends ActionBarActivity {
     }
 
     public void login(View view){
+        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong");
         if(!mLoginInProgress){
             mLoginInProgress = true;
             mLoginThread  = getLoginThread();

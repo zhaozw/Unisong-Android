@@ -12,6 +12,8 @@ public class PrefUtils {
     public static final String PREFS_LOGIN_USERNAME_KEY = "__USERNAME__" ;
     public static final String PREFS_LOGIN_PASSWORD_KEY = "__PASSWORD__" ;
     public static final String PREFS_HAS_OPENED_APP_KEY = "__OPENED__" ;
+    public static final String PREFS_FACEBOOK_ACCESS_TOKEN_KEY = "__FB_ACCESS_TOKEN__";
+    public static final String PREFS_ACCOUNT_TYPE_KEY = "__ACCOUNT_TYPE__";
 
     /**
      * Called to save supplied value in shared preferences against given key.

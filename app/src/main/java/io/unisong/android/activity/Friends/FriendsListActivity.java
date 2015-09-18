@@ -1,5 +1,6 @@
 package io.unisong.android.activity.Friends;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import io.unisong.android.activity.NavigationDrawerFragment;
+import io.unisong.android.activity.SettingsActivity;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.user.FriendsList;
@@ -109,7 +111,13 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         drawerLayout.closeDrawers();
         //TODO: Make a settings screen so this does something
         if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(1)){
-//            TODO:
+            Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+            startActivity(intent);
+        }
+
+        if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(1)){
+            Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+            startActivity(intent);
         }
     }
 

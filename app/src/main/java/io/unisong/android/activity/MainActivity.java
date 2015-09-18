@@ -118,6 +118,7 @@ public class MainActivity extends ActionBarActivity {
 
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_OPENED_APP_KEY, "yes");
 
+        startNewActivity(LoginActivity.class);
     }
 
     private Thread getLoginCheckThread(){
@@ -130,7 +131,6 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void checkIfLoggedIn() {
-
         while(!mClient.isLoginDone()){
             synchronized (this){
                 try{
@@ -141,9 +141,6 @@ public class MainActivity extends ActionBarActivity {
             }
         }
 
-        if(AccessToken.getCurrentAccessToken() != null) {
-            Log.d(LOG_TAG, AccessToken.getCurrentAccessToken().toString());
-        }
 
         // Check our current cookie-based login status
         if (mClient.isLoggedIn()) {
@@ -154,10 +151,9 @@ public class MainActivity extends ActionBarActivity {
             // If we're logged in with facebook and don't have a cookie, but our access token
             // is not yet expired, then try to log in with the access token.
             // TODO : investigate facebook token expirations. They might autorenew.
-            Log.d(LOG_TAG , "Our HTTP cookie has expired, but our facebook access token is still good.");
+            Log.d(LOG_TAG, "Our HTTP cookie has expired, but our facebook access token is still good.");
 
             mClient.loginFacebook(AccessToken.getCurrentAccessToken() );
-
 
         } else {
             Log.d(LOG_TAG, "We're not logged in and never were, starting LoginActivity");
