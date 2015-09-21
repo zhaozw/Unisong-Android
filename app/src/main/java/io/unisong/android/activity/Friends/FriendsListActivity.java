@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import io.unisong.android.activity.NavigationDrawerFragment;
+import io.unisong.android.activity.ProfileActivity;
 import io.unisong.android.activity.SettingsActivity;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.NetworkUtilities;
@@ -110,13 +111,13 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(io.unisong.android.R.id.drawer_layout);
         drawerLayout.closeDrawers();
         //TODO: Make a settings screen so this does something
-        if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(1)){
+        if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(3)){
             Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
             startActivity(intent);
         }
 
         if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(1)){
-            Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
             startActivity(intent);
         }
     }

@@ -40,9 +40,6 @@ public class FriendsList implements Serializable{
     private static FriendsList sInstance;
 
     public static FriendsList getInstance(){
-        if(sInstance == null){// && !readFromDisk()){
-            sInstance = new FriendsList();
-        }
         return sInstance;
     }
 
@@ -51,7 +48,7 @@ public class FriendsList implements Serializable{
     private List<User> mIncomingRequests;
     private List<User> mOutgoingRequests;
 
-    private Context context;
+    private Context mContext;
 
     private Thread mFriendsThread;
 
@@ -63,8 +60,10 @@ public class FriendsList implements Serializable{
      * and the network if not.
      * Also checks to see if the data on disk is up to date.
      */
-    public FriendsList(){
+    public FriendsList(Context context){
+        sInstance = this;
         mUpdated = false;
+        mContext = context;
 
         // TODO : handle not being logged in and having no data on disk.
         // TODO : implement storage with file system not Prefs.
@@ -159,7 +158,7 @@ public class FriendsList implements Serializable{
                 }
             }
         }
-        String URL = "/user/friends";
+        String URL = NetworkUtilities.HTTP_URL + "/user/friends";
 
         Response response;
         try {
@@ -184,7 +183,7 @@ public class FriendsList implements Serializable{
             // Load friends
             for(int i = 0; i < friendsArray.length(); i++){
 
-                User userToAdd = new User(UUID.fromString(friendsArray.getString(i)));
+                User userToAdd = new User(mContext , UUID.fromString(friendsArray.getString(i)));
                 boolean isEqual = false;
 
                 // Make sure the user we're loading isn't already in mFriends
@@ -206,7 +205,7 @@ public class FriendsList implements Serializable{
 
             for(int i = 0; i < inReqArray.length(); i++){
 
-                User userToAdd = new User(UUID.fromString(inReqArray.getString(i)));
+                User userToAdd = new User(mContext, UUID.fromString(inReqArray.getString(i)));
                 boolean isEqual = false;
 
                 for(User user : mIncomingRequests){
@@ -227,7 +226,7 @@ public class FriendsList implements Serializable{
 
             for(int i = 0; i < outReqAr.length(); i++){
 
-                User userToAdd = new User(UUID.fromString(outReqAr.getString(i)));
+                User userToAdd = new User(mContext , UUID.fromString(outReqAr.getString(i)));
                 boolean isEqual = false;
 
                 // make sure we dont' already have this user.

@@ -181,6 +181,7 @@ public class Client {
         }
     }
 
+    // TODO : delete
     private void decodeUser(byte[] data , int index){
         byte[] sizeArr = Arrays.copyOfRange(data , index , index + 4);
         index += 4;
@@ -189,8 +190,6 @@ public class Client {
 
         byte[] usrDataArr = Arrays.copyOfRange(data , index, index + size);
         index += size;
-
-        mUser = new User(usrDataArr);
 
     }
 

@@ -11,6 +11,8 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.facebook.AccessToken;
+
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.TimeManager;
@@ -20,7 +22,6 @@ import io.unisong.android.network.master.Broadcaster;
 import io.unisong.android.network.ntp.SntpClient;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.Contacts;
-import io.unisong.android.network.user.FriendsList;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -67,7 +68,6 @@ public class MediaService extends Service{
         Log.d(LOG_TAG, "Starting MediaService");
 
         mSntpClient = new SntpClient();
-        FriendsList list = FriendsList.getInstance();
 
         mMessageReceiver = new BroadcastReceiver() {
             @Override

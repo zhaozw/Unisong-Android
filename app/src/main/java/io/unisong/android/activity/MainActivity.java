@@ -19,12 +19,8 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.facebook.AccessToken;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
+import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import io.unisong.android.MediaService;
 import io.unisong.android.MyApplication;
@@ -34,8 +30,8 @@ import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.Master;
 import io.unisong.android.MediaService.MediaServiceBinder;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.FriendsList;
 
-import java.net.HttpCookie;
 import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity {
@@ -70,16 +66,22 @@ public class MainActivity extends ActionBarActivity {
 
         //Create the activity and set the layout
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        //setContentView(R.layout.activity_main);
 
         mIntent = getIntent();
         hasStarted = mIntent.getBooleanExtra("has-started" , false);
 
-        if(!hasStarted) {
-            mClient = new HttpClient(this);
+        if(HttpClient.getInstance() == null){
+            Log.d(LOG_TAG , "Starting HttpClient.");
+            mClient = new HttpClient(getApplicationContext());
+        }
 
+        if(!hasStarted) {
+
+            FriendsList friendsList = new FriendsList(getApplicationContext());
             //Start MediaService
-            Intent ServiceIntent = new Intent(this, MediaService.class);
+            Intent ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
             startService(ServiceIntent);
 
 
@@ -87,7 +89,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         //Register the broadcast reciever
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mMessageReceiver,
                 new IntentFilter("master-discovered"));
 
         mMasterReceived = false;
@@ -118,6 +120,7 @@ public class MainActivity extends ActionBarActivity {
 
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_OPENED_APP_KEY, "yes");
 
+
         startNewActivity(LoginActivity.class);
     }
 
@@ -131,6 +134,11 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void checkIfLoggedIn() {
+
+        Log.d(LOG_TAG , "Checking Login status");
+        mClient.checkIfLoggedIn();
+
+        Log.d(LOG_TAG , "Done with checkIfLoggedIn()");
         while(!mClient.isLoginDone()){
             synchronized (this){
                 try{
@@ -141,6 +149,7 @@ public class MainActivity extends ActionBarActivity {
             }
         }
 
+        Log.d(LOG_TAG , "Login status retrieved.");
 
         // Check our current cookie-based login status
         if (mClient.isLoggedIn()) {

@@ -1,10 +1,13 @@
 package io.unisong.android.network.user;
 
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.AsyncTask;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.facebook.AccessToken;
@@ -28,6 +31,7 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
 
@@ -48,28 +52,30 @@ public class User implements Serializable {
     private String mProfilePictureCachePath;
     private String mProfilePictureS3Key;
     private String mName;
-    private Bitmap mProfilePicture;
+    private byte[] mProfilePicture;
+    private Context mContext;
 
     // The access token for facebook users.
 
     /**
      * Instantiate
      */
-    private User(){
+    private User(Context context){
         mClient = HttpClient.getInstance();
+        mContext = context;
     }
 
 
-    public User(String username){
-        this();
+    public User(Context context , String username){
+        this(context);
         mUsername = username;
         getUserInfoThread().start();
 
         // TODO : load rest of info from server and save.
     }
 
-    public User(UUID uuid){
-        this();
+    public User(Context context , UUID uuid){
+        this(context);
         mUUID = uuid;
         getUserInfoThread().start();
     }
@@ -81,19 +87,11 @@ public class User implements Serializable {
      * and deserialize everything from there.
      * @param accessToken
      */
-    public User(AccessToken accessToken){
+    public User(Context context , AccessToken accessToken){
+        this(context);
         mFBAccessToken = accessToken;
         mFacebookID = accessToken.getUserId();
         getUserInfoThread().start();
-    }
-
-
-    /**
-     * Creates an User object from a set of bytes, ususally used by
-     * @param data
-     */
-    public User(byte[] data){
-
     }
 
     public String getUsername(){
@@ -122,7 +120,7 @@ public class User implements Serializable {
     }
 
     public Bitmap getProfilePicture(){
-        return mProfilePicture;
+        return BitmapFactory.decodeByteArray(mProfilePicture , 0 , mProfilePicture.length);
     }
 
     private class DownloadFilesTask extends AsyncTask<URL, Integer, Long> {
@@ -138,7 +136,7 @@ public class User implements Serializable {
 
 
     private void getFacebookProfilePicture(){
-        HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=small");
+        HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=large");
 
         // If we don't parse the url correctly return null
         // TODO : handle error?
@@ -147,15 +145,23 @@ public class User implements Serializable {
 
 //        Response response = mClient.get(imageUrl)
 
-        Bitmap bitmap = null;
-        try {
-             bitmap = BitmapFactory.decodeStream(factory.open(imageUrl.url()).getInputStream());
+
+        InputStream inputStream;
+
+        try{
+            inputStream = factory.open(imageUrl.url()).getInputStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer, 0, buffer.length)) != -1) {
+                baos.write(buffer, 0, read);
+            }
+
+            mProfilePicture = baos.toByteArray();
         } catch (IOException e){
             e.printStackTrace();
-
         }
 
-        mProfilePicture = bitmap;
     }
 
     /**
@@ -164,28 +170,34 @@ public class User implements Serializable {
      * @return
      */
     private boolean getCachedPicture(){
-        if(mProfilePictureCachePath == null){
+
+        File file = new File(mContext.getCacheDir().getAbsolutePath() + getProfilePictureCachePath());
+
+        if(!file.exists()){
             return false;
+        } else {
+            Log.d(LOG_TAG , "Loading cached picture.");
+            InputStream in;
+            try {
+                in = new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            Bitmap bitmap = BitmapFactory.decodeStream(in);
+            mImageView.setImageBitmap(bitmap);
+
+            return true;
         }
-        File file = new File(mProfilePictureCachePath);
-
-        InputStream in;
-        try {
-            in = new FileInputStream(file);
-        } catch (FileNotFoundException e){
-            e.printStackTrace();
-            return false;
-        }
-
-        Bitmap bitmap = BitmapFactory.decodeStream(in);
-        mImageView.setImageBitmap(bitmap);
-
-        return true;
     }
 
-    private void cacheProfilePicture(){
-        File file = new File(getProfilePictureCachePath());
+    private void cacheProfilePicture(byte[] data){
+        File file = new File(mContext.getCacheDir().getAbsolutePath() + getProfilePictureCachePath());
 
+        if(file.exists()){
+            file.delete();
+        }
         OutputStream out;
         try {
             out = new FileOutputStream(file);
@@ -193,8 +205,12 @@ public class User implements Serializable {
             e.printStackTrace();
             return ;
         }
-        if(mProfilePicture != null){
-            mProfilePicture.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+        try {
+            out.write(data);
+            out.close();
+        } catch (IOException e){
+            e.printStackTrace();
         }
     }
 
@@ -203,22 +219,33 @@ public class User implements Serializable {
      */
     private void getUnisongProfilePicture(){
         try {
-            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/ " + mUUID.toString() + " /profile/picture/");
-
+            // todo : uncomment after test
+            //Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/ " + mUUID.toString() + " /profile/picture/");
+            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/profile/picture/");
             String data;
 
             try{
-                JSONObject object = new JSONObject(response.body().string());
+                String body = response.body().string();
+                JSONObject object = new JSONObject(body);
                 data = object.getString("data");
             } catch (JSONException e){
                 e.printStackTrace();
                 return;
             }
 
-            byte[] bitmapArr = Base64.decode(data, Base64.DEFAULT);
-            mProfilePicture = BitmapFactory.decodeByteArray(bitmapArr , 0, 0);
+            Log.d(LOG_TAG, "Loaded!");
+            byte[] jpegDataArr = Base64.decode(data, Base64.DEFAULT);
+            //mProfilePicture = BitmapFactory.decodeByteArray(jpegDataArr , 0, jpegDataArr.length);
 
-            cacheProfilePicture();
+            Matrix matrix = new Matrix();
+
+            matrix.postRotate(-90);
+
+            //mProfilePicture = Bitmap.createBitmap(mProfilePicture, 0, 0, mProfilePicture.getWidth(),
+            //                                            mProfilePicture.getHeight(), matrix, true);
+
+            byte[] array = Base64.decode(data, Base64.DEFAULT);
+            cacheProfilePicture(array);
 
         } catch (IOException e){
             e.printStackTrace();
@@ -265,6 +292,7 @@ public class User implements Serializable {
         }
     }
 
+
     private Thread getUserInfoThread(){
         return new Thread(new Runnable() {
             @Override
@@ -275,6 +303,10 @@ public class User implements Serializable {
         });
     }
 
+    /**
+     * This method retrieves user info from the server and assigns it to relevant fields.
+     * TODO : figure out how to properly mix this with cached data.
+     */
     private void getUserInfo(){
         Response response;
         try {
@@ -283,7 +315,7 @@ public class User implements Serializable {
             } else if (mUUID != null) {
                 response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID);
             } else if (mFacebookID != null) {
-                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebook/" + mFacebookID);
+                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + mFacebookID);
             } else {
                 return;
             }
@@ -293,7 +325,9 @@ public class User implements Serializable {
         }
         JSONObject object;
         try {
-            object = new JSONObject(response.body().string());
+            String body = response.body().string();
+            Log.d(LOG_TAG , body);
+            object = new JSONObject(body);
             mUUID = UUID.fromString(object.getString("userID"));
             mUsername = object.getString("username");
             mPhoneNumber = object.getString("phone_number");
@@ -312,7 +346,43 @@ public class User implements Serializable {
             return;
         }
 
+    }
 
+    public void uploadProfilePicture(Bitmap bitmap){
+        Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            return;
+        }
+
+        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        Log.d(LOG_TAG , "Byte array size: " + byteArray.length + " bytes.");
+        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        Log.d(LOG_TAG , "Encoded getBytes() size : " + encoded.getBytes().length + " bytes.");
+
+        uploadPicture(encoded);
+    }
+
+    private void uploadPicture(String encoded){
+        JSONObject object = new JSONObject();
+        try {
+            object.put("data", encoded);
+        } catch (JSONException e){
+            e.printStackTrace();
+            return;
+        }
+
+        try {
+            mClient.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        System.gc();
     }
 
 }

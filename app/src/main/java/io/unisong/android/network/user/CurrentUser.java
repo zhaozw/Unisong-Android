@@ -2,14 +2,6 @@ package io.unisong.android.network.user;
 
 import android.content.Context;
 
-import com.facebook.AccessToken;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.reflect.Method;
-
-import io.unisong.android.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.http.HttpClient;
 
@@ -22,7 +14,6 @@ import io.unisong.android.network.http.HttpClient;
  */
 public class CurrentUser {
 
-    private final static String FACEBOOK_ACCESS_TOKEN_PATH = "fbaccesstoken";
     private User mCurrentUser;
     private FriendsList mFriendsList;
     private HttpClient mClient;
@@ -43,14 +34,13 @@ public class CurrentUser {
     public CurrentUser(Context context, String accountType){
         String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
 
-        mCurrentUser = new User(username);
-        mFriendsList = FriendsList.getInstance();
         mContext = context;
         sInstance = this;
 
         if(accountType.equals("facebook")){
            // If it's a facebook account load the access token.
 
+            mCurrentUser = new User(context , username);
 
 
         } else {

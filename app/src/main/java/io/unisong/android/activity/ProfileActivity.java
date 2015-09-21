@@ -2,11 +2,13 @@ package io.unisong.android.activity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import org.json.JSONException;
@@ -26,6 +28,8 @@ import io.unisong.android.network.user.User;
 public class ProfileActivity extends ActionBarActivity {
 
 
+    private final static String LOG_TAG = ProfileActivity.class.getSimpleName();
+
     private User mUser;
     private ImageView mProfilePictureView;
     private HttpClient mClient;
@@ -38,6 +42,7 @@ public class ProfileActivity extends ActionBarActivity {
         mProfilePictureView = (ImageView) findViewById(R.id.profile_picture_view);
 
         mUser = CurrentUser.getInstance().getUser();
+        mProfilePictureView.setImageBitmap(mUser.getProfilePicture());
 
         if(mUser.isFacebookUser()){
 
@@ -47,7 +52,11 @@ public class ProfileActivity extends ActionBarActivity {
 
     }
 
-    public void onChooseProfilePicture(View v){
+    /**
+     * This method is called when a user presses the profile upload button.
+     * @param v the view that was pressed to call this method
+     */
+    public void uploadPicture(View v){
         Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, 1);
@@ -61,38 +70,47 @@ public class ProfileActivity extends ActionBarActivity {
         {
             Uri chosenImageUri = data.getData();
 
+            Log.d(LOG_TAG , chosenImageUri.toString());
+
             Bitmap bitmap = null;
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), chosenImageUri);
+                Matrix matrix = new Matrix();
+
+                matrix.postRotate(-90);
+
+                Bitmap temp = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+                        bitmap.getHeight(), matrix, true);
+                mProfilePictureView.setImageBitmap(temp);
             } catch (FileNotFoundException e){
                 e.printStackTrace();
             } catch (IOException e){
                 e.printStackTrace();
             }
-            JSONObject object = new JSONObject();
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            try {
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-            } catch (NullPointerException e){
-                e.printStackTrace();
-                return;
-            }
-            byte[] byteArray = byteArrayOutputStream .toByteArray();
-            String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
-            try {
-                object.put("data", encoded);
-            } catch (JSONException e){
-                e.printStackTrace();
-                return;
-            }
 
-            try {
-                mClient.put(NetworkUtilities.HTTP_URL + "", object);
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-
+            getUploadThread(bitmap).start();
         }
     }
+
+    private Thread getUploadThread(final Bitmap bitmap){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mUser.uploadProfilePicture(bitmap);
+            }
+        });
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        mClient = null;
+        mUser = null;
+        mProfilePictureView = null;
+
+    }
+
+
+
 }

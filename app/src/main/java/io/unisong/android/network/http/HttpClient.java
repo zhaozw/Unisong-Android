@@ -17,14 +17,10 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
-import java.net.CookieStore;
 import java.net.HttpCookie;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Random;
 
-import io.unisong.android.FacebookAccessToken;
+import io.unisong.android.network.user.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.user.CurrentUser;
@@ -55,16 +51,14 @@ public class HttpClient {
     public HttpClient(Context context){
         mClient = new OkHttpClient();
         // TODO : reenable session persistence.
-        //mManager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
-        mManager = new CookieManager();
-        mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        mManager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
+        //mManager = new CookieManager();
+        //mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
         mClient.setCookieHandler(mManager);
         mIsLoggedIn = false;
         mLoginDone = false;
         sInstance = this;
         mContext = context;
-
-        checkIfLoggedIn();
     }
 
     public void login(String username, String password){
@@ -170,44 +164,52 @@ public class HttpClient {
         return sInstance;
     }
 
-    private void checkIfLoggedIn(){
+    public void checkIfLoggedIn(){
 
 
 
-        String accountType = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "");
+        String accountType = PrefUtils.getFromPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "");
 
         if(accountType.equals("facebook")){
-            AccessToken token = FacebookAccessToken.loadFacebookAccessToken(mContext);
+            FacebookAccessToken.loadFacebookAccessToken(mContext);
 
+            AccessToken token = AccessToken.getCurrentAccessToken();
             if(token != null){
                 mFBAccessToken = token;
             } else {
                 mLoginDone = true;
-            }
-        } else {
-
-            List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
-
-            for(HttpCookie cookie : cookies){
-                if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
-                    Log.d(LOG_TAG , "Cookie found, we are logged in.");
-                    mIsLoggedIn = true;
-                    mLoginDone = true;
-
-                    CurrentUser user = new CurrentUser(mContext, "unisong");
-                    return;
-                }
-            }
-
-            String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
-            String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
-            if(!username.equals("") && !password.equals("")){
-                login(username , password);
                 return;
             }
-
-            mLoginDone = true;
         }
+
+
+        List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
+
+        for(HttpCookie cookie : cookies){
+            if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
+                Log.d(LOG_TAG , "Cookie found, we are logged in.");
+                mIsLoggedIn = true;
+                mLoginDone = true;
+
+                CurrentUser user = new CurrentUser(mContext, "unisong");
+                return;
+            }
+        }
+
+        if(accountType.equals("facebook")){
+            loginFacebook(mFBAccessToken);
+        }
+
+        String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+        String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+
+        if(!username.equals("") && !password.equals("")){
+            login(username , password);
+            return;
+        }
+
+        mLoginDone = true;
+
 
     }
 
@@ -247,6 +249,7 @@ public class HttpClient {
                     }
                 } catch (JSONException e){
                     e.printStackTrace();
+                    mLoginDone = true;
                     return;
                 }
 
@@ -256,20 +259,21 @@ public class HttpClient {
                 } catch (IOException e){
                     // TODO : handle
                     e.printStackTrace();
+                    mLoginDone = true;
                     return;
                 }
 
 
                 if(response.toString().contains("code=200")) {
                     Log.d(LOG_TAG , "Facebook Login Success");
-                    CurrentUser user = new CurrentUser(mContext , new User(mFBAccessToken));
+                    CurrentUser user = new CurrentUser(mContext , new User(mContext , mFBAccessToken));
                     mIsLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Facebook Login Failure");
                     mIsLoggedIn = false;
                 }
 
-                // TODO : get long term access token from here.
+                mLoginDone = true;
 
             }
         });

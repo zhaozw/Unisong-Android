@@ -9,19 +9,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import io.unisong.android.FacebookAccessToken;
+import io.unisong.android.network.user.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.user.CurrentUser;
-import io.unisong.android.network.user.User;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
@@ -61,13 +58,9 @@ public class LoginActivity extends ActionBarActivity {
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_login);
-        if(HttpClient.getInstance() == null) {
-            mClient = new HttpClient(this);
-        } else {
-            mClient = HttpClient.getInstance();
-        }
+
+        mClient = HttpClient.getInstance();
 
 
         Log.d(LOG_TAG, "LoginActivity onCreate called");
@@ -125,7 +118,7 @@ public class LoginActivity extends ActionBarActivity {
     }
 
     public void loginFB(LoginResult loginResult){
-        getLoginFBThread( loginResult).start();
+        getLoginFBThread(loginResult).start();
 
     }
 
@@ -137,7 +130,7 @@ public class LoginActivity extends ActionBarActivity {
                 Response httpResponse;
 
                 try {
-                    httpResponse = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebook/" + loginResult.getAccessToken().getUserId());
+                    httpResponse = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + loginResult.getAccessToken().getUserId());
                 } catch (IOException e){
                     e.printStackTrace();
                     return;

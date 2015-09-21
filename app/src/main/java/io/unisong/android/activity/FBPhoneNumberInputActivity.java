@@ -65,6 +65,11 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         String username = mUsername.getText().toString();
         String phonenumber = mPhoneNumber.getText().toString();
 
+        phonenumber = phonenumber.replace("(" , "");
+        phonenumber = phonenumber.replace(")" , "");
+        phonenumber = phonenumber.replace("-" , "");
+        phonenumber = phonenumber.replace(" " , "");
+
         mClient.loginFacebook(AccessToken.getCurrentAccessToken() , mEmail , username, phonenumber);
 
         Intent intent = new Intent(getApplicationContext() , FriendsListActivity.class);
