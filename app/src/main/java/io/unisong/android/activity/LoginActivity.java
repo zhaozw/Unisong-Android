@@ -65,7 +65,7 @@ public class LoginActivity extends ActionBarActivity {
 
         Log.d(LOG_TAG, "LoginActivity onCreate called");
         mUsername = (FloatLabel) findViewById(R.id.loginUsername);
-        mPassword = (FloatLabel) findViewById(R.id.loginPassword);
+        mPassword = (FloatLabel) findViewById(R.id.login_password);
 
         mToolbar = (Toolbar) findViewById(R.id.login_bar);
 
@@ -184,7 +184,7 @@ public class LoginActivity extends ActionBarActivity {
 
                     mClient.loginFacebook(loginResult.getAccessToken());
 
-                    startActivity(FriendsListActivity.class);
+                    startActivity(UnisongActivity.class);
 
                 }
             }

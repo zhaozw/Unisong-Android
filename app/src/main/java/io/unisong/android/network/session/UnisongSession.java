@@ -29,6 +29,8 @@ public class UnisongSession {
     private String mSesionIdentifier;
     private boolean mIsLocalSession;
     private SongQueue mSongQueue;
+    private boolean mIsMaster;
+    private boolean mIsDisconnected;
 
     private List<Client> mClients;
     private Master master;
@@ -39,7 +41,9 @@ public class UnisongSession {
 
         mSongQueue = new SongQueue();
         mSongQueue.addSong(firstSong);
+        mIsMaster = false;
 
+        mIsDisconnected = false;
         sInstance = this;
     }
 
@@ -47,6 +51,8 @@ public class UnisongSession {
         for (Client comp : mClients){
             if(comp.equals(client)) return;
         }
+
+        mClients.add(client);
     }
 
     public int getCurrentSongID(){
@@ -60,4 +66,28 @@ public class UnisongSession {
     public void startSong(int songID){
         mCurrentSong = mSongQueue.getSong(songID);
     }
+
+    public void endSession(){
+        // TODO : end session and disconnect hosts
+        // can only do if master
+    }
+
+    public void disconnect(){
+        // TODO : disconnects user from session
+
+    }
+
+    public void destroy(){
+        if(mIsMaster){
+            endSession();
+        }
+        disconnect();
+
+        sInstance = null;
+
+        mSongQueue = null;
+        mClients = null;
+        mIsDisconnected = true;
+    }
+
 }

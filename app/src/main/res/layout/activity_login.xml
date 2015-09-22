@@ -23,7 +23,7 @@
         android:layout="@layout/custom_float_label"/>
 
     <com.iangclifton.android.floatlabel.FloatLabel
-        android:id="@+id/loginPassword"
+        android:id="@+id/login_password"
         android:textColorHint="@color/secondaryText"
         android:layout_below="@+id/loginUsername"
         android:layout_width="match_parent"
@@ -37,7 +37,7 @@
         android:layout="@layout/custom_float_label"/>
 
     <Button
-        android:layout_below="@id/loginPassword"
+        android:layout_below="@id/login_password"
         android:background="@drawable/button_border"
         android:layout_marginLeft="@dimen/login_button_margin"
         android:layout_marginRight="@dimen/login_button_margin"

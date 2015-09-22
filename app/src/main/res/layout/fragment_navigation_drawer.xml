@@ -4,7 +4,7 @@
     android:background="@color/white"
     tools:context="io.unisong.android.activity.NavigationDrawerFragment">
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/containerDrawerImage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -17,7 +17,7 @@
             android:layout_marginTop="@dimen/drawer_margin_top"
             android:layout_marginBottom="@dimen/drawer_margin_bottom"/>
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
         android:layout_below="@id/containerDrawerImage"

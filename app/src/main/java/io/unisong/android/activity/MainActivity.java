@@ -120,7 +120,6 @@ public class MainActivity extends ActionBarActivity {
 
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_OPENED_APP_KEY, "yes");
 
-
         startNewActivity(LoginActivity.class);
     }
 
@@ -155,7 +154,7 @@ public class MainActivity extends ActionBarActivity {
         if (mClient.isLoggedIn()) {
             // We are logged in, proceed to FriendsListActivity for now, and the new default for later.
             Log.d(LOG_TAG , "We are logged in! Starting FriendsListActivity");
-            startNewActivity(FriendsListActivity.class);
+            startNewActivity(UnisongActivity.class);
         } else if(AccessToken.getCurrentAccessToken() != null && !AccessToken.getCurrentAccessToken().isExpired()){
             // If we're logged in with facebook and don't have a cookie, but our access token
             // is not yet expired, then try to log in with the access token.
@@ -168,7 +167,6 @@ public class MainActivity extends ActionBarActivity {
             Log.d(LOG_TAG, "We're not logged in and never were, starting LoginActivity");
             startNewActivity(LoginActivity.class);
         }
-
 
     }
 

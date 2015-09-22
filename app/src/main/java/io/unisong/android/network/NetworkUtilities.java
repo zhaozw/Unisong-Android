@@ -21,6 +21,7 @@ public class NetworkUtilities {
     private final static String LOG_TAG = NetworkUtilities.class.getSimpleName();
     public final static String EC2_INSTANCE = "http://ec2-52-27-241-102.us-west-2.compute.amazonaws.com";
     public final static String HTTP_URL = EC2_INSTANCE + ":8000";
+    public final static String HTTP_DOMAIN = "ec2-52-27-241-102.us-west-2.compute.amazonaws.com";
     public final static String SOCKETIO_URL = EC2_INSTANCE + ":8005";
     private static URI SOCKETIO_URI;
     private static URI HTTP_URI;

@@ -1,10 +1,9 @@
-package io.unisong.android.activity.Friends;
+package io.unisong.android.activity;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -12,29 +11,34 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
-import io.unisong.android.activity.NavigationDrawerFragment;
+import de.hdodenhof.circleimageview.CircleImageView;
+import io.unisong.android.R;
+import io.unisong.android.activity.Friends.FriendsAdapter;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FriendsList;
+import io.unisong.android.network.user.User;
 
 /**
- * Created by ezturner on 8/11/2015.
+ * Created by Ethan on 9/21/2015.
  */
-public class FriendsListActivity  extends ActionBarActivity implements NavigationDrawerFragment.OnFragmentInteractionListener {
+public class UnisongActivity extends AppCompatActivity {
 
-    private final static String LOG_TAG = FriendsListActivity.class.getSimpleName();
+    private final static String LOG_TAG = UnisongActivity.class.getSimpleName();
 
+    private Handler mHandler;
     private Toolbar mToolbar;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private FriendsAdapter mAdapter;
     private FriendsList mFriendsList;
 
-
-    protected void onCreate(Bundle savedInstanceState){
+    @Override
+    public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        setContentView(io.unisong.android.R.layout.activity_friends);
+        setContentView(R.layout.activity_unisong);
+
         mRecyclerView = (RecyclerView) findViewById(io.unisong.android.R.id.friendsRecyclerView);
 
         // use this setting to improve performance if you know that changes
@@ -51,7 +55,7 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         mAdapter = new FriendsAdapter(mFriendsList.getFriends());
         mRecyclerView.setAdapter(mAdapter);
 
-        Log.d(LOG_TAG , "Starting thread");
+        Log.d(LOG_TAG, "Starting thread");
 
         mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
 
@@ -60,12 +64,11 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
 
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
-                getSupportFragmentManager().findFragmentById(io.unisong.android.R.id.fragment_navigation_drawer);
+        User currentUser = CurrentUser.getInstance();
 
-        drawerFragment.setUp((DrawerLayout)findViewById(io.unisong.android.R.id.drawer_layout) , mToolbar , io.unisong.android.R.id.fragment_navigation_drawer);
-
+        mHandler = new Handler();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -80,41 +83,35 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
 
-        if(id == io.unisong.android.R.id.action_settings){
+        if(id == R.id.action_settings){
             Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if(id == R.id.action_add_friend){
+            Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if(id == R.id.action_log_out){
+            new Thread(mLogoutRunnable).start();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void onClick(View v){
-
-    }
-
-    @Override
-    public void onFragmentInteraction(Uri uri){
-        //TODO: Make this do something
-    }
-
-    public void onDrawerClick(View v){
-        //TODO: add ripple effect on this click
-        DrawerLayout drawerLayout = (DrawerLayout) findViewById(io.unisong.android.R.id.drawer_layout);
-        drawerLayout.closeDrawers();
-        //TODO: Make a settings screen so this does something
-        if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(3)){
-
-
+    private Runnable mLogoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            CurrentUser.logOut();
+            runOnUiThread(mBackToLoginActivityRunnable);
         }
+    };
 
-        if(v.findViewById(io.unisong.android.R.id.drawerRowImage).getTag().equals(1)){
-
+    private Runnable mBackToLoginActivityRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+            finish();
         }
-    }
-
-    public void friendRowClick(View v){
-
-    }
-
+    };
 
 }

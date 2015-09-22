@@ -12,4 +12,14 @@
         android:orderInCategory="100"
         speakersync:showAsAction="never"  />
 
+    <item android:id="@+id/action_add_friend"
+        android:title="@string/action_add_friend"
+        android:orderInCategory="100"
+        speakersync:showAsAction="never"  />
+
+    <item android:id="@+id/action_log_out"
+        android:title="@string/action_log_out"
+        android:orderInCategory="100"
+        speakersync:showAsAction="never"  />
+
 </menu>

@@ -15,9 +15,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.R;
 import io.unisong.android.activity.MusicPlayer.DrawerAdapter;
 import io.unisong.android.activity.MusicPlayer.DrawerInformation;
+import io.unisong.android.network.user.CurrentUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +54,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     private boolean mUserLearnedDrawer;
     private boolean mFromSavedInstanceState;
+    private CircleImageView mProfilePictureView;
 
     private View mContainerView;
 
@@ -114,6 +117,11 @@ public class NavigationDrawerFragment extends Fragment {
         }
 
         mAdapter = new DrawerAdapter(getActivity() , info);
+
+        /*
+        mProfilePictureView = (CircleImageView) getView().findViewById(R.id.drawer_profile_picture);
+        mProfilePictureView.setImageBitmap(CurrentUser.getInstance().getUser().getProfilePicture());
+        */
 
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

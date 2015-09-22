@@ -45,4 +45,15 @@ public class PrefUtils {
             return defaultValue;
         }
     }
+
+    public static void deleteFromPrefs(Context context, String key){
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        try{
+            sharedPrefs.edit().remove(key).commit();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
 }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
@@ -91,6 +92,7 @@ public class User implements Serializable {
         this(context);
         mFBAccessToken = accessToken;
         mFacebookID = accessToken.getUserId();
+        Log.d(LOG_TAG , "Initializing facebook user.");
         getUserInfoThread().start();
     }
 
@@ -122,18 +124,6 @@ public class User implements Serializable {
     public Bitmap getProfilePicture(){
         return BitmapFactory.decodeByteArray(mProfilePicture , 0 , mProfilePicture.length);
     }
-
-    private class DownloadFilesTask extends AsyncTask<URL, Integer, Long> {
-
-        @Override
-        protected Long doInBackground(URL... urls) {
-            return null;
-        }
-    }
-
-
-    private ImageView mImageView;
-
 
     private void getFacebookProfilePicture(){
         HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=large");
@@ -170,7 +160,6 @@ public class User implements Serializable {
      * @return
      */
     private boolean getCachedPicture(){
-
         File file = new File(mContext.getCacheDir().getAbsolutePath() + getProfilePictureCachePath());
 
         if(!file.exists()){
@@ -185,14 +174,19 @@ public class User implements Serializable {
                 return false;
             }
 
-            Bitmap bitmap = BitmapFactory.decodeStream(in);
-            mImageView.setImageBitmap(bitmap);
+            try {
+                mProfilePicture = new byte[in.available()];
+                in.read(mProfilePicture);
+            } catch (IOException e){
+                e.printStackTrace();
+                return false;
+            }
 
             return true;
         }
     }
 
-    private void cacheProfilePicture(byte[] data){
+    private void cacheProfilePicture(){
         File file = new File(mContext.getCacheDir().getAbsolutePath() + getProfilePictureCachePath());
 
         if(file.exists()){
@@ -207,7 +201,7 @@ public class User implements Serializable {
         }
 
         try {
-            out.write(data);
+            out.write(mProfilePicture);
             out.close();
         } catch (IOException e){
             e.printStackTrace();
@@ -234,18 +228,9 @@ public class User implements Serializable {
             }
 
             Log.d(LOG_TAG, "Loaded!");
-            byte[] jpegDataArr = Base64.decode(data, Base64.DEFAULT);
-            //mProfilePicture = BitmapFactory.decodeByteArray(jpegDataArr , 0, jpegDataArr.length);
 
-            Matrix matrix = new Matrix();
-
-            matrix.postRotate(-90);
-
-            //mProfilePicture = Bitmap.createBitmap(mProfilePicture, 0, 0, mProfilePicture.getWidth(),
-            //                                            mProfilePicture.getHeight(), matrix, true);
-
-            byte[] array = Base64.decode(data, Base64.DEFAULT);
-            cacheProfilePicture(array);
+            mProfilePicture = Base64.decode(data, Base64.DEFAULT);
+            cacheProfilePicture();
 
         } catch (IOException e){
             e.printStackTrace();
@@ -253,7 +238,7 @@ public class User implements Serializable {
     }
 
     private String getProfilePictureCachePath(){
-        return mUsername + ".profile_picture.png";
+        return mUsername + ".profile_picture.jpeg";
     }
 
     private void loadProfilePicture(){
@@ -262,26 +247,6 @@ public class User implements Serializable {
         } else if(!getCachedPicture()){
             getUnisongProfilePicture();
         }
-    }
-
-    // writes the object using an output stream
-    public void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(mUUID);
-        out.writeObject(mPhoneNumber);
-        out.writeObject(mProfilePictureCachePath);
-        out.writeObject(mProfilePictureS3Key);
-        out.writeObject(mName);
-        out.writeObject(mFacebookID);
-    }
-
-    // reads an object using an output stream
-    public void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException{
-        mUUID = (UUID) in.readObject();
-        mPhoneNumber = (String) in.readObject();
-        mProfilePictureCachePath = (String) in.readObject();
-        mProfilePictureS3Key = (String) in.readObject();
-        mName = (String) in.readObject();
-        mFacebookID = (String) in.readObject();
     }
 
     public boolean isFacebookUser(){
@@ -310,7 +275,7 @@ public class User implements Serializable {
     private void getUserInfo(){
         Response response;
         try {
-            if (mUsername != null) {
+            if (mUsername != null && !mUsername.equals("")) {
                 response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + mUsername);
             } else if (mUUID != null) {
                 response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID);
@@ -365,6 +330,11 @@ public class User implements Serializable {
         Log.d(LOG_TAG , "Encoded getBytes() size : " + encoded.getBytes().length + " bytes.");
 
         uploadPicture(encoded);
+    }
+
+    public JSONObject toJSONObject() throws JSONException {
+        JSONObject user = new JSONObject();
+        return user;
     }
 
     private void uploadPicture(String encoded){

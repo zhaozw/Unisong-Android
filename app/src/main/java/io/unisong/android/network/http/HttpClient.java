@@ -104,8 +104,9 @@ public class HttpClient {
                     return;
                 }
 
-                if(response.toString().contains("code=200")) {
+                if(response.code() == 200) {
                     Log.d(LOG_TAG , "Login Success");
+                    PrefUtils.saveToPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
                     mIsLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Login Failure");
@@ -264,8 +265,9 @@ public class HttpClient {
                 }
 
 
-                if(response.toString().contains("code=200")) {
+                if(response.code() == 200) {
                     Log.d(LOG_TAG , "Facebook Login Success");
+                    PrefUtils.saveToPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
                     CurrentUser user = new CurrentUser(mContext , new User(mContext , mFBAccessToken));
                     mIsLoggedIn = true;
                 } else {

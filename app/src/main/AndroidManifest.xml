@@ -20,9 +20,14 @@
         android:theme="@style/UnisongTheme" >
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
 
-        <service android:name=".MediaService"
-            android:process=":remote"/>
+        <service android:name=".MediaService"/>
 
+        <activity android:name=".activity.UnisongActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+
+        </activity>
 
         <activity
             android:name="io.unisong.android.activity.MainActivity"
@@ -33,10 +38,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name="io.unisong.android.activity.TypeSelector"
-            android:label="@string/app_name" >
         </activity>
         <activity
             android:name="io.unisong.android.activity.MusicPlayer.MusicPlayer"
@@ -69,11 +70,6 @@
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value="io.unisong.android.activity.MusicPlayer.MusicPlayer" />
         </activity>
 
-        <activity android:name="io.unisong.android.activity.SocketIOTestActivity"
-            android:label="@string/app_name">
-
-        </activity>
-
 
         <activity android:name="com.facebook.FacebookActivity"
             android:configChanges=
@@ -83,16 +79,6 @@
 
 
         <activity android:name=".activity.FBPhoneNumberInputActivity"
-            android:label="@string/app_name"
-            >
-        </activity>
-
-        <activity android:name=".activity.ProfileActivity"
-            android:label="@string/app_name"
-            >
-        </activity>
-
-        <activity android:name=".activity.SettingsActivity"
             android:label="@string/app_name"
             >
         </activity>

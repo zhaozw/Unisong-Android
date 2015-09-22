@@ -82,4 +82,8 @@ public class FacebookAccessToken {
             }
         }
     }
+
+    public static void deleteFacebookAccessToken(Context context){
+        PrefUtils.deleteFromPrefs(context , PrefUtils.PREFS_FACEBOOK_ACCESS_TOKEN_KEY);
+    }
 }
