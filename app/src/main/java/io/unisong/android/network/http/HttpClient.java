@@ -192,7 +192,8 @@ public class HttpClient {
                 mIsLoggedIn = true;
                 mLoginDone = true;
 
-                CurrentUser user = new CurrentUser(mContext, "unisong");
+                CurrentUser user = new CurrentUser(mContext, accountType);
+
                 return;
             }
         }

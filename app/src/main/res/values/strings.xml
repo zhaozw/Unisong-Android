@@ -37,6 +37,8 @@
     <string name="drawer_close">Drawer Close</string>
     <string name="drawer_open">Drawer Open</string>
 
+    <string name="add_friend_label">Add Friend</string>
+
     <string-array name="music_player_tabs">
         <item>PLAYLISTS</item>
         <item>ARTISTS</item>

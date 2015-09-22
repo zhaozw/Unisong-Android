@@ -83,6 +83,16 @@
             >
         </activity>
 
+        <activity android:name=".activity.AddFriendActivity"
+            android:label="@string/add_friend_label"
+            />
+
+        <activity android:name=".activity.AddFriendByUsernameActivity"
+            android:label="@string/add_friend_label"
+            />
+        <activity android:name=".activity.AddFriendFromContactsActivity"
+            android:label="@string/add_friend_label"
+            />
     </application>
 
 </manifest>

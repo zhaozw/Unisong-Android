@@ -18,4 +18,7 @@
     <dimen name="login_button_margin">32dp</dimen>
     <dimen name="main_profile_image_radius">192dp</dimen>
     <dimen name="main_profile_image_margin">24dp</dimen>
+
+    <dimen name="friend_image_margin">16dp</dimen>
+    <dimen name="friend_image_radius">40dp</dimen>
 </resources>

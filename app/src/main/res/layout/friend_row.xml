@@ -5,43 +5,45 @@
     android:padding="@dimen/friend_row_padding"
     android:onClick="friendRowClick">
 
-    <ImageView
-        android:id="@+id/friendImage"
-        android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/friend_image"
+        android:layout_width="@dimen/friend_image_radius"
+        android:layout_height="@dimen/friend_image_radius"
         android:layout_alignParentBottom="true"
         android:layout_alignParentTop="true"
-        android:layout_marginEnd="12dp"
-        android:layout_marginRight="12dp"
-        android:src="@drawable/ic_launcher" />
+        android:layout_marginEnd="@dimen/friend_image_margin"
+        android:layout_marginRight="@dimen/friend_image_margin"
+        android:src="@drawable/ic_contact_picture" />
 
     <TextView
-        android:id="@+id/friendSecondLine"
+        android:id="@+id/friend_second_line"
         android:layout_width="fill_parent"
         android:layout_height="26dip"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_toRightOf="@id/friendImage"
-        android:layout_toEndOf="@id/friendImage"
+        android:layout_toRightOf="@id/friend_image"
+        android:layout_toEndOf="@id/friend_image"
         android:ellipsize="marquee"
         android:singleLine="true"
         android:textColor="@color/secondaryText"
+        android:text="\@username"
         android:textSize="@dimen/text_size_row_secondary" />
 
     <TextView
-        android:id="@+id/friendFirstLine"
+        android:id="@+id/friend_first_line"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/friendSecondLine"
+        android:layout_above="@id/friend_second_line"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:layout_alignWithParentIfMissing="true"
-        android:layout_toRightOf="@id/friendImage"
-        android:layout_toEndOf="@id/friendImage"
+        android:layout_toRightOf="@id/friend_image"
+        android:layout_toEndOf="@id/friend_image"
         android:gravity="center_vertical"
         android:textColor="@color/primaryText"
+        android:text="Placeholder Name"
         android:textSize="@dimen/text_size_row_primary" />
 
 </RelativeLayout>

@@ -9,7 +9,6 @@ import android.widget.TextView;
 import io.unisong.android.R;
 import io.unisong.android.network.user.User;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,8 +28,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
         public ViewHolder(View v) {
             super(v);
-            txtHeader = (TextView) v.findViewById(R.id.friendFirstLine);
-            txtFooter = (TextView) v.findViewById(R.id.friendSecondLine);
+            txtHeader = (TextView) v.findViewById(R.id.friend_first_line);
+            txtFooter = (TextView) v.findViewById(R.id.friend_second_line);
         }
     }
 

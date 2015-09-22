@@ -1,6 +1,8 @@
 package io.unisong.android.activity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +13,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -33,13 +37,14 @@ public class UnisongActivity extends AppCompatActivity {
     private LinearLayoutManager mLayoutManager;
     private FriendsAdapter mAdapter;
     private FriendsList mFriendsList;
+    private RelativeLayout mUserProfileLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_unisong);
 
-        mRecyclerView = (RecyclerView) findViewById(io.unisong.android.R.id.friendsRecyclerView);
+        mRecyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -66,6 +71,12 @@ public class UnisongActivity extends AppCompatActivity {
 
         User currentUser = CurrentUser.getInstance();
 
+        mUserProfileLayout = (RelativeLayout) findViewById(R.id.user_profile_layout);
+
+        getLayoutInflater().inflate(R.layout.friend_row , mUserProfileLayout);
+
+        new LoadCurrentUserProfile().execute(mUserProfileLayout);
+
         mHandler = new Handler();
     }
 
@@ -87,7 +98,8 @@ public class UnisongActivity extends AppCompatActivity {
             Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
             return true;
         } else if(id == R.id.action_add_friend){
-            Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(getApplicationContext() , AddFriendActivity.class);
+            startActivity(intent);
             return true;
         } else if(id == R.id.action_log_out){
             new Thread(mLogoutRunnable).start();
@@ -114,4 +126,42 @@ public class UnisongActivity extends AppCompatActivity {
         }
     };
 
+    private class LoadCurrentUserProfile extends AsyncTask<RelativeLayout , Void, User> {
+
+        private RelativeLayout layout;
+        @Override
+        protected User doInBackground(RelativeLayout... relativeLayouts) {
+            layout = relativeLayouts[0];
+
+            User user = CurrentUser.getInstance();
+
+            while(user.doesNotHaveProfilePicture()){
+                synchronized (this){
+                    try {
+                        this.wait(10);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            return user;
+        }
+
+        @Override
+        protected void onPostExecute(User user){
+            TextView name = (TextView) layout.findViewById(R.id.friend_first_line);
+            name.setText(user.getName());
+
+            TextView username = (TextView) layout.findViewById(R.id.friend_second_line);
+            username.setText("@" + user.getUsername());
+
+            CircleImageView imageView = (CircleImageView) layout.findViewById(R.id.friend_image);
+
+            Bitmap profile = user.getProfilePicture();
+            if(profile != null) {
+                imageView.setImageBitmap(profile);
+            }
+        }
+    }
 }

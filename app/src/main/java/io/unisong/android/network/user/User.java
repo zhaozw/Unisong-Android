@@ -56,6 +56,12 @@ public class User implements Serializable {
     private byte[] mProfilePicture;
     private Context mContext;
 
+    // The boolean tag to tell us if we failed to get the profile picture
+    private boolean mRetrieveProfilePictureFailed;
+
+    // The boolean that tells us if we're done retrieving the profile picture
+    private boolean mHasProfilePicture;
+
     // The access token for facebook users.
 
     /**
@@ -64,6 +70,8 @@ public class User implements Serializable {
     private User(Context context){
         mClient = HttpClient.getInstance();
         mContext = context;
+        mHasProfilePicture = false;
+        mRetrieveProfilePictureFailed = false;
     }
 
 
@@ -122,7 +130,10 @@ public class User implements Serializable {
     }
 
     public Bitmap getProfilePicture(){
-        return BitmapFactory.decodeByteArray(mProfilePicture , 0 , mProfilePicture.length);
+        if(mProfilePicture != null) {
+            return BitmapFactory.decodeByteArray(mProfilePicture, 0, mProfilePicture.length);
+        }
+        return null;
     }
 
     private void getFacebookProfilePicture(){
@@ -148,8 +159,10 @@ public class User implements Serializable {
             }
 
             mProfilePicture = baos.toByteArray();
+            mHasProfilePicture = true;
         } catch (IOException e){
             e.printStackTrace();
+            mRetrieveProfilePictureFailed = true;
         }
 
     }
@@ -177,6 +190,7 @@ public class User implements Serializable {
             try {
                 mProfilePicture = new byte[in.available()];
                 in.read(mProfilePicture);
+                mHasProfilePicture = true;
             } catch (IOException e){
                 e.printStackTrace();
                 return false;
@@ -224,15 +238,18 @@ public class User implements Serializable {
                 data = object.getString("data");
             } catch (JSONException e){
                 e.printStackTrace();
+                mRetrieveProfilePictureFailed = true;
                 return;
             }
 
             Log.d(LOG_TAG, "Loaded!");
 
             mProfilePicture = Base64.decode(data, Base64.DEFAULT);
+            mHasProfilePicture = true;
             cacheProfilePicture();
 
         } catch (IOException e){
+            mRetrieveProfilePictureFailed = true;
             e.printStackTrace();
         }
     }
@@ -355,4 +372,11 @@ public class User implements Serializable {
         System.gc();
     }
 
+    public boolean doesNotHaveProfilePicture(){
+        if(!mRetrieveProfilePictureFailed) {
+            return !mHasProfilePicture;
+        } else {
+            return true;
+        }
+    }
 }

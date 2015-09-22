@@ -11,15 +11,21 @@
     <RelativeLayout
     android:layout_width="match_parent" android:layout_height="wrap_content" >
 
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/user_profile_layout"
+            android:layout_marginTop="8dp"/>
+
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/activeSessionsRecyclerView"
+            android:id="@+id/active_sessions_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
         </android.support.v7.widget.RecyclerView>
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/friendsRecyclerView"
+            android:id="@+id/friends_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
