@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:padding="@dimen/friend_row_padding"
-    android:onClick="friendRowClick">
+    >
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/friend_image"
@@ -13,6 +12,9 @@
         android:layout_alignParentTop="true"
         android:layout_marginEnd="@dimen/friend_image_margin"
         android:layout_marginRight="@dimen/friend_image_margin"
+        android:layout_marginLeft="@dimen/friend_image_margin"
+        android:layout_marginStart="@dimen/friend_image_margin"
+        android:tag="Hiii"
         android:src="@drawable/ic_contact_picture" />
 
     <TextView
@@ -37,8 +39,8 @@
         android:layout_above="@id/friend_second_line"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
         android:layout_alignWithParentIfMissing="true"
+        android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/friend_image"
         android:layout_toEndOf="@id/friend_image"
         android:gravity="center_vertical"

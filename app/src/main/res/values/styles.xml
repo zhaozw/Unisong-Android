@@ -19,5 +19,13 @@
         <item name="android:textColor">@color/secondaryText</item>
     </style>
 
+    <style name="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">#000</item>
+        <item name="android:alpha">0.12</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:layout_marginBottom">4dp</item>
+    </style>
 
 </resources>

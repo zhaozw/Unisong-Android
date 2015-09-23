@@ -126,13 +126,16 @@ public class CurrentUser {
 
         PrefUtils.deleteFromPrefs(sContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY);
 
+        Log.d(LOG_TAG , sContext.getCacheDir().getAbsolutePath().toString());
         // Delete cached files
-        File dir = new File(sContext.getCacheDir().getAbsolutePath());
+        File dir = new File(sContext.getCacheDir().getAbsolutePath() + "/");
         if (dir.isDirectory())
         {
             String[] children = dir.list();
+            Log.d(LOG_TAG , "Deleting " + children.length +" cached files.");
             for (int i = 0; i < children.length; i++)
             {
+                Log.d(LOG_TAG , "Deleting : " + children[i]);
                 new File(dir, children[i]).delete();
             }
         }

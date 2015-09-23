@@ -35,8 +35,12 @@ dependencies {
     compile 'io.socket:socket.io-client:0.6.1'
     compile 'com.facebook.android:facebook-android-sdk:4.0.0'
     compile 'de.hdodenhof:circleimageview:2.0.0'
+    compile('com.afollestad.material-dialogs:core:0.8.0.1@aar') {
+        transitive = true
+    }
 }
 
 repositories {
     mavenCentral()
+    maven { url "https://jitpack.io" }
 }

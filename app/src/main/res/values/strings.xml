@@ -39,6 +39,10 @@
 
     <string name="add_friend_label">Add Friend</string>
 
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="change_profile_picture">Would you like to change your profile picture?</string>
+
     <string-array name="music_player_tabs">
         <item>PLAYLISTS</item>
         <item>ARTISTS</item>
