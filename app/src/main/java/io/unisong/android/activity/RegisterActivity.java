@@ -1,5 +1,6 @@
 package io.unisong.android.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -7,6 +8,7 @@ import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.View;
 
+import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.NetworkUtilities;
@@ -130,6 +132,11 @@ public class RegisterActivity extends ActionBarActivity {
 
     private void registerSuccess(String username , String password){
         //TODO : save account credentials with AccountManager/shared prefs/something
-
+        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY , username);
+        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_PASSWORD_KEY, password);
+        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong");
+        Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

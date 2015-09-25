@@ -48,6 +48,12 @@ public class FriendsList implements Serializable{
     private List<User> mIncomingRequests;
     private List<User> mOutgoingRequests;
 
+    // Users not currently in an Unisong session.
+    private List<User> mIdleUsers;
+
+    // Users currently in an active Unisong session.
+    private List<User> mActiveUsers;
+
     private Context mContext;
 
     private Thread mFriendsThread;
@@ -183,7 +189,8 @@ public class FriendsList implements Serializable{
             // Load friends
             for(int i = 0; i < friendsArray.length(); i++){
 
-                User userToAdd = new User(mContext , UUID.fromString(friendsArray.getString(i)));
+                JSONObject object = friendsArray.getJSONObject(i);
+                User userToAdd = new User(mContext , UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 // Make sure the user we're loading isn't already in mFriends
@@ -205,7 +212,8 @@ public class FriendsList implements Serializable{
 
             for(int i = 0; i < inReqArray.length(); i++){
 
-                User userToAdd = new User(mContext, UUID.fromString(inReqArray.getString(i)));
+                JSONObject object = inReqArray.getJSONObject(i);
+                User userToAdd = new User(mContext , UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 for(User user : mIncomingRequests){
@@ -226,7 +234,8 @@ public class FriendsList implements Serializable{
 
             for(int i = 0; i < outReqAr.length(); i++){
 
-                User userToAdd = new User(mContext , UUID.fromString(outReqAr.getString(i)));
+                JSONObject object = outReqAr.getJSONObject(i);
+                User userToAdd = new User(mContext , UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 // make sure we dont' already have this user.
@@ -246,7 +255,8 @@ public class FriendsList implements Serializable{
             }
 
             if(mUpdated){
-                writeToDisk();
+                // TODO : enable caching.
+                //writeToDisk();
             }
         } catch (IOException e){
             // TODO : handle
@@ -256,6 +266,8 @@ public class FriendsList implements Serializable{
             int dles = 0;
             e.printStackTrace();
             return;
+        } catch(Exception e){
+            e.printStackTrace();
         }
     }
 

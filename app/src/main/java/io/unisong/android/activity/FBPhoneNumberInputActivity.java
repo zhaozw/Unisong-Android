@@ -10,9 +10,11 @@ import android.widget.EditText;
 
 import com.facebook.AccessToken;
 
+import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.FacebookAccessToken;
 
 /**
  * This activity is presented after a user logs in with facebook for the first time.
@@ -40,7 +42,7 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
 
         mPhoneNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 
-        mEmail = getIntent().getCharArrayExtra("email").toString();
+        mEmail = new String(getIntent().getCharArrayExtra("email"));
 
         mClient = HttpClient.getInstance();
     }
@@ -64,6 +66,8 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         // TODO : input validation and checking against server.
         String username = mUsername.getText().toString();
         String phonenumber = mPhoneNumber.getText().toString();
+        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
+        PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
 
         phonenumber = phonenumber.replace("(" , "");
         phonenumber = phonenumber.replace(")" , "");
@@ -71,8 +75,9 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         phonenumber = phonenumber.replace(" " , "");
 
         mClient.loginFacebook(AccessToken.getCurrentAccessToken() , mEmail , username, phonenumber);
+        FacebookAccessToken.saveFacebookAccessToken(getApplicationContext());
 
-        Intent intent = new Intent(getApplicationContext() , FriendsListActivity.class);
+        Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
         startActivity(intent);
         finish();
     }

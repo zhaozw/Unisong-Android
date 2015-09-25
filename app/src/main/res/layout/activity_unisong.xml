@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
 android:layout_width="match_parent" android:layout_height="wrap_content">
 
     <RelativeLayout
-        android:background="@color/primaryColor"
+        android:background="@drawable/profile_border"
         android:id="@+id/user_profile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="24dp">
+        android:paddingBottom="14dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/user_image"
-            android:layout_width="164dp"
-            android:layout_height="164dp"
+            android:layout_width="112dp"
+            android:layout_height="112dp"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
             android:onClick="addFriendClick"
             android:src="@drawable/ic_contact_picture"
             android:layout_marginTop="24dp"
-            app:civ_border_width="10dp"
+            app:civ_border_width="6dp"
             app:civ_border_color="@color/primaryColorLight"/>
 
         <TextView
@@ -57,10 +58,10 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
         <Button
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:onClick="settingsClick"
             android:id="@+id/settings_button"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
-            android:onClick="sayhi"
             android:layout_alignParentEnd="true"/>
 
 
@@ -70,26 +71,54 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
             android:id="@+id/logout_button"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
-            android:onClick="sayhi"
+            android:onClick="logout"
             android:layout_alignParentStart="true"/>
 
 
     </RelativeLayout>
 
-    <!--
+    <TextView
+        android:id="@+id/active_sessions_label"
+        android:layout_below="@id/user_profile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/active_sessions"
+        android:textSize="16dp"/>
+
     <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/active_sessions_label"
         android:id="@+id/active_sessions_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="0dp">
+
+    </android.support.v7.widget.RecyclerView>
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/active_sessions_recyclerview"
+        android:id="@+id/friends_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
     </android.support.v7.widget.RecyclerView>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/friends_recyclerview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Open Add Friend"
+        android:onClick="addFriendClick"
+        android:layout_alignParentBottom="true"/>
 
-    </android.support.v7.widget.RecyclerView>-->
 
+    <com.getbase.floatingactionbutton.FloatingActionButton
+        android:id="@+id/unisong_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        fab:fab_icon="@drawable/ic_add_white_24dp"
+        fab:fab_colorNormal="@color/accent"
+        fab:fab_colorPressed="@color/accent_pressed"
+        android:onClick="startUnisongSession"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"/>
 
 </RelativeLayout>

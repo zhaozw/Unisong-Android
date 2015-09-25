@@ -1,9 +1,12 @@
 package io.unisong.android.activity.Friends;
 
+import android.graphics.Bitmap;
+import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import io.unisong.android.R;
@@ -18,18 +21,22 @@ import java.util.List;
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
     private List<User> mDataset;
 
+    private Handler mHandler;
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
     public class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-        public TextView txtHeader;
-        public TextView txtFooter;
+        public TextView mNameView;
+        public TextView mUsernameView;
+        public ImageView mProfileView;
 
         public ViewHolder(View v) {
             super(v);
-            txtHeader = (TextView) v.findViewById(R.id.friend_first_line);
-            txtFooter = (TextView) v.findViewById(R.id.friend_second_line);
+
+            mProfileView = (ImageView) v.findViewById(R.id.friend_image);
+            mNameView = (TextView) v.findViewById(R.id.friend_first_line);
+            mUsernameView = (TextView) v.findViewById(R.id.friend_second_line);
         }
     }
 
@@ -53,6 +60,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     @Override
     public FriendsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                    int viewType) {
+        mHandler = new Handler();
         // create a new view
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.friend_row, parent, false);
         // set the view's size, margins, paddings and layout parameters
@@ -65,17 +73,40 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     public void onBindViewHolder(ViewHolder holder, final int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        final String name = mDataset.get(position).getName();
-        holder.txtHeader.setText(mDataset.get(position).getName());
-        holder.txtHeader.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                remove(mDataset.get(position));
+
+        User user = mDataset.get(position);
+        Bitmap profilePicture = user.getProfilePicture();
+        if(profilePicture != null) {
+            holder.mProfileView.setImageBitmap(profilePicture);
+        } else {
+            mHandler.postDelayed(new loadPictureRunnable(user, holder.mProfileView) , 50);
+        }
+        holder.mNameView.setText(mDataset.get(position).getName());
+        holder.mUsernameView.setText("@" + mDataset.get(position).getUsername());
+
+    }
+
+
+    private class loadPictureRunnable implements Runnable{
+
+        private User mUser;
+        private ImageView mImageView;
+
+        public loadPictureRunnable(final User user , final ImageView imageView){
+            mUser = user;
+            mImageView = imageView;
+        }
+
+        @Override
+        public void run() {
+            if(mUser.profileRetrievalFailed()){
+
+            } else if(!mUser.hasProfilePicture()){
+                mHandler.postDelayed(this , 50);
+            } else {
+                mImageView.setImageBitmap(mUser.getProfilePicture());
             }
-        });
-
-        holder.txtFooter.setText("Footer: " + mDataset.get(position));
-
+        }
     }
 
     // Return the size of your dataset (invoked by the layout manager)

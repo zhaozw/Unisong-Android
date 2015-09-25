@@ -22,6 +22,6 @@
     <dimen name="friend_image_margin">16dp</dimen>
     <dimen name="friend_image_radius">48dp</dimen>
 
-    <dimen name="current_user_name_text_size">28sp</dimen>
-    <dimen name="current_user_username_text_size">14sp</dimen>
+    <dimen name="current_user_name_text_size">22sp</dimen>
+    <dimen name="current_user_username_text_size">12sp</dimen>
 </resources>

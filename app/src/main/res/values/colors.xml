@@ -9,7 +9,8 @@
     <color name="white">#FFFFFF</color>
     <!-- <color name="primaryColorLight">#c5cae9</color> -->
     <color name="primaryColorLight">#BBDEFB</color>
-    <color name="accent">#9E9E9E</color>
+    <color name="accent">#F44336</color>
+    <color name="accent_pressed">#D32F2F</color>
     <color name="translucent_black">#80000000</color>
 
 </resources>

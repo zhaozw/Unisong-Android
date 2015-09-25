@@ -252,7 +252,7 @@ public class LoginActivity extends ActionBarActivity {
         AccountManager manager = AccountManager.get(this);
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , password);
-        startActivity(FriendsListActivity.class);
+        startActivity(UnisongActivity.class);
     }
 
     private void startActivity(Class classToStart){

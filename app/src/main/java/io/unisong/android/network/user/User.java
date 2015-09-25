@@ -123,9 +123,15 @@ public class User implements Serializable {
 
     public boolean equals(User user){
         // todo : check for null?
-        if(user.getUsername().equals(mUsername) || user.getUUID().equals(mUUID)){
-            return true;
-        }
+        if(user.getUsername() != null && mUsername != null)
+            if(user.getUsername().equals(mUsername))
+                return true;
+
+        if(user.getUUID() != null && mUUID != null)
+            if(user.getUUID().equals(mUUID))
+                return true;
+
+        Log.d(LOG_TAG , "Umm what?");
         return false;
     }
 
@@ -137,7 +143,7 @@ public class User implements Serializable {
     }
 
     private void getFacebookProfilePicture(){
-        HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFBAccessToken.getUserId() + "/picture?type=large");
+        HttpUrl imageUrl = HttpUrl.parse("http://graph.facebook.com/" + mFacebookID + "/picture?type=large");
 
         // If we don't parse the url correctly return null
         // TODO : handle error?
@@ -179,40 +185,7 @@ public class User implements Serializable {
         if(!file.exists()){
             return false;
         } else {
-            Log.d(LOG_TAG , "Loading cached unisong picture.");
-            InputStream in;
-            try {
-                in = new FileInputStream(file);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                return false;
-            }
-
-            try {
-                mProfilePicture = new byte[in.available()];
-                in.read(mProfilePicture);
-                mHasProfilePicture = true;
-            } catch (IOException e){
-                e.printStackTrace();
-                return false;
-            }
-
-            return true;
-        }
-    }
-
-    /**
-     * Returns true if getting the cached picture was successful.
-     * Will also set the
-     * @return
-     */
-    private boolean getCachedFacebookPicture(){
-        File file = new File(mContext.getCacheDir().getAbsolutePath() + "/" + getProfilePictureCachePath());
-
-        if(!file.exists() || System.currentTimeMillis() - file.lastModified() > 24 * 60 * 60 * 1000){
-            return false;
-        } else {
-            Log.d(LOG_TAG, "Loading cached facebook picture.");
+            Log.d(LOG_TAG , "Loading " + getProfilePictureCachePath());
             InputStream in;
             try {
                 in = new FileInputStream(file);
@@ -262,25 +235,30 @@ public class User implements Serializable {
     private void getUnisongProfilePicture(){
         try {
             // todo : uncomment after test
-            //Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/ " + mUUID.toString() + " /profile/picture/");
-            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/profile/picture/");
+            Log.d(LOG_TAG , mUUID.toString());
+            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/profile/picture/");
+            //Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/profile/picture/");
             String data;
 
-            try{
-                String body = response.body().string();
-                JSONObject object = new JSONObject(body);
-                data = object.getString("data");
-            } catch (JSONException e){
-                e.printStackTrace();
+            if(response.code() == 200) {
+                try {
+                    String body = response.body().string();
+                    JSONObject object = new JSONObject(body);
+                    data = object.getString("data");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    mRetrieveProfilePictureFailed = true;
+                    return;
+                }
+
+                Log.d(LOG_TAG, "Loaded!");
+
+                mProfilePicture = Base64.decode(data, Base64.DEFAULT);
+                mHasProfilePicture = true;
+                cacheProfilePicture();
+            } else {
                 mRetrieveProfilePictureFailed = true;
-                return;
             }
-
-            Log.d(LOG_TAG, "Loaded!");
-
-            mProfilePicture = Base64.decode(data, Base64.DEFAULT);
-            mHasProfilePicture = true;
-            cacheProfilePicture();
 
         } catch (IOException e){
             mRetrieveProfilePictureFailed = true;
@@ -294,14 +272,12 @@ public class User implements Serializable {
 
     private void loadProfilePicture(){
 
-
-
         if(mFacebookID != null){
             File file = new File(mContext.getCacheDir().getAbsolutePath() + "/" + getProfilePictureCachePath());
 
             if(file.exists() && System.currentTimeMillis() - file.lastModified() > 24 * 60 * 60 * 1000){
                 file.delete();
-            } else {
+            } else if(file.exists()) {
                 if(getCachedPicture()){
                     return;
                 }
@@ -364,9 +340,8 @@ public class User implements Serializable {
             mUsername = object.getString("username");
             mPhoneNumber = object.getString("phone_number");
             mName = object.getString("name");
-            mFacebookID = object.getLong("facebookID") + "";
-            if(mFacebookID.equals("0")){
-                mFacebookID = null;
+            if(object.has("facebookID")) {
+                mFacebookID = object.getLong("facebookID") + "";
             }
         } catch (IOException e){
             e.printStackTrace();
@@ -423,11 +398,11 @@ public class User implements Serializable {
         System.gc();
     }
 
-    public boolean doesNotHaveProfilePicture(){
-        if(!mRetrieveProfilePictureFailed) {
-            return !mHasProfilePicture;
-        } else {
-            return true;
-        }
+    public boolean hasProfilePicture(){
+        return mHasProfilePicture;
+    }
+
+    public boolean profileRetrievalFailed(){
+        return mRetrieveProfilePictureFailed;
     }
 }

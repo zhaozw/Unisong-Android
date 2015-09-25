@@ -38,6 +38,7 @@ dependencies {
     compile('com.afollestad.material-dialogs:core:0.8.0.1@aar') {
         transitive = true
     }
+    compile 'com.getbase:floatingactionbutton:1.10.0'
 }
 
 repositories {

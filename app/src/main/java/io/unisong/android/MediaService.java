@@ -102,7 +102,7 @@ public class MediaService extends Service{
             }
         };
 
-        mContacts = new Contacts(getApplicationContext());
+        //mContacts = new Contacts(getApplicationContext());
         //Register the broadcast reciever
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("service-interface"));

@@ -1,15 +1,8 @@
 package io.unisong.android.activity;
 
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,19 +11,16 @@ import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.TouchDelegate;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.Friends.FriendsAdapter;
 import io.unisong.android.network.user.CurrentUser;
@@ -70,22 +61,22 @@ public class UnisongActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_unisong);
 
-        //mRecyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
-//
-        //// use this setting to improve performance if you know that changes
-        //// in content do not change the mLayout size of the RecyclerView
-        //mRecyclerView.setHasFixedSize(true);
-//
-        //// use a linear mLayout manager
-        //mLayoutManager = new LinearLayoutManager(this);
-        //mRecyclerView.setLayoutManager(mLayoutManager);
-//
-        //mFriendsList = FriendsList.getInstance();
-//
-        //// specify an adapter (see also next example)
-        //mAdapter = new FriendsAdapter(mFriendsList.getFriends());
-        //mRecyclerView.setAdapter(mAdapter);
-//
+        mRecyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the mLayout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+
+        // use a linear mLayout manager
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        mFriendsList = FriendsList.getInstance();
+
+        // specify an adapter (see also next example)
+        mAdapter = new FriendsAdapter(mFriendsList.getFriends());
+        mRecyclerView.setAdapter(mAdapter);
+
         Log.d(LOG_TAG, "Starting thread");
 
         //mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
@@ -114,6 +105,15 @@ public class UnisongActivity extends AppCompatActivity {
 
         mUserProfileImageView = (CircleImageView) findViewById(R.id.user_image);
 
+        if(PrefUtils.getFromPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong").equals("unisong")){
+            mUserProfileImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    onProfileClick(view);
+                }
+            });
+        }
+
         //findViewById(R.id.unisong_first_divider).setAlpha(0.12f);
 
         Button moreButton = (Button) findViewById(R.id.settings_button);
@@ -133,17 +133,15 @@ public class UnisongActivity extends AppCompatActivity {
         iconicFontDrawable.setIconPadding(22);
 
         logoutButton.setBackground(iconicFontDrawable);
-
-        registerForContextMenu(moreButton);
-
     }
 
     public void onProfileClick(View view){
         Log.d(LOG_TAG, "User Profile onClick Received!");
-        new MaterialDialog.Builder(getApplicationContext())
-                .title(R.string.change_profile_picture)
-                .positiveText(R.string.yes)
-                .negativeText(R.string.no)
+        // TODO : set the colors for the text.
+        new MaterialDialog.Builder(this)
+                .content(R.string.change_profile_picture)
+                .positiveText(R.string.change)
+                .negativeText(R.string.cancel)
                 .callback(new MaterialDialog.ButtonCallback() {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
@@ -157,10 +155,29 @@ public class UnisongActivity extends AppCompatActivity {
 
     private AlphaAnimation buttonClick = new AlphaAnimation(0.2F, 1F);
 
-    public void sayhi(View v){
-        Log.d(LOG_TAG, "Hiiiiiii182738162487");
+    public void settingsClick(View view){
+        Log.d(LOG_TAG, "Settings Click Received");
+        buttonClick.setDuration(1000);
+        view.startAnimation(buttonClick);
+        // TODO : adjust the menu location so that we're not below the settings and instead are on top of it
+        // TODO : also add dividers.
+        PopupMenu popupMenu = new PopupMenu(this , view);
+        popupMenu.inflate(R.menu.menu_unisong_options);
+        popupMenu.show();
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                return onOptionsItemSelected(item);
+            }
+        });
+    }
+
+    public void logout(View v){
         buttonClick.setDuration(1000);
         v.startAnimation(buttonClick);
+        // TODO : have a MaterialDialog pop up for confirmation
+        new Thread(mLogoutRunnable).start();
+
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
@@ -213,13 +230,6 @@ public class UnisongActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
-                                    ContextMenu.ContextMenuInfo menuInfo){
-        super.onCreateContextMenu(menu, v, menuInfo);
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.music_menu, menu);
-    }
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu items for use in the action bar
         MenuInflater inflater = getMenuInflater();
@@ -227,12 +237,12 @@ public class UnisongActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
 
         if(id == R.id.action_settings){
+            // TODO : see if we need this?
             Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
             return true;
         } else if(id == R.id.action_add_friend){
@@ -272,7 +282,7 @@ public class UnisongActivity extends AppCompatActivity {
 
             User user = CurrentUser.getInstance();
 
-            while(user == null || user.doesNotHaveProfilePicture()){
+            while(user == null || !user.hasProfilePicture()){
                 user = CurrentUser.getInstance();
                 synchronized (this){
                     try {
@@ -289,6 +299,7 @@ public class UnisongActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(User user){
 
+            Log.d(LOG_TAG , "Current User done loading profile picture, assigning to ImageView");
             TextView name = (TextView) findViewById(R.id.current_user_name);
             name.setText(user.getName());
 
