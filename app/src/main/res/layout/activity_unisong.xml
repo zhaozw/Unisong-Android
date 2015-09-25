@@ -78,12 +78,27 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
     </RelativeLayout>
 
     <TextView
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
         android:id="@+id/active_sessions_label"
         android:layout_below="@id/user_profile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/active_sessions"
-        android:textSize="16dp"/>
+        android:textSize="16sp"/>
+
+    <com.getbase.floatingactionbutton.FloatingActionButton
+        fab:fab_icon="@drawable/ic_add_white_24dp"
+        fab:fab_colorNormal="@color/colorAccent"
+        fab:fab_colorPressed="@color/colorAccentPressed"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="8dp"
+        android:layout_below="@id/user_profile"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        />
 
     <android.support.v7.widget.RecyclerView
         android:layout_below="@id/active_sessions_label"
@@ -94,6 +109,8 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
     </android.support.v7.widget.RecyclerView>
 
     <android.support.v7.widget.RecyclerView
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
         android:layout_below="@id/active_sessions_recyclerview"
         android:id="@+id/friends_recyclerview"
         android:layout_width="match_parent"
@@ -101,6 +118,7 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
 
     </android.support.v7.widget.RecyclerView>
 
+    <!--
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -108,14 +126,15 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
         android:onClick="addFriendClick"
         android:layout_alignParentBottom="true"/>
 
+-->
 
     <com.getbase.floatingactionbutton.FloatingActionButton
         android:id="@+id/unisong_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         fab:fab_icon="@drawable/ic_add_white_24dp"
-        fab:fab_colorNormal="@color/accent"
-        fab:fab_colorPressed="@color/accent_pressed"
+        fab:fab_colorNormal="@color/colorAccent"
+        fab:fab_colorPressed="@color/colorAccentPressed"
         android:onClick="startUnisongSession"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"

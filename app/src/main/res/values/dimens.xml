@@ -11,7 +11,7 @@
     <dimen name="drawer_icon_size">16dp</dimen>
 
     <dimen name="text_size_row_primary">16sp</dimen>
-    <dimen name="text_size_row_secondary">12sp</dimen>
+    <dimen name="text_size_row_secondary">14sp</dimen>
 
     <dimen name="friend_row_padding">6dp</dimen>
 
@@ -20,8 +20,11 @@
     <dimen name="main_profile_image_margin">24dp</dimen>
 
     <dimen name="friend_image_margin">16dp</dimen>
-    <dimen name="friend_image_radius">48dp</dimen>
+    <dimen name="friend_image_radius">40dp</dimen>
 
     <dimen name="current_user_name_text_size">22sp</dimen>
     <dimen name="current_user_username_text_size">12sp</dimen>
+    <dimen name="friend_row_height">72dp</dimen>
+    <dimen name="friend_text_left_margin">72dp</dimen>
+    <dimen name="friend_text_right_margin">16dp</dimen>
 </resources>

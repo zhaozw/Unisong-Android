@@ -60,7 +60,7 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
 
         mTabs = (SlidingTabLayout) findViewById(R.id.player_tabs);
         mTabs.setViewPager(mPager);
-        mTabs.setSelectedIndicatorColors(getResources().getColor(R.color.accent));
+        mTabs.setSelectedIndicatorColors(getResources().getColor(R.color.colorAccent));
         mTabs.setBackgroundColor(getResources().getColor(R.color.primaryColor));
 
     }

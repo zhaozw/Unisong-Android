@@ -59,7 +59,7 @@ public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerVie
 
         IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(mContext);
         iconicFontDrawable.setIcon(icon);
-        iconicFontDrawable.setIconColor(mContext.getResources().getColor(R.color.accent));
+        iconicFontDrawable.setIconColor(mContext.getResources().getColor(R.color.colorAccent));
 
         final float scale = mContext.getResources().getDisplayMetrics().density;
         int pixels = (int) (mContext.getResources().getDimension(R.dimen.drawer_icon_size) * scale + 0.5f);

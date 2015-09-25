@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="active_sessions">Active Sessions:</string>
+    <string name="active_sessions">Active Sessions</string>
     <string name="app_name">Unisong</string>
 
     <string name="hello_world">Hello world!</string>

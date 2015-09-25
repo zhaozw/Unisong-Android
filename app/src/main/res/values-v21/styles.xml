@@ -4,12 +4,12 @@
     <!-- Base application theme. -->
     <style name="UnisongTheme" parent="UnisongTheme.Base">
         <item name="colorControlNormal">#c5c5c5</item>
-        <item name="colorControlActivated">@color/accent</item>
-        <item name="colorControlHighlight">@color/accent</item>
+        <item name="colorControlActivated">@color/colorAccent</item>
+        <item name="colorControlHighlight">@color/colorAccent</item>
 
         <item name="android:colorPrimary">@color/primaryColor</item>
         <item name="android:colorPrimaryDark">@color/primaryColorDark</item>
-        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@color/primaryColorDark</item>
     </style>
