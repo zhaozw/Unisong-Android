@@ -1,4 +1,4 @@
-package io.unisong.android.activity.MusicPlayer.MusicSelect;
+package io.unisong.android.activity.musicplayer.MusicSelect;
 
 import android.app.Activity;
 import android.content.Intent;

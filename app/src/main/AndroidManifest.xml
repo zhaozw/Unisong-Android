@@ -40,7 +40,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="io.unisong.android.activity.MusicPlayer.MusicPlayer"
+            android:name="io.unisong.android.activity.musicplayer.MusicPlayer"
             android:label="@string/app_name" >
         </activity>
         <activity
@@ -52,22 +52,22 @@
             android:label="@string/register" >
         </activity>
         <activity
-            android:name="io.unisong.android.activity.MusicPlayer.MusicSelect.MusicSelectActivity"
+            android:name="io.unisong.android.activity.musicplayer.MusicSelect.MusicSelectActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>
 
 
         <activity
-            android:name="io.unisong.android.activity.Friends.FriendsListActivity"
+            android:name="io.unisong.android.activity.friends.FriendsListActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>
 
         <activity
-            android:name="io.unisong.android.activity.MusicPlayer.MusicPlaying"
+            android:name="io.unisong.android.activity.musicplayer.MusicPlaying"
             android:label="@string/title_activity_music_playing" >
-            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value="io.unisong.android.activity.MusicPlayer.MusicPlayer" />
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value="io.unisong.android.activity.musicplayer.MusicPlayer" />
         </activity>
 
 
@@ -93,6 +93,10 @@
         <activity android:name=".activity.AddFriendFromContactsActivity"
             android:label="@string/add_friend_label"
             />
+        <activity android:name=".activity.unisongsession.MainSessionActivity"
+            android:label="@string/add_friend_label"
+            />
+
     </application>
 
 </manifest>

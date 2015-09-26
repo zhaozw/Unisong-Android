@@ -126,9 +126,6 @@ public class MediaService extends Service{
 //            e.printStackTrace();
 //        }
 
-        if(UnisongSession.getInstance() == null){
-            UnisongSession session = new UnisongSession();
-        }
     }
 
     public void broadcaster() {

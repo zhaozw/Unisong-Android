@@ -39,6 +39,7 @@
     <string name="drawer_open">Drawer Open</string>
 
     <string name="add_friend_label">Add Friend</string>
+    <string name="friends_label">Friends</string>
 
     <string name="change">Change</string>
     <string name="cancel">Cancel</string>
@@ -51,7 +52,11 @@
         <item>SONGS</item>
         <item>GENRES</item>
     </string-array>
-    
+
+    <string-array name="unisong_session_tab_names">
+        <item>MEMBERS</item>
+        <item>SONGS</item>
+    </string-array>
     
     <string-array name = "drawer_text">
         <item>Friends</item>

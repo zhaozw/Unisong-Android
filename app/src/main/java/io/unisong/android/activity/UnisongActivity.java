@@ -34,7 +34,9 @@ import java.io.IOException;
 import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
-import io.unisong.android.activity.Friends.FriendsAdapter;
+import io.unisong.android.activity.friends.FriendsAdapter;
+import io.unisong.android.activity.unisongsession.MainSessionActivity;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FriendsList;
 import io.unisong.android.network.user.ImageUtilities;
@@ -78,13 +80,6 @@ public class UnisongActivity extends AppCompatActivity {
         mRecyclerView.setAdapter(mAdapter);
 
         Log.d(LOG_TAG, "Starting thread");
-
-        //mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
-
-        //setSupportActionBar(mToolbar);
-        //getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-        //getSupportActionBar().setHomeButtonEnabled(true);
 
         User currentUser = CurrentUser.getInstance();
 
@@ -133,6 +128,15 @@ public class UnisongActivity extends AppCompatActivity {
         iconicFontDrawable.setIconPadding(22);
 
         logoutButton.setBackground(iconicFontDrawable);
+
+        Button addFriendButton = (Button) findViewById(R.id.add_friend_button);
+
+        iconicFontDrawable = new IconicFontDrawable(this.getApplicationContext());
+        iconicFontDrawable.setIcon("entypo-add-user");
+        iconicFontDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.secondaryText));
+        iconicFontDrawable.setIconPadding(16);
+
+        addFriendButton.setBackground(iconicFontDrawable);
     }
 
     public void onProfileClick(View view){
@@ -314,5 +318,20 @@ public class UnisongActivity extends AppCompatActivity {
                 imageView.setImageBitmap(profile);
             }
         }
+    }
+
+    public void onFABClick(View view){
+        UnisongSession session = UnisongSession.getInstance();
+        if(session != null){
+            // TODO : if we're in a session, move to the Session screen
+        } else {
+            // TODO : if not, then create a session
+
+            session = new UnisongSession();
+            Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+            startActivity(intent);
+        }
+
+
     }
 }

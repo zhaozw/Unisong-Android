@@ -1,4 +1,4 @@
-package io.unisong.android.activity.MusicPlayer;
+package io.unisong.android.activity.musicplayer;
 
 
 import android.content.Intent;
@@ -23,7 +23,7 @@ import android.widget.Toast;
 
 import io.unisong.android.activity.NavigationDrawerFragment;
 import io.unisong.android.R;
-import io.unisong.android.activity.MusicPlayer.Tabs.SlidingTabLayout;
+import io.unisong.android.activity.musicplayer.Tabs.SlidingTabLayout;
 
 /**
  * Created by ezturner on 4/8/2015.

@@ -13,7 +13,6 @@
         <ImageView
             android:layout_width="@dimen/navigation_drawer_width"
             android:layout_height="@dimen/navigation_drawer_image_height"
-            android:src="@drawable/ic_abstract"
             android:layout_marginTop="@dimen/drawer_margin_top"
             android:layout_marginBottom="@dimen/drawer_margin_bottom"/>
 

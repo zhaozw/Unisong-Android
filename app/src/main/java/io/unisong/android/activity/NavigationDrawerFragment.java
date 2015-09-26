@@ -17,9 +17,8 @@ import android.view.ViewGroup;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.R;
-import io.unisong.android.activity.MusicPlayer.DrawerAdapter;
-import io.unisong.android.activity.MusicPlayer.DrawerInformation;
-import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.activity.musicplayer.DrawerAdapter;
+import io.unisong.android.activity.musicplayer.DrawerInformation;
 
 import java.util.ArrayList;
 import java.util.List;

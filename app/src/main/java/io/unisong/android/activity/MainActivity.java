@@ -26,7 +26,6 @@ import io.unisong.android.MediaService;
 import io.unisong.android.MyApplication;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
-import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.Master;
 import io.unisong.android.MediaService.MediaServiceBinder;
 import io.unisong.android.network.http.HttpClient;

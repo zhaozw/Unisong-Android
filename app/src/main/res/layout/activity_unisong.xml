@@ -81,37 +81,27 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
         android:layout_marginTop="8dp"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
-        android:id="@+id/active_sessions_label"
+        android:id="@+id/friends_label"
         android:layout_below="@id/user_profile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/active_sessions"
+        android:text="@string/friends_label"
         android:textSize="16sp"/>
 
-    <com.getbase.floatingactionbutton.FloatingActionButton
-        fab:fab_icon="@drawable/ic_add_white_24dp"
-        fab:fab_colorNormal="@color/colorAccent"
-        fab:fab_colorPressed="@color/colorAccentPressed"
+    <Button
+        android:id="@+id/add_friend_button"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="8dp"
+        android:layout_marginRight="8dp"
         android:layout_below="@id/user_profile"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_width="48dp"
         />
-
-    <android.support.v7.widget.RecyclerView
-        android:layout_below="@id/active_sessions_label"
-        android:id="@+id/active_sessions_recyclerview"
-        android:layout_width="match_parent"
-        android:layout_height="0dp">
-
-    </android.support.v7.widget.RecyclerView>
 
     <android.support.v7.widget.RecyclerView
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
-        android:layout_below="@id/active_sessions_recyclerview"
+        android:layout_below="@id/friends_label"
         android:id="@+id/friends_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -135,7 +125,7 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
         fab:fab_icon="@drawable/ic_add_white_24dp"
         fab:fab_colorNormal="@color/colorAccent"
         fab:fab_colorPressed="@color/colorAccentPressed"
-        android:onClick="startUnisongSession"
+        android:onClick="onFABClick"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="16dp"/>

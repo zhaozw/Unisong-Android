@@ -9,6 +9,16 @@ import io.unisong.android.network.user.User;
  */
 public class MyApplication extends Application {
 
+    private static MyApplication sInstance;
+
+    public static void setInstance(MyApplication application){
+        sInstance = application;
+    }
+
+    public static MyApplication getInstance(){
+        return sInstance;
+    }
+
     private static boolean activityVisible;
 
     public static boolean isActivityVisible() {
@@ -32,6 +42,4 @@ public class MyApplication extends Application {
     public static void setThisUser(User user){
         sUser = user;
     }
-
-
 }

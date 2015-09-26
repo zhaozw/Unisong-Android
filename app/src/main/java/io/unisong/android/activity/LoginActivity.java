@@ -11,7 +11,6 @@ import android.widget.Toast;
 
 import io.unisong.android.network.user.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
-import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 

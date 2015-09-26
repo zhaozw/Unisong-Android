@@ -1,4 +1,4 @@
-package io.unisong.android.activity.MusicPlayer.MusicSelect;
+package io.unisong.android.activity.musicplayer.MusicSelect;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;

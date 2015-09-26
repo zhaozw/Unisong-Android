@@ -1,4 +1,4 @@
-package io.unisong.android.activity.MusicPlayer;
+package io.unisong.android.activity.musicplayer;
 
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;

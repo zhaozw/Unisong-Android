@@ -1,4 +1,4 @@
-package io.unisong.android.activity.MusicPlayer;
+package io.unisong.android.activity.musicplayer;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -6,11 +6,11 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import io.unisong.android.activity.MusicPlayer.MusicSelect.Album;
-import io.unisong.android.activity.MusicPlayer.MusicSelect.Artist;
-import io.unisong.android.activity.MusicPlayer.MusicSelect.MusicData;
-import io.unisong.android.activity.MusicPlayer.MusicSelect.Playlist;
-import io.unisong.android.activity.MusicPlayer.MusicSelect.Song;
+import io.unisong.android.activity.musicplayer.MusicSelect.Album;
+import io.unisong.android.activity.musicplayer.MusicSelect.Artist;
+import io.unisong.android.activity.musicplayer.MusicSelect.MusicData;
+import io.unisong.android.activity.musicplayer.MusicSelect.Playlist;
+import io.unisong.android.activity.musicplayer.MusicSelect.Song;
 
 import java.util.ArrayList;
 import java.util.HashMap;

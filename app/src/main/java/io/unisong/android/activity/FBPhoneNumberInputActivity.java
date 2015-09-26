@@ -12,7 +12,6 @@ import com.facebook.AccessToken;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
-import io.unisong.android.activity.Friends.FriendsListActivity;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.FacebookAccessToken;
 
