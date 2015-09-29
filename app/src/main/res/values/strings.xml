@@ -8,6 +8,8 @@
 
     <string name="action_settings">Settings</string>
     <string name="action_search">Search</string>
+    <string name="action_invite_friend">Invite Friend</string>
+    <string name="session_members">Session Members</string>
 
     <string name="artist">Artists</string>
     <string name="album">Albums</string>

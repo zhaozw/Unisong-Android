@@ -23,7 +23,7 @@ import android.widget.Toast;
 
 import io.unisong.android.activity.NavigationDrawerFragment;
 import io.unisong.android.R;
-import io.unisong.android.activity.musicplayer.Tabs.SlidingTabLayout;
+import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
 
 /**
  * Created by ezturner on 4/8/2015.

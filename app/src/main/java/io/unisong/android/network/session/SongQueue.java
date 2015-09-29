@@ -22,6 +22,7 @@ public class SongQueue {
      */
 
     public void addSong(Song song){
+        // TODO : add server code.
         mSongQueue.add(song);
     }
 

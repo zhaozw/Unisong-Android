@@ -21,11 +21,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
 import java.io.FileNotFoundException;
@@ -35,7 +37,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
-import io.unisong.android.activity.unisongsession.MainSessionActivity;
+import io.unisong.android.activity.session.MainSessionActivity;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FriendsList;
@@ -137,6 +139,7 @@ public class UnisongActivity extends AppCompatActivity {
         iconicFontDrawable.setIconPadding(16);
 
         addFriendButton.setBackground(iconicFontDrawable);
+
     }
 
     public void onProfileClick(View view){
@@ -286,8 +289,9 @@ public class UnisongActivity extends AppCompatActivity {
 
             User user = CurrentUser.getInstance();
 
-            while(user == null || !user.hasProfilePicture()){
+            while(user == null || user.getName() == null){
                 user = CurrentUser.getInstance();
+
                 synchronized (this){
                     try {
                         this.wait(10);
@@ -301,7 +305,8 @@ public class UnisongActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(User user){
+        protected void onPostExecute(User user) {
+            Picasso.with(getApplicationContext()).load(user.getProfileURL()).into((ImageView) findViewById(R.id.user_image));
 
             Log.d(LOG_TAG , "Current User done loading profile picture, assigning to ImageView");
             TextView name = (TextView) findViewById(R.id.current_user_name);
@@ -310,13 +315,6 @@ public class UnisongActivity extends AppCompatActivity {
             TextView username = (TextView) findViewById(R.id.current_user_username);
             username.setText("@" + user.getUsername());
 
-            CircleImageView imageView = (CircleImageView) findViewById(R.id.user_image);
-
-            Bitmap profile = user.getProfilePicture();
-
-            if(profile != null) {
-                imageView.setImageBitmap(profile);
-            }
         }
     }
 

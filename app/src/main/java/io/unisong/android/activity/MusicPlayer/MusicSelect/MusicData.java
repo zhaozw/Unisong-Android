@@ -1,4 +1,4 @@
-package io.unisong.android.activity.musicplayer.MusicSelect;
+package io.unisong.android.activity.musicplayer.musicselect;
 
 /**
  * Created by Ethan on 2/26/2015.

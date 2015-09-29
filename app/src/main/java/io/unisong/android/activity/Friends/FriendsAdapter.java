@@ -1,6 +1,5 @@
 package io.unisong.android.activity.friends;
 
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -8,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import io.unisong.android.R;
 import io.unisong.android.network.user.User;
@@ -27,16 +28,16 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     // you provide access to all the views for a data item in a view holder
     public class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-        public TextView mNameView;
-        public TextView mUsernameView;
-        public ImageView mProfileView;
+        public TextView nameView;
+        public TextView usernameView;
+        public ImageView profileView;
 
         public ViewHolder(View v) {
             super(v);
 
-            mProfileView = (ImageView) v.findViewById(R.id.friend_image);
-            mNameView = (TextView) v.findViewById(R.id.friend_first_line);
-            mUsernameView = (TextView) v.findViewById(R.id.friend_second_line);
+            profileView = (ImageView) v.findViewById(R.id.friend_image);
+            nameView = (TextView) v.findViewById(R.id.friend_first_line);
+            usernameView = (TextView) v.findViewById(R.id.friend_second_line);
         }
     }
 
@@ -75,38 +76,10 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         // - replace the contents of the view with that element
 
         User user = mDataset.get(position);
-        Bitmap profilePicture = user.getProfilePicture();
-        if(profilePicture != null) {
-            holder.mProfileView.setImageBitmap(profilePicture);
-        } else {
-            mHandler.postDelayed(new loadPictureRunnable(user, holder.mProfileView) , 50);
-        }
-        holder.mNameView.setText(mDataset.get(position).getName());
-        holder.mUsernameView.setText("@" + mDataset.get(position).getUsername());
+        Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
+        holder.nameView.setText(mDataset.get(position).getName());
+        holder.usernameView.setText("@" + mDataset.get(position).getUsername());
 
-    }
-
-
-    private class loadPictureRunnable implements Runnable{
-
-        private User mUser;
-        private ImageView mImageView;
-
-        public loadPictureRunnable(final User user , final ImageView imageView){
-            mUser = user;
-            mImageView = imageView;
-        }
-
-        @Override
-        public void run() {
-            if(mUser.profileRetrievalFailed()){
-
-            } else if(!mUser.hasProfilePicture()){
-                mHandler.postDelayed(this , 50);
-            } else {
-                mImageView.setImageBitmap(mUser.getProfilePicture());
-            }
-        }
     }
 
     // Return the size of your dataset (invoked by the layout manager)

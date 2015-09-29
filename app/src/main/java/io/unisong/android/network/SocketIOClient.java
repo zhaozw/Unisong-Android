@@ -16,6 +16,13 @@ import io.unisong.android.network.http.HttpClient;
  */
 public class SocketIOClient {
 
+    private static SocketIOClient sInstance;
+    public static SocketIOClient getInstance(){
+        if(sInstance == null){
+            sInstance = new SocketIOClient();
+        }
+        return sInstance;
+    }
     private final String LOG_TAG = SocketIOClient.class.getSimpleName();
 
     private HttpClient mHttpClient;
@@ -28,9 +35,6 @@ public class SocketIOClient {
         mHttpClient = HttpClient.getInstance();
 
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri());
-
-
-        mSocket.on("pause" , mPauseListener);
 
         connect();
         mIsLoggedIn = false;
@@ -63,18 +67,6 @@ public class SocketIOClient {
 //    public boolean login(){
 //
 //    }
-
-    /**
-     * The listener for when we get a pause event
-     *
-     */
-    private Emitter.Listener mPauseListener = new Emitter.Listener() {
-
-        @Override
-        public void call(Object... args) {
-        }
-
-    };
 
 
     /**

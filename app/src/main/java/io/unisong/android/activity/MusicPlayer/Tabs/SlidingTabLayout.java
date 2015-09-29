@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.unisong.android.activity.musicplayer.Tabs;
+package io.unisong.android.activity.musicplayer.tabs;
 
         import android.content.Context;
         import android.graphics.Typeface;
+        import android.support.v4.content.ContextCompat;
         import android.support.v4.view.PagerAdapter;
         import android.support.v4.view.ViewPager;
         import android.util.AttributeSet;
@@ -30,6 +31,8 @@ package io.unisong.android.activity.musicplayer.Tabs;
         import android.widget.HorizontalScrollView;
         import android.widget.LinearLayout;
         import android.widget.TextView;
+
+        import io.unisong.android.R;
 
 /**
  * To be used with ViewPager to provide a tab indicator component which give constant feedback as to
@@ -211,6 +214,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
                 lp.weight = 1;
             }
 
+            tabTitleView.setTextColor(ContextCompat.getColor(getContext() , R.color.white));
             tabTitleView.setText(adapter.getPageTitle(i));
             tabView.setOnClickListener(tabClickListener);
             String desc = mContentDescriptions.get(i, null);

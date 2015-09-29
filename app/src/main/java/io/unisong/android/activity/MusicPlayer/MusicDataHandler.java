@@ -6,11 +6,11 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import io.unisong.android.activity.musicplayer.MusicSelect.Album;
-import io.unisong.android.activity.musicplayer.MusicSelect.Artist;
-import io.unisong.android.activity.musicplayer.MusicSelect.MusicData;
-import io.unisong.android.activity.musicplayer.MusicSelect.Playlist;
-import io.unisong.android.activity.musicplayer.MusicSelect.Song;
+import io.unisong.android.activity.musicplayer.musicselect.Album;
+import io.unisong.android.activity.musicplayer.musicselect.Artist;
+import io.unisong.android.activity.musicplayer.musicselect.MusicData;
+import io.unisong.android.activity.musicplayer.musicselect.Playlist;
+import io.unisong.android.activity.musicplayer.musicselect.Song;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.unisong.android.activity.musicplayer.Tabs;
+package io.unisong.android.activity.musicplayer.tabs;
         import android.R;
         import android.content.Context;
         import android.graphics.Canvas;
