@@ -26,7 +26,7 @@ import io.unisong.android.MediaService;
 import io.unisong.android.MyApplication;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
-import io.unisong.android.network.Master;
+import io.unisong.android.network.Host;
 import io.unisong.android.MediaService.MediaServiceBinder;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.FriendsList;
@@ -44,7 +44,7 @@ public class MainActivity extends ActionBarActivity {
     private boolean mMasterReceived;
 
     //The list of master devices that can be connected to
-    private ArrayList<Master> mMasters;
+    private ArrayList<Host> mHosts;
 
 
     //The handler for interacting with the UI thread
@@ -89,9 +89,7 @@ public class MainActivity extends ActionBarActivity {
 
         //Register the broadcast reciever
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mMessageReceiver,
-                new IntentFilter("master-discovered"));
-
-        mMasterReceived = false;
+                new IntentFilter("unisong-service-interface"));
 
         if(sHandler == null) {
             sHandler = new Handler(Looper.getMainLooper()) {
@@ -235,7 +233,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void listener(View v){
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command" , "listener");
 
@@ -243,7 +241,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void broadcaster(View v){
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command" , "broadcaster");
 
@@ -259,23 +257,16 @@ public class MainActivity extends ActionBarActivity {
             String message = intent.getStringExtra("message");
             Log.d("receiver", "Got message: " + message);
 
-            /*if(!MyApplication.isPlaying()) {
-
-
-                Master master = (Master) intent.getSerializableExtra("master");
-                mMasters.add(master);
-            }*/
 
         }
     };
 
     @Override
     protected void onDestroy() {
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command", "destroy");
 
-        // TODO : find a better way to close the service when app is done.
         //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
         // Unregister since the activity is about to be closed.
@@ -302,7 +293,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void pause(View v){
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command", "pause");
 
@@ -310,7 +301,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void resume(View v){
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command" , "resume");
 
@@ -318,7 +309,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void seek(View v){
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command" , "seek");
 
@@ -326,7 +317,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void retransmit(View v){
-        Intent intent = new Intent("service-interface");
+        Intent intent = new Intent("unisong-service-interface");
         // You can also include some extra data.
         intent.putExtra("command" , "retransmit");
 

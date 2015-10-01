@@ -9,12 +9,10 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import io.unisong.android.network.Client;
-import io.unisong.android.network.Master;
+import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.Song;
@@ -49,7 +47,7 @@ public class UnisongSession {
     private List<User> mMembers;
     private List<Client> mClients;
     private HttpClient mClient;
-    private Master master;
+    private Host host;
 
     public UnisongSession(){
 
@@ -128,7 +126,7 @@ public class UnisongSession {
 
     public void endSession(){
         // TODO : end session and disconnect hosts
-        // can only do if master
+        // can only do if host
     }
 
     public void disconnect(){

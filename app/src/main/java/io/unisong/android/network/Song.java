@@ -18,12 +18,22 @@ public class Song {
     private String mMime;
     //Duration is in milliseconds
     private long mDuration;
+    private String mPath;
 
     //The # of the song
     private int mSongID;
 
     //TODO: add the picture for the song in here.
 
+    /**
+     * This is the constructor for a song created from a network source. We do not need the path
+     * since we will be taking it in over wifi.
+     * @param name
+     * @param artist
+     * @param channels
+     * @param mime
+     * @param duration
+     */
     public Song(String name , String artist, int channels , String mime, long duration){
         mName = name;
         mArtist = artist;
@@ -32,6 +42,13 @@ public class Song {
         mDuration = duration;
     }
 
+    /**
+     * This constructor creates a song from the UI/the host, as we will require the path for sourcing requirements.
+     */
+    public Song(String name , String artist, int channels , String mime, long duration, String path){
+        this(name, artist , channels, mime, duration);
+        mPath = path;
+    }
     /**
      * This is a recursive method to decode a byte array into a Song object
      *
@@ -93,6 +110,10 @@ public class Song {
     //TODO: implement this
     public byte[] getBytes(){
         return new byte[1];
+    }
+
+    public String getPath(){
+        return mPath;
     }
 
 }

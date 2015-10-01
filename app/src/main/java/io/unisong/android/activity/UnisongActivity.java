@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
@@ -94,6 +95,7 @@ public class UnisongActivity extends AppCompatActivity {
             TextView username = (TextView) findViewById(R.id.current_user_username);
             username.setText("@" + user.getUsername());
         }
+
 
 
         new LoadCurrentUserProfile().execute();
@@ -325,7 +327,12 @@ public class UnisongActivity extends AppCompatActivity {
         } else {
             // TODO : if not, then create a session
 
-            session = new UnisongSession();
+            Intent broadcast = new Intent("unisong-service-interface");
+            // You can also include some extra data.
+            broadcast.putExtra("command" , "start session");
+
+            LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
+
             Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
             startActivity(intent);
         }

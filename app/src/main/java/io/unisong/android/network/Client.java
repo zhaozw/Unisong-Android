@@ -4,8 +4,8 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.master.MasterTCPHandler;
-import io.unisong.android.network.master.transmitter.LANTransmitter;
+import io.unisong.android.network.host.MasterTCPHandler;
+import io.unisong.android.network.host.transmitter.LANTransmitter;
 import io.unisong.android.network.packets.tcp.TCPAcknowledgePacket;
 import io.unisong.android.network.packets.tcp.TCPEndSongPacket;
 import io.unisong.android.network.packets.tcp.TCPFramePacket;

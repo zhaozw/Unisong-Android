@@ -1,4 +1,4 @@
-package io.unisong.android.network.master;
+package io.unisong.android.network.host;
 
 import android.util.Log;
 import io.unisong.android.audio.AudioFrame;
@@ -8,7 +8,7 @@ import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
-import io.unisong.android.network.master.transmitter.LANTransmitter;
+import io.unisong.android.network.host.transmitter.LANTransmitter;
 
 import java.io.IOException;
 import java.net.ServerSocket;

@@ -1,8 +1,7 @@
-package io.unisong.android.network.master.transmitter;
+package io.unisong.android.network.host.transmitter;
 
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioSource;
-import io.unisong.android.audio.master.AACEncoder;
 
 /**
  * Created by Ethan on 5/22/2015.

@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * A packet that signals that a Master has received a discovery request
+ * A packet that signals that a Host has received a discovery request
  * and is trying to respond.
  * Created by Ethan on 3/5/2015.
  */

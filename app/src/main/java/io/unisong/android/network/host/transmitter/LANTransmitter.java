@@ -1,4 +1,4 @@
-package io.unisong.android.network.master.transmitter;
+package io.unisong.android.network.host.transmitter;
 
 import android.util.Log;
 
@@ -10,9 +10,9 @@ import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.Client;
-import io.unisong.android.network.master.MasterDiscoveryHandler;
-import io.unisong.android.network.master.MasterFECHandler;
-import io.unisong.android.network.master.MasterTCPHandler;
+import io.unisong.android.network.host.MasterDiscoveryHandler;
+import io.unisong.android.network.host.MasterFECHandler;
+import io.unisong.android.network.host.MasterTCPHandler;
 import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
 import java.io.IOException;

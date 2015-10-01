@@ -3,13 +3,11 @@ package io.unisong.android.network.client;
 import android.content.Context;
 import android.util.Log;
 
-import io.unisong.android.MediaService;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.audio.client.SongDecoder;
-import io.unisong.android.audio.master.FileDecoder;
-import io.unisong.android.network.Master;
+import io.unisong.android.network.Host;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.receiver.LANReceiver;
@@ -80,12 +78,12 @@ public class Listener{
     }
 
 
-    //Start playing from a master, start listening to the stream
-    public void playFromMaster(Master master){
-        mClientTCPHandler = new ClientTCPHandler(master.getIP() , master.getPort() , this );
+    //Start playing from a host, start listening to the stream
+    public void playFromMaster(Host host){
+        mClientTCPHandler = new ClientTCPHandler(host.getIP() , host.getPort() , this );
 
         if(mLANReceiver != null){
-            mLANReceiver.playFromMaster(master);
+            mLANReceiver.playFromMaster(host);
         }
     }
 

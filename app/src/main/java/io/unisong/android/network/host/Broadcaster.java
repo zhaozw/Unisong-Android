@@ -1,4 +1,4 @@
-package io.unisong.android.network.master;
+package io.unisong.android.network.host;
 
 import android.util.Log;
 
@@ -12,9 +12,9 @@ import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.Song;
 import io.unisong.android.network.TimeManager;
-import io.unisong.android.network.master.transmitter.LANTransmitter;
-import io.unisong.android.network.master.transmitter.ServerTransmitter;
-import io.unisong.android.network.master.transmitter.Transmitter;
+import io.unisong.android.network.host.transmitter.LANTransmitter;
+import io.unisong.android.network.host.transmitter.ServerTransmitter;
+import io.unisong.android.network.host.transmitter.Transmitter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,12 +52,14 @@ public class Broadcaster implements AudioObserver {
     private ServerTransmitter mServerTransmitter;
 
     private AudioTrackManager mAudioTrackManager;
+    private UnisongSession mSession;
 
     //Makes an Broadcaster object
-    public Broadcaster(){
+    public Broadcaster(UnisongSession session){
         //Get the singleton objects.
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mTimeManager = TimeManager.getInstance();
+        mSession = session;
 
         mAudioTrackManager = AudioTrackManager.getInstance();
 
@@ -71,29 +73,18 @@ public class Broadcaster implements AudioObserver {
 
         mServerTransmitter = new ServerTransmitter();
         mTransmitters.add(mServerTransmitter);
-
-        mWorker = Executors.newSingleThreadScheduledExecutor();
-
-        mWorker.schedule(mSongStreamStart, 500, TimeUnit.MILLISECONDS);
-
     }
 
-    Runnable mSongStreamStart = new Runnable() {
-        @Override
-        public void run() {
-            startSongStream();
-        }
-    };
 
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
-    public void startSongStream(){
+    private void startSongStream(Song song){
         mUnisongSession.startSong(0);
 
         mEncoder = new AACEncoder();
 
 
-        mEncoder.encode(0, mUnisongSession.getCurrentSongID() , MediaService.TEST_FILE_PATH);
+        mEncoder.encode(0, song.getID() , song.getPath());
         // TODO: actually switch the songs
 
 
@@ -112,7 +103,7 @@ public class Broadcaster implements AudioObserver {
 
         mStreamRunning = true;
 
-        FileDecoder decoder = new FileDecoder(MediaService.TEST_FILE_PATH , 0 , mAudioTrackManager);
+        FileDecoder decoder = new FileDecoder(song.getPath() , 0 , mAudioTrackManager);
 
         mAudioTrackManager.startSong(decoder);
 
@@ -146,6 +137,6 @@ public class Broadcaster implements AudioObserver {
     }
 
     public void startSong(Song song){
-
+        startSongStream(song);
     }
 }

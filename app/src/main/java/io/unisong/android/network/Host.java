@@ -9,7 +9,7 @@ import java.util.ArrayList;
 /**
  * Created by ezturner on 2/13/2015.
  */
-public class Master implements Serializable{
+public class Host implements Serializable{
 
     private int mPort;
     private String mPhoneNumber;
@@ -19,7 +19,7 @@ public class Master implements Serializable{
     //The packets that are received while deciding which master to use
     private ArrayList<DatagramPacket> mPackets;
 
-    public Master(int port, String number, InetAddress IP ){
+    public Host(int port, String number, InetAddress IP){
         mPort = port;
         mPhoneNumber = number;
         mIP = IP;

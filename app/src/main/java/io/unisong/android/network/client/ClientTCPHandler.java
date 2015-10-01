@@ -38,7 +38,7 @@ public class ClientTCPHandler {
 
     private String LOG_TAG = ClientTCPHandler.class.getSimpleName();
 
-    //The address of the Master that we will connect to.
+    //The address of the Host that we will connect to.
     private InetAddress mMasterAddress;
 
     //The socket that will connect to the master
@@ -169,7 +169,7 @@ public class ClientTCPHandler {
         }
     }
 
-    //A function to connect to a Master phone,
+    //A function to connect to a Host phone,
     private void connectToHost(InetAddress address){
         try{
             if(mSocket != null){
@@ -237,7 +237,7 @@ public class ClientTCPHandler {
                     switchMaster();
                     break;
                 case CONSTANTS.TCP_MASTER_CLOSE:
-                    Log.d(LOG_TAG, "Master Close Received");
+                    Log.d(LOG_TAG, "Host Close Received");
                     synchronized (mSocket) {
                         try {
                             mSocket.close();

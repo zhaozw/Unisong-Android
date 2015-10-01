@@ -11,14 +11,11 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.facebook.AccessToken;
-
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.Listener;
-import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.master.Broadcaster;
+import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.ntp.SntpClient;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.Contacts;
@@ -97,6 +94,9 @@ public class MediaService extends Service{
                 }  else if(command.equals("destroy")){
                     Log.d(LOG_TAG , "Destroy received!");
                     onDestroy();
+                }else if(command.equals("start session")){
+                    Log.d(LOG_TAG , "Start session received!");
+                    startSession();
                 }
 
             }
@@ -105,7 +105,7 @@ public class MediaService extends Service{
         //mContacts = new Contacts(getApplicationContext());
         //Register the broadcast reciever
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("service-interface"));
+                new IntentFilter("unisong-service-interface"));
 
         mAudioStatePublisher = AudioStatePublisher.getInstance();
 
@@ -129,9 +129,7 @@ public class MediaService extends Service{
     }
 
     public void broadcaster() {
-        if(mBroadcaster == null) {
-            mBroadcaster = new Broadcaster();
-        }
+
     }
 
 
@@ -140,6 +138,21 @@ public class MediaService extends Service{
     }
 
     public void play(){
+        if(mBroadcaster != null){
+            mBroadcaster.startSong(UnisongSession.getInstance().getCurrentSong());
+        }
+    }
+
+    public void startSession(){
+
+        UnisongSession unisongSession = UnisongSession.getInstance();
+        if(unisongSession == null){
+            unisongSession = new UnisongSession();
+        }
+
+        if(mBroadcaster == null){
+            mBroadcaster = new Broadcaster(unisongSession);
+        }
 
     }
 

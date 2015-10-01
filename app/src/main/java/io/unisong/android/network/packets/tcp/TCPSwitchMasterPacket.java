@@ -12,7 +12,7 @@ import java.io.OutputStream;
  */
 public class TCPSwitchMasterPacket {
 
-    //The new Master's IP address
+    //The new Host's IP address
     private String mIP;
 
     public TCPSwitchMasterPacket(InputStream stream){

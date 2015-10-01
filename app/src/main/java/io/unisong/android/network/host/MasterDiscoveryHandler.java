@@ -1,4 +1,4 @@
-package io.unisong.android.network.master;
+package io.unisong.android.network.host;
 
 import android.util.Log;
 
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 /**
  * Created by ezturner on 2/13/2015.
@@ -120,9 +121,16 @@ public class MasterDiscoveryHandler {
         byte[] data = new byte[256];
         DatagramPacket packet = new DatagramPacket(data , data.length);
 
-        Log.d(LOG_TAG , "Starting to listen");
+        try {
+            mReceiveSocket.setSoTimeout(1000);
+        } catch (SocketException e){
+            e.printStackTrace();
+        }
+        Log.d(LOG_TAG, "Starting to listen");
         try {
             mReceiveSocket.receive(packet);
+        } catch (SocketTimeoutException e){
+
         } catch(IOException e){
             e.printStackTrace();
             return;

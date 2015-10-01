@@ -4,7 +4,7 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.Master;
+import io.unisong.android.network.Host;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
@@ -52,17 +52,17 @@ public class LANReceiver {
         mParent = parent;
     }
 
-    //Start playing from a master, start listening to the stream
-    public void playFromMaster(Master master){
+    //Start playing from a host, start listening to the stream
+    public void playFromMaster(Host host){
 
-        Log.d(LOG_TAG, "Listening from master: " + master.getIP().toString().substring(1) + ":" + master.getPort());
+        Log.d(LOG_TAG, "Listening from host: " + host.getIP().toString().substring(1) + ":" + host.getPort());
 
-        mPackets = convertPackets(master.getPackets());
+        mPackets = convertPackets(host.getPackets());
 
-        mPort = master.getPort();
+        mPort = host.getPort();
         mIsListening = true;
 
-        mSocket = master.getSocket();
+        mSocket = host.getSocket();
 
         mListenThread = getListenThread();
         mListenThread.start();

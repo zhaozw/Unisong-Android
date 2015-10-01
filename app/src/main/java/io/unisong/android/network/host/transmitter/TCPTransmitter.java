@@ -1,7 +1,6 @@
-package io.unisong.android.network.master.transmitter;
+package io.unisong.android.network.host.transmitter;
 
 import io.unisong.android.audio.AudioSource;
-import io.unisong.android.audio.master.AACEncoder;
 
 /**
  * This class will handle point to point transmissions in an environment where multicast/broadcast does
