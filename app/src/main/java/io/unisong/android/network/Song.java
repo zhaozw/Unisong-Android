@@ -50,7 +50,7 @@ public class Song {
         mPath = path;
     }
     /**
-     * This is a recursive method to decode a byte array into a Song object
+     * This is a recursive method to decode a byte array into a LocalSong object
      *
      * @param data the raw network data for this client object
      * @param index the index at which we are currently operating

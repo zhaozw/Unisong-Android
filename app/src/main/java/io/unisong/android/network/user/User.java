@@ -51,8 +51,8 @@ public class User implements Serializable {
     private String mPhoneNumber;
     private UUID mUUID;
     private String mName;
-    private byte[] mProfilePicture;
     private Context mContext;
+    private String mPassword;
 
     // The boolean tag to tell us if we failed to get the profile picture
     private boolean mRetrieveProfilePictureFailed;
@@ -102,6 +102,14 @@ public class User implements Serializable {
         getUserInfoThread().start();
     }
 
+    public void setPassword(String password){
+        mPassword = password;
+    }
+
+    public String getPassword(){
+        return mPassword;
+    }
+
     public String getUsername(){
         return mUsername;
     }
@@ -142,13 +150,6 @@ public class User implements Serializable {
         } else {
             return NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/profile/picture/";
         }
-    }
-
-    public Bitmap getProfilePicture(){
-        if(mProfilePicture != null) {
-            return BitmapFactory.decodeByteArray(mProfilePicture, 0, mProfilePicture.length);
-        }
-        return null;
     }
 
 

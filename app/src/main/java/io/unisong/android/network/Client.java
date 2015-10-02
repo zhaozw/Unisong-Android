@@ -343,10 +343,10 @@ public class Client {
 
     //Tells this slave that a song is currently in progress
     public void sendSongInProgress() {
-        Log.d(LOG_TAG, "Sending Song Start to "  + toString());
+        Log.d(LOG_TAG, "Sending LocalSong Start to "  + toString());
         DataOutputStream outputStream;
         synchronized (mOutputStream){
-            //Send out the Song In Progress TCP packet.
+            //Send out the LocalSong In Progress TCP packet.
             TCPSongInProgressPacket.send(mOutputStream, mTimeManager.getSongStartTime(), mSession.getCurrentSong().getChannels(),
                     mTransmitter.getNextPacketSendID(), (byte) 0);
         }
@@ -460,7 +460,6 @@ public class Client {
         }
         return true;
     }
-
 
 
 }

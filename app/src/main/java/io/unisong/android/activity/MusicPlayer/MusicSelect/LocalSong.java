@@ -3,7 +3,7 @@ package io.unisong.android.activity.musicplayer.musicselect;
 /**
  * Created by Ethan on 2/26/2015.
  */
-public class Song implements MusicData{
+public class LocalSong implements MusicData{
 
     private long mID;
     private String mName;
@@ -12,7 +12,7 @@ public class Song implements MusicData{
     private String mData;
 
     //The class for storing song data
-    public Song(long songID, String songTitle, String songArtist, String albumart, String data){
+    public LocalSong(long songID, String songTitle, String songArtist, String albumart, String data){
         mID = songID;
         mName = songTitle;
         mArtist = songArtist;

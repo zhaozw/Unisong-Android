@@ -11,7 +11,7 @@ import java.io.OptionalDataException;
 import java.io.OutputStream;
 
 /**
- * A class for sending all of the relevant information on a Song,
+ * A class for sending all of the relevant information on a LocalSong,
  * including mime type, artist, duration and name
  * Created by ezturner on 8/10/2015.
  */

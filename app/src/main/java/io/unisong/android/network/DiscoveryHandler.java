@@ -13,6 +13,17 @@ import java.net.SocketException;
  */
 public class DiscoveryHandler {
 
+    private static DiscoveryHandler sInstance;
+
+    public static DiscoveryHandler getInstance(){
+        return sInstance;
+    }
+
+    public static void setInstance(DiscoveryHandler handler){
+        sInstance = handler;
+    }
+
+    private ConnectionUtils mConnection;
     private final static String LOG_TAG = DiscoveryHandler.class.getSimpleName();
     private DatagramSocket mSocket;
     private Handler mHandler;
@@ -26,23 +37,18 @@ public class DiscoveryHandler {
             Log.d(LOG_TAG, "Creating discovery socket failed!");
         }
 
-        mHandler = new Handler();
-        mHandler.post(mCheckWifiRunnable);
+        mConnection = ConnectionUtils.getInstance();
     }
 
-    private Runnable mCheckWifiRunnable = new Runnable() {
-        @Override
-        public void run() {
-            checkWifi();
-            mHandler.postDelayed(mCheckWifiRunnable , 2000);
-        }
-    };
-
-    /**
-     * Checks the local wifi networks to see if any of them are Unisong hotspots.
-     */
-    private void checkWifi(){
-
+    public Thread getDiscoveryThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                sendDiscoveryPacket()
+            }
+        });
     }
+
+
 
 }

@@ -6,11 +6,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import io.unisong.android.activity.musicplayer.musicselect.Album;
-import io.unisong.android.activity.musicplayer.musicselect.Artist;
 import io.unisong.android.activity.musicplayer.musicselect.MusicData;
-import io.unisong.android.activity.musicplayer.musicselect.Playlist;
-import io.unisong.android.activity.musicplayer.musicselect.Song;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,16 +24,16 @@ public class MusicDataHandler {
     private List<MusicData> mListData;
 
     //The list of songs on the device
-    private List<Song> mSongs;
+    private List<io.unisong.android.activity.musicplayer.musicselect.LocalSong> mLocalSongs;
 
     //The list of playlists on the device
-    private List<Playlist> mPlaylists;
+    private List<io.unisong.android.activity.musicplayer.musicselect.LocalPlaylist> mPlaylists;
 
     //The list of artists on the device
-    private List<Artist> mArtists;
+    private List<io.unisong.android.activity.musicplayer.musicselect.LocalArtist> mLocalArtists;
 
     //The list of albums on the device
-    private List<Album> mAlbums;
+    private List<io.unisong.android.activity.musicplayer.musicselect.LocalAlbum> mLocalAlbums;
 
     private ContentResolver mContentResolver;
 
@@ -46,20 +42,20 @@ public class MusicDataHandler {
         mContentResolver = contentResolver;
 
         //Start the array lists of music data
-        mSongs = new ArrayList<Song>();
-        mPlaylists = new ArrayList<Playlist>();
-        mAlbums = new ArrayList<Album>();
-        mArtists = new ArrayList<Artist>();
+        mLocalSongs = new ArrayList<io.unisong.android.activity.musicplayer.musicselect.LocalSong>();
+        mPlaylists = new ArrayList<io.unisong.android.activity.musicplayer.musicselect.LocalPlaylist>();
+        mLocalAlbums = new ArrayList<io.unisong.android.activity.musicplayer.musicselect.LocalAlbum>();
+        mLocalArtists = new ArrayList<io.unisong.android.activity.musicplayer.musicselect.LocalArtist>();
 
         //get all of the music info
         getMusicInfo();
 
         mListData = new ArrayList<MusicData>();
         //The for loop for turning our data into a generic List for the AlphabeticalAdapter list, so we can filter out Hangouts stuff
-        for(int i = 0; i < mSongs.size(); i++){
-            String name = mSongs.get(i).getPrimaryText();
+        for(int i = 0; i < mLocalSongs.size(); i++){
+            String name = mLocalSongs.get(i).getPrimaryText();
             if(!name.equals("Hangouts message") && !name.equals("Hangouts video call")){
-                mListData.add(mSongs.get(i));
+                mListData.add(mLocalSongs.get(i));
             }
         }
     }
@@ -100,7 +96,7 @@ public class MusicDataHandler {
 
                 artistNameMap.put(artistId , artistName);
 
-                mArtists.add(new Artist(artistId, artistName, albums, tracks));
+                mLocalArtists.add(new io.unisong.android.activity.musicplayer.musicselect.LocalArtist(artistId, artistName, albums, tracks));
             }
             while (artistCursor.moveToNext());
         }
@@ -134,7 +130,7 @@ public class MusicDataHandler {
                 //Put the album art in the map so that the songs can access it
                 artMap.put(albumId , albumArt);
                 String albumArtist = albumCursor.getString(artistColumn);
-                mAlbums.add(new Album(albumId, albumName , albumArt , albumArtist));
+                mLocalAlbums.add(new io.unisong.android.activity.musicplayer.musicselect.LocalAlbum(albumId, albumName , albumArt , albumArtist));
             }
             while (albumCursor.moveToNext());
         }
@@ -173,12 +169,12 @@ public class MusicDataHandler {
                 long albumId = musicCursor.getLong(albumIdColumn);
 
                 String data = musicCursor.getString(dataColumn);
-                Log.d(LOG_TAG , "Album ID : " + albumId);
+                Log.d(LOG_TAG , "LocalAlbum ID : " + albumId);
                 String albumArt = artMap.get(albumId);
 
-                Log.d(LOG_TAG , "Album Art String : " + albumArt);
+                Log.d(LOG_TAG , "LocalAlbum Art String : " + albumArt);
 
-                mSongs.add(new Song(thisId, thisTitle, thisArtist , albumArt, data));
+                mLocalSongs.add(new io.unisong.android.activity.musicplayer.musicselect.LocalSong(thisId, thisTitle, thisArtist , albumArt, data));
             }
             while (musicCursor.moveToNext());
         }
@@ -201,7 +197,7 @@ public class MusicDataHandler {
             do {
                 long playlistId = playlistCursor.getLong(idColumn);
                 String playlistName = playlistCursor.getString(nameColumn);
-                mPlaylists.add(new Playlist(playlistId, playlistName));
+                mPlaylists.add(new io.unisong.android.activity.musicplayer.musicselect.LocalPlaylist(playlistId, playlistName));
             }
             while (playlistCursor.moveToNext());
         }

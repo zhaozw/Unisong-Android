@@ -3,14 +3,14 @@ package io.unisong.android.activity.musicplayer.musicselect;
 /**
  * Created by Ethan on 2/26/2015.
  */
-public class Playlist implements MusicData{
+public class LocalPlaylist implements MusicData{
 
     private long mID;
     private String mTitle;
     private int mCount;
 
     //The class for storing playlist information
-    public Playlist(long playlistID, String playlistName) {
+    public LocalPlaylist(long playlistID, String playlistName) {
         mID = playlistID;
         mTitle = playlistName;
     }

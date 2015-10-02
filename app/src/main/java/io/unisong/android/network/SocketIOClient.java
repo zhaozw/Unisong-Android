@@ -5,8 +5,10 @@ import org.json.JSONObject;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import io.unisong.android.PrefUtils;
 import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * This class handles all communication between the android client
@@ -36,7 +38,7 @@ public class SocketIOClient {
 
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri());
 
-        connect();
+        getConnectionThread().start();
         mIsLoggedIn = false;
     }
 
@@ -85,4 +87,24 @@ public class SocketIOClient {
         mSocket.emit(eventName , data);
     }
 
+    private Thread getConnectionThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                checkForLogin();
+                connect();
+                login();
+            }
+        });
+    }
+    private void checkForLogin(){
+        // wait while we're not logged in
+        while(!mHttpClient.isLoggedIn()){
+
+        }
+    }
+
+    private void login(){
+
+    }
 }

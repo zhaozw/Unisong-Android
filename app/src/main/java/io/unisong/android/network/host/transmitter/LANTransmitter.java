@@ -10,7 +10,6 @@ import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.Client;
-import io.unisong.android.network.host.MasterDiscoveryHandler;
 import io.unisong.android.network.host.MasterFECHandler;
 import io.unisong.android.network.host.MasterTCPHandler;
 import io.unisong.android.network.packets.FramePacket;

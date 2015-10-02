@@ -61,7 +61,7 @@ public class TCPSongStartPacket {
 
 
     private void receive(InputStream stream){
-        Log.d(LOG_TAG, "Receiving Song Start Instructions");
+        Log.d(LOG_TAG, "Receiving LocalSong Start Instructions");
         byte[] data = new byte[13];
 
         synchronized (stream){

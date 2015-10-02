@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +50,10 @@ public class UnisongSession {
     private HttpClient mClient;
     private Host host;
 
+    /**
+     * This constructor creates a UnisongSession where the current user is the
+     * session host.
+     */
     public UnisongSession(){
 
         mClient = HttpClient.getInstance();
@@ -62,9 +67,11 @@ public class UnisongSession {
         configureSocketIO();
         mIsDisconnected = false;
         sInstance = this;
+
+
     }
 
-    public UnisongSession(String sessionID){
+    public UnisongSession(User userToJoin){
 
     }
 
@@ -151,4 +158,7 @@ public class UnisongSession {
         return mMembers;
     }
 
+    public String getSessionID(){
+        return mSessionID;
+    }
 }

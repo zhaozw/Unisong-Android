@@ -104,7 +104,7 @@ public class Listener{
         if(!songStarted){
             songStarted = true;
         } else {
-            Log.d(LOG_TAG , "Song is being started a second time!");
+            Log.d(LOG_TAG , "LocalSong is being started a second time!");
         }
 
         //TODO : calculate the current frame to play?

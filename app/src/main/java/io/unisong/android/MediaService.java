@@ -13,12 +13,15 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
+import io.unisong.android.network.ConnectionUtils;
+import io.unisong.android.network.DiscoveryHandler;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.ntp.SntpClient;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.Contacts;
+import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -47,7 +50,7 @@ public class MediaService extends Service{
 
     private AudioTrackManager mAudioTrackManager;
 
-    //The time that we have paused at, relative to the Song start time.
+    //The time that we have paused at, relative to the LocalSong start time.
     private long mResumeTime = 0;
 
 
@@ -119,6 +122,15 @@ public class MediaService extends Service{
         mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
         mWakeLock.acquire();
 
+        // Start ConnectionUtils and assign it to the static instance.
+        ConnectionUtils utils = new ConnectionUtils();
+        ConnectionUtils.setInstance(utils);
+
+        // Discovery handler needs to be instantiated after ConnectionUtils.
+        DiscoveryHandler handler = new DiscoveryHandler();
+
+        DiscoveryHandler.setInstance(handler);
+
 //        AudioFileReader reader = new AudioFileReader();
 //        try {
 //            reader.readFile(TEST_FILE_PATH);
@@ -150,10 +162,10 @@ public class MediaService extends Service{
             unisongSession = new UnisongSession();
         }
 
-        if(mBroadcaster == null){
-            mBroadcaster = new Broadcaster(unisongSession);
-        }
+    }
 
+    public void joinSession(User user){
+        UnisongSession session = new UnisongSession(user);
     }
 
     public void pause(){

@@ -1,6 +1,7 @@
 package io.unisong.android.network.user;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.squareup.okhttp.Response;
@@ -60,6 +61,7 @@ public class FriendsList implements Serializable{
 
     // This tells us whether the data has been updated and needs to be written to disk
     private boolean mUpdated;
+    private Handler mHandler;
 
     /**
      * Instantiates the FriendsList, and loads the relevant data from disk if available
@@ -78,6 +80,8 @@ public class FriendsList implements Serializable{
         mFriends = new ArrayList<>();
         mIncomingRequests = new ArrayList<>();
         mOutgoingRequests = new ArrayList<>();
+
+        mHandler = new Handler();
 
         mClient = HttpClient.getInstance();
         // TODO : get friends from server.
@@ -130,6 +134,7 @@ public class FriendsList implements Serializable{
 
                 loadFriendsFromServer();
 
+                mHandler.post(mCheckFriendStatusRunnable);
 
             }
         });
@@ -403,5 +408,19 @@ public class FriendsList implements Serializable{
         return mOutgoingRequests;
     }
 
+    private Runnable mCheckFriendStatusRunnable = new Runnable() {
+        @Override
+        public void run() {
+            checkFriendStatus();
+//            mHandler.postDelayed()
+        }
+    };
 
+    /**
+     * This method checks the status of a user's friends list to see if any have joined or left
+     * Unisong sessions.
+     */
+    private void checkFriendStatus(){
+
+    }
 }

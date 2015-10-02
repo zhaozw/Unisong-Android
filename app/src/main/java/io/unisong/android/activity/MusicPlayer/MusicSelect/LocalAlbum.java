@@ -3,7 +3,7 @@ package io.unisong.android.activity.musicplayer.musicselect;
 /**
  * Created by Ethan on 2/26/2015.
  */
-public class Album implements MusicData{
+public class LocalAlbum implements MusicData{
 
 
     private long mID;
@@ -12,7 +12,7 @@ public class Album implements MusicData{
     private String mArtist;
 
     //The class for storing album data
-    public Album(long albumID, String albumName , String albumArt , String artist) {
+    public LocalAlbum(long albumID, String albumName, String albumArt, String artist) {
         mID = albumID;
         mName = albumName;
         mCoverArt = albumArt;
