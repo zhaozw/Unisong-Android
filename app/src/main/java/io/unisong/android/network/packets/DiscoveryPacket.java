@@ -99,7 +99,14 @@ public class DiscoveryPacket {
         return mUser;
     }
 
-    p
+    public InetAddress getAddress(){
+        return mAddress;
+    }
+
+    public UnisongSession getSession(){
+        return mSession;
+    }
+
     public String toString(){
         return "DiscoveryPacket";
     }

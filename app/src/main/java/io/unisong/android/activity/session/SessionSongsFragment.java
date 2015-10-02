@@ -17,7 +17,7 @@ import io.unisong.android.network.Song;
  */
 public class SessionSongsFragment extends Fragment {
 
-    private List<Song>
+    private List<Song> mSongs;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
