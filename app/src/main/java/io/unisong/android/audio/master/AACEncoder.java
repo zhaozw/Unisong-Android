@@ -19,12 +19,12 @@ import java.util.TreeMap;
  * Created by Ethan on 4/27/2015.
  */
 public class AACEncoder implements AudioSource{
-    private static final String LOG_TAG = "AACEncoder";
+    private static final String LOG_TAG = AACEncoder.class.getSimpleName();
 
     //The current ID of the audio frame
     private int mCurrentOutputID;
 
-    //The media codec object used to decode the files
+    //The media codec object used to encode the files
     private MediaCodec mCodec;
 
     private boolean mStop = false;
@@ -74,7 +74,8 @@ public class AACEncoder implements AudioSource{
         Log.d(LOG_TAG , "Starting encode()");
         mSongID = songID;
         mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
-        mDecoder = new FileDecoder(filePath, startTime , this);
+        mDecoder = new FileDecoder(filePath);
+        mDecoder.startDecode(startTime);
         mEncodeThread = getEncode();
         mEncodeThread.start();
         Log.d(LOG_TAG , "Done with encode()");
@@ -84,7 +85,7 @@ public class AACEncoder implements AudioSource{
         return new Thread(new Runnable()  {
             public void run(){
                 try {
-                    decode();
+                    encode();
                 } catch (IOException e){
                     e.printStackTrace();
                 }
@@ -102,7 +103,7 @@ public class AACEncoder implements AudioSource{
     private int mDataIndex = 0;
 
 
-    private void decode() throws IOException {
+    private void encode() throws IOException {
 
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -123,7 +124,7 @@ public class AACEncoder implements AudioSource{
 
         mOutputBitrate = 1441200;
 
-        //If mInputFormat is null, then lets wait until it is no longer null
+        // If mInputFormat is null, then lets wait until it is no longer null
         while (mInputFormat == null){
             try {
                 synchronized (this){
@@ -183,7 +184,7 @@ public class AACEncoder implements AudioSource{
                         this.wait(10);
                     }
                 } catch (InterruptedException e){
-                    Log.d(LOG_TAG , "We have more frames to decode!");
+                    Log.d(LOG_TAG , "We have more frames to encode!");
                 }
 
                 if(mStop){

@@ -46,9 +46,6 @@ public class LANTransmitter implements Transmitter{
     //The socket that the
     private DatagramSocket mStreamSocket;
 
-    //Handles the network discovery
-    private MasterDiscoveryHandler mDiscoveryHandler;
-
     //The object that handles all reliability stuff
     private MasterTCPHandler mTCPHandler;
 
@@ -98,8 +95,6 @@ public class LANTransmitter implements Transmitter{
             mStreamIP = NetworkUtilities.getBroadcastAddress();
             //Start the socket for the actual stream
             mStreamSocket = new DatagramSocket();
-
-            mDiscoveryHandler = new MasterDiscoveryHandler(mPort);
             mTCPHandler = new MasterTCPHandler(this, unisongSession);
 
         } catch(IOException e){

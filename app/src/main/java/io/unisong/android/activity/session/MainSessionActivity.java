@@ -1,5 +1,6 @@
 package io.unisong.android.activity.session;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -11,9 +12,11 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import io.unisong.android.R;
+import io.unisong.android.activity.musicselect.MusicSelectActivity;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
 
 /**
@@ -113,5 +116,16 @@ public class MainSessionActivity extends AppCompatActivity {
         public int getCount() {
             return mTabNames.length;
         }
+    }
+
+    public void inviteFriend(View view){
+        Toast.makeText(this, "Invite a friend!", Toast.LENGTH_SHORT).show();
+
+    }
+
+    public void addSong(View view){
+        Intent intent = new Intent(getApplicationContext(), MusicSelectActivity.class);
+        startActivity(intent);
+
     }
 }

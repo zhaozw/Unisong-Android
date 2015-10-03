@@ -9,6 +9,7 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.Decoder;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.song.SongFormat;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -58,15 +59,19 @@ public class SongDecoder implements Decoder {
     private int mCurrentID;
 
     private int mLastFrameRequested;
+    private int mFrameBufferSize;
+    private SongFormat mInputFormat;
 
 
-    public SongDecoder(int channels){
+    public SongDecoder(SongFormat format){
+        mInputFormat = format;
+        mFrameBufferSize = 50;
         mOutputFrames = new HashMap<>();
         mInputFrames = new HashMap<>();
         mTimeManager = TimeManager.getInstance();
-        mime = "audio/mp4a-latm";
-        bitrate = channels * 64000;
-        sampleRate = 44100;
+        mime = format.getMime();
+        bitrate = format.getBitrate();
+        sampleRate = format.getSampleRate();
         mRunning = false;
     }
 
@@ -112,11 +117,10 @@ public class SongDecoder implements Decoder {
 
         MediaFormat format = new MediaFormat();
         format.setString(MediaFormat.KEY_MIME, mime);
-        format.setInteger(MediaFormat.KEY_AAC_PROFILE,
-                MediaCodecInfo.CodecProfileLevel.AACObjectLC); //fixed version
-        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, 64000 * channels);
-        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
+        //fixed version
+        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, mInputFormat.getSampleRate());
+        format.setInteger(MediaFormat.KEY_BIT_RATE, mInputFormat.getBitrate());
+        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mInputFormat.getChannels());
 
         mCodec.configure(format, null, null, 0);
         mCodec.start();
@@ -385,7 +389,7 @@ public class SongDecoder implements Decoder {
      * If we do, it'll wait until more are used up to decode additional ones.
      */
     private void checkBuffer(){
-        while(mOutputFrames.size() > 25){
+        while(mOutputFrames.size() > mFrameBufferSize){
             if(mStop)   return;
             synchronized (this){
                 try{

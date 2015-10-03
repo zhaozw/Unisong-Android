@@ -1,43 +1,53 @@
-package io.unisong.android.activity.musicplayer;
+package io.unisong.android.activity.musicselect;
 
-
-import android.content.Intent;
+import android.content.ContentResolver;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import io.unisong.android.activity.NavigationDrawerFragment;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.unisong.android.R;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
+import io.unisong.android.activity.session.SessionSongsAdapter;
 
 /**
- * Created by ezturner on 4/8/2015.
+ * Created by Ethan on 2/26/2015.
  */
-public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFragment.OnFragmentInteractionListener{
+public class MusicSelectActivity extends AppCompatActivity{
+
+    private final String LOG_TAG = MusicSelectActivity.class.getSimpleName();
+
+
 
     public final static String POSITION = "position";
-
     private Toolbar mToolbar;
 
     private ViewPager mPager;
     private SlidingTabLayout mTabs;
-
+    private MusicAdapter mAlphabeticalAdapter;
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -50,20 +60,14 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
 
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
-                getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
-
-        drawerFragment.setUp((DrawerLayout)findViewById(R.id.drawer_layout) , mToolbar , R.id.fragment_navigation_drawer);
-
 
         mPager = (ViewPager) findViewById(R.id.player_pager);
         mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
 
         mTabs = (SlidingTabLayout) findViewById(R.id.player_tabs);
         mTabs.setViewPager(mPager);
-        mTabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.colorAccent));
+        mTabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.white));
         mTabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
-
     }
 
 
@@ -81,7 +85,7 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
         int id = item.getItemId();
 
         if(id == R.id.action_settings){
-            Toast.makeText(this , "Hey, you just hit the button! " , Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -90,26 +94,11 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
 
 
     public void onClick(View v){
-        startActivity(new Intent(MusicPlayer.this , MusicPlaying.class));
+
     }
 
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-        //TODO: Make this do something
-    }
-
-    public void onDrawerClick(View v){
-        //TODO: add ripple effect on this click
-        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawerLayout.closeDrawers();
-        //TODO: Make a settings screen so this does something
-        if(v.findViewById(R.id.drawerRowImage).getTag().equals(1)){
-//            TODO:
-        }
-    }
-
-    class MyPagerAdapter extends FragmentPagerAdapter{
+    class MyPagerAdapter extends FragmentPagerAdapter {
 
         String[] mTabNames;
         public MyPagerAdapter(FragmentManager fragmentManager){
@@ -137,12 +126,14 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
 
         @Override
         public int getCount() {
-            return 5;
+            return mTabNames.length;
         }
     }
 
     public static class MyFragment extends Fragment{
-        private TextView mTextView;
+        private RecyclerView mMusicDataRecyclerView;
+        private MusicAdapter mAdapter;
+        private LinearLayoutManager mLayoutManager;
 
         public static MyFragment getInstance(int position){
 
@@ -160,8 +151,35 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
         public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
             View layout = inflater.inflate(R.layout.fragment_music_display, container , false);
 
+            mMusicDataRecyclerView = (RecyclerView) layout.findViewById(R.id.music_recycler_view);
+
+            // use a linear mLayout manager
+            mLayoutManager = new LinearLayoutManager(getContext());
+            mMusicDataRecyclerView.setLayoutManager(mLayoutManager);
+
+            mAdapter = new MusicAdapter(layout.getContext());
+            mAdapter.setData(getData(getArguments().getInt(POSITION)));
+            mMusicDataRecyclerView.setAdapter(mAdapter);
 
             return layout;
         }
+    }
+
+
+    public static List<MusicData> getData(int pos){
+        switch(pos){
+            case 0:
+                return mPlaylists;
+            case 1:
+                return mArtists;
+            case 2:
+                return mAlbums;
+            case 3:
+                return mSongs;
+            // TODO : load genres as well.
+            case 4:
+                return mPlaylists;
+        }
+        return mSongs;
     }
 }

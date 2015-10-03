@@ -27,6 +27,7 @@ public class DiscoveryHandler {
     private final static String LOG_TAG = DiscoveryHandler.class.getSimpleName();
     private DatagramSocket mSocket;
     private Handler mHandler;
+    private boolean mStop = false;
 
     public DiscoveryHandler(){
         try {
@@ -44,11 +45,28 @@ public class DiscoveryHandler {
         return new Thread(new Runnable() {
             @Override
             public void run() {
-                sendDiscoveryPacket()
+                while(!mStop) {
+                    sendDiscoveryPacket();
+                    listenForDiscoveryPackets();
+                    // TODO : implement this stuff
+                    mStop = true;
+                }
             }
         });
     }
 
+    private void sendDiscoveryPacket(){
+
+    }
+
+    public void listenForDiscoveryPackets(){
+
+    }
+
+    public void destroy(){
+        mStop = true;
+
+    }
 
 
 }

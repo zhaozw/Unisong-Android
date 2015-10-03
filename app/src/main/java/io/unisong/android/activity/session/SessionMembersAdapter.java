@@ -96,29 +96,6 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
 
     }
 
-
-    private class loadPictureRunnable implements Runnable{
-
-        private User mUser;
-        private ImageView mImageView;
-
-        public loadPictureRunnable(final User user , final ImageView imageView){
-            mUser = user;
-            mImageView = imageView;
-        }
-
-        @Override
-        public void run() {
-            if(mUser.profileRetrievalFailed()){
-
-            } else if(!mUser.hasProfilePicture()){
-                mHandler.postDelayed(this , 50);
-            } else {
-                mImageView.setImageBitmap(mUser.getProfilePicture());
-            }
-        }
-    }
-
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {

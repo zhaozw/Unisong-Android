@@ -1,9 +1,9 @@
-package io.unisong.android.activity.musicplayer.musicselect;
+package io.unisong.android.activity.musicselect;
 
 /**
  * Created by Ethan on 2/26/2015.
  */
-public class LocalArtist implements MusicData{
+public class UIArtist implements MusicData{
 
     private long mID;
     private String mName;
@@ -11,7 +11,7 @@ public class LocalArtist implements MusicData{
     private String mTracks;
 
     //The class for storing artist data
-    public LocalArtist(long artistID, String artistName, String albums, String tracks) {
+    public UIArtist(long artistID, String artistName, String albums, String tracks) {
         mID = artistID;
         mName = artistName;
         mAlbums = albums;
@@ -25,6 +25,6 @@ public class LocalArtist implements MusicData{
     //The string that will be below the name
     public String getSecondaryText(){ return mAlbums + " album, " + mTracks + " songs";};
 
-    public String getArt(){return "";}
+    public String getImageURL(){return "";}
 
 }

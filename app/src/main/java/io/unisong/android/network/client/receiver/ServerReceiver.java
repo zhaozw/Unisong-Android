@@ -114,7 +114,7 @@ public class ServerReceiver implements Receiver{
         @Override
         public void call(Object... args) {
 
-            Log.d(LOG_TAG , "Server LocalSong Start received.");
+            Log.d(LOG_TAG , "Server UISong Start received.");
             JSONObject object = (JSONObject) args[0];
             long songStartTime;
             int songID;

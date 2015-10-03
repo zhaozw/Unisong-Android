@@ -52,7 +52,7 @@
             android:label="@string/register" >
         </activity>
         <activity
-            android:name="io.unisong.android.activity.musicplayer.musicselect.MusicSelectActivity"
+            android:name=".activity.musicselect.MusicSelectActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>

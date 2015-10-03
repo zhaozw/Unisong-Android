@@ -82,7 +82,7 @@ public class Broadcaster implements AudioObserver {
         mEncoder = new AACEncoder();
 
 
-        mEncoder.encode(0, song.getID() , song.getPath());
+        //mEncoder.encode(0, song.getID() , song.getPath());
         // TODO: actually switch the songs
 
 
@@ -101,9 +101,9 @@ public class Broadcaster implements AudioObserver {
 
         mStreamRunning = true;
 
-        FileDecoder decoder = new FileDecoder(song.getPath() , 0 , mAudioTrackManager);
+        //FileDecoder decoder = new FileDecoder(song.getPath() , 0 , mAudioTrackManager);
 
-        mAudioTrackManager.startSong(decoder);
+        //mAudioTrackManager.startSong(decoder);
 
         Log.d(LOG_TAG , "Starting broadcaster succeeded.");
     }

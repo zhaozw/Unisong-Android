@@ -29,20 +29,20 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
     public class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
         public TextView nameView;
-        public TextView usernameView;
+        public TextView artistView;
         public ImageView profileView;
 
         public ViewHolder(View v) {
             super(v);
 
-            profileView = (ImageView) v.findViewById(R.id.friend_image);
-            nameView = (TextView) v.findViewById(R.id.friend_first_line);
-            usernameView = (TextView) v.findViewById(R.id.friend_second_line);
+            profileView = (ImageView) v.findViewById(R.id.session_song_image);
+            nameView = (TextView) v.findViewById(R.id.session_song_name);
+            artistView = (TextView) v.findViewById(R.id.session_song_artist);
         }
     }
 
-    public void add(int position, User user) {
-        mDataset.add(position, user);
+    public void add(int position, Song song) {
+        mDataset.add(position, song);
         notifyItemInserted(position);
     }
 
@@ -53,17 +53,17 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public FriendsAdapter(List<User> myDataset) {
+    public SessionSongsAdapter(List<Song> myDataset) {
         mDataset = myDataset;
     }
 
     // Create new views (invoked by the layout manager)
     @Override
-    public FriendsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+    public SessionSongsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                         int viewType) {
         mHandler = new Handler();
         // create a new view
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.friend_row, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.session_song_row, parent, false);
         // set the view's size, margins, paddings and layout parameters
         ViewHolder vh = new ViewHolder(v);
         return vh;
@@ -75,10 +75,10 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
 
-        User user = mDataset.get(position);
-        Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
+        Song song = mDataset.get(position);
+        Picasso.with(holder.profileView.getContext()).load(song.getImageURL()).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());
-        holder.usernameView.setText("@" + mDataset.get(position).getUsername());
+        holder.artistView.setText("@" + mDataset.get(position).getArtist());
 
     }
 

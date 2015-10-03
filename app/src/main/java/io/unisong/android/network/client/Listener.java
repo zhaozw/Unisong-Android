@@ -27,9 +27,6 @@ public class Listener{
 
     private final static String LOG_TAG = "Listener";
 
-    //The discovery handler, which will handle finding and choosing the
-    private ClientDiscoveryHandler mSlaveDiscoveryHandler;
-
     //The Client reliability handler which handles packet reliability
     private ClientTCPHandler mClientTCPHandler;
 
@@ -91,11 +88,6 @@ public class Listener{
         mClientTCPHandler.packetReceived(packetID);
     }
 
-    //Starts the process of finding masters
-    public void findMasters() {
-        mSlaveDiscoveryHandler.findMasters();
-    }
-
     private boolean songStarted = false;
 
     public void startSong(long startTime , int channels , int songID){
@@ -104,11 +96,11 @@ public class Listener{
         if(!songStarted){
             songStarted = true;
         } else {
-            Log.d(LOG_TAG , "LocalSong is being started a second time!");
+            Log.d(LOG_TAG , "UISong is being started a second time!");
         }
 
         //TODO : calculate the current frame to play?
-        mSongDecoder = new SongDecoder(channels);
+        //mSongDecoder = new SongDecoder(channels);
 
         // TODO : seek time
         mSongDecoder.decode(0);
@@ -140,7 +132,6 @@ public class Listener{
 
     public synchronized void destroy() {
         mClientTCPHandler.destroy();
-        mSlaveDiscoveryHandler.destroy();
 
         if(mLANReceiver != null){
             mLANReceiver.destroy();

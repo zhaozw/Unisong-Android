@@ -6,7 +6,6 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.audio.Decoder;
 import io.unisong.android.network.CONSTANTS;
 
@@ -48,38 +47,39 @@ public class FileDecoder implements Decoder{
     //The current ID of the audio frame
     private Integer mCurrentFrameID;
 
-    private byte mStreamID;
+    // The number of frames that will be buffered.
+    private int mFrameBufferSize;
 
-    //The parent AudioTrackManager, null if this is an AACEncoder extractor
-    private AudioTrackManager mManager;
-
-    //The parent AACEncoder object, null if this is an AudioTrackManager extractor
-    private AACEncoder mEncoder;
+    private MediaFormat mInputFormat;
+    private MediaFormat mOutputFormat;
 
 
-    public FileDecoder(String path, long seekTime){
+    public FileDecoder(String path){
         //Set the variables
-        mSeekTime = seekTime;
         mRunning = false;
-        mSamples = 0l;
-        mTimeAdjust = seekTime;
 
-        mCurrentFrameID = 0;
+        mFrameBufferSize  = 50;
 
         //Create the file and start the Thread.
         mCurrentFile = new File(path);
+    }
+
+    public void setFrameBufferSize(int size){
         mDecodeThread = getDecode();
         mDecodeThread.start();
     }
 
-    public FileDecoder(String path, long seekTime, AACEncoder encoder) {
-        this(path, seekTime);
-        mEncoder = encoder;
+    /**
+     * Starts the decoding at the beginning of the song.
+     */
+    public void startDecode(){
+        getDecode().start();
     }
 
-    public FileDecoder(String path, long seekTime, AudioTrackManager manager) {
-        this(path, seekTime);
-        mManager = manager;
+    public void startDecode(long seekTime){
+        mSeekTime = seekTime;
+        mTimeAdjust = seekTime;
+        startDecode();
     }
 
     private Thread getDecode(){
@@ -122,20 +122,18 @@ public class FileDecoder implements Decoder{
         }
 
         // Read track header
-        MediaFormat format = null;
         try {
-            format = mExtractor.getTrackFormat(0);
-            mime = format.getString(MediaFormat.KEY_MIME);
-            sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            mInputFormat = mExtractor.getTrackFormat(0);
+            mime = mInputFormat.getString(MediaFormat.KEY_MIME);
+            sampleRate = mInputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             // if duration is 0, we are probably playing a live stream
-            duration = format.getLong(MediaFormat.KEY_DURATION);
-            bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+            duration = mInputFormat.getLong(MediaFormat.KEY_DURATION);
+            bitrate = mInputFormat.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
             e.printStackTrace();
             // don't exit, tolerate this error, we'll fail later if this is critical
-            //TODO: figure out what to do with this error
         }
         Log.d(LOG_TAG, "Track info: mime:" + mime + " sampleRate:" + sampleRate + " channels:" + channels + " bitrate:" + bitrate + " duration:" + duration);
 
@@ -147,7 +145,7 @@ public class FileDecoder implements Decoder{
             e.printStackTrace();
         }
 
-        mCodec.configure(format, null, null, 0);
+        mCodec.configure(mInputFormat, null, null, 0);
         mCodec.start();
         ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
         ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
@@ -222,20 +220,7 @@ public class FileDecoder implements Decoder{
                     if(!mStop)  createPCMFrame(chunk);
 
 
-                    while(mFrames.size() > 25){
-                        if(mStop){
-                            Log.d(LOG_TAG , "mStop is true, exiting loop.");
-                            break;
-                        }
-
-                        synchronized (this){
-                            try {
-                                this.wait(5);
-                            } catch (InterruptedException e){
-
-                            }
-                        }
-                    }
+                    waitForFrameUse();
 
                 	/*if(this.state.get() != PlayerStates.PLAYING) {
                 		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
@@ -252,32 +237,14 @@ public class FileDecoder implements Decoder{
 
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0){
                     Log.d(LOG_TAG, "saw output EOS.");
-                    if(mEncoder != null)    mEncoder.lastFrame(mCurrentFrameID);
-                    if(mManager != null)    mManager.setLastFrameID(mCurrentFrameID);
                     sawOutputEOS = true;
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED){
                 codecOutputBuffers = mCodec.getOutputBuffers();
                 Log.d(LOG_TAG, "output buffers have changed.");
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                MediaFormat oformat = mCodec.getOutputFormat();
-                Log.d(LOG_TAG, "output format has changed to " + oformat);
-                if (mFirstOutputChange){
-                    MediaFormat outFormat = mCodec.getOutputFormat();
-                    int outputChannels = outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-                    int outputSampleRate = outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-
-
-                    mFirstOutputChange = false;
-                    Log.d(LOG_TAG, "Starting AAC Encoder now");
-
-                    Log.d(LOG_TAG, "Output channels are : " + outputChannels);
-                    createAudioTrack(outputSampleRate, outputChannels);
-
-                    //TODO: Ensure that the output format is always 2 channels and 44100 sample rate
-                    setEncoderFormat(format);
-
-                }
+                mOutputFormat = mCodec.getOutputFormat();
+                Log.d(LOG_TAG, "output format has changed to " + mOutputFormat);
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
@@ -298,12 +265,21 @@ public class FileDecoder implements Decoder{
         releaseCodec();
     }
 
-    private void createAudioTrack(int outputSampleRate , int outputChannels){
-        if(mManager != null)     mManager.createAudioTrack(outputSampleRate ,outputChannels);
-    }
+    public void waitForFrameUse(){
+        while(mFrames.size() > mFrameBufferSize){
+            if(mStop){
+                Log.d(LOG_TAG , "mStop is true, exiting loop.");
+                break;
+            }
 
-    private void setEncoderFormat(MediaFormat format){
-        if(mEncoder != null)    mEncoder.setInputFormat(format);
+            synchronized (this){
+                try {
+                    this.wait(5);
+                } catch (InterruptedException e){
+
+                }
+            }
+        }
     }
 
     private void releaseCodec(){
@@ -322,8 +298,6 @@ public class FileDecoder implements Decoder{
         releaseCodec();
         mExtractor = null;
         mCurrentFile = null;
-        mManager = null;
-        mEncoder = null;
 
     }
 
@@ -382,5 +356,9 @@ public class FileDecoder implements Decoder{
         synchronized (mFrames) {
             return mFrames.containsKey(ID);
         }
+    }
+
+    public MediaFormat getFormat(){
+        return mInputFormat;
     }
 }

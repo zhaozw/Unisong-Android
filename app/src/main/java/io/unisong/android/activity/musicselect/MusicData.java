@@ -1,4 +1,4 @@
-package io.unisong.android.activity.musicplayer.musicselect;
+package io.unisong.android.activity.musicselect;
 
 /**
  * Created by Ethan on 2/26/2015.
@@ -11,6 +11,6 @@ public interface MusicData {
 
     public long getID();
 
-    public String getArt();
+    public String getImageURL();
 
 }

@@ -32,7 +32,7 @@ public class TCPSongInProgressPacket {
         receive(stream);
     }
 
-    //Writes the LocalSong In Progress information and identifier byte
+    //Writes the UISong In Progress information and identifier byte
     public static void send(OutputStream stream, Long startTime , int channels, int currentPacketID, byte streamID) {
         byte[] startTimeArr = ByteBuffer.allocate(8).putLong(startTime).array();
 

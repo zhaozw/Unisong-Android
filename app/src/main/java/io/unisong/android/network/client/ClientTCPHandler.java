@@ -341,18 +341,18 @@ public class ClientTCPHandler {
 
     //Listens for the song start data.
     private void listenSongStart(){
-        Log.d(LOG_TAG, "LocalSong Start identifier received");
+        Log.d(LOG_TAG, "UISong Start identifier received");
 
         TCPSongStartPacket packet = new TCPSongStartPacket(mInStream);
 
         mCanRequest = true;
 
         mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID());
-        Log.d(LOG_TAG, "LocalSong Starting!");
+        Log.d(LOG_TAG, "UISong Starting!");
     }
 
     private void listenSongInProgress(){
-        Log.d(LOG_TAG , "LocalSong in progress");
+        Log.d(LOG_TAG , "UISong in progress");
 
         TCPSongInProgressPacket packet = new TCPSongInProgressPacket(mInStream);
         mCanRequest = true;

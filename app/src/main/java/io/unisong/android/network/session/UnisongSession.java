@@ -157,6 +157,8 @@ public class UnisongSession {
         return mMembers;
     }
 
+    public SongQueue getSongQueue(){return mSongQueue;}
+
     public String getSessionID(){
         return mSessionID;
     }

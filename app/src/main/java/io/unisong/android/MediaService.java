@@ -11,6 +11,7 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import io.unisong.android.activity.musicselect.MusicDataManager;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.ConnectionUtils;
@@ -37,6 +38,7 @@ public class MediaService extends Service{
     private Broadcaster mBroadcaster;
 
     private BroadcastReceiver mMessageReceiver ;
+    private MusicDataManager mMusicDataManager;
     private SntpClient mSntpClient;
 
     public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
@@ -50,7 +52,7 @@ public class MediaService extends Service{
 
     private AudioTrackManager mAudioTrackManager;
 
-    //The time that we have paused at, relative to the LocalSong start time.
+    //The time that we have paused at, relative to the UISong start time.
     private long mResumeTime = 0;
 
 
@@ -122,6 +124,12 @@ public class MediaService extends Service{
         mWakeLock = mgr.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyWakeLock");
         mWakeLock.acquire();
 
+        mMusicDataManager = MusicDataManager.getInstance();
+
+        if(mMusicDataManager == null){
+            mMusicDataManager = new MusicDataManager(getApplicationContext());
+            MusicDataManager.setInstance(mMusicDataManager);
+        }
         // Start ConnectionUtils and assign it to the static instance.
         ConnectionUtils utils = new ConnectionUtils();
         ConnectionUtils.setInstance(utils);
@@ -219,6 +227,9 @@ public class MediaService extends Service{
         }
 
         mTimeManager = null;
+
+        mMusicDataManager.destroy();
+        mMusicDataManager = null;
 
         System.gc();
     }
