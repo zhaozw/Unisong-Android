@@ -8,7 +8,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +15,7 @@ import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
-import io.unisong.android.network.Song;
+import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.User;
 

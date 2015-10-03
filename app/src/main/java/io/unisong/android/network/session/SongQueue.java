@@ -3,7 +3,7 @@ package io.unisong.android.network.session;
 import java.util.LinkedList;
 import java.util.List;
 
-import io.unisong.android.network.Song;
+import io.unisong.android.network.song.Song;
 
 /**
  * Created by Ethan on 9/12/2015.

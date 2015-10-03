@@ -152,9 +152,6 @@ public class FileDecoder implements Decoder{
         ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
         ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
 
-
-
-
         if(mSeekTime != 0) {
             mExtractor.seekTo((mSeekTime - 50) * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
             Log.d(LOG_TAG, "mExtractor sample time is :" + mExtractor.getSampleTime() + " from SeekTime : " + mSeekTime);

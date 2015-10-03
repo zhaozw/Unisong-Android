@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import java.util.List;
 
 import io.unisong.android.R;
-import io.unisong.android.network.Song;
+import io.unisong.android.network.song.Song;
 
 /**
  * Created by Ethan on 9/26/2015.

@@ -2,7 +2,6 @@ package io.unisong.android.network.host;
 
 import android.util.Log;
 
-import io.unisong.android.MediaService;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
@@ -10,7 +9,7 @@ import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.Song;
+import io.unisong.android.network.song.Song;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.host.transmitter.LANTransmitter;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
@@ -18,7 +17,6 @@ import io.unisong.android.network.host.transmitter.Transmitter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
