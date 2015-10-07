@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
@@ -151,6 +152,10 @@ public class UnisongSession {
         mSongQueue = null;
         mClients = null;
         mIsDisconnected = true;
+    }
+
+    public void addFrame(AudioFrame frame){
+        mSongQueue.getSong(frame.getSongID());
     }
 
     public List<User> getMembers(){

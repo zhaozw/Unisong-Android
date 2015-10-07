@@ -90,6 +90,7 @@ public class Listener{
 
     private boolean songStarted = false;
 
+    // TODO : rewrite this method with Song integration/
     public void startSong(long startTime , int channels , int songID){
 
         //TODO: get rid of this, it's just test code
@@ -108,7 +109,7 @@ public class Listener{
         mTimeManager.setSongStartTime(startTime);
         mSession.startSong(songID);
 
-        mManager.startSong(mSongDecoder);
+//        mManager.startSong(song);
     }
 
     public DatagramPacket getPacket(int ID){
@@ -116,7 +117,7 @@ public class Listener{
     }
 
     public void addFrame(AudioFrame frame){
-        mManager.addInputFrame(frame);
+        mSession.addFrame(frame);
     }
 
     public void resume(long resumeTime,  long newSongStartTime){

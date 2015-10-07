@@ -401,4 +401,8 @@ public class SongDecoder implements Decoder {
         }
     }
 
+    public boolean hasInputFrame(int ID){
+        return mInputFrames.containsKey(ID);
+    }
+
 }

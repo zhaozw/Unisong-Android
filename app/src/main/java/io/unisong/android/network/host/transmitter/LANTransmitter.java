@@ -14,6 +14,8 @@ import io.unisong.android.network.host.MasterFECHandler;
 import io.unisong.android.network.host.MasterTCPHandler;
 import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
+import io.unisong.android.network.song.Song;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -396,7 +398,7 @@ public class LANTransmitter implements Transmitter{
     }
 
     @Override
-    public void startSong(long songStartTime, int channels, int songID) {
+    public void startSong(Song song) {
 
     }
 

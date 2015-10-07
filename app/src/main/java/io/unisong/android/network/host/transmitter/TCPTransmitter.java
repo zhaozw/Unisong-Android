@@ -1,6 +1,7 @@
 package io.unisong.android.network.host.transmitter;
 
 import io.unisong.android.audio.AudioSource;
+import io.unisong.android.network.song.Song;
 
 /**
  * This class will handle point to point transmissions in an environment where multicast/broadcast does
@@ -28,7 +29,7 @@ public class TCPTransmitter implements Transmitter {
     }
 
     @Override
-    public void startSong(long songStartTime, int channels, int songID) {
+    public void startSong(Song song) {
 
     }
 

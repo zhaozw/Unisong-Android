@@ -134,6 +134,7 @@ public class MusicSelectActivity extends AppCompatActivity{
         private RecyclerView mMusicDataRecyclerView;
         private MusicAdapter mAdapter;
         private LinearLayoutManager mLayoutManager;
+        private MusicDataManager mDataManager;
 
         public static MyFragment getInstance(int position){
 
@@ -151,6 +152,7 @@ public class MusicSelectActivity extends AppCompatActivity{
         public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
             View layout = inflater.inflate(R.layout.fragment_music_display, container , false);
 
+            mDataManager = MusicDataManager.getInstance();
             mMusicDataRecyclerView = (RecyclerView) layout.findViewById(R.id.music_recycler_view);
 
             // use a linear mLayout manager
@@ -158,28 +160,11 @@ public class MusicSelectActivity extends AppCompatActivity{
             mMusicDataRecyclerView.setLayoutManager(mLayoutManager);
 
             mAdapter = new MusicAdapter(layout.getContext());
-            mAdapter.setData(getData(getArguments().getInt(POSITION)));
+            mAdapter.setData(mDataManager.getData(getArguments().getInt(POSITION)));
             mMusicDataRecyclerView.setAdapter(mAdapter);
 
             return layout;
         }
     }
 
-
-    public static List<MusicData> getData(int pos){
-        switch(pos){
-            case 0:
-                return mPlaylists;
-            case 1:
-                return mArtists;
-            case 2:
-                return mAlbums;
-            case 3:
-                return mSongs;
-            // TODO : load genres as well.
-            case 4:
-                return mPlaylists;
-        }
-        return mSongs;
-    }
 }

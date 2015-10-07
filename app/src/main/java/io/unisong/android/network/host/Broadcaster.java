@@ -10,6 +10,7 @@ import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
+import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.host.transmitter.LANTransmitter;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
@@ -77,13 +78,9 @@ public class Broadcaster implements AudioObserver {
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     private void startSongStream(Song song){
-        mUnisongSession.startSong(0);
 
-        mEncoder = new AACEncoder();
-
-
-        //mEncoder.encode(0, song.getID() , song.getPath());
-        // TODO: actually switch the songs
+        song.start();
+        mUnisongSession.startSong(song.getID());
 
 
         // The start time in milliseconds
@@ -91,19 +88,19 @@ public class Broadcaster implements AudioObserver {
 
         mWorker.schedule(mNotifyAudioPublisher, CONSTANTS.SONG_START_DELAY, TimeUnit.MILLISECONDS);
 
-
         for(Transmitter transmitter : mTransmitters){
-            transmitter.setAudioSource(mEncoder);
-            // TODO : make sure that we can get the channels and songID dynamically
-            transmitter.startSong(mTimeManager.getSongStartTime() , 2, 0);
+            transmitter.startSong(song);
         }
+
+        mAudioTrackManager.startSong(song);
+
+
 
 
         mStreamRunning = true;
 
         //FileDecoder decoder = new FileDecoder(song.getPath() , 0 , mAudioTrackManager);
 
-        //mAudioTrackManager.startSong(decoder);
 
         Log.d(LOG_TAG , "Starting broadcaster succeeded.");
     }

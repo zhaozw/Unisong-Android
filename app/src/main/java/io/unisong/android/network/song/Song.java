@@ -1,5 +1,8 @@
 package io.unisong.android.network.song;
 
+import java.util.List;
+import java.util.Map;
+
 import io.unisong.android.audio.AudioFrame;
 
 /**
@@ -53,11 +56,31 @@ public abstract class Song {
     }
 
     /**
+     * Returns the encoded frame with the specified ID
+     * @param ID
+     * @return
+     */
+    public abstract AudioFrame getFrame(int ID);
+
+    /**
      * Returns the raw PCM frame with a given ID
      * @param ID
      * @return
      */
     public abstract AudioFrame getPCMFrame(int ID);
 
+    public abstract boolean hasFrame(int ID);
+
+    public abstract boolean hasPCMFrame(int ID);
+
     public abstract void start();
+
+    public abstract void seek(long seekTime);
+
+    public abstract Map<Integer, AudioFrame> getPCMFrames();
+
+    public abstract SongFormat getFormat();
+
+    public abstract void addFrame(AudioFrame frame);
+
 }

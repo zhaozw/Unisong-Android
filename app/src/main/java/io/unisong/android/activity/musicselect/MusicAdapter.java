@@ -1,6 +1,10 @@
 package io.unisong.android.activity.musicselect;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +18,7 @@ import com.squareup.picasso.Picasso;
 import io.unisong.android.R;
 import io.unisong.android.network.user.User;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +57,18 @@ class MusicAdapter extends RecyclerView.Adapter <MusicAdapter.MusicViewHolder>
 
         MusicData data = mMusicData.get(i);
 //        Log.d(LOG_TAG , data.getImageURL());
-//        if(data.getImageURL() != null && !data.getImageURL().equals("null"))
-//            Picasso.with(viewHolder.mImage.getContext()).load(data.getImageURL()).into((viewHolder.mImage));
+        if(data.getImageURL() != null && !data.getImageURL().equals("null")) {
+            // TODO : figure out how to load these images and set a default one.
+            try {
+                String path = "file://" + data.getImageURL();
+                Bitmap bitmap = BitmapFactory.decodeFile(path);
+                viewHolder.mImage.setImageBitmap(bitmap);
+            } catch (Exception e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Error on image load!");
+            }
+        }
+
 
         viewHolder.mPrimaryText.setText(data.getPrimaryText());
         viewHolder.mSecondaryText.setText(data.getSecondaryText());

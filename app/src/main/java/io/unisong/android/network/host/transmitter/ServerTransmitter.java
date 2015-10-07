@@ -5,11 +5,15 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Time;
+
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioSource;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.song.Song;
 
 /**
  * The class to handle transmissions to my python/HTTP server
@@ -23,8 +27,10 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     private boolean mTransmitting;
     private AudioSource mSource;
     private Thread mBroadcastThread;
+    private TimeManager mTimeManager;
 
     public ServerTransmitter(){
+        mTimeManager = TimeManager.getInstance();
         mTransmitting = true;
         //HttpClient httpClient = HttpClient.getInstance();
         //httpClient.login("anoaz" , "pass");
@@ -98,14 +104,14 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     }
 
     @Override
-    public void startSong(long songStartTime, int channels, int songID) {
+    public void startSong(Song song) {
 
         JSONObject startSongJSON = new JSONObject();
 
         try {
-            startSongJSON.put("songStartTime", songStartTime);
-            startSongJSON.put("songID", songID);
-            startSongJSON.put("channels", channels);
+            startSongJSON.put("songStartTime", mTimeManager.getSongStartTime());
+            startSongJSON.put("songID", song.getID());
+            startSongJSON.put("format" ,song.getFormat().toJSON());
         } catch (JSONException e){
             e.printStackTrace();
         }

@@ -4,6 +4,7 @@ import android.accounts.AccountManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -38,7 +39,7 @@ import io.unisong.android.R;
 /**
  * Created by ezturner on 7/14/2015.
  */
-public class LoginActivity extends ActionBarActivity {
+public class LoginActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = LoginActivity.class.getSimpleName();
 

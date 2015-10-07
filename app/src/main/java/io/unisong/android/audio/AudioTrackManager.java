@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.song.Song;
 
 import java.util.Map;
 
@@ -45,9 +46,6 @@ public class AudioTrackManager implements AudioObserver {
     //The handler for scheduling resyncs and the song start
     private Handler mHandler;
 
-    //The last frame added's ID
-    private int mLastAddedFrameID;
-
     //The class that handles all of the time calculations
     private TimeManager mTimeManager;
 
@@ -58,9 +56,10 @@ public class AudioTrackManager implements AudioObserver {
 
     private AudioStatePublisher mAudioStatePublisher;
 
-    private Decoder mDecoder;
-
     private long mTimeUntilSongStart;
+
+    // The song we're currently playing.
+    private Song mSong;
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
@@ -141,7 +140,7 @@ public class AudioTrackManager implements AudioObserver {
 
             }*/
 
-            while (!mDecoder.hasFrame(mFrameToPlay)) {
+            while (!mSong.hasPCMFrame(mFrameToPlay)) {
                 try {
                     synchronized (this) {
                         this.wait(1);
@@ -154,9 +153,7 @@ public class AudioTrackManager implements AudioObserver {
                 }
             }
 
-            AudioFrame frame = mDecoder.getFrame(mFrameToPlay);
-
-            long difference = mTimeManager.getPCMDifference(frame.getPlayTime());
+            AudioFrame frame = mSong.getFrame(mFrameToPlay);
 
             synchronizePlayTime();
 
@@ -183,11 +180,10 @@ public class AudioTrackManager implements AudioObserver {
         });
     }
 
-    public void startSong(Decoder decoder){
+    public void startSong(Song song){
 
-        // TODO : have the AudioTrackManage instantialize its own decoder.
-        //TODO: fix this so that we have a decent way of configuring this differently for client/master
-        mDecoder = decoder;
+        mSong = song;
+
         double millisTillSongStart =  (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
         mTimeUntilSongStart = (long) millisTillSongStart;
         Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mTimeManager.getOffset() is :" + mTimeManager.getOffset());
@@ -208,7 +204,7 @@ public class AudioTrackManager implements AudioObserver {
     }
 
     public void createAudioTrack(int sampleRate , int channels){
-        if(mAudioTrack == null) {
+        if (mAudioTrack == null) {
             Log.d(LOG_TAG, "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
             int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
 
@@ -227,16 +223,12 @@ public class AudioTrackManager implements AudioObserver {
     public void seek(long seekTime){
         mSeek = true;
         mFrameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
-        mDecoder.seek(seekTime);
+        mSong.seek(seekTime);
         Log.d(LOG_TAG , "mFrameToPlay is : " + mFrameToPlay);
     }
 
     public void setLastFrameID(int lastFrame){
         mLastFrameID = lastFrame;
-    }
-
-    public void lastPacket(){
-        mLastFrameID = mLastAddedFrameID;
     }
 
     public void pause(){
@@ -278,8 +270,9 @@ public class AudioTrackManager implements AudioObserver {
     }
 
     public void resume(long resumeTime){
+        // TODO : re
         if(!mSeek){
-            Map<Integer, AudioFrame> frames = mDecoder.getFrames();
+            Map<Integer, AudioFrame> frames = mSong.getPCMFrames();
             synchronized (frames){
                 Log.d(LOG_TAG, frames.size() + " ");
                 for (int i = 0; i < frames.size(); i++) {
@@ -317,7 +310,7 @@ public class AudioTrackManager implements AudioObserver {
         mTimeManager = null;
         mHandler.removeCallbacks(mStartSong);
         mAudioTrack = null;
-        mDecoder.destroy();
+        mSong = null;
 
     }
 
@@ -378,9 +371,5 @@ public class AudioTrackManager implements AudioObserver {
                     mFrameToPlay = index;
                 }
             }*/
-    }
-
-    public void addInputFrame(AudioFrame frame){
-        mDecoder.addInputFrame(frame);
     }
 }

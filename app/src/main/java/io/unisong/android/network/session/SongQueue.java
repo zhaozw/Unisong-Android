@@ -1,8 +1,11 @@
 package io.unisong.android.network.session;
 
+import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 
+import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.Song;
 
 /**
@@ -10,9 +13,11 @@ import io.unisong.android.network.song.Song;
  */
 public class SongQueue {
 
+    private HttpClient mClient;
     private List<Song> mSongQueue;
 
     public SongQueue(){
+        mClient = HttpClient.getInstance();
         mSongQueue = new LinkedList<>();
     }
 
@@ -24,6 +29,14 @@ public class SongQueue {
     public void addSong(Song song){
         // TODO : add server code.
         mSongQueue.add(song);
+    }
+
+    /**
+     * This method will create a song
+     * @param song - the song to be created on the server
+     */
+    public void createSong(Song song){
+
     }
 
     public void removeSong(int songID){
