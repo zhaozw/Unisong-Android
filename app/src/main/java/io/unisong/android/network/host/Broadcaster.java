@@ -53,6 +53,8 @@ public class Broadcaster implements AudioObserver {
     private AudioTrackManager mAudioTrackManager;
     private UnisongSession mSession;
 
+    private Song mCurrentSong;
+
     //Makes an Broadcaster object
     public Broadcaster(UnisongSession session){
         //Get the singleton objects.
@@ -79,6 +81,8 @@ public class Broadcaster implements AudioObserver {
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     private void startSongStream(Song song){
 
+        mCurrentSong = song;
+
         song.start();
         mUnisongSession.startSong(song.getID());
 
@@ -94,12 +98,7 @@ public class Broadcaster implements AudioObserver {
 
         mAudioTrackManager.startSong(song);
 
-
-
-
         mStreamRunning = true;
-
-        //FileDecoder decoder = new FileDecoder(song.getPath() , 0 , mAudioTrackManager);
 
 
         Log.d(LOG_TAG , "Starting broadcaster succeeded.");
@@ -118,7 +117,7 @@ public class Broadcaster implements AudioObserver {
     }
 
     private void seek(long time){
-        //TODO: figure out how to handle seek with the new AACEncoder/FileDecoder system.
+        mCurrentSong.seek(time);
     }
 
 

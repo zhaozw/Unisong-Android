@@ -2,22 +2,22 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="@dimen/friend_row_height"
-    >
+    android:onClick="onRowClick">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/music_image"
-        android:layout_width="@dimen/friend_image_radius"
-        android:layout_height="@dimen/friend_image_radius"
+        android:layout_width="@dimen/music_image_radius"
+        android:layout_height="@dimen/music_image_radius"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="@dimen/friend_image_margin"
-        android:src="@drawable/ic_contact_picture"/>
+        android:layout_marginLeft="@dimen/music_image_margin"
+        android:src="@drawable/default_artwork"/>
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="@dimen/friend_text_left_margin"
-        android:layout_marginStart="@dimen/friend_text_left_margin"
+        android:layout_marginLeft="@dimen/music_text_left_margin"
+        android:layout_marginStart="@dimen/music_text_left_margin"
         android:layout_marginRight="@dimen/friend_text_right_margin"
         android:layout_marginEnd="@dimen/friend_text_right_margin"
         android:layout_width="wrap_content"

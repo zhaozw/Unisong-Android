@@ -5,12 +5,20 @@ package io.unisong.android.activity.musicselect;
  */
 public interface MusicData {
 
-    public String getPrimaryText();
+    int SONG = 0;
+    int PLAYLIST = 1;
+    int ARTIST = 2;
+    int GENRE = 3;
+    int ALBUM = 4;
 
-    public String getSecondaryText();
+    String getPrimaryText();
 
-    public long getID();
+    String getSecondaryText();
 
-    public String getImageURL();
+    long getID();
+
+    String getImageURL();
+
+    int getType();
 
 }

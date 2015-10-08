@@ -2,6 +2,7 @@ package io.unisong.android.activity;
 
 import android.accounts.AccountManager;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
@@ -39,7 +40,7 @@ import io.unisong.android.R;
 /**
  * Created by ezturner on 7/14/2015.
  */
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends ActionBarActivity {
 
     private static final String LOG_TAG = LoginActivity.class.getSimpleName();
 

@@ -53,7 +53,7 @@
         </activity>
         <activity
             android:name=".activity.musicselect.MusicSelectActivity"
-            android:label="@string/app_name"
+            android:label="@string/add_song"
             android:screenOrientation="portrait" >
         </activity>
 

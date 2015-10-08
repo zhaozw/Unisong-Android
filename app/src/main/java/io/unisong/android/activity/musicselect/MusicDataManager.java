@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -46,12 +47,26 @@ public class MusicDataManager {
     private List<MusicData> mGenres;
 
     private Context mContext;
+    private Handler mHandler;
 
     public MusicDataManager(Context applicationContext){
         mContext = applicationContext;
-        getMusicInfo();
+        mHandler = new Handler();
+        mHandler.post(mGetMusicInfoRunnable);
     }
 
+
+    private Runnable mGetMusicInfoRunnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                getMusicInfo();
+            } catch (Exception e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Fetching music data failed!");
+            }
+        }
+    };
     //retrieve song info
     private void getMusicInfo() {
         //Get the content resolver
@@ -71,14 +86,14 @@ public class MusicDataManager {
 
         //Get all the artist info
         Uri externalArtistUri = MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI;
-        Uri internalArtistUri = MediaStore.Audio.Artists.INTERNAL_CONTENT_URI;
-        Cursor externalArtistCursor = musicResolver.query(externalArtistUri, null, null, null, null);
-        Cursor internalArtistCursor = musicResolver.query(internalArtistUri , null, null, null, null);
+        //Uri internalArtistUri = MediaStore.Audio.Artists.INTERNAL_CONTENT_URI;
+        Cursor artistCursor = musicResolver.query(externalArtistUri, null, null, null, null);
+        //Cursor internalArtistCursor = musicResolver.query(internalArtistUri , null, null, null, null);
 
-        Cursor[] artistArr = new Cursor[]{externalArtistCursor , internalArtistCursor};
-        MergeCursor artistCursor = new MergeCursor(artistArr);
+        //Cursor[] artistArr = new Cursor[]{externalArtistCursor , internalArtistCursor};
+        //MergeCursor artistCursor = new MergeCursor(artistArr);
 
-        if(artistCursor != null && artistCursor.moveToFirst()){
+        if(artistCursor.moveToFirst()){
             //get columns
             int nameColumn = artistCursor.getColumnIndex
                     (MediaStore.Audio.Artists.ARTIST);
@@ -92,23 +107,24 @@ public class MusicDataManager {
 
                 Log.d(LOG_TAG, "Artist Name : " + artistName);
 
-                artistNameMap.put(artistId , artistName);
+                artistNameMap.put(artistId, artistName);
 
-                mArtists.add(new UIArtist(artistId, artistName, "X albums" , "X Tracks"));
+                mArtists.add(new UIArtist(artistId, artistName));
             }
             while (artistCursor.moveToNext());
         }
+        artistCursor.close();
 
 
         Uri externalAlbumUri = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI;
-        Uri internalAlbumUri = MediaStore.Audio.Albums.INTERNAL_CONTENT_URI;
-        Cursor externalAlbumCursor = musicResolver.query(externalAlbumUri, null, null, null, null);
-        Cursor internalAlbumCursor = musicResolver.query(internalAlbumUri , null, null, null, null);
+        //Uri internalAlbumUri = MediaStore.Audio.Albums.INTERNAL_CONTENT_URI;
+        Cursor albumCursor = musicResolver.query(externalAlbumUri, null, null, null, null);
+       // Cursor internalAlbumCursor = musicResolver.query(internalAlbumUri , null, null, null, null);
 
-        Cursor[] albumArr = new Cursor[]{externalAlbumCursor , internalAlbumCursor};
-        MergeCursor albumCursor = new MergeCursor(albumArr);
+        //Cursor[] albumArr = new Cursor[]{externalAlbumCursor , internalAlbumCursor};
+        //MergeCursor albumCursor = new MergeCursor(albumArr);
 
-        if(albumCursor != null && albumCursor.moveToFirst()){
+        if(albumCursor.moveToFirst()){
             //get columns
             int nameColumn = albumCursor.getColumnIndex
                     (MediaStore.Audio.Albums.ALBUM);
@@ -129,24 +145,26 @@ public class MusicDataManager {
                 String albumArt = albumCursor.getString(artColumn);
                 //Put the album art in the map so that the songs can access it
                 artMap.put(albumId , albumArt);
-                String albumArtist = albumCursor.getString(artistColumn);
-                mAlbums.add(new UIAlbum(albumId, albumName , albumArt , albumArtist));
+                String artistName = albumCursor.getString(artistColumn);
+                UIArtist artist = getArtistByName(artistName);
+                mAlbums.add(new UIAlbum(albumId, albumName , albumArt , artist));
             }
             while (albumCursor.moveToNext());
         }
+        albumCursor.close();
 
 
         // Merge the internal and external cursors.
         Uri externalMusicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Uri internalMusicUri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
-        Cursor externalMusicCursor = musicResolver.query(externalMusicUri, null, null, null, null);
-        Cursor internalMusicCursor = musicResolver.query(internalMusicUri , null, null, null, null);
+        //Uri internalMusicUri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
+        Cursor musicCursor = musicResolver.query(externalMusicUri, null, null, null, null);
+        //Cursor internalMusicCursor = musicResolver.query(internalMusicUri , null, null, null, null);
 
-        Cursor[] musicArr = new Cursor[]{externalMusicCursor , internalMusicCursor};
-        MergeCursor musicCursor = new MergeCursor(musicArr);
+        //Cursor[] musicArr = new Cursor[]{externalMusicCursor , internalMusicCursor};
+        //MergeCursor musicCursor = new MergeCursor(musicArr);
 
 
-        if(musicCursor!=null && musicCursor.moveToFirst()){
+        if(musicCursor.moveToFirst()){
             //get columns
             int titleColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.TITLE);
@@ -156,8 +174,9 @@ public class MusicDataManager {
             int artistColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.ARTIST);
 
-            int albumIdColumn = artistColumn=musicCursor.getColumnIndex
+            int albumIdColumn = musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.ALBUM_ID);
+
 
             //add songs to list
             do {
@@ -165,78 +184,129 @@ public class MusicDataManager {
                 String thisTitle = musicCursor.getString(titleColumn);
 
                 //Get the ID of the artist, then get the name
-                Long thisArtistId = musicCursor.getLong(artistColumn);
-                String thisArtist = artistNameMap.get(thisArtistId);
+                long artistID = musicCursor.getLong(artistColumn);
+                UIArtist artist = getArtistByID(artistID);
 
-                long albumId = musicCursor.getLong(albumIdColumn);
-                Log.d(LOG_TAG, "Album ID : " + albumId);
-                String albumArt = artMap.get(albumId);
+                String artistName = artistNameMap.get(artistID);
 
-                Log.d(LOG_TAG , "Album Art String : " + albumArt);
+                long albumID = musicCursor.getLong(albumIdColumn);
+                UIAlbum album = getAlbumByID(albumID);
 
-                mSongs.add(new UISong(thisId, thisTitle, thisArtist , albumArt));
+                String albumArt = artMap.get(albumID);
+
+
+                Log.d(LOG_TAG , "art from map: " + albumArt );
+                if(album != null)
+                    Log.d(LOG_TAG, "Album Art String : " + album.getImageURL());
+
+                if(!thisTitle.equals("Hangouts message") || !thisTitle.equals("Hangouts video call") || !thisTitle.equals("Facebook Pop")) {
+
+                    UISong song = new UISong(thisId, thisTitle);
+                    mSongs.add(song);
+                    if(album != null){
+                        album.addSong(song);
+                    }
+                }
             }
             while (musicCursor.moveToNext());
         }
+        musicCursor.close();
+
 
 
 
         // Merge the internal and external cursors.
         Uri externalPlaylistUri = MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI;
-        Uri internalPlaylistUri = MediaStore.Audio.Playlists.INTERNAL_CONTENT_URI;
-        Cursor externalPlaylistCursor = musicResolver.query(externalPlaylistUri, null, null, null, null);
-        Cursor internalPlaylistCursor = musicResolver.query(internalPlaylistUri , null, null, null, null);
+        Cursor playlistCursor = musicResolver.query(externalPlaylistUri, null, null, null, null);
 
-        Cursor[] playlistArr = new Cursor[]{externalPlaylistCursor , internalPlaylistCursor};
-        MergeCursor playlistCursor = new MergeCursor(playlistArr);
 
-        if(playlistCursor != null && playlistCursor.moveToFirst()){
+        if(playlistCursor.moveToFirst()){
             //get columns
             int nameColumn = playlistCursor.getColumnIndex
                     (MediaStore.Audio.Playlists.NAME);
             int idColumn = playlistCursor.getColumnIndex
                     (MediaStore.Audio.Playlists._ID);
+            int dataColumn = playlistCursor.getColumnIndex
+                    (MediaStore.Audio.Playlists.DATA);
 
 
             //add songs to list
             do {
                 long playlistId = playlistCursor.getLong(idColumn);
                 String playlistName = playlistCursor.getString(nameColumn);
-                mPlaylists.add(new UIPlaylist(playlistId, playlistName));
+                String data = playlistCursor.getString(dataColumn);
+                mPlaylists.add(new UIPlaylist(playlistId, playlistName, data));
             }
             while (playlistCursor.moveToNext());
         }
+        playlistCursor.close();
 
 
         // Merge the internal and external cursors.
         Uri externalGenreUri = MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI;
-        Uri internalGenreUri = MediaStore.Audio.Genres.INTERNAL_CONTENT_URI;
-        Cursor externalGenreCursor = musicResolver.query(externalGenreUri, null, null, null, null);
-        Cursor internalGenreCursor = musicResolver.query(internalGenreUri , null, null, null, null);
+        //Uri internalGenreUri = MediaStore.Audio.Genres.INTERNAL_CONTENT_URI;
+        Cursor genreCursor = musicResolver.query(externalGenreUri, null, null, null, null);
+        //Cursor internalGenreCursor = musicResolver.query(internalGenreUri , null, null, null, null);
 
-        Cursor[] genreArr = new Cursor[]{externalGenreCursor , internalGenreCursor};
-        MergeCursor genreCursor = new MergeCursor(genreArr);
+        //Cursor[] genreArr = new Cursor[]{externalGenreCursor , internalGenreCursor};
+        //MergeCursor genreCursor = new MergeCursor(genreArr);
 
-        if(genreCursor != null && genreCursor.moveToFirst()){
+        if(genreCursor.moveToFirst()){
             //get columns
             int nameColumn = genreCursor.getColumnIndex
                     (MediaStore.Audio.Genres.NAME);
             int idColumn = genreCursor.getColumnIndex
                     (MediaStore.Audio.Genres._ID);
 
-            int countColumn = genreCursor.getColumnIndex
-                    (MediaStore.Audio.Genres._COUNT);
 
 
             //add songs to list
             do {
                 long genreId = genreCursor.getLong(idColumn);
                 String genreName = genreCursor.getString(nameColumn);
-                int count = genreCursor.getInt(countColumn);
-                mPlaylists.add(new UIGenre(genreId, genreName , count));
+                mGenres.add(new UIGenre(genreId, genreName));
             }
             while (genreCursor.moveToNext());
         }
+        genreCursor.close();
+    }
+
+    public UIArtist getArtistByName(String artist){
+        for(MusicData data : mArtists){
+            if(data.getPrimaryText().equals(artist)){
+                return (UIArtist)data;
+            }
+        }
+        return null;
+    }
+
+    public UIArtist getArtistByID(long artistID){
+        return (UIArtist) getDataByID(mArtists , artistID);
+    }
+
+    public UIAlbum getAlbumByID(long albumID){
+        return (UIAlbum) getDataByID(mAlbums , albumID);
+    }
+
+    public UISong getSongByID(long songID){
+        return (UISong) getDataByID(mSongs , songID);
+    }
+
+    public UIGenre getGenreByID(long genreID){
+        return (UIGenre) getDataByID(mPlaylists , genreID);
+    }
+
+    public UIPlaylist getPlaylistByID(long playlistID){
+        return (UIPlaylist) getDataByID(mPlaylists , playlistID);
+    }
+
+    private MusicData getDataByID(List<MusicData> datas, long ID){
+        for(MusicData data : datas){
+            if(data.getID() == ID){
+                return data;
+            }
+        }
+        return null;
     }
 
     public List<MusicData> getData(int pos){

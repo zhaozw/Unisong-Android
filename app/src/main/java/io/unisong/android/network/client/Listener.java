@@ -25,16 +25,8 @@ import java.net.DatagramPacket;
 public class Listener{
 
 
-    private final static String LOG_TAG = "Listener";
+    private final static String LOG_TAG = Listener.class.getSimpleName();
 
-    //The Client reliability handler which handles packet reliability
-    private ClientTCPHandler mClientTCPHandler;
-
-    //The activity context
-    private Context mContext;
-
-    //The stream ID
-    private byte mStreamID;
 
     //The class that handles all of the time operations
     private TimeManager mTimeManager;
@@ -49,8 +41,6 @@ public class Listener{
 
     private SongDecoder mSongDecoder;
     private UnisongSession mSession;
-
-    private UnisongSession mCurrentUnisongSession;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
     public Listener(){
@@ -77,15 +67,18 @@ public class Listener{
 
     //Start playing from a host, start listening to the stream
     public void playFromMaster(Host host){
-        mClientTCPHandler = new ClientTCPHandler(host.getIP() , host.getPort() , this );
 
         if(mLANReceiver != null){
             mLANReceiver.playFromMaster(host);
         }
     }
 
+    public void joinServerSession(int sessionID){
+        mServerReceiever.joinSession(sessionID);
+    }
+
     public void packetReceived(int packetID){
-        mClientTCPHandler.packetReceived(packetID);
+
     }
 
     private boolean songStarted = false;
@@ -109,7 +102,6 @@ public class Listener{
         mTimeManager.setSongStartTime(startTime);
         mSession.startSong(songID);
 
-//        mManager.startSong(song);
     }
 
     public DatagramPacket getPacket(int ID){
@@ -132,7 +124,7 @@ public class Listener{
     }
 
     public synchronized void destroy() {
-        mClientTCPHandler.destroy();
+        //mClientTCPHandler.destroy();
 
         if(mLANReceiver != null){
             mLANReceiver.destroy();

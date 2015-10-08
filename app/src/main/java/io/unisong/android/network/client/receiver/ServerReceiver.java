@@ -45,10 +45,15 @@ public class ServerReceiver implements Receiver{
         mClient = new SocketIOClient();
 
         mClient.setServerReceiver(this);
-        mClient.joinSession(5);
 
         mClient.on("data", mDataListener);
-        mClient.on("start song" , mSongStartListener);
+        mClient.on("start song", mSongStartListener);
+        mClient.on("pause", mPauseListener);
+        mClient.on("end song", mEndSongListener);
+        mClient.on("end session", mEndSessionListener);
+        mClient.on("seek" , mSeekListener);
+        mClient.on("add song" , mAddSongListener);
+
     }
 
     @Override
@@ -140,4 +145,64 @@ public class ServerReceiver implements Receiver{
         }
     };
 
+    /**
+     * The listener for when we get data.
+     *
+     */
+    private Emitter.Listener mEndSongListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+
+        }
+    };
+
+    /**
+     * The listener for when we get data.
+     *
+     */
+    private Emitter.Listener mEndSessionListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+
+        }
+    };
+
+
+    /**
+     * The listener for when we get data.
+     *
+     */
+    private Emitter.Listener mSeekListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+
+        }
+    };
+
+
+    /**
+     * The listener for when we get data.
+     *
+     */
+    private Emitter.Listener mAddSongListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+
+        }
+    };
+
+
+
+    /**
+     * This will join the specified Server session.
+     * @param sessionID
+     */
+    public void joinSession(int sessionID){
+        mClient.joinSession(sessionID);
+
+    }
 }

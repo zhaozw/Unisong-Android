@@ -1,7 +1,9 @@
 package io.unisong.android.activity.friends;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +22,9 @@ import java.util.List;
  * Created by ezturner on 8/11/2015.
  */
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
+
+    private final static String LOG_TAG = FriendsAdapter.class.getSimpleName();
+
     private List<User> mDataset;
 
     private Handler mHandler;
@@ -76,9 +81,13 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         // - replace the contents of the view with that element
 
         User user = mDataset.get(position);
-        Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
-        holder.nameView.setText(mDataset.get(position).getName());
-        holder.usernameView.setText("@" + mDataset.get(position).getUsername());
+        if(user.getName() != null && user.getUsername() != null) {
+            Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
+            holder.nameView.setText(mDataset.get(position).getName());
+            holder.usernameView.setText("@" + mDataset.get(position).getUsername());
+        } else {
+            new LoadUserProfile(holder, user).execute();
+        }
 
     }
 
@@ -86,6 +95,48 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     @Override
     public int getItemCount() {
         return mDataset.size();
+    }
+
+    private class LoadUserProfile extends AsyncTask<Void , Void, Void> {
+
+
+        private ViewHolder mHolder;
+        private User mUser;
+
+        public LoadUserProfile(ViewHolder holder, User user){
+            mHolder = holder;
+            mUser = user;
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            while(mUser.getName() == null || mUser.getUsername() == null){
+
+                synchronized (this){
+                    try {
+                        this.wait(10);
+                    } catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void nullObj) {
+            Picasso.with(mHolder.profileView.getContext()).load(mUser.getProfileURL()).into((ImageView) mHolder.profileView.findViewById(R.id.friend_image));
+
+            Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
+            TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
+            name.setText(mUser.getName());
+
+            TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);
+            username.setText("@" + mUser.getUsername());
+
+        }
     }
 
 }

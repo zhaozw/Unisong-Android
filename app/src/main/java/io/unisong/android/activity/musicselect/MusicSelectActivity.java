@@ -32,6 +32,7 @@ import java.util.Map;
 import io.unisong.android.R;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
 import io.unisong.android.activity.session.SessionSongsAdapter;
+import io.unisong.android.network.song.LocalSong;
 
 /**
  * Created by Ethan on 2/26/2015.
@@ -57,8 +58,10 @@ public class MusicSelectActivity extends AppCompatActivity{
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         getSupportActionBar().setHomeButtonEnabled(true);
+
 
 
         mPager = (ViewPager) findViewById(R.id.player_pager);
@@ -87,14 +90,46 @@ public class MusicSelectActivity extends AppCompatActivity{
         if(id == R.id.action_settings){
             Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
             return true;
+        } if(id == android.R.id.home){
+            onBackPressed();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
 
-    public void onClick(View v){
+    public void onRowClick(View v){
+        String tag = (String)v.getTag();
 
+        String[] parts = tag.split(":");
+
+        int type = Integer.parseInt(parts[0]);
+
+        long ID = Long.parseLong(parts[1]);
+
+        switch (type){
+            case MusicData.ALBUM:
+
+                break;
+
+            case MusicData.GENRE:
+
+                break;
+
+            case MusicData.PLAYLIST:
+
+                break;
+
+            case MusicData.ARTIST:
+
+                break;
+
+            case MusicData.SONG:
+                MusicDataManager manager = MusicDataManager.getInstance();
+                UISong uiSong = manager.getSongByID(ID);
+                LocalSong song = new LocalSong(uiSong);
+                break;
+        }
     }
 
 

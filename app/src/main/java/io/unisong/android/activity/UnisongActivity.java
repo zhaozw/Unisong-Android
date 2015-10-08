@@ -291,7 +291,7 @@ public class UnisongActivity extends AppCompatActivity {
 
             User user = CurrentUser.getInstance();
 
-            while(user == null || user.getName() == null){
+            while(user == null || user.getName() == null || user.getUsername() == null){
                 user = CurrentUser.getInstance();
 
                 synchronized (this){
@@ -319,6 +319,7 @@ public class UnisongActivity extends AppCompatActivity {
 
         }
     }
+
 
     public void onFABClick(View view){
         UnisongSession session = UnisongSession.getInstance();

@@ -4,6 +4,7 @@ import android.media.MediaFormat;
 
 import java.util.Map;
 
+import io.unisong.android.activity.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
@@ -29,8 +30,15 @@ public class LocalSong extends Song {
     public LocalSong(String name, String artist, long duration,int ID , String imageURL, String path) {
         super(name, artist, duration, ID, imageURL);
         mPath = path;
-        mDecoder = new FileDecoder(mPath);
-        mEncoder = new AACEncoder();
+    }
+
+    /**
+     * This constructor takes in a UISong and creates a LocalSong from it.
+     * @param uiSong
+     */
+    public LocalSong(UISong uiSong){
+        // TODO : set duration later.
+        super(uiSong.getName() , uiSong.getArtist() , uiSong.getImageURL() );
     }
 
     public void setFormat(MediaFormat format){
