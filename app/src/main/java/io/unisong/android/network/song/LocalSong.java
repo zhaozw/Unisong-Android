@@ -45,6 +45,11 @@ public class LocalSong extends Song {
         mFormat = new SongFormat(format);
     }
 
+    @Override
+    public long getDuration(){
+        // TODO : get duration from
+        return 0l;
+    }
     /**
      * Returns an encoded frame.
      * @param ID

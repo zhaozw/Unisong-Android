@@ -1,6 +1,7 @@
 package io.unisong.android.network.session;
 
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class SongQueue {
 
     public SongQueue(){
         mClient = HttpClient.getInstance();
-        mSongQueue = new LinkedList<>();
+        mSongQueue = new ArrayList<>();
     }
 
     /**
@@ -66,5 +67,9 @@ public class SongQueue {
             }
         }
         return null;
+    }
+
+    public int size(){
+        return mSongQueue.size();
     }
 }

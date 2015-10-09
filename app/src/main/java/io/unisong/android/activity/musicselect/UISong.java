@@ -23,6 +23,10 @@ public class UISong implements MusicData{
         mPath = path;
     }
 
+    public String getName(){
+        return mName;
+    }
+
     public void setArtist(UIArtist artist){
         mArtist = artist;
         setArtistName(artist.getPrimaryText());

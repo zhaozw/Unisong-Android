@@ -32,6 +32,8 @@ import java.util.Map;
 import io.unisong.android.R;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
 import io.unisong.android.activity.session.SessionSongsAdapter;
+import io.unisong.android.network.host.Broadcaster;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.LocalSong;
 
 /**
@@ -125,9 +127,11 @@ public class MusicSelectActivity extends AppCompatActivity{
                 break;
 
             case MusicData.SONG:
+                Log.d(LOG_TAG , "Song chosen");
                 MusicDataManager manager = MusicDataManager.getInstance();
                 UISong uiSong = manager.getSongByID(ID);
                 LocalSong song = new LocalSong(uiSong);
+                UnisongSession.getInstance().addSong(song);
                 break;
         }
     }

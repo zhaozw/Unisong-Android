@@ -92,6 +92,7 @@ public class UnisongSession {
             @Override
             public void run() {
                 Response response;
+                Log.d(LOG_TAG , "Creating Unisong session.");
                 try {
                     response = mClient.post(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
 
@@ -99,6 +100,7 @@ public class UnisongSession {
                         String body = response.body().string();
                         JSONObject object = new JSONObject(body);
                         mSessionID = object.getInt("sessionID") + "";
+                        Log.d(LOG_TAG , "Session ID : " + mSessionID);
                     }
                 } catch (IOException e){
                     e.printStackTrace();
@@ -166,5 +168,12 @@ public class UnisongSession {
 
     public String getSessionID(){
         return mSessionID;
+    }
+
+    public void addSong(Song song){
+        mSongQueue.addSong(song);
+        if(mSongQueue.size() == 1){
+
+        }
     }
 }

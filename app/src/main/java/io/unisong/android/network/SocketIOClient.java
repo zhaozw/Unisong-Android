@@ -1,5 +1,7 @@
 package io.unisong.android.network;
 
+import android.util.Log;
+
 import org.json.JSONObject;
 
 import io.socket.client.IO;
@@ -34,6 +36,7 @@ public class SocketIOClient {
 
     public SocketIOClient(){
 
+        Log.d(LOG_TAG, "Starting SocketIO Client");
         mHttpClient = HttpClient.getInstance();
 
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri());
@@ -47,6 +50,7 @@ public class SocketIOClient {
     }
 
     public void connect(){
+        Log.d(LOG_TAG , "Connecting to server with socket.io");
         mSocket.connect();
     }
 

@@ -37,6 +37,12 @@ public abstract class Song {
         mImageURL = imageURL;
     }
 
+    public Song(String name , String artist, String imageURL){
+        mName = name;
+        mArtist = artist;
+        mImageURL = imageURL;
+    }
+
     public int getID(){
         return mSongID;
     }
