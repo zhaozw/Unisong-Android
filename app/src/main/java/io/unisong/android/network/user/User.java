@@ -15,6 +15,8 @@ import com.facebook.AccessToken;
 
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.session.UnisongSession;
+
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Response;
@@ -102,6 +104,20 @@ public class User implements Serializable {
         getUserInfoThread().start();
     }
 
+    public void checkSessionStatus(){
+        try {
+            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/session/");
+
+            if(response.code() == 200){
+                int id = Integer.parseInt(response.body().string());
+
+                UnisongSession session = new UnisongSession(id);
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
     public void setPassword(String password){
         mPassword = password;
     }
@@ -167,6 +183,7 @@ public class User implements Serializable {
             @Override
             public void run() {
                 getUserInfo();
+                checkSessionStatus();
                 //loadProfilePicture();
             }
         });

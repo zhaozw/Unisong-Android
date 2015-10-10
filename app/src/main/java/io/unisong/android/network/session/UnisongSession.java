@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.unisong.android.PrefUtils;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
@@ -18,6 +19,7 @@ import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 
 /**
@@ -71,6 +73,22 @@ public class UnisongSession {
 
     }
 
+    public UnisongSession(int ID){
+        mSessionID = ID + "";
+
+        Log.d(LOG_TAG , "Creating session based on ID : " + ID);
+        mClient = HttpClient.getInstance();
+        mSocketIOClient = SocketIOClient.getInstance();
+
+        mSongQueue = new SongQueue();
+        mMembers = new ArrayList<>();
+
+        create();
+        configureSocketIO();
+        mIsDisconnected = false;
+        sInstance = this;
+    }
+
     public UnisongSession(User userToJoin){
 
     }
@@ -107,6 +125,16 @@ public class UnisongSession {
                     return;
                 } catch (JSONException e){
                     Log.d(LOG_TAG, "JSON Parsing failed.");
+                }
+
+                try {
+                    JSONObject credentials = new JSONObject();
+                    User user = CurrentUser.getInstance();
+                    credentials.put("username" , user.getUsername());
+                    credentials.put("password" , user.getPassword());
+                    mSocketIOClient.emit("authenticate" , credentials);
+                } catch (JSONException e){
+                    e.printStackTrace();
                 }
 
             }

@@ -1,10 +1,12 @@
 package io.unisong.android.network.user;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.facebook.AccessToken;
 import com.facebook.login.LoginManager;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONObject;
 

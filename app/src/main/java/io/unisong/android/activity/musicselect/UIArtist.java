@@ -10,8 +10,6 @@ public class UIArtist implements MusicData{
 
     private long mID;
     private String mName;
-    private String mNumAlbums;
-    private String mTracks;
     private List<UIAlbum> mAlbums;
 
     //The class for storing artist data
@@ -30,7 +28,17 @@ public class UIArtist implements MusicData{
     public String getPrimaryText(){return mName;}
 
     //The string that will be below the name
-    public String getSecondaryText(){ return mNumAlbums + " album, " + mTracks + " songs";};
+    public String getSecondaryText(){
+        return mAlbums.size() + " albums, " + getNumSongs() + " songs";
+    }
+
+    public int getNumSongs(){
+        int songs = 0;
+        for(UIAlbum album : mAlbums){
+            songs += album.getSongs().size();
+        }
+        return songs;
+    }
 
     public String getImageURL(){return "";}
 

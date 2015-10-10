@@ -44,5 +44,10 @@ public class UIAlbum implements MusicData{
     }
 
     //The string that will be below the name
-    public String getSecondaryText(){ return "";};
+    public String getSecondaryText(){
+        if(mArtist == null)
+            return "<unknown>";
+
+        return mArtist;
+    }
 }

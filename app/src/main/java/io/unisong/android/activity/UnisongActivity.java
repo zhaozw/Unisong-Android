@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
@@ -94,6 +95,7 @@ public class UnisongActivity extends AppCompatActivity {
 
             TextView username = (TextView) findViewById(R.id.current_user_username);
             username.setText("@" + user.getUsername());
+
         }
 
 
@@ -142,6 +144,7 @@ public class UnisongActivity extends AppCompatActivity {
 
         addFriendButton.setBackground(iconicFontDrawable);
 
+
     }
 
     public void onProfileClick(View view){
@@ -151,6 +154,7 @@ public class UnisongActivity extends AppCompatActivity {
                 .content(R.string.change_profile_picture)
                 .positiveText(R.string.change)
                 .negativeText(R.string.cancel)
+                .theme(Theme.LIGHT)
                 .callback(new MaterialDialog.ButtonCallback() {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
@@ -330,13 +334,13 @@ public class UnisongActivity extends AppCompatActivity {
 
             Intent broadcast = new Intent("unisong-service-interface");
             // You can also include some extra data.
-            broadcast.putExtra("command" , "start session");
+            broadcast.putExtra("command", "start session");
 
             LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
-
-            Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
-            startActivity(intent);
         }
+
+        Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+        startActivity(intent);
 
 
     }

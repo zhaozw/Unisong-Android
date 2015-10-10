@@ -2,6 +2,7 @@ package io.unisong.android.network;
 
 import android.util.Log;
 
+
 import org.json.JSONObject;
 
 import io.socket.client.IO;
@@ -39,7 +40,10 @@ public class SocketIOClient {
         Log.d(LOG_TAG, "Starting SocketIO Client");
         mHttpClient = HttpClient.getInstance();
 
-        mSocket = IO.socket(NetworkUtilities.getSocketIOUri());
+        IO.Options opts = new IO.Options();
+        opts.forceNew = true;
+
+        mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
         getConnectionThread().start();
         mIsLoggedIn = false;
@@ -50,8 +54,11 @@ public class SocketIOClient {
     }
 
     public void connect(){
-        Log.d(LOG_TAG , "Connecting to server with socket.io");
+        Log.d(LOG_TAG, "Connecting to server with socket.io");
         mSocket.connect();
+        mSocket.on(Socket.EVENT_RECONNECT, mReconnectListener);
+        mSocket.on(Socket.EVENT_DISCONNECT , mDisconnectListener);
+
     }
 
     public boolean isConnected(){
@@ -79,10 +86,28 @@ public class SocketIOClient {
      * The listener for when the socket gets disconnected.
      *
      */
+    private Emitter.Listener mReconnectListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+            Log.d(LOG_TAG , "Reconnection event.");
+        }
+
+    };
+
+    /**
+     * The listener for when the socket gets disconnected.
+     *
+     */
     private Emitter.Listener mDisconnectListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
+            for(Object object : args){
+                Log.d(LOG_TAG , "Object : " + object.toString());
+                Log.d(LOG_TAG , object.getClass().getSimpleName());
+            }
+            Log.d(LOG_TAG , "Disconnected.");
         }
 
     };
