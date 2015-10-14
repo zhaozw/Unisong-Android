@@ -7,6 +7,7 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioSource;
+import io.unisong.android.network.song.LocalSong;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +39,7 @@ public class AACEncoder implements AudioSource{
 
     private boolean mRunning;
 
-    private InputStream mInputStream;
+    private LocalSong mSong;
     private MediaFormat mInputFormat;
 
     //The output and input frames
@@ -148,6 +149,8 @@ public class AACEncoder implements AudioSource{
         format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
         format.setInteger(MediaFormat.KEY_BIT_RATE, 64000 * channels);
         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
+
+        mSong.setFormat(format);
 
         mCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mCodec.start();
@@ -403,6 +406,10 @@ public class AACEncoder implements AudioSource{
         synchronized (mInputFrames){
             mInputFrames = new TreeMap<>();
         }
+    }
+
+    public void setSong(LocalSong song){
+        mSong = song;
     }
 
     public void setInputFormat(MediaFormat format){

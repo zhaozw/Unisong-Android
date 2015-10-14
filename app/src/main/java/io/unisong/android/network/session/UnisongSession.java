@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.unisong.android.PrefUtils;
+import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
@@ -51,6 +52,7 @@ public class UnisongSession {
     private List<Client> mClients;
     private HttpClient mClient;
     private Host host;
+    private SessionSongsAdapter mAdapter;
 
     /**
      * This constructor creates a UnisongSession where the current user is the
@@ -102,6 +104,10 @@ public class UnisongSession {
 
     private void configureSocketIO(){
 
+    }
+
+    public void setSongAdapter(SessionSongsAdapter adapter){
+        mAdapter = adapter;
     }
 
 

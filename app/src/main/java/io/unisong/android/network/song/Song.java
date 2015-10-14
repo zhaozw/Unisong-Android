@@ -11,29 +11,24 @@ import io.unisong.android.audio.AudioFrame;
  */
 public abstract class Song {
     
-    private String mName;
-    private String mArtist;
-    //Duration is in milliseconds
-    private long mDuration;
-    private int mType;
+    protected String mName;
+    protected String mArtist;
 
-    private String mImageURL;
+    protected String mImageURL;
 
     //The # of the song
-    private int mSongID;
+    protected int mSongID;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
      * since we will be taking it in over wifi.
      * @param name
      * @param artist
-     * @param duration
      * @param imageURL
      */
-    public Song(String name , String artist, long duration, int ID , String imageURL){
+    public Song(String name , String artist, int ID , String imageURL){
         mName = name;
         mArtist = artist;
-        mDuration = duration;
         mImageURL = imageURL;
     }
 
@@ -52,10 +47,6 @@ public abstract class Song {
     }
 
     public String getArtist(){return mArtist;}
-
-    public long getDuration(){
-        return mDuration;
-    }
 
     public String getImageURL(){
         return mImageURL;
@@ -88,5 +79,7 @@ public abstract class Song {
     public abstract SongFormat getFormat();
 
     public abstract void addFrame(AudioFrame frame);
+
+    public abstract long getDuration();
 
 }

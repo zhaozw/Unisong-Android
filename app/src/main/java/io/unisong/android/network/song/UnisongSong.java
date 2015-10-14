@@ -23,10 +23,14 @@ public class UnisongSong extends Song {
      * @param imageURL
      */
     public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat) {
-        super(name, artist, duration,ID ,  imageURL);
+        super(name, artist,ID ,  imageURL);
         mSongDecoder = new SongDecoder(inputFormat);
     }
 
+    // TODO : write and actually implement.
+    public long getDuration(){
+        return 0l;
+    }
     @Override
     public AudioFrame getFrame(int ID) {
         return mSongDecoder.getFrame(ID);

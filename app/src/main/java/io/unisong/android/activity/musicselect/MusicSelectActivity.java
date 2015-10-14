@@ -131,7 +131,10 @@ public class MusicSelectActivity extends AppCompatActivity{
                 MusicDataManager manager = MusicDataManager.getInstance();
                 UISong uiSong = manager.getSongByID(ID);
                 LocalSong song = new LocalSong(uiSong);
-                UnisongSession.getInstance().addSong(song);
+                UnisongSession session = UnisongSession.getInstance();
+                if(session != null)
+                    session.addSong(song);
+                onBackPressed();
                 break;
         }
     }

@@ -59,4 +59,8 @@ public class UISong implements MusicData{
     public int getType(){
         return SONG;
     }
+
+    public String getPath(){
+        return mPath;
+    }
 }
