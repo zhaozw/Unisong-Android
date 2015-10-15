@@ -81,16 +81,11 @@ public class Listener{
 
     }
 
-    private boolean songStarted = false;
-
     // TODO : rewrite this method with Song integration/
     public void startSong(long startTime , int channels , int songID){
 
-        //TODO: get rid of this, it's just test code
-        if(!songStarted){
-            songStarted = true;
-        } else {
-            Log.d(LOG_TAG , "UISong is being started a second time!");
+        if(mAudioStatePublisher.getState() != AudioStatePublisher.PAUSED){
+            endSong();
         }
 
         //TODO : calculate the current frame to play?
@@ -120,7 +115,8 @@ public class Listener{
     //TODO: implement this
     //Ends the current song, either in preparation for another or not
     public void endSong(){
-
+        // TODO : if we need to wait for components here then then don't do it with this thread, we're getting it from
+        // TODO : socket.io and dont' know what it should be doing.
     }
 
     public synchronized void destroy() {

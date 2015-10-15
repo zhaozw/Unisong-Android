@@ -19,6 +19,7 @@ import io.unisong.android.network.SocketIOClient;
  */
 public class LocalSong extends Song {
 
+    public final static String TYPE_STRING = "LocalSong";
     private String mPath;
     private FileDecoder mDecoder;
     private AACEncoder mEncoder;

@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.socket.emitter.Emitter;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
@@ -18,8 +19,10 @@ import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.song.UnisongSong;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 
@@ -62,6 +65,9 @@ public class UnisongSession {
 
         mClient = HttpClient.getInstance();
         mSocketIOClient = SocketIOClient.getInstance();
+        if(mSocketIOClient != null){
+            mSocketIOClient.on("add song" , mAddSongListener);
+        }
 
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
@@ -75,6 +81,9 @@ public class UnisongSession {
 
     }
 
+    /**
+     * Creates a UnisongSession with only an ID and then populates all of the fields from the server.
+     */
     public UnisongSession(int ID){
         mSessionID = ID + "";
 
@@ -206,8 +215,30 @@ public class UnisongSession {
 
     public void addSong(Song song){
         mSongQueue.addSong(song);
-        if(mSongQueue.size() == 1){
-
+        if(mSongQueue.size() == 1 && mIsMaster){
+            // TODO : start song
+        }
+        if(mAdapter != null){
+            mAdapter.add(song);
         }
     }
+
+    private Emitter.Listener mAddSongListener = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try{
+                JSONObject object = (JSONObject) args[0];
+                String type = object.getString("type");
+                if(type.equals(UnisongSong.TYPE_STRING)){
+
+                } else if(type.equals(LocalSong.TYPE_STRING)){
+
+                }// TODO : when added add SoundcloudSong and Spotify/Google play songs.
+            } catch (Exception e){
+                e.printStackTrace();
+                // TODO : handle individual exceptions and report them to crashalytics/google analytics
+            }
+        }
+    };
+
 }

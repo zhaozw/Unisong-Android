@@ -11,7 +11,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -52,30 +52,26 @@ public class SntpClient
     }
 
     //The current server IP
-    private String mServerIP = "";
+    private final static String sServerAddress = "pool.ntp.org";
 
     //The list of offsets to ensure that none of them are crazy innacurate
-    private  ArrayList<Double> list = new ArrayList<Double>();
+    private List<NtpEntry> mResults;
 
     //The offset, for everyone to see.
     private  double mTimeOffset;
 
-    //Set to check if the calculation is done.
-    private int mNumberDone;
-
     //The thread that all of the packets are sent/received on
     private Thread mThread;
-
-    private boolean mHasOffset;
 
     //The socket.
     private DatagramSocket mSocket;
 
+    private boolean mDestroyed;
+
     //The class that handles all of the time management stuff
 
     public SntpClient(){
-        //TODO: manually resolve the address instead of the default android code
-        mServerIP = "pool.ntp.org";
+        mDestroyed = false;
         mTimeOffset = 0;
         try {
             // Send request
@@ -87,53 +83,27 @@ public class SntpClient
         mThread = getClientThread();
         mThread.start();
 
-        mHasOffset = false;
-
         sInstance = this;
     }
 
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.
-    public double calculateOffset() throws IOException{
+    public void sendPackets(){
 
-        mNumberDone = 0;
+        int total = 0;
+        int count = 0;
 
-        for(int i = 0; i < 5; i++){
-            getOneOffset();
-            if(i == 0){
-                mTimeOffset = list.get(i);
+        while(!mDestroyed){
+            count++;
+            total++;
+
+            if(count > 20 && total < 25){
+                count = 0;
+                
+            } else if(count > 50 && total < 200){
+                count = 0;
+
             }
-            /*try {
-                wait(5);
-            } catch(InterruptedException e){
-                e.printStackTrace();
-            }*/
         }
-
-        mSocket.close();/*
-        while(mNumberDone < 4){
-            try {
-                wait();
-            } catch(InterruptedException e){
-                e.printStackTrace();
-            }
-        }*/
-
-        mNumberDone = 0;
-
-        double average = 0;
-
-        for(int i = 0; i < list.size(); i++){
-            average += list.get(i);
-        }
-
-        average = average / list.size();
-
-        mTimeOffset = average;
-        list = new ArrayList<Double>();
-
-        mHasOffset = true;
-
-        return average;
     }
 
     public long getOffset(){
@@ -143,11 +113,7 @@ public class SntpClient
     private Thread getClientThread(){
         return new Thread(){
             public void run(){
-                try {
-                    mTimeOffset = calculateOffset();
-                } catch(IOException e){
-                    e.printStackTrace();
-                }
+                sendPackets();
             }
         };
     }
@@ -169,7 +135,7 @@ public class SntpClient
     private void getOneOffset() throws IOException{
         // Send request
 
-        InetAddress address = Address.getByName(mServerIP);
+        InetAddress address = Address.getByName(sServerAddress);
         Log.d(LOG_TAG , "address is " + address.toString());
         byte[] buf = new NtpMessage().toByteArray();
         //TODO: change this to NTP_PORT
@@ -185,7 +151,7 @@ public class SntpClient
 
 
         // Get response
-        Log.d(LOG_TAG , "NTP request sent to : " + mServerIP +" , waiting for response...\n");
+        Log.d(LOG_TAG , "NTP request sent to : " + sServerAddress +" , waiting for response...");
         packet = new DatagramPacket(buf, buf.length);
         mSocket.setSoTimeout(500);
         try {
@@ -217,24 +183,25 @@ public class SntpClient
         // Display response
 
 
-        Log.d(LOG_TAG , "NTP server: " + mServerIP);
+        Log.d(LOG_TAG , "NTP server: " + sServerAddress);
         //Log.d(LOG_TAG , msg.toString());
 
         Log.d(LOG_TAG , "Dest. timestamp:     " +
                 NtpMessage.timestampToString(destinationTimestamp));
 
-        Log.d(LOG_TAG , "Round-trip delay: " +
-                new DecimalFormat("0.00").format(roundTripDelay*1000) + " ms");
+        Log.d(LOG_TAG, "Round-trip delay: " +
+                new DecimalFormat("0.00").format(roundTripDelay * 1000) + " ms");
 
-        Log.d(LOG_TAG , "Local clock offset: " +
-                new DecimalFormat("0.00").format(localClockOffset*1000) + " ms");
+        Log.d(LOG_TAG, "Local clock offset: " +
+                new DecimalFormat("0.00").format(localClockOffset * 1000) + " ms");
 
-        list.add(localClockOffset * 1000);
-        mNumberDone++;
+        NtpEntry entry = new NtpEntry(localClockOffset * 1000 , roundTripDelay * 1000);
+        mResults.add(entry);
     }
 
 
     public void destroy(){
+        mDestroyed = true;
         mSocket.close();
         mSocket = null;
     }

@@ -26,18 +26,12 @@ public class ServerReceiver implements Receiver{
     private final static String LOG_TAG = ServerReceiver.class.getSimpleName();
 
     private SocketIOClient mClient;
-
-    private Map<Integer, AudioFrame> mFrames;
     private Listener mListener;
-
-    private AudioTrackManager mAudioTrackManager;
 
     public ServerReceiver(Listener listener){
         // Configure Socekt.IO client
 
         configureSocketIO();
-        // Initialize frames.
-        mFrames = new HashMap<>();
 
         mListener = listener;
     }
@@ -53,15 +47,9 @@ public class ServerReceiver implements Receiver{
         mClient.on("end song", mEndSongListener);
         mClient.on("end session", mEndSessionListener);
         mClient.on("seek" , mSeekListener);
-        mClient.on("add song" , mAddSongListener);
+        mClient.on("audio data" , mAudioDataListener);
 
     }
-
-    @Override
-    public Map<Integer , AudioFrame> getFrames() {
-        return mFrames;
-    }
-
 
 
     private boolean mFirstDataReceived = false;
@@ -134,6 +122,8 @@ public class ServerReceiver implements Receiver{
                 return;
             }
 
+
+
             mListener.startSong(songStartTime , channels ,songID);
         }
     };
@@ -183,19 +173,18 @@ public class ServerReceiver implements Receiver{
         }
     };
 
-
     /**
      * The listener for when we get data.
      *
      */
-    private Emitter.Listener mAddSongListener = new Emitter.Listener() {
+    private Emitter.Listener mAudioDataListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
+            // TODO : implement with the revised AudioData data standard.
 
         }
     };
-
 
 
     /**

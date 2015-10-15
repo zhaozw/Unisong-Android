@@ -41,13 +41,27 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         }
     }
 
+    /**
+     * This will add a song to the end of the SessionSongsAdapter.
+     * @param song
+     */
+    public void add(Song song){
+        mDataset.add(song);
+        notifyItemInserted(mDataset.size());
+    }
+
+    /**
+     * This will add a song at the specified position to the Dataset.
+     * @param position
+     * @param song
+     */
     public void add(int position, Song song) {
         mDataset.add(position, song);
         notifyItemInserted(position);
     }
 
-    public void remove(User user) {
-        int position = mDataset.indexOf(user);
+    public void remove(Song song) {
+        int position = mDataset.indexOf(song);
         mDataset.remove(position);
         notifyItemRemoved(position);
     }

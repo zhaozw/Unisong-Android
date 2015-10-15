@@ -9,5 +9,5 @@ import java.util.Map;
  */
 public interface Receiver {
 
-    public Map<Integer, AudioFrame> getFrames();
+
 }

@@ -11,6 +11,8 @@ import io.unisong.android.audio.client.SongDecoder;
  */
 public class UnisongSong extends Song {
 
+    public final static String TYPE_STRING = "UnisongSong";
+
     private SongDecoder mSongDecoder;
 
     /**
@@ -61,7 +63,7 @@ public class UnisongSong extends Song {
 
     @Override
     public void seek(long seekTime) {
-
+        mSongDecoder.seek(seekTime);
     }
 
     @Override
@@ -76,14 +78,6 @@ public class UnisongSong extends Song {
 
     @Override
     public void addFrame(AudioFrame frame) {
-
-    }
-
-    /**
-     * This provides a received Unisong frame from a network source.
-     * @param frame
-     */
-    public void addInputFrame(AudioFrame frame){
         mSongDecoder.addInputFrame(frame);
     }
 
