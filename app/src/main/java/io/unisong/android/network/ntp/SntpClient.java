@@ -96,14 +96,47 @@ public class SntpClient
             count++;
             total++;
 
+            try {
+                getOneOffset();
+            } catch (IOException e){
+                // If we're having an IOException wait 200ms and then try again
+                e.printStackTrace();
+                try{
+                    synchronized (this){
+                        this.wait(200);
+                    }
+                } catch (InterruptedException interruptedException){
+                    interruptedException.printStackTrace();
+                }
+                continue;
+            }
+
             if(count > 20 && total < 25){
                 count = 0;
-                
+                calculateOffset();
             } else if(count > 50 && total < 200){
                 count = 0;
+                calculateOffset();
+            } else if(count > 100){
+                calculateOffset();
+            }
 
+            if(total >= 600){
+                return;
             }
         }
+    }
+
+    private void calculateOffset(){
+        double offset = 0;
+
+        for(int i = 0; i < mResults.size(); i++){
+            offset += mResults.get(i).getOffset();
+        }
+
+        offset = offset / mResults.size();
+
+        mTimeOffset = offset;
     }
 
     public long getOffset(){

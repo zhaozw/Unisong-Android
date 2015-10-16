@@ -6,11 +6,9 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioSource;
 import io.unisong.android.network.song.LocalSong;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
@@ -19,7 +17,7 @@ import java.util.TreeMap;
 /**
  * Created by Ethan on 4/27/2015.
  */
-public class AACEncoder implements AudioSource{
+public class AACEncoder{
     private static final String LOG_TAG = AACEncoder.class.getSimpleName();
 
     //The current ID of the audio frame
@@ -106,6 +104,7 @@ public class AACEncoder implements AudioSource{
 
     private void encode() throws IOException {
 
+        // TODO : get rid of frames that have been played.
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
@@ -386,7 +385,7 @@ public class AACEncoder implements AudioSource{
         if(frame == null){
             Log.d(LOG_TAG , "FRAME IS ALSO NULL WTF");
         }
-        mOutputFrames.put(frame.getID() , frame);
+        mOutputFrames.put(frame.getID(), frame);
 
     }
 
@@ -416,15 +415,6 @@ public class AACEncoder implements AudioSource{
         mInputFormat = format;
     }
 
-    /**
-     * This method tells the AAC Encoder that a frame has been used, and
-     * it will use that information to figure out how many frames to encode.
-     * @param frameID
-     */
-    public void frameUsed(int frameID){
-        if(frameID > mHighestFrameUsed) mHighestFrameUsed = frameID;
-    }
-
     public Map<Integer , AudioFrame> getFrames(){
         return mOutputFrames;
     }
@@ -447,8 +437,11 @@ public class AACEncoder implements AudioSource{
     }
 
     public AudioFrame getFrame(int ID){
+        if(ID > mHighestFrameUsed) mHighestFrameUsed = ID;
+
         synchronized (mOutputFrames){
             return mOutputFrames.get(ID);
         }
+
     }
 }

@@ -115,6 +115,8 @@ public class User implements Serializable {
             }
         } catch (IOException e){
             e.printStackTrace();
+        } catch (NullPointerException e){
+            e.printStackTrace();
         }
     }
 
@@ -144,7 +146,6 @@ public class User implements Serializable {
 
 
     public boolean equals(User user){
-        // todo : check for null?
         if(user.getUsername() != null && mUsername != null)
             if(user.getUsername().equals(mUsername))
                 return true;

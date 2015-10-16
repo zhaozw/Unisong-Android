@@ -107,6 +107,14 @@ public class Listener{
         mSession.addFrame(frame);
     }
 
+    public void seek(long seekTime){
+        mAudioStatePublisher.seek(seekTime);
+    }
+
+    public void pause(){
+        mAudioStatePublisher.pause();
+    }
+
     public void resume(long resumeTime,  long newSongStartTime){
         mTimeManager.setSongStartTime(newSongStartTime);
         mAudioStatePublisher.resume(resumeTime);

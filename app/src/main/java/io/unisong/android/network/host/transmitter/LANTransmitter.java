@@ -3,7 +3,7 @@ package io.unisong.android.network.host.transmitter;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioSource;
+import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.NetworkUtilities;
@@ -73,9 +73,7 @@ public class LANTransmitter implements Transmitter{
 
     private List<Integer> mPacketsToRebroadcast;
 
-    //The Audio source we are receiving encoded audio data from.
-    private AudioSource mSource;
-
+    private UnisongSession mCurrentSession;
 
     //TODO: implement multicast
     public LANTransmitter(boolean multicast, UnisongSession unisongSession){
@@ -85,6 +83,7 @@ public class LANTransmitter implements Transmitter{
         //TODO: send out 4-5 UDP packets over 50-100ms checking if we can use the port?
 
 
+        mCurrentSession = UnisongSession.getInstance();
         mPacketsToRebroadcast = new ArrayList<>();
 
         mMasterFECHandler = new MasterFECHandler();
@@ -196,8 +195,6 @@ public class LANTransmitter implements Transmitter{
 
                 Log.d(LOG_TAG, "mPacketsSentCount :" + mPacketsSentCount + " , delay is : " + delay);
             }
-            mSource.frameUsed(mNextFrameSendID - 1);
-
 
             if(mNextFrameSendID != mLastFrameID && mStreamRunning) {
                 mWorker.schedule(mPacketSender , delay , TimeUnit.MILLISECONDS);
@@ -386,11 +383,6 @@ public class LANTransmitter implements Transmitter{
 
     private byte getStreamID(){
         return mStreamID;
-    }
-
-    @Override
-    public void setAudioSource(AudioSource source) {
-        mSource = source;
     }
 
     public void setLastFrame(int lastFrame){

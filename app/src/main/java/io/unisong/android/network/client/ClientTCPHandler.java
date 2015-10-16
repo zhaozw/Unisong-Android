@@ -325,7 +325,7 @@ public class ClientTCPHandler {
         long seekTime = seekPacket.getSeekTime();
         Log.d(LOG_TAG , "Seek Time is : " + seekTime);
 
-        mAudioStatePublisher.seek(seekTime);
+        mListener.seek(seekTime);
 
         mTopPacket = (int) (seekTime / (1024000.0 / 44100.0));
     }
@@ -374,8 +374,7 @@ public class ClientTCPHandler {
 
     private void listenPause(){
         Log.d(LOG_TAG, "Pause Received");
-//        mListener.pause();
-        //TODO: handle pause
+        mListener.pause();
     }
 
     private void listenResume(){

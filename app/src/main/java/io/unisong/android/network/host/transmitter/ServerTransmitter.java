@@ -5,11 +5,8 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.sql.Time;
-
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
-import io.unisong.android.audio.AudioSource;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.TimeManager;
@@ -25,34 +22,49 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
     private SocketIOClient mClient;
     private boolean mTransmitting;
-    private AudioSource mSource;
     private Thread mBroadcastThread;
+    private AudioStatePublisher mAudioStatePublisher;
     private TimeManager mTimeManager;
 
     public ServerTransmitter(){
         mTimeManager = TimeManager.getInstance();
-        mTransmitting = true;
-        //HttpClient httpClient = HttpClient.getInstance();
-        //httpClient.login("anoaz" , "pass");
-
-        mClient = new SocketIOClient();
-        mClient.joinSession(5);
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
     }
 
     private Thread getBroadcastThread(){
         return new Thread(new Runnable() {
             @Override
             public void run() {
+
+                if(mTransmitting){
+                    mStop = true;
+                    while(mTransmitting) {
+                        try {
+                            synchronized (this) {
+                                this.wait(5);
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
                 broadcast();
             }
         });
     }
 
+    private boolean mStop = false;
+    private Song mSong;
+
     private void broadcast(){
         int currentFrame = 0;
 
+        Song currentSong = mSong;
+        mTransmitting = true;
+
         while(mTransmitting){
-            if(!mSource.hasFrame(currentFrame)){
+            if(!currentSong.hasFrame(currentFrame) && !mStop){
 
                 synchronized (this){
                     try{
@@ -62,21 +74,25 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                     }
                 }
                 continue;
+            } else if(mStop){
+                break;
             }
 
-            AudioFrame frame = mSource.getFrame(currentFrame);
+            AudioFrame frame = currentSong.getFrame(currentFrame);
 
             // TODO : figure out why frame is null
             if(frame == null){
-                Log.d(LOG_TAG , "FRAME IS NULL WTF :"  + mSource.hasFrame(currentFrame) );
+                Log.d(LOG_TAG , "FRAME IS NULL WTF :"  + currentSong.hasFrame(currentFrame) );
                 continue;
             }
-            mSource.frameUsed(currentFrame);
 
             currentFrame++;
 
             uploadFrame(frame);
         }
+
+
+        mTransmitting = false;
     }
 
     private void uploadFrame(AudioFrame frame){
@@ -94,16 +110,6 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     }
 
     @Override
-    public void setAudioSource(AudioSource source) {
-        mSource = source;
-    }
-
-    @Override
-    public void setLastFrame(int lastFrame) {
-
-    }
-
-    @Override
     public void startSong(Song song) {
 
         JSONObject startSongJSON = new JSONObject();
@@ -118,6 +124,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
         mClient.emit("start song" , startSongJSON);
 
+        mSong = song;
         mBroadcastThread = getBroadcastThread();
         mBroadcastThread.start();
     }
@@ -126,8 +133,16 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     public void update(int state) {
         switch (state){
             case AudioStatePublisher.PAUSED:
+                mClient.emit("pause", null);
                 break;
             case AudioStatePublisher.RESUME:
+                try {
+                    JSONObject object = new JSONObject();
+                    object.put("resumeTime", mAudioStatePublisher.getResumeTime());
+                    mClient.emit("resume", object);
+                } catch (JSONException e){
+                    e.printStackTrace();
+                }
                 break;
             case AudioStatePublisher.SEEK:
                 break;

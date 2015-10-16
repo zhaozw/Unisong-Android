@@ -200,7 +200,8 @@ public class UnisongSession {
     }
 
     public void addFrame(AudioFrame frame){
-        mSongQueue.getSong(frame.getSongID());
+        Song song = mSongQueue.getSong(frame.getSongID());
+        song.addFrame(frame);
     }
 
     public List<User> getMembers(){

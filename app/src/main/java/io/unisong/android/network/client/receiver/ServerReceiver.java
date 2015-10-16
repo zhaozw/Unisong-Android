@@ -47,7 +47,6 @@ public class ServerReceiver implements Receiver{
         mClient.on("end song", mEndSongListener);
         mClient.on("end session", mEndSessionListener);
         mClient.on("seek" , mSeekListener);
-        mClient.on("audio data" , mAudioDataListener);
 
     }
 
@@ -97,8 +96,7 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
-
-
+            mListener.pause();
 
         }
     };
@@ -108,23 +106,25 @@ public class ServerReceiver implements Receiver{
         @Override
         public void call(Object... args) {
 
-            Log.d(LOG_TAG , "Server UISong Start received.");
-            JSONObject object = (JSONObject) args[0];
-            long songStartTime;
-            int songID;
-            int channels;
             try {
-                songStartTime = object.getLong("songStartTime");
-                songID = object.getInt("songID");
-                channels = object.getInt("channels");
-            } catch (JSONException e){
+                Log.d(LOG_TAG, "Server UISong Start received.");
+                JSONObject object = (JSONObject) args[0];
+                long songStartTime;
+                int songID;
+                int channels;
+                try {
+                    songStartTime = object.getLong("songStartTime");
+                    songID = object.getInt("songID");
+                    channels = object.getInt("channels");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    return;
+                }
+                mListener.startSong(songStartTime, channels, songID);
+            } catch (Exception e){
                 e.printStackTrace();
-                return;
             }
 
-
-
-            mListener.startSong(songStartTime , channels ,songID);
         }
     };
 
@@ -144,7 +144,7 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
-
+            mListener.endSong();
         }
     };
 
@@ -156,7 +156,11 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
+            UnisongSession session = UnisongSession.getInstance();
 
+            if(session != null){
+                session.endSession();
+            }
         }
     };
 
@@ -169,20 +173,15 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
-
-        }
-    };
-
-    /**
-     * The listener for when we get data.
-     *
-     */
-    private Emitter.Listener mAudioDataListener = new Emitter.Listener() {
-
-        @Override
-        public void call(Object... args) {
-            // TODO : implement with the revised AudioData data standard.
-
+            // the first arg should be a long with the seek time
+            try {
+                Long seekTime = (Long) args[0];
+                if (seekTime != null) {
+                    mListener.seek(seekTime);
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+            };
         }
     };
 

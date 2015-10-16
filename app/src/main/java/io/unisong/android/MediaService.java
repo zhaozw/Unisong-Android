@@ -135,9 +135,9 @@ public class MediaService extends Service{
         ConnectionUtils.setInstance(utils);
 
         // Discovery handler needs to be instantiated after ConnectionUtils.
-        DiscoveryHandler handler = new DiscoveryHandler();
+        //DiscoveryHandler handler = new DiscoveryHandler();
 
-        DiscoveryHandler.setInstance(handler);
+        //DiscoveryHandler.setInstance(handler);
 
 //        AudioFileReader reader = new AudioFileReader();
 //        try {

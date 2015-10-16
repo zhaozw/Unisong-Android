@@ -1,6 +1,5 @@
 package io.unisong.android.network.host.transmitter;
 
-import io.unisong.android.audio.AudioSource;
 import io.unisong.android.network.song.Song;
 
 /**
@@ -15,16 +14,6 @@ public class TCPTransmitter implements Transmitter {
     }
 
     public void addSlave(){
-
-    }
-
-    @Override
-    public void setAudioSource(AudioSource source) {
-
-    }
-
-    @Override
-    public void setLastFrame(int lastFrame) {
 
     }
 

@@ -120,5 +120,9 @@ public class AudioStatePublisher {
         mResumeTime = resumeTime;
         update(AudioStatePublisher.RESUME);
     }
+
+    public void pause(){
+        update(AudioStatePublisher.PAUSED);
+    }
 }
 
