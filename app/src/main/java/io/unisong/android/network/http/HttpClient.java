@@ -2,6 +2,7 @@ package io.unisong.android.network.http;
 
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.facebook.AccessToken;
@@ -47,6 +48,7 @@ public class HttpClient {
     private OkHttpClient mClient;
     private boolean mLoginDone;
     private Context mContext;
+    private Handler mHandler;
 
     public HttpClient(Context context){
         mClient = new OkHttpClient();
@@ -59,6 +61,8 @@ public class HttpClient {
         mLoginDone = false;
         sInstance = this;
         mContext = context;
+        mHandler = new Handler();
+        mHandler.postDelayed(mCheckCookieRunnable, 70 * 1000);
     }
 
     public void login(String username, String password){
@@ -280,5 +284,49 @@ public class HttpClient {
 
             }
         });
+
     }
+
+    private Runnable mCheckCookieRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
+
+            for(HttpCookie cookie : cookies){
+                if(cookie.getName().equals("connect.sid") ){
+                    Log.d(LOG_TAG , "Cookie found, we are logged in.");
+
+                    if(cookie.hasExpired()){
+                        // TODO : renew cookie
+                    } else if(cookie.getMaxAge() < (24 * 60 * 1000)){
+                        mHandler.postDelayed(mReplaceCookieRunnable , 10 * 1000);
+                    }
+
+                    return;
+                }
+            }
+        }
+    };
+
+    private Runnable mReplaceCookieRunnable = new Runnable() {
+        @Override
+        public void run() {
+            try{
+                JSONObject credentials = new JSONObject();
+
+                String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY, "");
+                String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+
+                credentials.put("username" , username);
+                credentials.put("password" , password);
+                post(NetworkUtilities.HTTP_URL + "/login", credentials);
+            } catch (IOException e){
+                mHandler.postDelayed(mReplaceCookieRunnable , 100 * 1000);
+                e.printStackTrace();
+            } catch (JSONException e){
+                e.printStackTrace();
+            }
+        }
+    };
 }

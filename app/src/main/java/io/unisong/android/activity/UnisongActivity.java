@@ -144,7 +144,6 @@ public class UnisongActivity extends AppCompatActivity {
 
         addFriendButton.setBackground(iconicFontDrawable);
 
-
     }
 
     public void onProfileClick(View view){
