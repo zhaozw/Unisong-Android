@@ -1,5 +1,8 @@
 package io.unisong.android.network.song;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
@@ -13,6 +16,7 @@ public class UnisongSong extends Song {
 
     public final static String TYPE_STRING = "UnisongSong";
 
+    private SongFormat mFormat;
     private SongDecoder mSongDecoder;
 
     /**
@@ -26,7 +30,14 @@ public class UnisongSong extends Song {
      */
     public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat) {
         super(name, artist,ID ,  imageURL);
+        mFormat = inputFormat;
         mSongDecoder = new SongDecoder(inputFormat);
+    }
+
+    public UnisongSong(JSONObject object) throws JSONException{
+        super(object.getString("name"), object.getString("artist"), object.getInt("ID"), object.getString("imageURL"));
+        mFormat = new SongFormat(object.getJSONObject("format"));
+        mSongDecoder = new SongDecoder(getFormat());
     }
 
     // TODO : write and actually implement.
@@ -50,7 +61,7 @@ public class UnisongSong extends Song {
 
     @Override
     public boolean hasPCMFrame(int ID) {
-        return false;
+        return mSongDecoder.hasFrame(ID);
     }
 
     /**
@@ -68,12 +79,12 @@ public class UnisongSong extends Song {
 
     @Override
     public Map<Integer, AudioFrame> getPCMFrames() {
-        return null;
+        return mSongDecoder.getFrames();
     }
 
     @Override
     public SongFormat getFormat() {
-        return null;
+        return mFormat;
     }
 
     @Override

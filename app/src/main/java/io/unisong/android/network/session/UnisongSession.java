@@ -1,5 +1,6 @@
 package io.unisong.android.network.session;
 
+import android.os.Handler;
 import android.util.Log;
 
 import com.squareup.okhttp.Response;
@@ -12,14 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.socket.emitter.Emitter;
-import io.unisong.android.PrefUtils;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
-import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.UnisongSong;
@@ -56,6 +55,7 @@ public class UnisongSession {
     private HttpClient mClient;
     private Host host;
     private SessionSongsAdapter mAdapter;
+    private Handler mHandler;
 
     /**
      * This constructor creates a UnisongSession where the current user is the
@@ -68,6 +68,8 @@ public class UnisongSession {
         if(mSocketIOClient != null){
             mSocketIOClient.on("add song" , mAddSongListener);
         }
+
+        mHandler = new Handler();
 
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
@@ -94,14 +96,52 @@ public class UnisongSession {
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
 
-        create();
         configureSocketIO();
+        getInfoFromServer();
         mIsDisconnected = false;
         sInstance = this;
+        mHandler = new Handler();
     }
 
     public UnisongSession(User userToJoin){
 
+    }
+
+    /**
+     * Starts a thread to download the relevant issues from the server
+     */
+    private void getInfoFromServer(){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                downloadInfo();
+            }
+        });
+    }
+
+    /**
+     * Downloads the info about the current info from the server
+     */
+    private void downloadInfo(){
+        try {
+            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/session/" + mSessionID);
+
+            if(response.code() == 200){
+                String body = response.body().string();
+
+                JSONObject object = new JSONObject(body);
+
+                if(object.has("users")){
+
+                }
+
+                if(object.has("songs"))
+            } else if(response.code() == 404){
+                Log.d(LOG_TAG , "Session not found!");
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -217,8 +257,11 @@ public class UnisongSession {
     public void addSong(Song song){
         mSongQueue.addSong(song);
         if(mSongQueue.size() == 1 && mIsMaster){
+            mCurrentSong = song;
+
             // TODO : start song
         }
+
         if(mAdapter != null){
             mAdapter.add(song);
         }
@@ -231,10 +274,10 @@ public class UnisongSession {
                 JSONObject object = (JSONObject) args[0];
                 String type = object.getString("type");
                 if(type.equals(UnisongSong.TYPE_STRING)){
-
-                } else if(type.equals(LocalSong.TYPE_STRING)){
-
-                }// TODO : when added add SoundcloudSong and Spotify/Google play songs.
+                    UnisongSong song = new UnisongSong(object);
+                    mSongQueue.addSong(song);
+                }
+                // TODO : when added add SoundcloudSong and Spotify/Google play songs.
             } catch (Exception e){
                 e.printStackTrace();
                 // TODO : handle individual exceptions and report them to crashalytics/google analytics

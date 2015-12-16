@@ -47,6 +47,7 @@ public class ServerReceiver implements Receiver{
         mClient.on("end song", mEndSongListener);
         mClient.on("end session", mEndSessionListener);
         mClient.on("seek" , mSeekListener);
+        mClient.on("resume" , mResumeListener);
 
     }
 
@@ -128,14 +129,6 @@ public class ServerReceiver implements Receiver{
         }
     };
 
-    private Emitter.Listener mEmitterListener = new Emitter.Listener() {
-
-        @Override
-        public void call(Object... args) {
-            JSONObject object = (JSONObject) args[0];
-        }
-    };
-
     /**
      * The listener for when we get data.
      *
@@ -184,6 +177,33 @@ public class ServerReceiver implements Receiver{
             };
         }
     };
+
+
+    /**
+     * The listener for when we receive a Resume event
+     *
+     * params
+     * args[0] - resumeTime : long
+     * The time in the song that we are resuming at in ms
+     * args[1] - newSongStartTime : long
+     * the new song start time - ms
+     *
+     */
+    private Emitter.Listener mResumeListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+            try{
+                long resumeTime = (long) args[0];
+                long newSongStartTime = (long) args[1];
+                mListener.resume(resumeTime , newSongStartTime);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    };
+
+
 
 
     /**

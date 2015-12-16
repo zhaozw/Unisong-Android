@@ -49,13 +49,13 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                     }
                 }
 
-                broadcast();
-            }
-        });
-    }
+            broadcast();
+        }
+    });
+}
 
-    private boolean mStop = false;
-    private Song mSong;
+private boolean mStop = false;
+private Song mSong;
 
     private void broadcast(){
         int currentFrame = 0;
