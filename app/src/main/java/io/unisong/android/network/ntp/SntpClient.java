@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -80,6 +81,7 @@ public class SntpClient
             e.printStackTrace();
         }
 
+        mResults = new ArrayList<>();
         mThread = getClientThread();
         mThread.start();
 

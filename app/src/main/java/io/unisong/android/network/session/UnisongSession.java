@@ -135,7 +135,7 @@ public class UnisongSession {
 
                 }
 
-                if(object.has("songs"))
+                //if(object.has("songs"))
             } else if(response.code() == 404){
                 Log.d(LOG_TAG , "Session not found!");
             }
