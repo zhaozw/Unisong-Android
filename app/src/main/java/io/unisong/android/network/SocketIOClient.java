@@ -105,7 +105,6 @@ public class SocketIOClient {
         public void call(Object... args) {
             for(Object object : args){
                 Log.d(LOG_TAG , "Object : " + object.toString());
-                Log.d(LOG_TAG , object.getClass().getSimpleName());
             }
             Log.d(LOG_TAG , "Disconnected.");
         }
@@ -135,5 +134,15 @@ public class SocketIOClient {
 
     private void login(){
 
+        for(int i = 0 ; i < 1000; i++){
+            synchronized (this){
+                try{
+                    wait(1000);
+                } catch (InterruptedException e){
+
+                }
+            }
+            mSocket.emit("go" , i);
+        }
     }
 }

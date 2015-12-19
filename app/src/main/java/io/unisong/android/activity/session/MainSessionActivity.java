@@ -18,6 +18,7 @@ import android.widget.Toast;
 import io.unisong.android.R;
 import io.unisong.android.activity.musicselect.MusicSelectActivity;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * Created by Ethan on 9/26/2015.
@@ -88,6 +89,7 @@ public class MainSessionActivity extends AppCompatActivity {
             super(fragmentManager);
             mTabNames = getResources().getStringArray(R.array.unisong_session_tab_names);
             mFriendsFragment = new SessionMembersFragment();
+            mSongsFragment = new SessionSongsFragment();
         }
 
         @Override

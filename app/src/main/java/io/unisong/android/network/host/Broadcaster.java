@@ -26,7 +26,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class Broadcaster implements AudioObserver {
 
-    public static final String LOG_TAG ="AudioBroadcaster";
+    public static final String LOG_TAG = Broadcaster.class.getSimpleName();
+
+    private static Broadcaster sInstance;
+
+    public static Broadcaster getInstance(){
+        return sInstance;
+    }
 
     //True if the listeners are running, false otherwise
     private boolean mStreamRunning;
@@ -74,9 +80,9 @@ public class Broadcaster implements AudioObserver {
 
         mServerTransmitter = new ServerTransmitter();
         mTransmitters.add(mServerTransmitter);
+
+        sInstance = this;
     }
-
-
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     private void startSongStream(Song song){

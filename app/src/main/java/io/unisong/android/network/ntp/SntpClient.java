@@ -123,7 +123,7 @@ public class SntpClient
                 calculateOffset();
             }
 
-            if(total >= 600){
+            if(total >= 10){
                 return;
             }
         }
@@ -171,7 +171,7 @@ public class SntpClient
         // Send request
 
         InetAddress address = Address.getByName(sServerAddress);
-        Log.d(LOG_TAG , "address is " + address.toString());
+        //Log.d(LOG_TAG , "address is " + address.toString());
         byte[] buf = new NtpMessage().toByteArray();
         //TODO: change this to NTP_PORT
         DatagramPacket packet =
@@ -186,7 +186,7 @@ public class SntpClient
 
 
         // Get response
-        Log.d(LOG_TAG , "NTP request sent to : " + sServerAddress +" , waiting for response...");
+        //Log.d(LOG_TAG , "NTP request sent to : " + sServerAddress +" , waiting for response...");
         packet = new DatagramPacket(buf, buf.length);
         mSocket.setSoTimeout(500);
         try {
@@ -217,6 +217,7 @@ public class SntpClient
 
         // Display response
 
+        /*
 
         Log.d(LOG_TAG , "NTP server: " + sServerAddress);
         //Log.d(LOG_TAG , msg.toString());
@@ -229,7 +230,7 @@ public class SntpClient
 
         Log.d(LOG_TAG, "Local clock offset: " +
                 new DecimalFormat("0.00").format(localClockOffset * 1000) + " ms");
-
+        */
         NtpEntry entry = new NtpEntry(localClockOffset * 1000 , roundTripDelay * 1000);
         mResults.add(entry);
     }

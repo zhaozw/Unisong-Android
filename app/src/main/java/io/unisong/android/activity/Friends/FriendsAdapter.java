@@ -131,6 +131,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
             Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
             TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
+            Log.d(LOG_TAG , "mUser: " + mUser.toString());
+            Log.d(LOG_TAG , "name : " + name.toString());
             name.setText(mUser.getName());
 
             TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);

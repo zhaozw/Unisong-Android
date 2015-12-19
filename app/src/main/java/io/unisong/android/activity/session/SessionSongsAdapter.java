@@ -2,6 +2,7 @@ package io.unisong.android.activity.session;
 
 import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 import io.unisong.android.R;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.user.User;
 
@@ -21,6 +23,8 @@ import io.unisong.android.network.user.User;
  */
 public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapter.ViewHolder> {
     private List<Song> mDataset;
+
+    private final static String LOG_TAG = SessionSongsAdapter.class.getSimpleName();
 
     private Handler mHandler;
     // Provide a reference to the views for each data item
@@ -46,6 +50,7 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
      * @param song
      */
     public void add(Song song){
+        Log.d(LOG_TAG, "Song Added");
         mDataset.add(song);
         notifyItemInserted(mDataset.size());
     }
@@ -69,6 +74,8 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
     // Provide a suitable constructor (depends on the kind of dataset)
     public SessionSongsAdapter(List<Song> myDataset) {
         mDataset = myDataset;
+        // Give the dataset to the session so that it can be updated manually
+        UnisongSession.getInstance().setSongAdapter(this);
     }
 
     // Create new views (invoked by the layout manager)

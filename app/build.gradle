@@ -28,11 +28,9 @@ dependencies {
     compile 'com.android.support:design:23.0.1'
     compile 'dnsjava:dnsjava:2.1.1'
     compile 'com.iangclifton.android:floatlabel:1.0.4'
-    compile 'com.squareup.okhttp:okhttp:2.4.0'
-    compile 'com.squareup.okio:okio:1.6.0'
     compile 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
     compile 'com.github.theDazzler:droidicon:0.1.9'
-    compile 'io.socket:socket.io-client:0.6.1'
+    compile 'io.socket:socket.io-client:0.6.2'
     compile 'com.facebook.android:facebook-android-sdk:4.0.0'
     compile 'de.hdodenhof:circleimageview:2.0.0'
     compile('com.afollestad.material-dialogs:core:0.8.0.1@aar') {
@@ -40,7 +38,6 @@ dependencies {
     }
     compile 'com.getbase:floatingactionbutton:1.10.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'io.reactivex:rxjava:1.0.14'
 }
 
 repositories {

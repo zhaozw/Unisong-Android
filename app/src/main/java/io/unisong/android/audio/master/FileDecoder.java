@@ -58,6 +58,10 @@ public class FileDecoder implements Decoder{
         //Set the variables
         mRunning = false;
 
+        // After hiatus: should I be instnatiating these here?
+        mCurrentFrameID = 0;
+        mSamples = 0l;
+
         mFrameBufferSize  = 50;
 
         //Create the file and start the Thread.

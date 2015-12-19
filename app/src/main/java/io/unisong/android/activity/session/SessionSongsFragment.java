@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.unisong.android.R;
@@ -42,7 +43,11 @@ public class SessionSongsFragment extends Fragment {
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new SessionSongsAdapter(mSession.getSongQueue().getQueue());
+        List<Song> songs = new ArrayList<>();
+        for(Song song : mSession.getSongQueue().getQueue()){
+            songs.add(song);
+        }
+        mAdapter = new SessionSongsAdapter(songs);
         mRecyclerView.setAdapter(mAdapter);
 
         return view;

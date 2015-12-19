@@ -1,6 +1,7 @@
 package io.unisong.android.network.session;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.squareup.okhttp.Response;
@@ -15,10 +16,12 @@ import java.util.List;
 import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.UnisongSong;
@@ -89,10 +92,18 @@ public class UnisongSession {
     public UnisongSession(int ID){
         mSessionID = ID + "";
 
+        try{
+            throw new Exception();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         Log.d(LOG_TAG , "Creating session based on ID : " + ID);
         mClient = HttpClient.getInstance();
         mSocketIOClient = SocketIOClient.getInstance();
 
+        // ?????
+        Looper.prepare();
+        mHandler = new Handler();
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
 
@@ -100,7 +111,6 @@ public class UnisongSession {
         getInfoFromServer();
         mIsDisconnected = false;
         sInstance = this;
-        mHandler = new Handler();
     }
 
     public UnisongSession(User userToJoin){
@@ -256,10 +266,20 @@ public class UnisongSession {
 
     public void addSong(Song song){
         mSongQueue.addSong(song);
+        Log.d(LOG_TAG, "Is Master: " + mIsMaster);
+        Log.d(LOG_TAG , "SongQueue : " + mSongQueue.size());
         if(mSongQueue.size() == 1 && mIsMaster){
+            Log.d(LOG_TAG , "Starting song?");
             mCurrentSong = song;
 
             // TODO : start song
+            Log.d(LOG_TAG , "Starting song?");
+
+            try {
+                Broadcaster.getInstance().startSong(song);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
 
         if(mAdapter != null){
