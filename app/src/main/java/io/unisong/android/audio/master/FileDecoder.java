@@ -68,11 +68,6 @@ public class FileDecoder implements Decoder{
         mCurrentFile = new File(path);
     }
 
-    public void setFrameBufferSize(int size){
-        mDecodeThread = getDecode();
-        mDecodeThread.start();
-    }
-
     /**
      * Starts the decoding at the beginning of the song.
      */

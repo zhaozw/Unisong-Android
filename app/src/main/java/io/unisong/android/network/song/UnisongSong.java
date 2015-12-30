@@ -1,5 +1,7 @@
 package io.unisong.android.network.song;
 
+import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -14,6 +16,7 @@ import io.unisong.android.audio.client.SongDecoder;
  */
 public class UnisongSong extends Song {
 
+    private final static String LOG_TAG = UnisongSong.class.getSimpleName();
     public final static String TYPE_STRING = "UnisongSong";
 
     private SongFormat mFormat;
@@ -31,12 +34,14 @@ public class UnisongSong extends Song {
     public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat) {
         super(name, artist,ID ,  imageURL);
         mFormat = inputFormat;
+        Log.d(LOG_TAG, mFormat.toString());
         mSongDecoder = new SongDecoder(inputFormat);
     }
 
     public UnisongSong(JSONObject object) throws JSONException{
         super(object.getString("name"), object.getString("artist"), object.getInt("ID"), object.getString("imageURL"));
         mFormat = new SongFormat(object.getJSONObject("format"));
+        Log.d(LOG_TAG, mFormat.toString());
         mSongDecoder = new SongDecoder(getFormat());
     }
 

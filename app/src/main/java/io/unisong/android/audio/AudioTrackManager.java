@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import io.unisong.android.network.TimeManager;
@@ -78,7 +79,9 @@ public class AudioTrackManager implements AudioObserver {
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mAudioStatePublisher.attach(this);
 
+
         mHandler = new Handler();
+        sInstance = this;
     }
 
     private boolean mStartSongRunning = false;

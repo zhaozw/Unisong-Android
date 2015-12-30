@@ -60,6 +60,8 @@ public class CurrentUser {
         } else {
             sCurrentUser = new User(context, username);
         }
+
+        mFriendsList = new FriendsList(context);
     }
 
     public CurrentUser(Context context, User user){
@@ -70,6 +72,8 @@ public class CurrentUser {
         if(user.isFacebookUser()){
             FacebookAccessToken.saveFacebookAccessToken(context);
         }
+
+        mFriendsList = new FriendsList(context);
     }
 
     public User getUser(){

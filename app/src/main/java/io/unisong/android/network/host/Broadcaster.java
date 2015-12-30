@@ -1,5 +1,6 @@
 package io.unisong.android.network.host;
 
+import android.os.Handler;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioObserver;
@@ -47,17 +48,14 @@ public class Broadcaster implements AudioObserver {
 
     private AACEncoder mEncoder;
 
-    //The Scheduler that handles packet send delays.
-    private ScheduledExecutorService mWorker;
-
     private LANTransmitter mLANTransmitter;
 
     private UnisongSession mUnisongSession;
 
     private ServerTransmitter mServerTransmitter;
 
+    private Handler mHandler;
     private AudioTrackManager mAudioTrackManager;
-    private UnisongSession mSession;
 
     private Song mCurrentSong;
 
@@ -66,11 +64,9 @@ public class Broadcaster implements AudioObserver {
         //Get the singleton objects.
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mTimeManager = TimeManager.getInstance();
-        mSession = session;
+        mUnisongSession = session;
 
         mAudioTrackManager = AudioTrackManager.getInstance();
-
-        mUnisongSession = new UnisongSession();
 
         //TODO: check to see if we're on wifi. If not, then don't start LANTransmitter
         mTransmitters = new ArrayList<>();
@@ -81,31 +77,37 @@ public class Broadcaster implements AudioObserver {
         mServerTransmitter = new ServerTransmitter();
         mTransmitters.add(mServerTransmitter);
 
+        mHandler = new Handler();
         sInstance = this;
     }
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
     private void startSongStream(Song song){
 
-        mCurrentSong = song;
+        Log.d(LOG_TAG , "Starting Song stream");
+        try {
+            mCurrentSong = song;
 
-        song.start();
-        mUnisongSession.startSong(song.getID());
+            song.start();
+            mUnisongSession.startSong(song.getID());
 
 
-        // The start time in milliseconds
-        mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
+            // The start time in milliseconds
+            mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
 
-        mWorker.schedule(mNotifyAudioPublisher, CONSTANTS.SONG_START_DELAY, TimeUnit.MILLISECONDS);
+            mHandler.postDelayed(mNotifyAudioPublisher, CONSTANTS.SONG_START_DELAY);
 
-        for(Transmitter transmitter : mTransmitters){
-            transmitter.startSong(song);
+            for (Transmitter transmitter : mTransmitters) {
+                transmitter.startSong(song);
+            }
+
+            mAudioTrackManager.startSong(song);
+
+            mStreamRunning = true;
+
+        } catch (Exception e){
+            e.printStackTrace();
         }
-
-        mAudioTrackManager.startSong(song);
-
-        mStreamRunning = true;
-
 
         Log.d(LOG_TAG , "Starting broadcaster succeeded.");
     }

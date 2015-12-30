@@ -124,6 +124,7 @@ public class MainActivity extends ActionBarActivity {
         return new Thread(new Runnable() {
             @Override
             public void run() {
+                Looper.prepare();
                 checkIfLoggedIn();
             }
         });

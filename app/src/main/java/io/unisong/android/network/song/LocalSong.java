@@ -46,8 +46,8 @@ public class LocalSong extends Song {
     public LocalSong(UISong uiSong){
         super(uiSong.getName() , uiSong.getArtist() , uiSong.getImageURL());
         mPath = uiSong.getPath();
-        mEncoder = new AACEncoder();
-        mEncoder.setSong(this);
+        //mEncoder = new AACEncoder();
+        //mEncoder.setSong(this);
         mDecoder = new FileDecoder(mPath);
         start();
     }
@@ -96,7 +96,7 @@ public class LocalSong extends Song {
      */
     public void start(){
         mDecoder.startDecode();
-        mEncoder.encode(0 , super.getID() , mPath);
+        //mEncoder.encode(0 , super.getID() , mPath);
     }
 
     public boolean hasFrame(int ID){

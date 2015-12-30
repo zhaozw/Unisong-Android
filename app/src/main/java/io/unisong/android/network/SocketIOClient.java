@@ -134,6 +134,7 @@ public class SocketIOClient {
 
     private void login(){
 
+        // TODO : implement?
         for(int i = 0 ; i < 1000; i++){
             synchronized (this){
                 try{
@@ -142,7 +143,7 @@ public class SocketIOClient {
 
                 }
             }
-            mSocket.emit("go" , i);
+            //mSocket.emit("go" , i);
         }
     }
 }

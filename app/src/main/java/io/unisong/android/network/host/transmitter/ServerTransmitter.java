@@ -11,6 +11,7 @@ import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.song.Song;
+import io.unisong.android.network.song.SongFormat;
 
 /**
  * The class to handle transmissions to my python/HTTP server
@@ -117,7 +118,20 @@ private Song mSong;
         try {
             startSongJSON.put("songStartTime", mTimeManager.getSongStartTime());
             startSongJSON.put("songID", song.getID());
-            startSongJSON.put("format" ,song.getFormat().toJSON());
+            SongFormat format = song.getFormat();
+
+            while(format == null){
+                synchronized (this){
+                    try{
+                        this.wait(1);
+                    } catch (InterruptedException e){
+
+                    }
+                }
+                format = song.getFormat();
+
+            }
+            startSongJSON.put("format", format.toJSON());
         } catch (JSONException e){
             e.printStackTrace();
         }

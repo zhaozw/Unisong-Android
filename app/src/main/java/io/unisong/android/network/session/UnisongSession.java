@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
@@ -58,7 +59,6 @@ public class UnisongSession {
     private HttpClient mClient;
     private Host host;
     private SessionSongsAdapter mAdapter;
-    private Handler mHandler;
 
     /**
      * This constructor creates a UnisongSession where the current user is the
@@ -72,8 +72,6 @@ public class UnisongSession {
             mSocketIOClient.on("add song" , mAddSongListener);
         }
 
-        mHandler = new Handler();
-
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
         mIsMaster = true;
@@ -83,7 +81,7 @@ public class UnisongSession {
         mIsDisconnected = false;
         sInstance = this;
 
-
+        Broadcaster broadcaster = new Broadcaster(this);
     }
 
     /**
@@ -92,18 +90,16 @@ public class UnisongSession {
     public UnisongSession(int ID){
         mSessionID = ID + "";
 
+        /*
         try{
             throw new Exception();
         } catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
         Log.d(LOG_TAG , "Creating session based on ID : " + ID);
         mClient = HttpClient.getInstance();
         mSocketIOClient = SocketIOClient.getInstance();
 
-        // ?????
-        Looper.prepare();
-        mHandler = new Handler();
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
 
@@ -111,6 +107,7 @@ public class UnisongSession {
         getInfoFromServer();
         mIsDisconnected = false;
         sInstance = this;
+
     }
 
     public UnisongSession(User userToJoin){
@@ -121,12 +118,16 @@ public class UnisongSession {
      * Starts a thread to download the relevant issues from the server
      */
     private void getInfoFromServer(){
-        mHandler.post(new Runnable() {
+        Log.d(LOG_TAG , "Posting");
+        // TODO : don't use thread here.
+        new Thread(new Runnable() {
             @Override
             public void run() {
+                Log.d(LOG_TAG , "calling download");
+                Looper.prepare();
                 downloadInfo();
             }
-        });
+        }).start();
     }
 
     /**
@@ -134,10 +135,13 @@ public class UnisongSession {
      */
     private void downloadInfo(){
         try {
+            Log.d(LOG_TAG , "Sending GET about session.");
             Response response = mClient.get(NetworkUtilities.HTTP_URL + "/session/" + mSessionID);
 
+            Log.d(LOG_TAG , "Code : " + response.code() );
             if(response.code() == 200){
                 String body = response.body().string();
+                Log.d(LOG_TAG , body);
 
                 JSONObject object = new JSONObject(body);
 
@@ -145,7 +149,24 @@ public class UnisongSession {
 
                 }
 
-                //if(object.has("songs"))
+                if(object.has("songs")){
+
+                }
+
+                if(object.has("sessionState")){
+
+                }
+
+                if(object.has("master")){
+                    String masterID = object.getString("master");
+                    User user = CurrentUser.getInstance();
+                    if(user.getUUID().compareTo(UUID.fromString(masterID)) == 0){
+                        mIsMaster = true;
+                        Broadcaster broadcaster = new Broadcaster(this);
+                    }
+                }
+
+
             } else if(response.code() == 404){
                 Log.d(LOG_TAG , "Session not found!");
             }
@@ -266,8 +287,11 @@ public class UnisongSession {
 
     public void addSong(Song song){
         mSongQueue.addSong(song);
+
         Log.d(LOG_TAG, "Is Master: " + mIsMaster);
         Log.d(LOG_TAG , "SongQueue : " + mSongQueue.size());
+
+
         if(mSongQueue.size() == 1 && mIsMaster){
             Log.d(LOG_TAG , "Starting song?");
             mCurrentSong = song;
@@ -276,6 +300,8 @@ public class UnisongSession {
             Log.d(LOG_TAG , "Starting song?");
 
             try {
+                Broadcaster broadcaster = Broadcaster.getInstance();
+                Log.d(LOG_TAG , "Broadcaster : " + broadcaster.toString());
                 Broadcaster.getInstance().startSong(song);
             } catch (Exception e){
                 e.printStackTrace();
