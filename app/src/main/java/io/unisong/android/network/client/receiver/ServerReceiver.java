@@ -17,6 +17,7 @@ import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * Created by ezturner on 6/8/2015.
@@ -149,7 +150,7 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
-            UnisongSession session = UnisongSession.getInstance();
+            UnisongSession session = CurrentUser.getInstance().getSession();
 
             if(session != null){
                 session.endSession();

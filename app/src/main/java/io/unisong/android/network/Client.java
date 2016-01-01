@@ -16,6 +16,7 @@ import io.unisong.android.network.packets.tcp.TCPSeekPacket;
 import io.unisong.android.network.packets.tcp.TCPSongInProgressPacket;
 import io.unisong.android.network.packets.tcp.TCPSongStartPacket;
 import io.unisong.android.network.session.UnisongSession;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 
 import java.io.BufferedInputStream;
@@ -82,7 +83,7 @@ public class Client {
     //TODO : Add mode for server connection
     public Client(String ip, Socket socket, MasterTCPHandler parent, LANTransmitter transmitter){
 
-        mSession = UnisongSession.getInstance();
+        mSession = CurrentUser.getInstance().getSession();
         mTransmitter = transmitter;
 
         //Get the singleton objects.

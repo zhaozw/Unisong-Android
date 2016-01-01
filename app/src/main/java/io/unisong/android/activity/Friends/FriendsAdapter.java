@@ -140,7 +140,6 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
             TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);
             username.setText("@" + mUser.getUsername());
-
         }
     }
 

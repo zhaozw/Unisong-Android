@@ -87,8 +87,8 @@ public class CurrentUser {
         Log.d(LOG_TAG , "Logging Out");
         HttpClient client = HttpClient.getInstance();
 
+        UnisongSession session = sCurrentUser.getSession();
         sCurrentUser = null;
-        UnisongSession session = UnisongSession.getInstance();
 
         // delete the Unisong session if we have one
         if(session != null){
@@ -103,7 +103,7 @@ public class CurrentUser {
 
         // Send logout request
         try {
-            client.post(NetworkUtilities.HTTP_URL + "/logout", new JSONObject());
+            client.syncPost(NetworkUtilities.HTTP_URL + "/logout", new JSONObject());
         } catch (IOException e){
             // TODO : manually delete cookie.
             e.printStackTrace();

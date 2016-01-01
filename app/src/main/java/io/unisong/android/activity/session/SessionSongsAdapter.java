@@ -16,6 +16,7 @@ import java.util.List;
 import io.unisong.android.R;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 
 /**
@@ -75,7 +76,7 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
     public SessionSongsAdapter(List<Song> myDataset) {
         mDataset = myDataset;
         // Give the dataset to the session so that it can be updated manually
-        UnisongSession.getInstance().setSongAdapter(this);
+        CurrentUser.getInstance().getSession().setSongAdapter(this);
     }
 
     // Create new views (invoked by the layout manager)

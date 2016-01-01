@@ -131,7 +131,7 @@ public class LoginActivity extends ActionBarActivity {
                 Response httpResponse;
 
                 try {
-                    httpResponse = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + loginResult.getAccessToken().getUserId());
+                    httpResponse = mClient.syncGet(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + loginResult.getAccessToken().getUserId());
                 } catch (IOException e){
                     e.printStackTrace();
                     return;

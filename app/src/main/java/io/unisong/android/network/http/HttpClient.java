@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.facebook.AccessToken;
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -99,7 +100,7 @@ public class HttpClient {
                 Log.d(LOG_TAG, "Sending Login Request");
                 Response response;
                 try {
-                    response = post(NetworkUtilities.HTTP_URL + "/login", object);
+                    response = syncPost(NetworkUtilities.HTTP_URL + "/login", object);
                 } catch (IOException e){
                     e.printStackTrace();
                     Log.d(LOG_TAG, "Request Failed");
@@ -123,7 +124,41 @@ public class HttpClient {
         });
     }
 
-    public Response post(String url, JSONObject json) throws IOException {
+    public void post(String url, JSONObject json, Callback callback) throws IOException {
+        RequestBody body = RequestBody.create(JSON, json.toString());
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+        mClient.newCall(request).enqueue(callback);
+    }
+
+    public void get(String url , Callback callback) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+        .build();
+        mClient.newCall(request).enqueue(callback);
+    }
+
+    public void put(String url, JSONObject json, Callback callback) throws IOException {
+        RequestBody body = RequestBody.create(JSON, json.toString());
+        Request request = new Request.Builder()
+                .url( url)
+                .put(body)
+                .build();
+        mClient.newCall(request).enqueue(callback);
+    }
+
+    public void delete(String url, Callback callback) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .delete()
+                .build();
+        mClient.newCall(request).enqueue(callback);
+    }
+
+    public Response syncPost(String url, JSONObject json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
                 .url(url)
@@ -133,16 +168,16 @@ public class HttpClient {
         return response;
     }
 
-    public Response get(String url) throws IOException {
+    public Response syncGet(String url) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .get()
-        .build();
+                .build();
         Response response = mClient.newCall(request).execute();
         return response;
     }
 
-    public Response put(String url, JSONObject json) throws IOException {
+    public Response syncPut(String url, JSONObject json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
                 .url( url)
@@ -152,7 +187,7 @@ public class HttpClient {
         return response;
     }
 
-    public Response delete(String url) throws IOException {
+    public Response syncDelete(String url) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .delete()
@@ -170,9 +205,6 @@ public class HttpClient {
     }
 
     public void checkIfLoggedIn(){
-
-
-
         String accountType = PrefUtils.getFromPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "");
 
         if(accountType.equals("facebook")){
@@ -215,7 +247,6 @@ public class HttpClient {
         }
 
         mLoginDone = true;
-
 
     }
 
@@ -261,7 +292,7 @@ public class HttpClient {
 
                 Response response;
                 try {
-                    response = post(NetworkUtilities.HTTP_URL + "/auth/facebook", loginObject);
+                    response = syncPost(NetworkUtilities.HTTP_URL + "/auth/facebook", loginObject);
                 } catch (IOException e){
                     // TODO : handle
                     e.printStackTrace();
@@ -320,7 +351,7 @@ public class HttpClient {
 
                 credentials.put("username" , username);
                 credentials.put("password" , password);
-                post(NetworkUtilities.HTTP_URL + "/login", credentials);
+                syncPost(NetworkUtilities.HTTP_URL + "/login", credentials);
             } catch (IOException e){
                 mHandler.postDelayed(mReplaceCookieRunnable , 100 * 1000);
                 e.printStackTrace();

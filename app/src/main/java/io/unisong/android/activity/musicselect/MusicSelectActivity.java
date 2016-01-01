@@ -35,13 +35,14 @@ import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.LocalSong;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * Created by Ethan on 2/26/2015.
  */
 public class MusicSelectActivity extends AppCompatActivity{
 
-    private final String LOG_TAG = MusicSelectActivity.class.getSimpleName();
+    private final static String LOG_TAG = MusicSelectActivity.class.getSimpleName();
 
 
 
@@ -131,7 +132,7 @@ public class MusicSelectActivity extends AppCompatActivity{
                 MusicDataManager manager = MusicDataManager.getInstance();
                 UISong uiSong = manager.getSongByID(ID);
                 LocalSong song = new LocalSong(uiSong);
-                UnisongSession session = UnisongSession.getInstance();
+                UnisongSession session = CurrentUser.getInstance().getSession();
                 if(session != null)
                     session.addSong(song);
                 onBackPressed();
@@ -202,6 +203,8 @@ public class MusicSelectActivity extends AppCompatActivity{
             mMusicDataRecyclerView.setLayoutManager(mLayoutManager);
 
             mAdapter = new MusicAdapter(layout.getContext());
+            Log.d(LOG_TAG , POSITION);
+            Log.d(LOG_TAG , mDataManager.toString());
             mAdapter.setData(mDataManager.getData(getArguments().getInt(POSITION)));
             mMusicDataRecyclerView.setAdapter(mAdapter);
 

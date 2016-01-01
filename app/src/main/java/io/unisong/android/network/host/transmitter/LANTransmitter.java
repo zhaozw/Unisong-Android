@@ -15,6 +15,7 @@ import io.unisong.android.network.host.MasterTCPHandler;
 import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
 import io.unisong.android.network.song.Song;
+import io.unisong.android.network.user.CurrentUser;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -83,7 +84,7 @@ public class LANTransmitter implements Transmitter{
         //TODO: send out 4-5 UDP packets over 50-100ms checking if we can use the port?
 
 
-        mCurrentSession = UnisongSession.getInstance();
+        mCurrentSession = CurrentUser.getInstance().getSession();
         mPacketsToRebroadcast = new ArrayList<>();
 
         mMasterFECHandler = new MasterFECHandler();

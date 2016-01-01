@@ -15,6 +15,7 @@ import java.util.List;
 import io.unisong.android.R;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * Created by Ethan on 9/26/2015.
@@ -33,7 +34,7 @@ public class SessionSongsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view =inflater.inflate(R.layout.fragment_session_songs, container, false);
 
-        mSession = UnisongSession.getInstance();
+        mSession = CurrentUser.getInstance().getSession();
         mRecyclerView = (RecyclerView) view.findViewById(R.id.session_songs_recyclerview);
 
         // use this setting to improve performance if you know that changes

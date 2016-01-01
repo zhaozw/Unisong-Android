@@ -40,11 +40,7 @@ import io.unisong.android.network.user.User;
 public class UnisongSession {
 
     private final static String LOG_TAG = UnisongSession.class.getSimpleName();
-    private static UnisongSession sInstance;
 
-    public static UnisongSession getInstance(){
-        return sInstance;
-    }
 
     private Song mCurrentSong;
     private String mSessionID;
@@ -79,7 +75,6 @@ public class UnisongSession {
         create();
         configureSocketIO();
         mIsDisconnected = false;
-        sInstance = this;
 
         Broadcaster broadcaster = new Broadcaster(this);
     }
@@ -106,7 +101,6 @@ public class UnisongSession {
         configureSocketIO();
         getInfoFromServer();
         mIsDisconnected = false;
-        sInstance = this;
 
     }
 
@@ -136,7 +130,7 @@ public class UnisongSession {
     private void downloadInfo(){
         try {
             Log.d(LOG_TAG , "Sending GET about session.");
-            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/session/" + mSessionID);
+            Response response = mClient.syncGet(NetworkUtilities.HTTP_URL + "/session/" + mSessionID);
 
             Log.d(LOG_TAG , "Code : " + response.code() );
             if(response.code() == 200){
@@ -198,7 +192,7 @@ public class UnisongSession {
                 Response response;
                 Log.d(LOG_TAG , "Creating Unisong session.");
                 try {
-                    response = mClient.post(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
+                    response = mClient.syncPost(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
 
                     if(response.code() == 200){
                         String body = response.body().string();
@@ -262,8 +256,6 @@ public class UnisongSession {
             endSession();
         }
         disconnect();
-
-        sInstance = null;
 
         mSongQueue = null;
         mClients = null;

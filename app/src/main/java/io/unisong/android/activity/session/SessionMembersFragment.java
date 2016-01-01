@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 
 import io.unisong.android.R;
 import io.unisong.android.network.session.UnisongSession;
+import io.unisong.android.network.user.CurrentUser;
 
 
 /**
@@ -29,7 +30,7 @@ public class SessionMembersFragment extends Fragment{
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_session_friends, container, false);
 
-        mSession = UnisongSession.getInstance();
+        mSession = CurrentUser.getInstance().getSession();
         mRecyclerView = (RecyclerView) view.findViewById(R.id.members_recyclerview);
 
         // use this setting to improve performance if you know that changes

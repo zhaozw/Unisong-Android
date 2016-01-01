@@ -46,10 +46,9 @@ public class LocalSong extends Song {
     public LocalSong(UISong uiSong){
         super(uiSong.getName() , uiSong.getArtist() , uiSong.getImageURL());
         mPath = uiSong.getPath();
-        //mEncoder = new AACEncoder();
-        //mEncoder.setSong(this);
+        mEncoder = new AACEncoder();
+        mEncoder.setSong(this);
         mDecoder = new FileDecoder(mPath);
-        start();
     }
 
     private Runnable mCreateRunnable = new Runnable() {

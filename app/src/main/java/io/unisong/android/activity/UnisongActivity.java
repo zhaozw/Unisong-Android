@@ -36,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import io.unisong.android.MediaService;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
@@ -324,22 +325,24 @@ public class UnisongActivity extends AppCompatActivity {
 
 
     public void onFABClick(View view){
-        UnisongSession session = UnisongSession.getInstance();
+        UnisongSession session = CurrentUser.getInstance().getSession();
         if(session != null){
             // TODO : if we're in a session, move to the Session screen
         } else {
             // TODO : if not, then create a session
 
-            Intent broadcast = new Intent("unisong-service-interface");
-            // You can also include some extra data.
-            broadcast.putExtra("command", "start session");
+            CurrentUser.getInstance().setSession(new UnisongSession());
 
-            LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
         }
 
         Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
         startActivity(intent);
+    }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
 
+        stopService(new Intent(this, MediaService.class));
     }
 }

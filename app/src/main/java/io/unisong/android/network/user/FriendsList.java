@@ -173,7 +173,7 @@ public class FriendsList implements Serializable{
 
         Response response;
         try {
-            response = client.get(URL);
+            response = client.syncGet(URL);
         } catch (IOException e){
             e.printStackTrace();
             Log.d(LOG_TAG, "Request Failed");

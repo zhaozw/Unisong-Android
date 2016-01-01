@@ -21,6 +21,7 @@
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
 
         <service android:name=".MediaService"/>
+        <service android:name=".network.NetworkService"/>
 
         <activity android:name=".activity.UnisongActivity"
             android:label="@string/app_name"

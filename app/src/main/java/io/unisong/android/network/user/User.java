@@ -17,8 +17,10 @@ import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.session.UnisongSession;
 
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkUrlFactory;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
@@ -55,6 +57,7 @@ public class User implements Serializable {
     private String mName;
     private Context mContext;
     private String mPassword;
+    private UnisongSession mSession;
 
     // The boolean tag to tell us if we failed to get the profile picture
     private boolean mRetrieveProfilePictureFailed;
@@ -72,13 +75,13 @@ public class User implements Serializable {
         mContext = context;
         mHasProfilePicture = false;
         mRetrieveProfilePictureFailed = false;
+        getUserInfoThread().start();
     }
 
 
     public User(Context context , String username){
         this(context);
         mUsername = username;
-        getUserInfoThread().start();
 
         // TODO : load rest of info from server and save.
     }
@@ -86,7 +89,6 @@ public class User implements Serializable {
     public User(Context context , UUID uuid){
         this(context);
         mUUID = uuid;
-        getUserInfoThread().start();
     }
 
 
@@ -100,19 +102,43 @@ public class User implements Serializable {
         this(context);
         mFacebookID = accessToken.getUserId();
         mIsFacebookUser = true;
-        Log.d(LOG_TAG , "Initializing facebook user.");
-        getUserInfoThread().start();
+        Log.d(LOG_TAG, "Initializing facebook user.");
+    }
+
+    private Thread getUserInfoThread(){
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getUserInfo();
+                checkSessionStatus();
+                //loadProfilePicture();
+            }
+        });
     }
 
     public void checkSessionStatus(){
         try {
-            Response response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/session/");
+
+            while(mUUID == null){
+                synchronized (this){
+                    try {
+                        this.wait(10);
+                    } catch (InterruptedException e){
+
+                    }
+                }
+            }
+            Response response = mClient.syncGet(NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/session/");
+
+            Log.d(LOG_TAG , "response");
 
             if(response.code() == 200){
                 int id = Integer.parseInt(response.body().string());
 
-                UnisongSession session = new UnisongSession(id);
+                Log.d(LOG_TAG , "Session created");
+                mSession = new UnisongSession(id);
             }
+
         } catch (IOException e){
             e.printStackTrace();
         } catch (NullPointerException e){
@@ -142,6 +168,14 @@ public class User implements Serializable {
 
     public String getPhoneNumber(){
         return mPhoneNumber;
+    }
+
+    public void setSession(UnisongSession session){
+        mSession = session;
+    }
+
+    public UnisongSession getSession() {
+        return mSession;
     }
 
 
@@ -179,30 +213,31 @@ public class User implements Serializable {
     }
 
 
-    private Thread getUserInfoThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-                getUserInfo();
-                checkSessionStatus();
-                //loadProfilePicture();
-            }
-        });
-    }
-
     /**
      * This method retrieves user info from the server and assigns it to relevant fields.
      * TODO : figure out how to properly mix this with cached data.
      */
     private void getUserInfo(){
-        Response response;
+
+        Callback profileCallback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                parseResponse(response);
+            }
+        };
+
         try {
             if (mUsername != null && !mUsername.equals("")) {
-                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + mUsername);
+                mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + mUsername ,profileCallback);
             } else if (mUUID != null) {
-                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID);
+                mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID , profileCallback);
             } else if (mFacebookID != null) {
-                response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + mFacebookID);
+                mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + mFacebookID , profileCallback);
             } else {
                 return;
             }
@@ -210,6 +245,9 @@ public class User implements Serializable {
             e.printStackTrace();
             return;
         }
+    }
+
+    private void parseResponse(Response response){
         JSONObject object;
         try {
             String body = response.body().string();
@@ -239,10 +277,10 @@ public class User implements Serializable {
             // TODO : investigate when this could happen
             return;
         }
-
     }
 
     public void uploadProfilePicture(Bitmap bitmap){
+        // TODO : don't use bitmaps?
         Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -267,6 +305,7 @@ public class User implements Serializable {
         return user;
     }
 
+
     private void uploadPicture(String encoded){
         JSONObject object = new JSONObject();
         try {
@@ -276,13 +315,24 @@ public class User implements Serializable {
             return;
         }
 
+        Callback uploadCallback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                // TODO : implement?
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                // TODO : implement?
+            }
+        };
+
         try {
-            mClient.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object);
+            mClient.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object, uploadCallback);
         } catch (IOException e){
             e.printStackTrace();
         }
 
-        System.gc();
     }
 
     public boolean hasProfilePicture(){

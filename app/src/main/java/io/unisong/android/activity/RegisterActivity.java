@@ -106,7 +106,7 @@ public class RegisterActivity extends ActionBarActivity {
 
         Response response;
         try {
-            response = client.post(URL, json);
+            response = client.syncPost(URL, json);
         } catch (IOException e){
             e.printStackTrace();
             Log.d(LOG_TAG, "Request Failed");

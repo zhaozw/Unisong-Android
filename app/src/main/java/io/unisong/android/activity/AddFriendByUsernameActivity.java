@@ -55,7 +55,7 @@ public class AddFriendByUsernameActivity extends AppCompatActivity{
 
             Response response;
             try {
-                 response = mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + username);
+                 response = mClient.syncGet(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + username);
             } catch (IOException e){
                 e.printStackTrace();
                 return "Failure";
@@ -85,7 +85,7 @@ public class AddFriendByUsernameActivity extends AppCompatActivity{
             try{
                 JSONObject object = new JSONObject();
                 object.put("friendID" , userID);
-                response = mClient.post(NetworkUtilities.HTTP_URL + "/user/friends" , object);
+                response = mClient.syncPost(NetworkUtilities.HTTP_URL + "/user/friends" , object);
             } catch (IOException e){
                 e.printStackTrace();
                 return "Failure";

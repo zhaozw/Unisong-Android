@@ -113,7 +113,6 @@ public class FileDecoder implements Decoder{
         // try to set the source, this might fail
         try {
             mExtractor.setDataSource(mCurrentFile.getPath());
-
         } catch (IOException e) {
             e.printStackTrace();
             //TODO : Handle this exception

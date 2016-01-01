@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,28 +29,20 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.network.Host;
 import io.unisong.android.MediaService.MediaServiceBinder;
+import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.FriendsList;
 
 import java.util.ArrayList;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
 
     private final static String LOG_TAG = MainActivity.class.getSimpleName();
-
-    //The MediaService that does basically everything
-    private MediaService mMediaService;
-
-
-    private boolean mMasterReceived;
-
-    //The list of master devices that can be connected to
-    private ArrayList<Host> mHosts;
-
 
     //The handler for interacting with the UI thread
     private static Handler sHandler;
 
+    private NetworkService mNetworkService;
     private HttpClient mClient;
 
     //The Intent
@@ -65,31 +58,26 @@ public class MainActivity extends ActionBarActivity {
 
         //Create the activity and set the layout
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
         //setContentView(R.layout.activity_main);
 
         mIntent = getIntent();
-        hasStarted = mIntent.getBooleanExtra("has-started" , false);
+        hasStarted = mIntent.getBooleanExtra("has-started", false);
 
-        if(HttpClient.getInstance() == null){
-            Log.d(LOG_TAG , "Starting HttpClient.");
-            mClient = new HttpClient(getApplicationContext());
-        }
+        Log.d(LOG_TAG , "Starting MainActivity");
 
         if(!hasStarted) {
 
-            FriendsList friendsList = new FriendsList(getApplicationContext());
+            Log.d(LOG_TAG , "Attempting to start network service.");
             //Start MediaService
-            Intent ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
+            Intent ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
+            startService(ServiceIntent);
+            ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
             startService(ServiceIntent);
 
+            Log.d(LOG_TAG , "why");
 
             mIntent.putExtra("has-started"  , true);
         }
-
-        //Register the broadcast reciever
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mMessageReceiver,
-                new IntentFilter("unisong-service-interface"));
 
         if(sHandler == null) {
             sHandler = new Handler(Looper.getMainLooper()) {
@@ -114,9 +102,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         // TODO : analytics?
-
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_OPENED_APP_KEY, "yes");
-
         startNewActivity(LoginActivity.class);
     }
 
@@ -132,10 +118,18 @@ public class MainActivity extends ActionBarActivity {
 
     private void checkIfLoggedIn() {
 
-        Log.d(LOG_TAG , "Checking Login status");
-        mClient.checkIfLoggedIn();
+        while(mClient == null){
+            synchronized (this){
+                try{
+                    this.wait(2);
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+            mClient = HttpClient.getInstance();
+        }
 
-        Log.d(LOG_TAG , "Done with checkIfLoggedIn()");
+
         while(!mClient.isLoginDone()){
             synchronized (this){
                 try{
@@ -174,104 +168,11 @@ public class MainActivity extends ActionBarActivity {
         finish();
     }
 
-    //The runnable that will prompt users for which stream they'd like to join if there are several.
-    private Runnable mPromptUserForStreams = new Runnable() {
-        @Override
-        public void run() {
-            mMasterReceived = false;
 
-            //TODO: Prompt user to choose which stream to play
-
-
-        }
-    };
-
-    //connect to the service
-    private ServiceConnection mediaConnection = new ServiceConnection(){
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-
-            MediaServiceBinder binder = (MediaServiceBinder)service;
-            //get service
-            mMediaService = binder.getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void togglePlay(View v){
-        Intent intent = new Intent("service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "play");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    public void listener(View v){
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "listener");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    public void broadcaster(View v){
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "broadcaster");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        //Call google analytics, and tell them they did this action
-    }
-
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Get extra data included in the Intent
-            String message = intent.getStringExtra("message");
-            Log.d("receiver", "Got message: " + message);
-
-
-        }
-    };
 
     @Override
     protected void onDestroy() {
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command", "destroy");
 
-        //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-
-        // Unregister since the activity is about to be closed.
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         super.onDestroy();
     }
 
@@ -325,4 +226,20 @@ public class MainActivity extends ActionBarActivity {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+
+    private ServiceConnection mediaConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            NetworkService.NetworkServiceBinder binder = (NetworkService.NetworkServiceBinder)service;
+            //get service
+            mNetworkService = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 }

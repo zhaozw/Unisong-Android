@@ -61,7 +61,8 @@ public class Listener{
         }
         mServerReceiever = new ServerReceiver(this);
 
-        mSession = UnisongSession.getInstance();
+        // TODO : set session.
+        //mSession = UnisongSession.getInstance();
     }
 
 
