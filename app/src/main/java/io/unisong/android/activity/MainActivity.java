@@ -63,18 +63,15 @@ public class MainActivity extends AppCompatActivity {
         mIntent = getIntent();
         hasStarted = mIntent.getBooleanExtra("has-started", false);
 
-        Log.d(LOG_TAG , "Starting MainActivity");
 
         if(!hasStarted) {
 
-            Log.d(LOG_TAG , "Attempting to start network service.");
             //Start MediaService
             Intent ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
             startService(ServiceIntent);
             ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
             startService(ServiceIntent);
 
-            Log.d(LOG_TAG , "why");
 
             mIntent.putExtra("has-started"  , true);
         }

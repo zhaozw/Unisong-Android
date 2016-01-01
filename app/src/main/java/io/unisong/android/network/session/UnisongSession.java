@@ -18,6 +18,7 @@ import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
@@ -239,6 +240,10 @@ public class UnisongSession {
 
     public void startSong(int songID){
         mCurrentSong = mSongQueue.getSong(songID);
+        if(mIsMaster){
+            Log.d(LOG_TAG , "Sending start song.");
+            Broadcaster.getInstance().startSong(mCurrentSong);
+        }
     }
 
     public void endSession(){
@@ -280,24 +285,12 @@ public class UnisongSession {
     public void addSong(Song song){
         mSongQueue.addSong(song);
 
-        Log.d(LOG_TAG, "Is Master: " + mIsMaster);
-        Log.d(LOG_TAG , "SongQueue : " + mSongQueue.size());
-
 
         if(mSongQueue.size() == 1 && mIsMaster){
-            Log.d(LOG_TAG , "Starting song?");
+            Log.d(LOG_TAG , "The first song has been added, automatically playing");
             mCurrentSong = song;
 
-            // TODO : start song
-            Log.d(LOG_TAG , "Starting song?");
-
-            try {
-                Broadcaster broadcaster = Broadcaster.getInstance();
-                Log.d(LOG_TAG , "Broadcaster : " + broadcaster.toString());
-                Broadcaster.getInstance().startSong(song);
-            } catch (Exception e){
-                e.printStackTrace();
-            }
+            startSong(song.getID());
         }
 
         if(mAdapter != null){

@@ -53,6 +53,7 @@ public class FileDecoder implements Decoder{
     private MediaFormat mInputFormat;
     private MediaFormat mOutputFormat;
 
+    private AACEncoder mEncoder;
 
     public FileDecoder(String path){
         //Set the variables
@@ -95,6 +96,9 @@ public class FileDecoder implements Decoder{
         });
     }
 
+    public void setEncoder(AACEncoder encoder){
+        mEncoder = encoder;
+    }
     private long mSize;
     //A boolean telling us when the first Output format is changed, so that we can start the AAC Encoder
     private boolean mFirstOutputChange = true;
@@ -243,6 +247,8 @@ public class FileDecoder implements Decoder{
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
                 mOutputFormat = mCodec.getOutputFormat();
                 Log.d(LOG_TAG, "output format has changed to " + mOutputFormat);
+                if(mEncoder != null)
+                    mEncoder.setInputFormat(mOutputFormat);
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }

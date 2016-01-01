@@ -23,12 +23,17 @@ public class SongFormat {
 
     public SongFormat(MediaFormat format){
         try{
-            mMime = format.getString(MediaFormat.KEY_MIME);
-            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            if(format.containsKey(MediaFormat.KEY_MIME))
+                mMime = format.getString(MediaFormat.KEY_MIME);
+            if(format.containsKey(MediaFormat.KEY_SAMPLE_RATE))
+                mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            if(format.containsKey(MediaFormat.KEY_CHANNEL_COUNT))
+                mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             // if duration is 0, we are probably playing a live stream
-            mDuration = format.getLong(MediaFormat.KEY_DURATION);
-            mBitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+            if(format.containsKey(MediaFormat.KEY_DURATION))
+                mDuration = format.getLong(MediaFormat.KEY_DURATION);
+            if(format.containsKey(MediaFormat.KEY_BIT_RATE))
+                mBitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e){
             e.printStackTrace();
             Log.d(LOG_TAG, "Creation of SongFormat failed.");

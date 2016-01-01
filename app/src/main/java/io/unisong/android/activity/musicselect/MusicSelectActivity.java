@@ -203,8 +203,6 @@ public class MusicSelectActivity extends AppCompatActivity{
             mMusicDataRecyclerView.setLayoutManager(mLayoutManager);
 
             mAdapter = new MusicAdapter(layout.getContext());
-            Log.d(LOG_TAG , POSITION);
-            Log.d(LOG_TAG , mDataManager.toString());
             mAdapter.setData(mDataManager.getData(getArguments().getInt(POSITION)));
             mMusicDataRecyclerView.setAdapter(mAdapter);
 

@@ -7,6 +7,7 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.Decoder;
+import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.song.SongFormat;
@@ -61,6 +62,7 @@ public class SongDecoder implements Decoder {
     private int mLastFrameRequested;
     private int mFrameBufferSize;
     private SongFormat mInputFormat;
+
 
 
     public SongDecoder(SongFormat format){

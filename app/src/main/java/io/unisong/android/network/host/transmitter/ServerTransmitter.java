@@ -30,6 +30,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     public ServerTransmitter(){
         mTimeManager = TimeManager.getInstance();
         mAudioStatePublisher = AudioStatePublisher.getInstance();
+        mClient = new SocketIOClient();
     }
 
     private Thread getBroadcastThread(){
@@ -55,8 +56,8 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     });
 }
 
-private boolean mStop = false;
-private Song mSong;
+    private boolean mStop = false;
+    private Song mSong;
 
     private void broadcast(){
         int currentFrame = 0;
@@ -107,7 +108,7 @@ private Song mSong;
             e.printStackTrace();
         }
 
-        mClient.emit("upload data", obj);
+        //mClient.emit("upload data", obj);
     }
 
     @Override
@@ -120,6 +121,7 @@ private Song mSong;
             startSongJSON.put("songID", song.getID());
             SongFormat format = song.getFormat();
 
+            // TODO : something. This will hang up the UI thread if it's any length at all.
             while(format == null){
                 synchronized (this){
                     try{

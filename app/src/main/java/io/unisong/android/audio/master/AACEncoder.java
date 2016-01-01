@@ -74,6 +74,7 @@ public class AACEncoder{
         mSongID = songID;
         mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
         mDecoder = new FileDecoder(filePath);
+        mDecoder.setEncoder(this);
         mDecoder.startDecode(startTime);
         mEncodeThread = getEncode();
         mEncodeThread.start();

@@ -95,7 +95,7 @@ public class LocalSong extends Song {
      */
     public void start(){
         mDecoder.startDecode();
-        //mEncoder.encode(0 , super.getID() , mPath);
+        mEncoder.encode(0 , super.getID() , mPath);
     }
 
     public boolean hasFrame(int ID){

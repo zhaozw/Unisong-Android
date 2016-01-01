@@ -87,22 +87,26 @@ public class Broadcaster implements AudioObserver {
         Log.d(LOG_TAG , "Starting Song stream");
         try {
             mCurrentSong = song;
+            Log.d(LOG_TAG , "Starting Song stream");
 
             song.start();
-            mUnisongSession.startSong(song.getID());
-
+            Log.d(LOG_TAG, "Starting Song stream");
 
             // The start time in milliseconds
             mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
 
+            Log.d(LOG_TAG, "Starting Song stream");
             mHandler.postDelayed(mNotifyAudioPublisher, CONSTANTS.SONG_START_DELAY);
 
+            Log.d(LOG_TAG, "Starting Song stream");
             for (Transmitter transmitter : mTransmitters) {
                 transmitter.startSong(song);
             }
 
+            Log.d(LOG_TAG , "Starting Song stream");
             mAudioTrackManager.startSong(song);
 
+            Log.d(LOG_TAG, "Starting Song stream");
             mStreamRunning = true;
 
         } catch (Exception e){
