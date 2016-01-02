@@ -76,8 +76,6 @@ public class MusicDataManager {
         //the map for the art resource urls
         Map<Long, String> artMap = new HashMap<>();
 
-        //The map for the artist IDs to their names
-        Map<Long, String> artistNameMap = new HashMap<>();
         mArtists = new ArrayList<>();
         mSongs = new ArrayList<>();
         mAlbums = new ArrayList<>();
@@ -104,10 +102,6 @@ public class MusicDataManager {
             do {
                 long artistId = artistCursor.getLong(idColumn);
                 String artistName = artistCursor.getString(nameColumn);
-
-                Log.d(LOG_TAG, "Artist Name : " + artistName);
-
-                artistNameMap.put(artistId, artistName);
 
                 mArtists.add(new UIArtist(artistId, artistName));
             }
@@ -146,8 +140,7 @@ public class MusicDataManager {
                 //Put the album art in the map so that the songs can access it
                 artMap.put(albumId , albumArt);
                 String artistName = albumCursor.getString(artistColumn);
-                UIArtist artist = getArtistByName(artistName);
-                mAlbums.add(new UIAlbum(albumId, albumName , albumArt , artist));
+                mAlbums.add(new UIAlbum(albumId, albumName , albumArt , artistName));
             }
             while (albumCursor.moveToNext());
         }
@@ -187,10 +180,8 @@ public class MusicDataManager {
                 String thisTitle = musicCursor.getString(titleColumn);
 
                 //Get the ID of the artist, then get the name
-                long artistID = musicCursor.getLong(artistColumn);
-                UIArtist artist = getArtistByID(artistID);
+                String artistName = musicCursor.getString(artistColumn);
 
-                String artistName = artistNameMap.get(artistID);
 
                 long albumID = musicCursor.getLong(albumIdColumn);
                 UIAlbum album = getAlbumByID(albumID);
@@ -200,11 +191,9 @@ public class MusicDataManager {
                 String path = musicCursor.getString(dataColumn);
 
 
-                Log.d(LOG_TAG , "art from map: " + albumArt );
-                if(album != null)
-                    Log.d(LOG_TAG, "Album Art String : " + album.getImageURL());
 
-                if(!thisTitle.equals("Hangouts message") || !thisTitle.equals("Hangouts video call") || !thisTitle.equals("Facebook Pop")) {
+                // TODO : filter out items that are not songs.
+                //if(!thisTitle.equals("Hangouts message") || !thisTitle.equals("Hangouts video call") || !thisTitle.equals("Facebook Pop")) {
 
                     UISong song = new UISong(thisId, thisTitle, path);
                     mSongs.add(song);
@@ -215,12 +204,11 @@ public class MusicDataManager {
                         song.setAlbumArt(albumArt);
                     }
 
-                    if(artist != null){
-                        song.setArtist(artist);
-                    } else {
+
+                    if(artistName != null){
                         song.setArtistName(artistName);
                     }
-                }
+                //}
             }
             while (musicCursor.moveToNext());
         }

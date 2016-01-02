@@ -103,7 +103,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         try {
             obj.put("dataID", frame.getID());
             obj.put("data", frame.getData());
-            obj.put("songID", 5);
+            obj.put("songID", frame.getSongID());
         } catch (JSONException e){
             e.printStackTrace();
         }

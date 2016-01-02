@@ -290,7 +290,8 @@ public class UnisongSession {
             Log.d(LOG_TAG , "The first song has been added, automatically playing");
             mCurrentSong = song;
 
-            startSong(song.getID());
+            // TODO : investigate if the first song should auto-play
+            //startSong(song.getID());
         }
 
         if(mAdapter != null){

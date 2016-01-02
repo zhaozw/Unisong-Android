@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="@dimen/friend_row_height"
-    android:onClick="onRowClick">
+    android:layout_height="@dimen/friend_row_height">
+    <!--android:onClick="onRowClick"-->
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/music_image"
-        android:layout_width="@dimen/music_image_radius"
-        android:layout_height="@dimen/music_image_radius"
+        android:layout_width="@dimen/music_image_diameter"
+        android:layout_height="@dimen/music_image_diameter"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/music_image_margin"
+        android:layout_marginStart="@dimen/music_image_margin"
         android:src="@drawable/default_artwork"/>
 
     <LinearLayout
@@ -27,6 +29,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:singleLine="true"
             android:textColor="@color/primaryText"
             android:text="Placeholder Name"
             android:textSize="@dimen/text_size_row_primary" />
@@ -42,5 +45,13 @@
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
 
+    <Button
+        android:id="@+id/song_add_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="gone"
+        android:onClick="addItem"/>
 
 </RelativeLayout>

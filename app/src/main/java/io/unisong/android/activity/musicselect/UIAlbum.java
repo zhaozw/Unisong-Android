@@ -16,11 +16,11 @@ public class UIAlbum implements MusicData{
     private List<UISong> mSongs;
 
     //The class for storing album data
-    public UIAlbum(long albumID, String albumName, String albumArt, UIArtist artist) {
+    public UIAlbum(long albumID, String albumName, String albumArt, String artistName) {
         mID = albumID;
         mName = albumName;
         mCoverArt = albumArt;
-        mArtist = artist.getPrimaryText();
+        mArtist = artistName;
         mSongs = new ArrayList<>();
     }
 

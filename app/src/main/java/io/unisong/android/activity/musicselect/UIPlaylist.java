@@ -35,7 +35,7 @@ public class UIPlaylist implements MusicData{
     public long getID(){return mID;}
 
     //TODO: See what we can get from MediaStore for this
-    public String getSecondaryText(){return "";}
+    public String getSecondaryText(){return mSongs.size() + " songs";}
 
     public String getPrimaryText(){return mTitle;}
 
@@ -43,5 +43,6 @@ public class UIPlaylist implements MusicData{
         return PLAYLIST;
     }
 
+    // TODO : see about some sort of playlist imagery?
     public String getImageURL(){return "null";}
 }

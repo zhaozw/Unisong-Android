@@ -6,8 +6,8 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/session_song_image"
-        android:layout_width="@dimen/friend_image_radius"
-        android:layout_height="@dimen/friend_image_radius"
+        android:layout_width="@dimen/music_image_diameter"
+        android:layout_height="@dimen/music_image_diameter"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/friend_image_margin"
@@ -24,6 +24,7 @@
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/session_song_name"
+            android:singleLine="true"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -38,7 +39,7 @@
             android:layout_below="@id/friend_first_line"
             android:singleLine="true"
             android:textColor="@color/secondaryText"
-            android:text="\@username"
+            android:text="Artist"
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
 

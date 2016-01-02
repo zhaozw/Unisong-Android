@@ -156,7 +156,7 @@ public class AudioTrackManager implements AudioObserver {
                 }
             }
 
-            AudioFrame frame = mSong.getFrame(mFrameToPlay);
+            AudioFrame frame = mSong.getPCMFrame(mFrameToPlay);
 
             synchronizePlayTime();
 

@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.List;
 
 import io.unisong.android.R;
@@ -98,9 +99,10 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         // - replace the contents of the view with that element
 
         Song song = mDataset.get(position);
-        Picasso.with(holder.profileView.getContext()).load(song.getImageURL()).into((holder.profileView));
+        Log.d(LOG_TAG , song.getImageURL());
+        Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());
-        holder.artistView.setText("@" + mDataset.get(position).getArtist());
+        holder.artistView.setText(mDataset.get(position).getArtist());
 
     }
 

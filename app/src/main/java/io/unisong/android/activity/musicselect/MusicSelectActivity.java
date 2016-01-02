@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -60,10 +61,13 @@ public class MusicSelectActivity extends AppCompatActivity{
         mToolbar = (Toolbar) findViewById(R.id.music_bar);
 
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        getSupportActionBar().setHomeButtonEnabled(true);
+        // get and configure actionbar
+        ActionBar bar = getSupportActionBar();
+        if(bar != null) {
+            bar.setDisplayShowHomeEnabled(true);
+            bar.setDisplayHomeAsUpEnabled(true);
+            bar.setHomeButtonEnabled(true);
+        }
 
 
 
@@ -100,10 +104,25 @@ public class MusicSelectActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(item);
     }
 
+    public void addItem(View v){
+        String tag = (String)v.getTag();
+        String[] parts = tag.split(":");
+
+        long ID = Long.parseLong(parts[1]);
+
+        Log.d(LOG_TAG , "Song chosen");
+        MusicDataManager manager = MusicDataManager.getInstance();
+        UISong uiSong = manager.getSongByID(ID);
+        LocalSong song = new LocalSong(uiSong);
+        UnisongSession session = CurrentUser.getInstance().getSession();
+        if(session != null)
+            session.addSong(song);
+        onBackPressed();
+    }
+
 
     public void onRowClick(View v){
         String tag = (String)v.getTag();
-
         String[] parts = tag.split(":");
 
         int type = Integer.parseInt(parts[0]);
