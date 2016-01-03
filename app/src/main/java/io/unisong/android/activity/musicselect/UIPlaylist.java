@@ -17,7 +17,7 @@ public class UIPlaylist implements MusicData{
     private String mTitle;
     private int mCount;
     private String mData;
-    private List<UISong> mSongs;
+    private List<MusicData> mSongs;
 
     //The class for storing playlist information
     public UIPlaylist(long playlistID, String playlistName, String data) {
@@ -45,4 +45,8 @@ public class UIPlaylist implements MusicData{
 
     // TODO : see about some sort of playlist imagery?
     public String getImageURL(){return "null";}
+
+    public List<MusicData> getChildren(){
+        return mSongs;
+    }
 }

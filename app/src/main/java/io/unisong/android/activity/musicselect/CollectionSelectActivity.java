@@ -2,11 +2,10 @@ package io.unisong.android.activity.musicselect;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.util.Log;
 
 import java.util.List;
 
@@ -15,8 +14,9 @@ import io.unisong.android.R;
 /**
  * Created by Ethan on 10/14/2015.
  */
-public class AlbumSelectActivity  extends MusicSelectActivity {
+public class CollectionSelectActivity extends MusicSelectActivity {
 
+    private final static String LOG_TAG = CollectionSelectActivity.class.getSimpleName();
     private Toolbar mToolbar;
     private MusicDataManager mDataManager;
     private RecyclerView mMusicDataRecyclerView;
@@ -29,9 +29,7 @@ public class AlbumSelectActivity  extends MusicSelectActivity {
 
         Intent intent = getIntent();
         // TODO : get album ID from intent
-        long albumID = intent.getLongExtra("albumID" , -1);
-
-
+        String tag = intent.getStringExtra("tag");
 
         mToolbar = (Toolbar) findViewById(R.id.music_bar);
 
@@ -49,17 +47,47 @@ public class AlbumSelectActivity  extends MusicSelectActivity {
         mMusicDataRecyclerView.setLayoutManager(mLayoutManager);
 
         mAdapter = new MusicAdapter(this);
-        if(albumID == -1){
+
+
+        String[] parts = tag.split(":");
+
+        int type = Integer.parseInt(parts[0]);
+
+        long ID = Long.parseLong(parts[1]);
+
+        List<MusicData> toDisplay = null;
+        MusicData data = null;
+
+        switch(type){
+            case MusicData.ALBUM:
+                data = mDataManager.getAlbumByID(ID);
+                break;
+
+            case MusicData.ARTIST:
+                data = mDataManager.getArtistByID(ID);
+                break;
+
+            case MusicData.GENRE:
+                data = mDataManager.getGenreByID(ID);
+                break;
+
+            case MusicData.PLAYLIST:
+                data = mDataManager.getPlaylistByID(ID);
+                break;
+        }
+
+        if(data == null){
+            Log.d(LOG_TAG, "Data null ):");
             return;
         }
-        List<UISong> mAlbumSongs = mDataManager.getAlbumByID(albumID).getSongs();
 
-        // TODO : see what we need to do to resolve this warning.
-        List<MusicData> data = (List<MusicData>)(List<?> )mAlbumSongs;
-        mAdapter.setData(data);
+        toDisplay = data.getChildren();
+
+
+        this.setTitle(data.getPrimaryText());
+
+        mAdapter.setData(toDisplay);
         mMusicDataRecyclerView.setAdapter(mAdapter);
     }
-
-
 
 }

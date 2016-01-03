@@ -134,13 +134,24 @@ public class MusicDataManager {
 
             //add songs to list
             do {
+                // get data.
                 long albumId = albumCursor.getLong(idColumn);
                 String albumName = albumCursor.getString(nameColumn);
                 String albumArt = albumCursor.getString(artColumn);
-                //Put the album art in the map so that the songs can access it
-                artMap.put(albumId , albumArt);
                 String artistName = albumCursor.getString(artistColumn);
-                mAlbums.add(new UIAlbum(albumId, albumName , albumArt , artistName));
+
+                //Put the album art in the map so that the songs can access it
+                artMap.put(albumId, albumArt);
+
+
+                UIAlbum album = new UIAlbum(albumId, albumName , albumArt , artistName);
+
+                mAlbums.add(album);
+
+                UIArtist artist = getArtistByName(artistName);
+                if(artist != null){
+                    artist.addAlbum(album);
+                }
             }
             while (albumCursor.moveToNext());
         }
@@ -237,6 +248,7 @@ public class MusicDataManager {
 
             //add songs to list
             do {
+                Log.d(LOG_TAG , "Load playlist");
                 long playlistID = playlistCursor.getLong(idColumn);
                 String playlistName = playlistCursor.getString(nameColumn);
                 String data = playlistCursor.getString(dataColumn);
@@ -245,7 +257,7 @@ public class MusicDataManager {
 
                 String [] STAR= {"*"};
 
-                Cursor membersCursor = musicResolver.query(   MediaStore.Audio.Playlists.Members.getContentUri("external",playlistID),
+                Cursor membersCursor = musicResolver.query(MediaStore.Audio.Playlists.Members.getContentUri("external", playlistID),
                         STAR, null, null, null);
                 if(membersCursor== null)
                     continue;
@@ -254,16 +266,19 @@ public class MusicDataManager {
                 int songColumn = membersCursor.getColumnIndex
                         (MediaStore.Audio.Playlists.Members.AUDIO_ID);
 
-                if(membersCursor.getPosition() == 0)
-                    continue;
+                //if(membersCursor.getPosition() == 0)
+                //    continue;
 
-                do{
-
-                    long songID = membersCursor.getLong(songColumn);
-                    UISong song = getSongByID(songID);
-                    if(song != null)
-                        playlist.addSong(song);
-                }while(membersCursor.moveToNext());
+                try {
+                    do {
+                        long songID = membersCursor.getLong(songColumn);
+                        UISong song = getSongByID(songID);
+                        if (song != null)
+                            playlist.addSong(song);
+                    } while (membersCursor.moveToNext());
+                } catch (Exception e){
+                    Log.d(LOG_TAG , "Getting members failed");
+                }
                 membersCursor.close();
             }
             while (playlistCursor.moveToNext());
@@ -287,16 +302,41 @@ public class MusicDataManager {
             int idColumn = genreCursor.getColumnIndex
                     (MediaStore.Audio.Genres._ID);
 
+            int membersIDColumn=genreCursor.getColumnIndex
+                    (MediaStore.Audio.Genres.Members._ID);
 
 
             //add songs to list
             do {
-                long genreId = genreCursor.getLong(idColumn);
+                long genreID = genreCursor.getLong(idColumn);
                 String genreName = genreCursor.getString(nameColumn);
-                UIGenre genre = new UIGenre(genreId, genreName);
+                UIGenre genre = new UIGenre(genreID, genreName);
                 mGenres.add(genre);
 
-                // TODO : resolve genre
+                String [] STAR= {"*"};
+                Cursor membersCursor = musicResolver.query(MediaStore.Audio.Genres.Members.getContentUri("external", genreID),
+                        STAR, null, null, null);
+                if(membersCursor== null)
+                    continue;
+                membersCursor.moveToFirst();
+
+                int songColumn = membersCursor.getColumnIndex
+                        (MediaStore.Audio.Genres.Members.AUDIO_ID);
+
+                //if(membersCursor.getPosition() == 0)
+                //    continue;
+
+                try {
+                    do {
+                        long songID = membersCursor.getLong(songColumn);
+                        UISong song = getSongByID(songID);
+                        if (song != null)
+                            genre.addSong(song);
+                    } while (membersCursor.moveToNext());
+                } catch (Exception e){
+                    e.printStackTrace();
+                    Log.d(LOG_TAG , "Getting members failed");
+                }
             }
             while (genreCursor.moveToNext());
             genreCursor.close();
@@ -325,7 +365,7 @@ public class MusicDataManager {
     }
 
     public UIGenre getGenreByID(long genreID){
-        return (UIGenre) getDataByID(mPlaylists , genreID);
+        return (UIGenre) getDataByID(mGenres , genreID);
     }
 
     public UIPlaylist getPlaylistByID(long playlistID){

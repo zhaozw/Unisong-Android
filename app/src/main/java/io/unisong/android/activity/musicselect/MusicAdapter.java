@@ -68,6 +68,7 @@ class MusicAdapter extends RecyclerView.Adapter <MusicAdapter.MusicViewHolder>
 
         String tag = data.getType() + ":"  + data.getID();
         layout.setTag(tag);
+        viewHolder.mSongAdd.setTag(tag);
 
         if(data.getType() == MusicData.SONG) {
             viewHolder.mSongAdd.setVisibility(View.VISIBLE);

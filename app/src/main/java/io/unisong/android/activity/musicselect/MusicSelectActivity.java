@@ -1,6 +1,7 @@
 package io.unisong.android.activity.musicselect;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -131,19 +132,27 @@ public class MusicSelectActivity extends AppCompatActivity{
 
         switch (type){
             case MusicData.ALBUM:
-
+                Intent albumIntent = new Intent(getApplicationContext() , CollectionSelectActivity.class);
+                albumIntent.putExtra("tag" , tag);
+                startActivity(albumIntent);
                 break;
 
             case MusicData.GENRE:
-
+                Intent genreIntent = new Intent(getApplicationContext() , CollectionSelectActivity.class);
+                genreIntent.putExtra("tag" , tag);
+                startActivity(genreIntent);
                 break;
 
             case MusicData.PLAYLIST:
-
+                Intent playlistIntent = new Intent(getApplicationContext() , CollectionSelectActivity.class);
+                playlistIntent.putExtra("tag" , tag);
+                startActivity(playlistIntent);
                 break;
 
             case MusicData.ARTIST:
-
+                Intent artistIntent = new Intent(getApplicationContext() , CollectionSelectActivity.class);
+                artistIntent.putExtra("tag" , tag);
+                startActivity(artistIntent);
                 break;
 
             case MusicData.SONG:

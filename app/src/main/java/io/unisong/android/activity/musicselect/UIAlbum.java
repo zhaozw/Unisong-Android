@@ -13,7 +13,7 @@ public class UIAlbum implements MusicData{
     private String mName;
     private String mCoverArt;
     private String mArtist;
-    private List<UISong> mSongs;
+    private List<MusicData> mSongs;
 
     //The class for storing album data
     public UIAlbum(long albumID, String albumName, String albumArt, String artistName) {
@@ -28,7 +28,7 @@ public class UIAlbum implements MusicData{
         mSongs.add(song);
     }
 
-    public List<UISong> getSongs(){
+    public List<MusicData> getSongs(){
         return mSongs;
     }
 
@@ -49,5 +49,9 @@ public class UIAlbum implements MusicData{
             return "<unknown>";
 
         return mArtist;
+    }
+
+    public List<MusicData> getChildren(){
+        return mSongs;
     }
 }

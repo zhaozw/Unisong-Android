@@ -1,5 +1,7 @@
 package io.unisong.android.activity.musicselect;
 
+import java.util.List;
+
 /**
  * Created by Ethan on 2/26/2015.
  */
@@ -62,5 +64,10 @@ public class UISong implements MusicData{
 
     public String getPath(){
         return mPath;
+    }
+
+    // Not great design lol, but better than making an entire nother interface to separate that functionality from UISong, right?
+    public List<MusicData> getChildren(){
+        return null;
     }
 }

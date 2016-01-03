@@ -10,7 +10,7 @@ public class UIArtist implements MusicData{
 
     private long mID;
     private String mName;
-    private List<UIAlbum> mAlbums;
+    private List<MusicData> mAlbums;
 
     //The class for storing artist data
     public UIArtist(long artistID, String artistName) {
@@ -34,8 +34,8 @@ public class UIArtist implements MusicData{
 
     public int getNumSongs(){
         int songs = 0;
-        for(UIAlbum album : mAlbums){
-            songs += album.getSongs().size();
+        for(MusicData album : mAlbums){
+            songs += ((UIAlbum)album).getSongs().size();
         }
         return songs;
     }
@@ -44,6 +44,11 @@ public class UIArtist implements MusicData{
 
     public int getType(){
         return ARTIST;
+    }
+
+    @Override
+    public List<MusicData> getChildren() {
+        return mAlbums;
     }
 
 }
