@@ -30,7 +30,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     public ServerTransmitter(){
         mTimeManager = TimeManager.getInstance();
         mAudioStatePublisher = AudioStatePublisher.getInstance();
-        mClient = new SocketIOClient();
+        mClient = SocketIOClient.getInstance();
     }
 
     private Thread getBroadcastThread(){
