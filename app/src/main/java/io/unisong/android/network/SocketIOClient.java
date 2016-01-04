@@ -43,6 +43,7 @@ public class SocketIOClient {
         IO.Options opts = new IO.Options();
         opts.forceNew = true;
 
+
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
         getConnectionThread().start();
@@ -56,6 +57,7 @@ public class SocketIOClient {
     public void connect(){
         Log.d(LOG_TAG, "Connecting to server with socket.io");
         mSocket.connect();
+        mSocket.on(Socket.EVENT_CONNECT , mConnectListener);
         mSocket.on(Socket.EVENT_RECONNECT, mReconnectListener);
         mSocket.on(Socket.EVENT_DISCONNECT , mDisconnectListener);
 
@@ -81,6 +83,18 @@ public class SocketIOClient {
 //
 //    }
 
+    /**
+     * The listener for when the socket gets connected.
+     *
+     */
+    private Emitter.Listener mConnectListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+            Log.d(LOG_TAG , "Reconnection event.");
+        }
+
+    };
 
     /**
      * The listener for when the socket gets disconnected.
