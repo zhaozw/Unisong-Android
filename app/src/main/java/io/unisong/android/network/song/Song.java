@@ -1,5 +1,7 @@
 package io.unisong.android.network.song;
 
+import org.json.JSONObject;
+
 import java.util.List;
 import java.util.Map;
 
@@ -81,5 +83,8 @@ public abstract class Song {
     public abstract void addFrame(AudioFrame frame);
 
     public abstract long getDuration();
+
+    public abstract JSONObject getJSON();
+
 
 }

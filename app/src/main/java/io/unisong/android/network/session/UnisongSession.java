@@ -42,7 +42,13 @@ public class UnisongSession {
 
     private final static String LOG_TAG = UnisongSession.class.getSimpleName();
 
+    private static UnisongSession sCurrentSession;
 
+    public static UnisongSession getCurrentSession(){
+        return sCurrentSession;
+    }
+
+    private int mNewSongID;
     private Song mCurrentSong;
     private String mSessionID;
     private boolean mIsLocalSession;
@@ -72,10 +78,12 @@ public class UnisongSession {
         mSongQueue = new SongQueue();
         mMembers = new ArrayList<>();
         mIsMaster = true;
+        sCurrentSession = this;
 
         create();
         configureSocketIO();
         mIsDisconnected = false;
+        mNewSongID = 0;
 
         Broadcaster broadcaster = new Broadcaster(this);
     }
@@ -86,6 +94,7 @@ public class UnisongSession {
     public UnisongSession(int ID){
         mSessionID = ID + "";
 
+        mNewSongID = 0;
         /*
         try{
             throw new Exception();
@@ -102,6 +111,9 @@ public class UnisongSession {
         configureSocketIO();
         getInfoFromServer();
         mIsDisconnected = false;
+
+        // TODO : investigate a better solution for figuring out how to do this.
+        sCurrentSession = this;
 
     }
 
@@ -179,6 +191,12 @@ public class UnisongSession {
 
     private void configureSocketIO(){
 
+    }
+
+    public int incrementNewSongID(){
+        int oldSongID = mNewSongID;
+        mNewSongID++;
+        return oldSongID;
     }
 
     public void setSongAdapter(SessionSongsAdapter adapter){
@@ -297,6 +315,9 @@ public class UnisongSession {
         if(mAdapter != null){
             mAdapter.add(song);
         }
+
+        Log.d(LOG_TAG , "Creating song on server");
+        mSocketIOClient.emit("add song" , song.getJSON());
     }
 
     private Emitter.Listener mAddSongListener = new Emitter.Listener() {

@@ -21,6 +21,11 @@ public class SongFormat {
     private int mSampleRate;
     private int mChannels;
 
+    /**
+     * Creates a song format from a MediaFormat
+     *
+     * @param format the MediaFormat used for instantiation
+     */
     public SongFormat(MediaFormat format){
         try{
             if(format.containsKey(MediaFormat.KEY_MIME))
@@ -40,6 +45,11 @@ public class SongFormat {
         }
     }
 
+    /**
+     * Creates a SongFormat object from a JSON object. Typically used to create
+     * a SongFormat for UnisongSong
+     * @param object the JSONObject received from the server/another host
+     */
     public SongFormat(JSONObject object){
         try{
             if(object.has("birate"))
@@ -62,6 +72,10 @@ public class SongFormat {
         }
     }
 
+    /**
+     * Will create a JSON representation of this object for this to be transmitted.
+     * @return object - the JSONObject to create
+     */
     public JSONObject toJSON(){
         JSONObject object = new JSONObject();
         try {
@@ -77,6 +91,10 @@ public class SongFormat {
         return object;
     }
 
+    /**
+     * Getters and setters.
+     * @return
+     */
     public int getBitrate(){
         return mBitrate;
     }

@@ -99,8 +99,8 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         // - replace the contents of the view with that element
 
         Song song = mDataset.get(position);
-        Log.d(LOG_TAG , song.getImageURL());
-        Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
+        if(song.getImageURL() != null)
+            Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());
         holder.artistView.setText(mDataset.get(position).getArtist());
 

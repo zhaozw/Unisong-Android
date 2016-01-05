@@ -7,12 +7,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
+import java.util.UUID;
 
 import io.unisong.android.activity.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * Created by Ethan on 10/3/2015.
@@ -24,6 +26,8 @@ public class LocalSong extends Song {
     private FileDecoder mDecoder;
     private AACEncoder mEncoder;
     private SongFormat mFormat;
+    private String mSessionID;
+    private int mSongID;
     private boolean mStarted;
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -33,10 +37,11 @@ public class LocalSong extends Song {
      * @param artist
      * @param imageURL
      */
-    public LocalSong(String name, String artist, int ID , String imageURL, String path) {
+    public LocalSong(String name, String artist, int ID , String imageURL, String path, String sessionID) {
         super(name, artist, ID, imageURL);
         mPath = path;
         mStarted = false;
+        mSessionID = sessionID;
     }
 
     /**
@@ -45,20 +50,19 @@ public class LocalSong extends Song {
      */
     public LocalSong(UISong uiSong){
         super(uiSong.getName() , uiSong.getArtist() , uiSong.getImageURL());
+        try {
+            UnisongSession session = UnisongSession.getCurrentSession();
+            mSessionID = session.getSessionID();
+            mSongID = session.incrementNewSongID();
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            // this will call if the session is either improperly initialized or not at all.
+        }
         mPath = uiSong.getPath();
         mEncoder = new AACEncoder();
         mEncoder.setSong(this);
         mDecoder = new FileDecoder(mPath);
     }
-
-    private Runnable mCreateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            SocketIOClient client = SocketIOClient.getInstance();
-            client.emit("add song" , toJSON());
-        }
-    };
-
 
     public void setFormat(MediaFormat format){
         mFormat = new SongFormat(format);
@@ -127,12 +131,17 @@ public class LocalSong extends Song {
     }
 
     // TODO: make toJSON with the data standard/update docs with new stuff
-    public JSONObject toJSON(){
+    public JSONObject getJSON(){
         JSONObject object = new JSONObject();
 
         try {
+            object.put("name" , getName());
+            object.put("artist" , getArtist());
+            object.put("sessionID" , mSessionID);
+            object.put("songID" , mSongID);
+            if(getFormat() != null)
+                object.put("format", getFormat().toJSON());
 
-            object.put("format", getFormat().toJSON());
 
         } catch (JSONException e){
             e.printStackTrace();

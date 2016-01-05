@@ -53,7 +53,7 @@ public class MusicSelectActivity extends AppCompatActivity{
 
     private ViewPager mPager;
     private SlidingTabLayout mTabs;
-    private MusicAdapter mAlphabeticalAdapter;
+
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -69,8 +69,6 @@ public class MusicSelectActivity extends AppCompatActivity{
             bar.setDisplayHomeAsUpEnabled(true);
             bar.setHomeButtonEnabled(true);
         }
-
-
 
         mPager = (ViewPager) findViewById(R.id.player_pager);
         mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
@@ -125,6 +123,7 @@ public class MusicSelectActivity extends AppCompatActivity{
     public void onRowClick(View v){
         String tag = (String)v.getTag();
         String[] parts = tag.split(":");
+
 
         int type = Integer.parseInt(parts[0]);
 

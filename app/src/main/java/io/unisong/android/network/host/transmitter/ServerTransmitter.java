@@ -14,7 +14,7 @@ import io.unisong.android.network.song.Song;
 import io.unisong.android.network.song.SongFormat;
 
 /**
- * The class to handle transmissions to my python/HTTP server
+ * The class to handle transmissions to the backend
  * Created by Ethan on 5/22/2015.
  */
 public class ServerTransmitter implements Transmitter, AudioObserver {
@@ -122,7 +122,13 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             SongFormat format = song.getFormat();
 
             // TODO : something. This will hang up the UI thread if it's any length at all.
+            int runs = 50;
             while(format == null){
+
+                runs--;
+                if(runs <= 0)
+                    break;
+
                 synchronized (this){
                     try{
                         this.wait(1);
@@ -133,7 +139,9 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 format = song.getFormat();
 
             }
-            startSongJSON.put("format", format.toJSON());
+
+            if(format != null)
+                startSongJSON.put("format", format.toJSON());
         } catch (JSONException e){
             e.printStackTrace();
         }

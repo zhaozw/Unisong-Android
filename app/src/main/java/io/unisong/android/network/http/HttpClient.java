@@ -3,6 +3,7 @@ package io.unisong.android.network.http;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.facebook.AccessToken;
@@ -88,6 +89,7 @@ public class HttpClient {
             @Override
             public void run() {
 
+                Looper.prepare();
                 JSONObject object = new JSONObject();
 
                 try {

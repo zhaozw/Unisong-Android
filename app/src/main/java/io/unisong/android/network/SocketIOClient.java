@@ -1,8 +1,12 @@
 package io.unisong.android.network;
 
+import android.os.Handler;
 import android.util.Log;
 
 
+import com.facebook.AccessToken;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import io.socket.client.IO;
@@ -12,6 +16,8 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.network.user.FacebookAccessToken;
+import io.unisong.android.network.user.User;
 
 /**
  * This class handles all communication between the android client
@@ -30,6 +36,7 @@ public class SocketIOClient {
     }
     private final String LOG_TAG = SocketIOClient.class.getSimpleName();
 
+    private Handler mHandler;
     private HttpClient mHttpClient;
     private Socket mSocket;
     private boolean mIsLoggedIn;
@@ -43,11 +50,11 @@ public class SocketIOClient {
         IO.Options opts = new IO.Options();
         opts.forceNew = true;
 
-
+        mHandler = new Handler();
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
-        getConnectionThread().start();
         mIsLoggedIn = false;
+        connect();
     }
 
     public void setServerReceiver(ServerReceiver receiver){
@@ -72,16 +79,34 @@ public class SocketIOClient {
     }
 
     public void joinSession(int sessionID){
-        mSocket.emit("join session" , sessionID);
+        mSocket.emit("join session", sessionID);
     }
 
     /**
      * This method will authenticate the user over the socket if the socket is connected.
      *
      */
-//    public boolean login(){
-//
-//    }
+    private void login(){
+
+        Log.d(LOG_TAG , "Logging in over socket.io");
+        User user = CurrentUser.getInstance();
+
+        try {
+            JSONObject object = new JSONObject();
+
+            object.put("username", user.getUsername());
+            // if this is a facebook user then authenticate with the facebook access token
+            if (user.isFacebookUser()) {
+                object.put("accessToken", AccessToken.getCurrentAccessToken().getToken());
+            } else {
+                // otherwise, use password
+                object.put("password", user.getPassword());
+            }
+            mSocket.emit("authenticate", object);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 
     /**
      * The listener for when the socket gets connected.
@@ -91,7 +116,13 @@ public class SocketIOClient {
 
         @Override
         public void call(Object... args) {
-            Log.d(LOG_TAG , "Reconnection event.");
+            Log.d(LOG_TAG, "Connection event.");
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    login();
+                }
+            }, 250);
         }
 
     };
@@ -143,21 +174,6 @@ public class SocketIOClient {
         // wait while we're not logged in
         while(!mHttpClient.isLoggedIn()){
 
-        }
-    }
-
-    private void login(){
-
-        // TODO : implement?
-        for(int i = 0 ; i < 1000; i++){
-            synchronized (this){
-                try{
-                    wait(1000);
-                } catch (InterruptedException e){
-
-                }
-            }
-            //mSocket.emit("go" , i);
         }
     }
 }

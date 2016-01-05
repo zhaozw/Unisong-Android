@@ -89,7 +89,7 @@ class MusicAdapter extends RecyclerView.Adapter <MusicAdapter.MusicViewHolder>
             // TODO : figure out how to load these images and set a default one.
             try {
                 String path = data.getImageURL();
-                Log.d(LOG_TAG, path);
+//                Log.d(LOG_TAG, path);
                 Picasso.with(viewHolder.mImage.getContext()).load(new File(path)).into((viewHolder.mImage));
             } catch (Exception e){
                 e.printStackTrace();

@@ -2,6 +2,7 @@ package io.unisong.android.activity.musicselect;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -14,7 +15,7 @@ import io.unisong.android.R;
 /**
  * Created by Ethan on 10/14/2015.
  */
-public class CollectionSelectActivity extends MusicSelectActivity {
+public class CollectionSelectActivity extends AppCompatActivity {
 
     private final static String LOG_TAG = CollectionSelectActivity.class.getSimpleName();
     private Toolbar mToolbar;

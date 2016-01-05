@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -29,6 +30,7 @@ public class NetworkService extends Service {
     private SntpClient mSntpClient;
     private DiscoveryHandler mDiscoveryHandler;
     private HttpClient mClient;
+    private SocketIOClient mSocketIO;
 
     private TimeManager mTimeManager;
 
@@ -36,7 +38,14 @@ public class NetworkService extends Service {
     public void onCreate(){
         FacebookSdk.sdkInitialize(getApplicationContext());
 
-        Log.d(LOG_TAG , "Creating NetworkService");
+
+        Log.d(LOG_TAG, "Creating NetworkService");
+
+        mClient = new HttpClient(getApplicationContext());
+        mClient.checkIfLoggedIn();
+
+        mSocketIO = SocketIOClient.getInstance();
+
 
         mSntpClient = new SntpClient();
         mTimeManager = new TimeManager(mSntpClient);
@@ -46,8 +55,6 @@ public class NetworkService extends Service {
 
         mDiscoveryHandler = new DiscoveryHandler();
 
-        mClient = new HttpClient(getApplicationContext());
-        mClient.checkIfLoggedIn();
     }
 
     @Override

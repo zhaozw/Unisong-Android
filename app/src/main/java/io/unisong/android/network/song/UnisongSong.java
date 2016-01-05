@@ -6,6 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
+import java.util.UUID;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.client.SongDecoder;
@@ -19,6 +20,7 @@ public class UnisongSong extends Song {
     private final static String LOG_TAG = UnisongSong.class.getSimpleName();
     public final static String TYPE_STRING = "UnisongSong";
 
+    private UUID mSessionID;
     private SongFormat mFormat;
     private SongDecoder mSongDecoder;
 
@@ -31,9 +33,10 @@ public class UnisongSong extends Song {
      * @param duration
      * @param imageURL
      */
-    public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat) {
+    public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat, UUID sessionID) {
         super(name, artist,ID ,  imageURL);
         mFormat = inputFormat;
+        mSessionID = sessionID;
         Log.d(LOG_TAG, mFormat.toString());
         mSongDecoder = new SongDecoder(inputFormat);
     }
@@ -97,5 +100,20 @@ public class UnisongSong extends Song {
         mSongDecoder.addInputFrame(frame);
     }
 
+    public JSONObject getJSON(){
+        JSONObject object = new JSONObject();
+
+        try {
+            object.put("name" , getName());
+            object.put("artist" , getArtist());
+            if(getFormat() != null)
+                object.put("format", getFormat().toJSON());
+
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        return object;
+    }
 
 }
