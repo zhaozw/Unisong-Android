@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.util.Map;
 import java.util.UUID;
 
+import io.unisong.android.activity.musicselect.MusicDataManager;
 import io.unisong.android.activity.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
@@ -26,22 +27,29 @@ public class LocalSong extends Song {
     private FileDecoder mDecoder;
     private AACEncoder mEncoder;
     private SongFormat mFormat;
-    private String mSessionID;
+    private int mSessionID;
     private int mSongID;
     private boolean mStarted;
     /**
      * This is the constructor for a song created from a network source. We do not need the path
      * since we will be taking it in over wifi.
      *
-     * @param name
-     * @param artist
-     * @param imageURL
+     * @param songJSON - the JSON representation of the song
      */
-    public LocalSong(String name, String artist, int ID , String imageURL, String path, String sessionID) {
-        super(name, artist, ID, imageURL);
-        mPath = path;
+    public LocalSong(JSONObject songJSON) throws JSONException{
+        super(songJSON.getString("name"), songJSON.getString("artist"), songJSON.getInt("songID")
+                ,MusicDataManager.getInstance().getSongImagePathByJSON(songJSON));
+        UISong song = null;
+        try{
+            song = MusicDataManager.getInstance().getSongByJSON(songJSON);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+        // TODO : figure out what to do if this does equal null
+        if(song != null)
+            mPath = song.getPath();
         mStarted = false;
-        mSessionID = sessionID;
+        mSessionID = songJSON.getInt("sessionID");
     }
 
     /**
@@ -148,6 +156,11 @@ public class LocalSong extends Song {
         }
 
         return object;
+    }
+
+    @Override
+    public void update(JSONObject songJSON) {
+
     }
 
 }

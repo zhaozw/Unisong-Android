@@ -277,6 +277,7 @@ public class HttpClient {
         return new Thread(new Runnable() {
             @Override
             public void run() {
+                Looper.prepare();
                 JSONObject loginObject = new JSONObject();
                 try {
                     loginObject.put("access_token", mFBAccessToken.getToken());

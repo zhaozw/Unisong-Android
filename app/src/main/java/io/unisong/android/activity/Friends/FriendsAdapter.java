@@ -134,7 +134,11 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
             Log.d(LOG_TAG , "mUser: " + mUser.toString());
 
             // TODO : investigate null case
-            name.setText(mUser.getName());
+            String usersName = mUser.getName();
+
+            Log.d(LOG_TAG, usersName);
+
+            name.setText(usersName);
 
 
             TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);

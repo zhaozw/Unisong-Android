@@ -95,8 +95,9 @@ public class MediaService extends Service{
         super.onDestroy();
         Log.d(LOG_TAG , "Destroying mAudioTrackManager");
 
-        mMusicDataManager.destroy();
-        mMusicDataManager = null;
+        if(mMusicDataManager != null)
+            mMusicDataManager.destroy();
+            mMusicDataManager = null;
 
         System.gc();
     }

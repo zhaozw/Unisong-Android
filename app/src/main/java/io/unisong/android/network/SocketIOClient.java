@@ -12,11 +12,10 @@ import org.json.JSONObject;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import io.unisong.android.PrefUtils;
 import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
-import io.unisong.android.network.user.FacebookAccessToken;
 import io.unisong.android.network.user.User;
 
 /**
@@ -39,11 +38,9 @@ public class SocketIOClient {
     private Handler mHandler;
     private HttpClient mHttpClient;
     private Socket mSocket;
-    private boolean mIsLoggedIn;
     private ServerReceiver mReceiver;
 
     public SocketIOClient(){
-
         Log.d(LOG_TAG, "Starting SocketIO Client");
         mHttpClient = HttpClient.getInstance();
 
@@ -53,7 +50,6 @@ public class SocketIOClient {
         mHandler = new Handler();
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
-        mIsLoggedIn = false;
         connect();
     }
 
@@ -82,14 +78,22 @@ public class SocketIOClient {
         mSocket.emit("join session", sessionID);
     }
 
+    private Runnable mLoginRunnable = () -> login();
+
     /**
      * This method will authenticate the user over the socket if the socket is connected.
      *
      */
     private void login(){
 
-        Log.d(LOG_TAG , "Logging in over socket.io");
         User user = CurrentUser.getInstance();
+
+        if(user == null || user.getUsername() == null) {
+            mHandler.postDelayed(mLoginRunnable, 2000l);
+            return;
+        }
+
+        Log.d(LOG_TAG , "Logging in over socket.io");
 
         try {
             JSONObject object = new JSONObject();
@@ -120,7 +124,16 @@ public class SocketIOClient {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    mHandler.removeCallbacks(mLoginRunnable);
                     login();
+
+                    UnisongSession currentSession = UnisongSession.getCurrentSession();
+
+                    if(currentSession != null){
+                        joinSession(currentSession.getSessionID());
+                        currentSession.getUpdate();
+                    }
+
                 }
             }, 250);
         }
@@ -156,7 +169,7 @@ public class SocketIOClient {
 
     };
 
-    public void emit(String eventName, JSONObject data){
+    public void emit(String eventName, Object data){
         mSocket.emit(eventName , data);
     }
 

@@ -42,7 +42,8 @@ public class UnisongSong extends Song {
     }
 
     public UnisongSong(JSONObject object) throws JSONException{
-        super(object.getString("name"), object.getString("artist"), object.getInt("ID"), object.getString("imageURL"));
+        // TODO : fix the imageURL stuff
+        super(object.getString("name"), object.getString("artist"), object.getInt("ID"), null);//object.getString("imageURL"));
         mFormat = new SongFormat(object.getJSONObject("format"));
         Log.d(LOG_TAG, mFormat.toString());
         mSongDecoder = new SongDecoder(getFormat());
@@ -114,6 +115,12 @@ public class UnisongSong extends Song {
         }
 
         return object;
+    }
+
+    // TODO : figure out a situation where this must be updated?
+    @Override
+    public void update(JSONObject songJSON) {
+
     }
 
 }

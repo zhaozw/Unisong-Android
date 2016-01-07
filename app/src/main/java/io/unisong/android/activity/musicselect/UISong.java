@@ -14,15 +14,17 @@ public class UISong implements MusicData{
     private UIArtist mArtist;
     private UIAlbum mAlbum;
     private String mPath;
+    private long mDuration;
 
     private long mArtistID;
     private long mAlbumID;
 
     //The class for storing song data
-    public UISong(long songID, String songTitle, String path){
+    public UISong(long songID, String songTitle, String path, long duration){
         mID = songID;
         mName = songTitle;
         mPath = path;
+        mDuration = duration;
     }
 
     public String getName(){
@@ -57,6 +59,10 @@ public class UISong implements MusicData{
     public String getArtist () {return mArtistName;}
 
     public String getImageURL(){return mArtPath;}
+
+    public long getDuration(){
+        return mDuration;
+    }
 
     public int getType(){
         return SONG;

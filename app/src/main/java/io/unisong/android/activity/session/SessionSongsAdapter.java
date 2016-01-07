@@ -77,7 +77,13 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
     public SessionSongsAdapter(List<Song> myDataset) {
         mDataset = myDataset;
         // Give the dataset to the session so that it can be updated manually
-        CurrentUser.getInstance().getSession().setSongAdapter(this);
+        try {
+            User user = CurrentUser.getInstance();
+            UnisongSession session = user.getSession();
+            session.setSongAdapter(this);
+        } catch (NullPointerException e){
+            e.printStackTrace();
+        }
     }
 
     // Create new views (invoked by the layout manager)

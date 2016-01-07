@@ -41,9 +41,14 @@ public class NetworkService extends Service {
 
         Log.d(LOG_TAG, "Creating NetworkService");
 
-        mClient = new HttpClient(getApplicationContext());
-        mClient.checkIfLoggedIn();
+        mClient = HttpClient.getInstance();
+        if(mClient == null) {
+            mClient = new HttpClient(getApplicationContext());
+            mClient.checkIfLoggedIn();
+        }
 
+        // TODO : only keep us connected when A: the user is using the app
+        // TODO : and B: a user is logged in
         mSocketIO = SocketIOClient.getInstance();
 
 

@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import io.unisong.android.network.NetworkUtilities;
@@ -90,6 +91,14 @@ public class FriendsList implements Serializable{
 
 
         loadFriends();
+        Log.d(LOG_TAG , "Creating a stack trace in case we get a double insntantiation error again");
+        Log.d(LOG_TAG , "Can be deleted after 1/14/15");
+        try{
+            Object a = null;
+            a.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void loadFriends(){
@@ -181,11 +190,11 @@ public class FriendsList implements Serializable{
         }
 
 
-        Log.d(LOG_TAG , "Done Sending");
-        Log.d(LOG_TAG , response.toString());
+        Log.d(LOG_TAG , "FriendsList Received");
         JSONObject body;
         try {
-            body = new JSONObject(response.body().string());
+            String bodyString = response.body().string();
+            body = new JSONObject(bodyString);
 
             JSONArray friendsArray = body.getJSONArray("friends");
             JSONArray inReqArray = body.getJSONArray("incomingRequests");

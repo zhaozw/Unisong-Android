@@ -86,5 +86,7 @@ public abstract class Song {
 
     public abstract JSONObject getJSON();
 
+    public abstract void update(JSONObject songJSON);
+
 
 }

@@ -39,6 +39,7 @@ public class CurrentUser {
 
     private static Context sContext;
 
+    // TODO : investigate subclassing User.
     public static User getInstance(){
         return sCurrentUser;
     }
@@ -50,6 +51,9 @@ public class CurrentUser {
      * @param accountType
      */
     public CurrentUser(Context context, String accountType){
+        if(sCurrentUser != null)
+            return;
+
         String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
 
         sContext = context;
@@ -61,10 +65,16 @@ public class CurrentUser {
             sCurrentUser = new User(context, username);
         }
 
-        mFriendsList = new FriendsList(context);
+        mFriendsList = FriendsList.getInstance();
+
+        if(mFriendsList == null)
+            mFriendsList = new FriendsList(context);
     }
 
     public CurrentUser(Context context, User user){
+        if(sCurrentUser != null)
+            return;
+
         sCurrentUser = user;
         sContext = context;
 
@@ -73,7 +83,10 @@ public class CurrentUser {
             FacebookAccessToken.saveFacebookAccessToken(context);
         }
 
-        mFriendsList = new FriendsList(context);
+        mFriendsList = FriendsList.getInstance();
+
+        if(mFriendsList == null)
+            mFriendsList = new FriendsList(context);
     }
 
     public User getUser(){
@@ -94,6 +107,8 @@ public class CurrentUser {
         if(session != null){
             session.destroy();
         }
+
+        UnisongSession.setCurrentSession(null);
 
         // Log out of facebook and get rid of access token.
         if(PrefUtils.getFromPrefs(sContext , PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong").equals("facebook")){

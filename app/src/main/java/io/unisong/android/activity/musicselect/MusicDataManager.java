@@ -9,10 +9,15 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.unisong.android.network.song.Song;
 
 /**
  * Created by Ethan on 10/3/2015.
@@ -184,6 +189,8 @@ public class MusicDataManager {
             int dataColumn = musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.DATA);
 
+            int durationColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DURATION);
 
             //add songs to list
             do {
@@ -201,12 +208,14 @@ public class MusicDataManager {
 
                 String path = musicCursor.getString(dataColumn);
 
+                long duration = musicCursor.getLong(durationColumn);
+
 
 
                 // TODO : filter out items that are not songs.
                 //if(!thisTitle.equals("Hangouts message") || !thisTitle.equals("Hangouts video call") || !thisTitle.equals("Facebook Pop")) {
 
-                    UISong song = new UISong(thisId, thisTitle, path);
+                    UISong song = new UISong(thisId, thisTitle, path, duration);
                     mSongs.add(song);
                     if(album != null){
                         album.addSong(song);
@@ -248,7 +257,6 @@ public class MusicDataManager {
 
             //add songs to list
             do {
-                Log.d(LOG_TAG , "Load playlist");
                 long playlistID = playlistCursor.getLong(idColumn);
                 String playlistName = playlistCursor.getString(nameColumn);
                 String data = playlistCursor.getString(dataColumn);
@@ -278,6 +286,7 @@ public class MusicDataManager {
                     } while (membersCursor.moveToNext());
                 } catch (Exception e){
                     Log.d(LOG_TAG , "Getting members failed");
+                    e.printStackTrace();
                 }
                 membersCursor.close();
             }
@@ -381,6 +390,25 @@ public class MusicDataManager {
         return null;
     }
 
+    /**
+     * Retrieves a list of songs with the given name - since there can be more than one
+     * @param name - the name of the song you're looking for
+     * @return songs - the songs with that name
+     */
+    public List<UISong> getSongsByName(String name){
+        List<UISong> songs = new ArrayList<>();
+
+        for(MusicData songData : mSongs){
+            UISong song = (UISong) songData;
+            if(song.getName().equals(name)){
+                songs.add(song);
+            }
+        }
+
+        return songs;
+    }
+
+
     public List<MusicData> getData(int pos){
         switch(pos){
             case 0:
@@ -400,6 +428,44 @@ public class MusicDataManager {
 
     public void destroy(){
         mContext = null;
+    }
 
+    public UISong getSongByJSON(JSONObject json) throws JSONException{
+
+        List<UISong> songsWithName = getSongsByName(json.getString("name"));
+        if(songsWithName.size() == 1){
+            return songsWithName.get(0);
+        } else {
+            List<UISong> newList = new ArrayList<>();
+
+            for(UISong song : songsWithName){
+                if(song.getArtist().equals(json.getString("artist")))
+                    newList.add(song);
+            }
+
+            if(newList.size() == 1){
+                return newList.get(0);
+            }
+        }
+
+        return null;
+    }
+    /**
+     * Feed in the JSON object of a song from a network source and then get the path of the image
+     * if it exists, null if not or if there's an exception
+     * @param json - the JSON representing the song object
+     * @return
+     */
+    public String getSongImagePathByJSON(JSONObject json){
+        try {
+            UISong song = getSongByJSON(json);
+
+            if(song != null)
+                return song.getImageURL();
+
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+        return null;
     }
 }

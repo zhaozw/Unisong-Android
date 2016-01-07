@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private static Handler sHandler;
 
     private NetworkService mNetworkService;
+    private MediaService mMediaService;
     private HttpClient mClient;
 
     //The Intent
@@ -68,9 +69,9 @@ public class MainActivity extends AppCompatActivity {
 
             //Start MediaService
             Intent ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
-            startService(ServiceIntent);
+            bindService(ServiceIntent, mNetworkConnection, Context.BIND_AUTO_CREATE);
             ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
-            startService(ServiceIntent);
+            bindService(ServiceIntent, mMediaConnection, Context.BIND_AUTO_CREATE);
 
 
             mIntent.putExtra("has-started"  , true);
@@ -162,15 +163,20 @@ public class MainActivity extends AppCompatActivity {
     private void startNewActivity(Class classToStart){
         Intent intent = new Intent(getApplicationContext(), classToStart);
         startActivity(intent);
-        finish();
     }
 
 
 
     @Override
     protected void onDestroy() {
-
         super.onDestroy();
+        Log.d(LOG_TAG , "MainActivity onDestroy() called, closing application.");
+
+        if(mNetworkService != null)
+            mNetworkService.onDestroy();
+
+        if(mMediaService != null)
+            mMediaService.onDestroy();
     }
 
     @Override
@@ -223,8 +229,7 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-
-    private ServiceConnection mediaConnection = new ServiceConnection(){
+    private ServiceConnection mNetworkConnection = new ServiceConnection(){
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -232,6 +237,22 @@ public class MainActivity extends AppCompatActivity {
             NetworkService.NetworkServiceBinder binder = (NetworkService.NetworkServiceBinder)service;
             //get service
             mNetworkService = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
+    private ServiceConnection mMediaConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            MediaService.MediaServiceBinder binder = (MediaService.MediaServiceBinder)service;
+            //get service
+            mMediaService = binder.getService();
         }
 
         @Override

@@ -80,6 +80,21 @@ public class UnisongActivity extends AppCompatActivity {
 
         mFriendsList = FriendsList.getInstance();
 
+        while(mFriendsList == null){
+            long currentTime = System.currentTimeMillis();
+            // TODO : investigate?
+            if(System.currentTimeMillis() - currentTime > 1000){
+                break;
+            }
+            try{
+                synchronized (this){
+                    this.wait(50);
+                }
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+
         // specify an adapter (see also next example)
         mAdapter = new FriendsAdapter(mFriendsList.getFriends());
         mRecyclerView.setAdapter(mAdapter);
@@ -331,7 +346,10 @@ public class UnisongActivity extends AppCompatActivity {
         } else {
             // TODO : if not, then create a session
 
-            CurrentUser.getInstance().setSession(new UnisongSession());
+            session = new UnisongSession();
+
+            CurrentUser.getInstance().setSession(session);
+            UnisongSession.setCurrentSession(session);
 
         }
 

@@ -137,6 +137,11 @@ public class User implements Serializable {
 
                 Log.d(LOG_TAG , "Session created");
                 mSession = new UnisongSession(id);
+
+                User currentUser = CurrentUser.getInstance();
+                if(currentUser != null && this.equals(currentUser)){
+                    UnisongSession.setCurrentSession(mSession);
+                }
             }
 
         } catch (IOException e){
