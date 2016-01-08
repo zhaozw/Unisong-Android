@@ -20,7 +20,7 @@ public class UnisongSong extends Song {
     private final static String LOG_TAG = UnisongSong.class.getSimpleName();
     public final static String TYPE_STRING = "UnisongSong";
 
-    private UUID mSessionID;
+    private int mSessionID;
     private SongFormat mFormat;
     private SongDecoder mSongDecoder;
 
@@ -33,7 +33,7 @@ public class UnisongSong extends Song {
      * @param duration
      * @param imageURL
      */
-    public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat, UUID sessionID) {
+    public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat, int sessionID) {
         super(name, artist,ID ,  imageURL);
         mFormat = inputFormat;
         mSessionID = sessionID;
@@ -45,13 +45,15 @@ public class UnisongSong extends Song {
         // TODO : fix the imageURL stuff
         super(object.getString("name"), object.getString("artist"), object.getInt("ID"), null);//object.getString("imageURL"));
         mFormat = new SongFormat(object.getJSONObject("format"));
+        mSongID = object.getInt("songID");
+        mSessionID = object.getInt("sessionID");
         Log.d(LOG_TAG, mFormat.toString());
         mSongDecoder = new SongDecoder(getFormat());
     }
 
     // TODO : write and actually implement.
     public long getDuration(){
-        return 0l;
+        return getFormat().getDuration();
     }
     @Override
     public AudioFrame getFrame(int ID) {
@@ -101,7 +103,7 @@ public class UnisongSong extends Song {
         mSongDecoder.addInputFrame(frame);
     }
 
-    public JSONObject getJSON(){
+    public JSONObject toJSON(){
         JSONObject object = new JSONObject();
 
         try {
@@ -109,6 +111,9 @@ public class UnisongSong extends Song {
             object.put("artist" , getArtist());
             if(getFormat() != null)
                 object.put("format", getFormat().toJSON());
+            object.put("type" , TYPE_STRING);
+            object.put("songID" , mSongID);
+            object.put("sessionID" , mSessionID);
 
         } catch (JSONException e){
             e.printStackTrace();

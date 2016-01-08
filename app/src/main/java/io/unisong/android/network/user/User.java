@@ -70,24 +70,24 @@ public class User implements Serializable {
     /**
      * Instantiate
      */
-    private User(Context context){
+    private User(){
+        UserUtils.addUser(this);
         mClient = HttpClient.getInstance();
-        mContext = context;
         mHasProfilePicture = false;
         mRetrieveProfilePictureFailed = false;
         getUserInfoThread().start();
     }
 
 
-    public User(Context context , String username){
-        this(context);
+    public User(String username){
+        this();
         mUsername = username;
 
         // TODO : load rest of info from server and save.
     }
 
-    public User(Context context , UUID uuid){
-        this(context);
+    public User(UUID uuid){
+        this();
         mUUID = uuid;
     }
 
@@ -98,8 +98,8 @@ public class User implements Serializable {
      * and deserialize everything from there.
      * @param accessToken
      */
-    public User(Context context , AccessToken accessToken){
-        this(context);
+    public User(AccessToken accessToken){
+        this();
         mFacebookID = accessToken.getUserId();
         mIsFacebookUser = true;
         Log.d(LOG_TAG, "Initializing facebook user.");

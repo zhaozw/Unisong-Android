@@ -111,6 +111,14 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         @Override
         protected Void doInBackground(Void... voids) {
 
+            synchronized (this){
+                try {
+                    this.wait(100);
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+
             while(mUser.getName() == null || mUser.getUsername() == null){
 
                 synchronized (this){
@@ -133,12 +141,15 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
             TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
             Log.d(LOG_TAG , "mUser: " + mUser.toString());
 
-            // TODO : investigate null case
             String usersName = mUser.getName();
 
             Log.d(LOG_TAG, usersName);
 
+            // TODO : investigate null case
+
+
             name.setText(usersName);
+
 
 
             TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);

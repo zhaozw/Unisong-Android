@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 
 import java.util.Map;
@@ -268,6 +269,15 @@ public class AudioTrackManager implements AudioObserver {
                 seek(seekTime);
 
                 resume(mAudioStatePublisher.getResumeTime());
+                break;
+
+            case AudioStatePublisher.PLAYING:
+                UnisongSession session = UnisongSession.getCurrentSession();
+                try {
+                    startSong(session.getCurrentSong());
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
                 break;
         }
     }

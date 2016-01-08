@@ -60,9 +60,9 @@ public class CurrentUser {
 
         if(accountType.equals("facebook")){
            // If it's a facebook account load the access token.
-            sCurrentUser = new User(context , AccessToken.getCurrentAccessToken());
+            sCurrentUser = new User(AccessToken.getCurrentAccessToken());
         } else {
-            sCurrentUser = new User(context, username);
+            sCurrentUser = new User(username);
         }
 
         mFriendsList = FriendsList.getInstance();

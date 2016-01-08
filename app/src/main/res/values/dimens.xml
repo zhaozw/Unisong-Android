@@ -35,4 +35,7 @@
 
     <dimen name="album_row_left_margin">16dp</dimen>
     <dimen name="album_row_right_margin">16dp</dimen>
+
+    <dimen name="session_song_margin_right">48dp</dimen>
+
 </resources>

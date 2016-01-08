@@ -28,7 +28,7 @@ public class SessionMembersFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view =  inflater.inflate(R.layout.fragment_session_friends, container, false);
+        View view =  inflater.inflate(R.layout.fragment_session_members, container, false);
 
         mSession = CurrentUser.getInstance().getSession();
         mRecyclerView = (RecyclerView) view.findViewById(R.id.members_recyclerview);

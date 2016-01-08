@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="@dimen/friend_row_height"
+    android:id="@+id/session_song_relative_layout"
     >
 
     <de.hdodenhof.circleimageview.CircleImageView
@@ -18,8 +19,8 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/friend_text_left_margin"
         android:layout_marginStart="@dimen/friend_text_left_margin"
-        android:layout_marginRight="@dimen/friend_text_right_margin"
-        android:layout_marginEnd="@dimen/friend_text_right_margin"
+        android:layout_marginRight="@dimen/session_song_margin_right"
+        android:layout_marginEnd="@dimen/session_song_margin_right"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <TextView
@@ -42,6 +43,14 @@
             android:text="Artist"
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
+
+    <!--
+    <Button
+        android:onClick="removeSong"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"/> -->
 
 
 </RelativeLayout>

@@ -74,6 +74,10 @@ public class MainSessionActivity extends AppCompatActivity {
         } else if(id == R.id.action_invite_friend){
             Toast.makeText(this, "Invite a friend!", Toast.LENGTH_SHORT).show();
             return true;
+        } else if(id == R.id.action_leave_session){
+            UnisongSession.getCurrentSession().leave();
+            onBackPressed();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

@@ -84,7 +84,7 @@ public abstract class Song {
 
     public abstract long getDuration();
 
-    public abstract JSONObject getJSON();
+    public abstract JSONObject toJSON();
 
     public abstract void update(JSONObject songJSON);
 

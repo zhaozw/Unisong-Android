@@ -15,6 +15,7 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 
 /**
@@ -29,6 +30,7 @@ public class LocalSong extends Song {
     private SongFormat mFormat;
     private int mSessionID;
     private int mSongID;
+    private long mSongStartTime;
     private boolean mStarted;
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -106,6 +108,7 @@ public class LocalSong extends Song {
      * Begins the PCM decoding and AAC encoding.
      */
     public void start(){
+        mSongStartTime = TimeManager.getInstance().getSongStartTime();
         mDecoder.startDecode();
         mEncoder.encode(0 , super.getID() , mPath);
     }
@@ -139,18 +142,23 @@ public class LocalSong extends Song {
     }
 
     // TODO: make toJSON with the data standard/update docs with new stuff
-    public JSONObject getJSON(){
+    public JSONObject toJSON(){
         JSONObject object = new JSONObject();
 
         try {
+
             object.put("name" , getName());
             object.put("artist" , getArtist());
             object.put("sessionID" , mSessionID);
             object.put("songID" , mSongID);
+
+            if(mSongStartTime != 0l)
+                object.put("songStartTime" , mSongStartTime);
+
             if(getFormat() != null)
                 object.put("format", getFormat().toJSON());
 
-
+            object.put("type" , UnisongSong.TYPE_STRING);
         } catch (JSONException e){
             e.printStackTrace();
         }

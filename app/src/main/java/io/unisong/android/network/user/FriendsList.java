@@ -91,14 +91,7 @@ public class FriendsList implements Serializable{
 
 
         loadFriends();
-        Log.d(LOG_TAG , "Creating a stack trace in case we get a double insntantiation error again");
-        Log.d(LOG_TAG , "Can be deleted after 1/14/15");
-        try{
-            Object a = null;
-            a.toString();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+
     }
 
     private void loadFriends(){
@@ -204,7 +197,7 @@ public class FriendsList implements Serializable{
             for(int i = 0; i < friendsArray.length(); i++){
 
                 JSONObject object = friendsArray.getJSONObject(i);
-                User userToAdd = new User(mContext , UUID.fromString(object.getString("userID")));
+                User userToAdd = new User(UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 // Make sure the user we're loading isn't already in mFriends
@@ -227,7 +220,7 @@ public class FriendsList implements Serializable{
             for(int i = 0; i < inReqArray.length(); i++){
 
                 JSONObject object = inReqArray.getJSONObject(i);
-                User userToAdd = new User(mContext , UUID.fromString(object.getString("userID")));
+                User userToAdd = new User(UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 for(User user : mIncomingRequests){
@@ -249,7 +242,7 @@ public class FriendsList implements Serializable{
             for(int i = 0; i < outReqAr.length(); i++){
 
                 JSONObject object = outReqAr.getJSONObject(i);
-                User userToAdd = new User(mContext , UUID.fromString(object.getString("userID")));
+                User userToAdd = new User(UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 // make sure we dont' already have this user.
@@ -342,7 +335,7 @@ public class FriendsList implements Serializable{
     /**
      * This will output the FriendsList to disk with the Serializable interface.
      */
-    public  void writeToDisk(){
+    public void writeToDisk(){
         FileOutputStream os;
         // TODO : see if we need anything special to overwrite.
         try {

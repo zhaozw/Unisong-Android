@@ -125,10 +125,14 @@ public class SongQueue {
             // TODO : figure out how to reorder adapter.
             // same way?
 
-            for(int i = queue.length() - 1; i > 0; i++){
+            for(int i = queue.length() - 1; i > 0; i--){
                 Song song = getSong(queue.getInt(i));
-                removeSong(song);
-                addSong(0 , song);
+                if(mSongQueue.indexOf(song) != i) {
+                    if (song != null) {
+                        removeSong(song);
+                        addSong(0, song);
+                    }
+                }
             }
 
         } catch (JSONException e){
@@ -140,4 +144,37 @@ public class SongQueue {
     public void setAdapter(SessionSongsAdapter adapter){
         mAdapter = adapter;
     }
+
+    public Song getCurrentSong(){
+        return mSongQueue.get(0);
+    }
+
+    public void moveItem(int fromPosition, int toPosition){
+        Song song = mSongQueue.get(fromPosition);
+        mSongQueue.remove(fromPosition);
+        mSongQueue.add(song);
+
+        mParentSession.sendUpdate();
+    }
+
+    public JSONArray getJSONQueue(){
+        JSONArray array = new JSONArray();
+
+        for(int i = 0; i < mSongQueue.size(); i++){
+            array.put(mSongQueue.get(i).getID());
+        }
+
+        return array;
+    }
+
+    public JSONArray getSongsJSON(){
+        JSONArray array = new JSONArray();
+
+        for(int i = 0; i < mSongQueue.size(); i++){
+            array.put(mSongQueue.get(i).toJSON());
+        }
+
+        return array;
+    }
+
 }

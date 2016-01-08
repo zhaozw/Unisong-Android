@@ -30,6 +30,7 @@ import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.UnisongSong;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
+import io.unisong.android.network.user.UserUtils;
 
 /**
  * A network session between a variety of devices.
@@ -60,6 +61,8 @@ public class UnisongSession {
     private SongQueue mSongQueue;
     private boolean mIsMaster;
     private boolean mIsDisconnected;
+    private String mMaster;
+    private String mSessionState;
 
     private SocketIOClient mSocketIOClient;
     private List<User> mMembers;
@@ -83,6 +86,8 @@ public class UnisongSession {
         mSongQueue = new SongQueue(this);
         mMembers = new ArrayList<>();
         mIsMaster = true;
+
+        mMaster = CurrentUser.getInstance().getUUID().toString();
 
         create();
         configureSocketIO();
@@ -174,9 +179,9 @@ public class UnisongSession {
     private void parseJSONObject(JSONObject object) throws JSONException{
 
         if(object.has("master")){
-            String masterID = object.getString("master");
+            mMaster = object.getString("master");
             User user = CurrentUser.getInstance();
-            if(user.getUUID().compareTo(UUID.fromString(masterID)) == 0){
+            if(user.getUUID().compareTo(UUID.fromString(mMaster)) == 0){
                 mIsMaster = true;
                 if(Broadcaster.getInstance() == null) {
                     Broadcaster broadcaster = new Broadcaster(this);
@@ -185,6 +190,14 @@ public class UnisongSession {
         }
 
         if(object.has("users")){
+            JSONArray array = object.getJSONArray("users");
+
+            for(int i = 0; i < array.length(); i++){
+                String uuid = array.getString(i);
+
+                mMembers.add(UserUtils.getUser(UUID.fromString(uuid)));
+            }
+
 
         }
 
@@ -192,14 +205,26 @@ public class UnisongSession {
             JSONArray songArray = object.getJSONArray("songs");
             JSONArray queueArray = object.getJSONArray("queue");
             mSongQueue.update(songArray, queueArray);
+
         }
 
         if(object.has("sessionState")){
+            mSessionState = object.getString("sessionState");
+            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
-        }
-
-        if(object.has("queue")){
-
+            if(mSessionState.equals("idle")){
+                if(publisher.getState() != AudioStatePublisher.IDLE){
+                    publisher.update(AudioStatePublisher.IDLE);
+                }
+            } else if(mSessionState.equals("paused")){
+                if(publisher.getState() != AudioStatePublisher.PAUSED){
+                    publisher.update(AudioStatePublisher.PAUSED);
+                }
+            } else if(mSessionState.equals("playing")){
+                if(publisher.getState() != AudioStatePublisher.PLAYING){
+                    publisher.update(AudioStatePublisher.PLAYING);
+                }
+            }
         }
     }
 
@@ -278,7 +303,7 @@ public class UnisongSession {
     }
 
     public Song getCurrentSong(){
-        return mCurrentSong;
+        return mSongQueue.getCurrentSong();
     }
 
     public void startSong(int songID){
@@ -339,7 +364,7 @@ public class UnisongSession {
         }
 
         Log.d(LOG_TAG , "Creating song on server");
-        mSocketIOClient.emit("add song" , song.getJSON());
+        mSocketIOClient.emit("add song" , song.toJSON());
     }
 
     private Emitter.Listener mGetSessionListener = new Emitter.Listener() {
@@ -383,8 +408,62 @@ public class UnisongSession {
         mSocketIOClient.emit("get session" , getSessionID());
     }
 
+    public void sendUpdate(){
+        mSocketIOClient.emit("update session" , this.toJSON());
+    }
+
     public boolean isMaster(){
         return mIsMaster;
+    }
+
+    public void leave(){
+        if(isMaster()){
+            mSocketIOClient.emit("end session", this.getSessionID());
+            mSocketIOClient.emit("leave" , new Object());
+        } else {
+            mSocketIOClient.emit("leave" , new Object());
+        }
+
+        setCurrentSession(null);
+        destroy();
+    }
+
+    public JSONObject toJSON(){
+        JSONObject object = new JSONObject();
+        try {
+            JSONArray users = new JSONArray();
+
+            for (User user : mMembers) {
+                users.put(user.getUUID().toString());
+            }
+
+            object.put("users", object);
+
+            object.put("queue" , mSongQueue.getJSONQueue());
+
+            object.put("songs" , mSongQueue.getSongsJSON());
+            object.put("master" , mMaster);
+
+            if(sCurrentSession == this){
+
+                AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+
+                if(publisher.getState() == AudioStatePublisher.IDLE){
+                    object.put("sessionState" , "idle");
+                } else if(publisher.getState()  == AudioStatePublisher.PAUSED){
+                    object.put("sessionState" , "idle");
+                } else if(publisher.getState() == AudioStatePublisher.PLAYING){
+                    object.put("sessionState" , "playing");
+                }
+            } else {
+                object.put("sessionState" , mSessionState);
+            }
+
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        return object;
     }
 
 }

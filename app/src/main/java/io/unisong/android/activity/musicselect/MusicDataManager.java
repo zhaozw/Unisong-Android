@@ -285,8 +285,7 @@ public class MusicDataManager {
                             playlist.addSong(song);
                     } while (membersCursor.moveToNext());
                 } catch (Exception e){
-                    Log.d(LOG_TAG , "Getting members failed");
-                    e.printStackTrace();
+                    Log.d(LOG_TAG , "Getting members failed. This may mean that the playlist is merely empty.");
                 }
                 membersCursor.close();
             }
