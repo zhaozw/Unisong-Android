@@ -43,15 +43,11 @@ public class SongQueue {
      */
 
     public void addSong(Song song){
-        // TODO : add server code.
-        // TODO : find a way to differentiate between new songs and songs from server
-        mSongQueue.add(song);
-        if(mAdapter != null)
-            mAdapter.add(song);
+        addSong(mSongQueue.size(), song);
     }
 
     public void addSong(int position, Song song){
-        mSongQueue.add(position , song);
+        mSongQueue.add(position, song);
         if(mAdapter != null)
             mAdapter.add(position , song);
     }
@@ -109,8 +105,7 @@ public class SongQueue {
                 Song song = getSong(ID);
                 if(song == null){
                     if(mParentSession.isMaster()) {
-                        LocalSong newSong = new LocalSong(songJSON);
-                        addSong(newSong);
+                        getSongLoop(songJSON);
                     } else {
                         UnisongSong newSong = new UnisongSong(songJSON);
                         addSong(newSong);
@@ -139,6 +134,22 @@ public class SongQueue {
             e.printStackTrace();
         }
 
+    }
+
+    private void getSongLoop(JSONObject songJSON){
+        try {
+            LocalSong newSong = new LocalSong(songJSON);
+            addSong(newSong);
+        } catch (Exception e){
+            synchronized (this){
+                try{
+                    this.wait(20);
+                } catch (InterruptedException dc){
+
+                }
+            }
+            getSongLoop(songJSON);
+        }
     }
 
     public void setAdapter(SessionSongsAdapter adapter){

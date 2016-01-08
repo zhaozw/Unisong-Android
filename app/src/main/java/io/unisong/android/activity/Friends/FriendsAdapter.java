@@ -135,25 +135,28 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
         @Override
         protected void onPostExecute(Void nullObj) {
-            Picasso.with(mHolder.profileView.getContext()).load(mUser.getProfileURL()).into((ImageView) mHolder.profileView.findViewById(R.id.friend_image));
+            try {
+                Picasso.with(mHolder.profileView.getContext()).load(mUser.getProfileURL()).into((ImageView) mHolder.profileView.findViewById(R.id.friend_image));
 
-            Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
-            TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
-            Log.d(LOG_TAG , "mUser: " + mUser.toString());
+                Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
+                TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
+                Log.d(LOG_TAG, "mUser: " + mUser.toString());
 
-            String usersName = mUser.getName();
+                String usersName = mUser.getName();
 
-            Log.d(LOG_TAG, usersName);
+                Log.d(LOG_TAG, usersName);
 
-            // TODO : investigate null case
-
-
-            name.setText(usersName);
+                // TODO : investigate null case
 
 
+                name.setText(usersName);
 
-            TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);
-            username.setText("@" + mUser.getUsername());
+
+                TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);
+                username.setText("@" + mUser.getUsername());
+            } catch (NullPointerException e){
+                e.printStackTrace();
+            }
         }
     }
 

@@ -1,12 +1,14 @@
 package io.unisong.android.activity.session;
 
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -17,6 +19,7 @@ import com.h6ah4i.android.widget.advrecyclerview.draggable.DraggableItemViewHold
 import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange;
 import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableItemViewHolder;
 import com.squareup.picasso.Picasso;
+import com.thedazzler.droidicon.IconicFontDrawable;
 
 import java.io.File;
 import java.util.List;
@@ -55,6 +58,7 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         public TextView artistView;
         public ImageView profileView;
         public RelativeLayout mRelativeLayout;
+        public Button mRemoveButton;
 
         public ViewHolder(View v) {
             super(v);
@@ -63,6 +67,15 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
             profileView = (ImageView) v.findViewById(R.id.session_song_image);
             nameView = (TextView) v.findViewById(R.id.session_song_name);
             artistView = (TextView) v.findViewById(R.id.session_song_artist);
+            mRemoveButton = (Button) v.findViewById(R.id.session_song_remove);
+
+
+            IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(v.getContext());
+            iconicFontDrawable.setIcon("gmd-close");
+            iconicFontDrawable.setIconColor(ContextCompat.getColor(v.getContext(), R.color.secondaryText));
+            iconicFontDrawable.setIconPadding(24);
+
+            mRemoveButton.setBackground(iconicFontDrawable);
         }
     }
 
@@ -128,7 +141,10 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         // - replace the contents of the view with that element
         Song song = mDataset.get(position);
 
-        holder.mRelativeLayout.setTag(song.getID());
+        Log.d(LOG_TAG , "songID: " + song.getID());
+        holder.mRelativeLayout.setTag(song.getID() + "");
+        holder.mRemoveButton.setTag(song.getID() + "");
+        Log.d(LOG_TAG , "mRemoveButton Tag: " + holder.mRemoveButton.getTag());
         if(song.getImageURL() != null)
             Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());

@@ -44,13 +44,16 @@
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
 
-    <!--
+
     <Button
+        android:id="@+id/session_song_remove"
         android:onClick="removeSong"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"/> -->
+        android:layout_marginStart="16dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
 
 
 </RelativeLayout>

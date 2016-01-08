@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,6 +26,7 @@ import io.unisong.android.network.session.UnisongSession;
  */
 public class MainSessionActivity extends AppCompatActivity {
 
+    private static final String LOG_TAG = MainSessionActivity.class.getSimpleName();
     public final static String POSITION = "position";
 
 
@@ -132,6 +134,20 @@ public class MainSessionActivity extends AppCompatActivity {
     public void addSong(View view){
         Intent intent = new Intent(getApplicationContext(), MusicSelectActivity.class);
         startActivity(intent);
+    }
 
+    public void removeSong(View view){
+        UnisongSession session = UnisongSession.getCurrentSession();
+
+        try {
+            int songID = Integer.parseInt((String)view.getTag());
+            Log.d(LOG_TAG , "ID : " + getResources().getResourceEntryName(view.getId()));
+            Log.d(LOG_TAG , "Tag : " +  view.getTag());
+            Log.d(LOG_TAG, "SongID : " + songID);
+            session.removeSong(songID);
+        } catch (Exception e){
+            // Catch NullPointerException and cast exception
+            e.printStackTrace();
+        }
     }
 }

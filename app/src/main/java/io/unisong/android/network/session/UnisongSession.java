@@ -54,15 +54,13 @@ public class UnisongSession {
         sCurrentSession = session;
     }
 
-    private int mNewSongID;
+    private int mNewSongID, mSessionID;
     private Song mCurrentSong;
-    private int mSessionID;
-    private boolean mIsLocalSession;
-    private SongQueue mSongQueue;
+
     private boolean mIsMaster;
-    private boolean mIsDisconnected;
-    private String mMaster;
-    private String mSessionState;
+
+    private SongQueue mSongQueue;
+    private String mMaster , mSessionState;
 
     private SocketIOClient mSocketIOClient;
     private List<User> mMembers;
@@ -91,7 +89,6 @@ public class UnisongSession {
 
         create();
         configureSocketIO();
-        mIsDisconnected = false;
         mNewSongID = 0;
 
         Broadcaster broadcaster = new Broadcaster(this);
@@ -119,7 +116,6 @@ public class UnisongSession {
 
         configureSocketIO();
         getInfoFromServer();
-        mIsDisconnected = false;
 
     }
 
@@ -194,6 +190,12 @@ public class UnisongSession {
 
             for(int i = 0; i < array.length(); i++){
                 String uuid = array.getString(i);
+
+                User user = CurrentUser.getInstance();
+
+                if(user != null)
+                    if(user.getUUID().toString().equals(uuid))
+                        continue;
 
                 mMembers.add(UserUtils.getUser(UUID.fromString(uuid)));
             }
@@ -333,7 +335,6 @@ public class UnisongSession {
 
         mSongQueue = null;
         mClients = null;
-        mIsDisconnected = true;
     }
 
     public void addFrame(AudioFrame frame){
@@ -365,6 +366,18 @@ public class UnisongSession {
 
         Log.d(LOG_TAG , "Creating song on server");
         mSocketIOClient.emit("add song" , song.toJSON());
+    }
+
+    /**
+     * Remove a song from the SongSession, with an ID. calls "delete song" in the socket.io client
+     * @param ID - the ID of the  given song
+     */
+    public void removeSong(int ID){
+        if(!mIsMaster)
+            return;
+        mSongQueue.removeSong(ID);
+
+        mSocketIOClient.emit("delete song" , ID);
     }
 
     private Emitter.Listener mGetSessionListener = new Emitter.Listener() {
@@ -432,6 +445,12 @@ public class UnisongSession {
         JSONObject object = new JSONObject();
         try {
             JSONArray users = new JSONArray();
+
+            if(mIsMaster) {
+                User user = CurrentUser.getInstance();
+                if(user != null)
+                    users.put(user.getUUID().toString());
+            }
 
             for (User user : mMembers) {
                 users.put(user.getUUID().toString());

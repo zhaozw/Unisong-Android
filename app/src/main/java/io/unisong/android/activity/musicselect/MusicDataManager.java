@@ -429,7 +429,7 @@ public class MusicDataManager {
         mContext = null;
     }
 
-    public UISong getSongByJSON(JSONObject json) throws JSONException{
+    public UISong getSongByJSON(JSONObject json) throws JSONException, NullPointerException{
 
         List<UISong> songsWithName = getSongsByName(json.getString("name"));
         if(songsWithName.size() == 1){

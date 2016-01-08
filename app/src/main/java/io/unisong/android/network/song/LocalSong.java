@@ -2,6 +2,7 @@
 package io.unisong.android.network.song;
 
 import android.media.MediaFormat;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,6 +23,8 @@ import io.unisong.android.network.session.UnisongSession;
  * Created by Ethan on 10/3/2015.
  */
 public class LocalSong extends Song {
+
+    private final static String LOG_TAG = LocalSong.class.getSimpleName();
 
     public final static String TYPE_STRING = "LocalSong";
     private String mPath;
@@ -52,6 +55,8 @@ public class LocalSong extends Song {
             mPath = song.getPath();
         mStarted = false;
         mSessionID = songJSON.getInt("sessionID");
+        Log.d(LOG_TAG, "LocalSong created, songID is : " + mSongID);
+        Log.d(LOG_TAG , "SongID :" + songJSON.getInt("songID"));
     }
 
     /**
