@@ -157,15 +157,6 @@ public class UnisongSession {
             } else if(response.code() == 404){
                 Log.d(LOG_TAG , "Session not found!");
             }
-
-
-            Log.d(LOG_TAG , "Sending GET about session songID.");
-            response = mClient.syncGet(NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/songID");
-
-            String body = response.body().string();
-
-            Log.d(LOG_TAG , "SongID Response Body: " + body);
-            mNewSongID = Integer.parseInt(body) + 1;
         } catch (Exception e){
             e.printStackTrace();
         }
