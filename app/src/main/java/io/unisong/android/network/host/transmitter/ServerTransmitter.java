@@ -180,4 +180,8 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 break;
         }
     }
+
+    public void destroy(){
+
+    }
 }

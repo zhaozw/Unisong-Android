@@ -31,4 +31,8 @@ public class TCPTransmitter implements Transmitter {
     public void update(int state) {
 
     }
+
+    public void destroy(){
+
+    }
 }

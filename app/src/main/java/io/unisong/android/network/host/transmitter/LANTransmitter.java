@@ -399,4 +399,8 @@ public class LANTransmitter implements Transmitter{
         mTCPHandler.startSong();
         startStream();
     }
+
+    public void destroy(){
+
+    }
 }

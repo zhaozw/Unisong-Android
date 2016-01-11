@@ -153,6 +153,5 @@ public class AudioStatePublisher {
         return mSongToEnd;
     }
 
-
 }
 

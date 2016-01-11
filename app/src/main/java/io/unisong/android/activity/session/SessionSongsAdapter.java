@@ -141,10 +141,8 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
         // - replace the contents of the view with that element
         Song song = mDataset.get(position);
 
-        Log.d(LOG_TAG , "songID: " + song.getID());
         holder.mRelativeLayout.setTag(song.getID() + "");
         holder.mRemoveButton.setTag(song.getID() + "");
-        Log.d(LOG_TAG , "mRemoveButton Tag: " + holder.mRemoveButton.getTag());
         if(song.getImageURL() != null)
             Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());
@@ -180,6 +178,8 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
 
     @Override
     public boolean onCheckCanStartDrag(ViewHolder holder, int position, int x, int y) {
+
+        Log.d(LOG_TAG , "Check Can Start Drag");
         if(!UnisongSession.getCurrentSession().isMaster())
             return false;
 
@@ -195,6 +195,7 @@ public class SessionSongsAdapter extends RecyclerView.Adapter<SessionSongsAdapte
 
     @Override
     public ItemDraggableRange onGetItemDraggableRange(ViewHolder holder, int position) {
+        Log.d(LOG_TAG , "get Item Draggable Range");
         return null;
     }
 

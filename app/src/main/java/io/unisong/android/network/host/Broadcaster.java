@@ -46,13 +46,8 @@ public class Broadcaster implements AudioObserver {
 
     private AudioStatePublisher mAudioStatePublisher;
 
-    private AACEncoder mEncoder;
-
-    private LANTransmitter mLANTransmitter;
-
     private UnisongSession mUnisongSession;
 
-    private ServerTransmitter mServerTransmitter;
 
     private Handler mHandler;
     private AudioTrackManager mAudioTrackManager;
@@ -127,7 +122,19 @@ public class Broadcaster implements AudioObserver {
     }
 
     //TODO: fix this up when rearchitecturing is done
+    // lol rearchitecturing is never done.
     public void destroy(){
+        for(Transmitter transmitter : mTransmitters){
+            transmitter.destroy();
+        }
+
+        mAudioTrackManager = null;
+        mTimeManager = null;
+
+
+        sInstance = null;
+        mCurrentSong = null;
+        mHandler = null;
 
     }
 
@@ -137,7 +144,7 @@ public class Broadcaster implements AudioObserver {
 
 
     @Override
-    public void update(int state) {
+    public void update(int state){
         switch (state){
             case AudioStatePublisher.SEEK:
                 seek(mAudioStatePublisher.getSeekTime());

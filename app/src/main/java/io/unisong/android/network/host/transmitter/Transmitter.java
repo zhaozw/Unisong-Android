@@ -10,4 +10,6 @@ public interface Transmitter extends AudioObserver {
 
 
     void startSong(Song songs);
+
+    void destroy();
 }

@@ -146,14 +146,16 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
                 Log.d(LOG_TAG, usersName);
 
-                // TODO : investigate null case
+                // TODO : handle null exception with a runnable.
 
-
-                name.setText(usersName);
+                if(name != null)
+                    name.setText(usersName);
 
 
                 TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);
-                username.setText("@" + mUser.getUsername());
+
+                if(username != null)
+                    username.setText("@" + mUser.getUsername());
             } catch (NullPointerException e){
                 e.printStackTrace();
             }

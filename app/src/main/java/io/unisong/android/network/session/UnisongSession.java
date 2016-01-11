@@ -88,7 +88,6 @@ public class UnisongSession {
         mMaster = CurrentUser.getInstance().getUUID().toString();
 
         create();
-        configureSocketIO();
         mNewSongID = 0;
 
         Broadcaster broadcaster = new Broadcaster(this);
@@ -244,6 +243,10 @@ public class UnisongSession {
                 }
             }
         }
+
+        if(object.has("songID")){
+            mNewSongID = object.getInt("songID");
+        }
     }
 
     /**
@@ -253,7 +256,7 @@ public class UnisongSession {
         getCreateThread().start();
     }
 
-    private void configureSocketIO(){
+    public void configureSocketIO(){
         if(this == sCurrentSession) {
             mSocketIOClient.on("add song", mAddSongListener);
             mSocketIOClient.on("get session" , mGetSessionListener);

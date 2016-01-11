@@ -351,6 +351,7 @@ public class UnisongActivity extends AppCompatActivity {
             CurrentUser.getInstance().setSession(session);
             UnisongSession.setCurrentSession(session);
 
+            session.configureSocketIO();
         }
 
         Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
