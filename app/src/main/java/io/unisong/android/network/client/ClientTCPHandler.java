@@ -390,7 +390,8 @@ public class ClientTCPHandler {
     }
 
     private void listenSongEnd(){
-        mListener.endSong();
+        // TODO : listen for songID packet?
+//        mListener.endSong();
     }
 
     //Sets this as the master

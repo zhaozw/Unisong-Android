@@ -144,7 +144,7 @@ public class MainSessionActivity extends AppCompatActivity {
             Log.d(LOG_TAG , "ID : " + getResources().getResourceEntryName(view.getId()));
             Log.d(LOG_TAG , "Tag : " +  view.getTag());
             Log.d(LOG_TAG, "SongID : " + songID);
-            session.removeSong(songID);
+            session.deleteSong(songID);
         } catch (Exception e){
             // Catch NullPointerException and cast exception
             e.printStackTrace();

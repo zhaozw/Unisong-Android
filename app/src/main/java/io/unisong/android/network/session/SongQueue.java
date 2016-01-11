@@ -6,13 +6,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.Socket;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import io.unisong.android.activity.session.SessionSongsAdapter;
-import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.song.Song;
@@ -52,7 +49,7 @@ public class SongQueue {
             mAdapter.add(position , song);
     }
 
-    public void removeSong(int songID){
+    public void deleteSong(int songID){
         Song songToRemove = null;
         for(Song song : mSongQueue){
             if(song.getID() == songID){
@@ -67,8 +64,8 @@ public class SongQueue {
         }
     }
 
-    public void removeSong(Song song){
-        removeSong(song.getID());
+    public void deleteSong(Song song){
+        deleteSong(song.getID());
     }
 
     public List<Song> getQueue(){
@@ -124,7 +121,7 @@ public class SongQueue {
                 Song song = getSong(queue.getInt(i));
                 if(mSongQueue.indexOf(song) != i) {
                     if (song != null) {
-                        removeSong(song);
+                        deleteSong(song);
                         addSong(0, song);
                     }
                 }

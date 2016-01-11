@@ -1,7 +1,15 @@
 package io.unisong.android.audio;
 
+import android.util.Log;
+
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import io.socket.emitter.Emitter;
+import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.TimeManager;
 
 /**
  * An Implementation of the Observer/Subject design pattern, this is the publisher
@@ -20,6 +28,8 @@ import java.util.List;
  */
 public class AudioStatePublisher {
 
+    private static final String LOG_TAG = AudioStatePublisher.class.getSimpleName();
+
     private static AudioStatePublisher sInstance;
 
     public static final int IDLE = 0;
@@ -27,12 +37,16 @@ public class AudioStatePublisher {
     public static final int SEEK = 2;
     public static final int PLAYING = 3;
     public static final int RESUME = 4;
+    public static final int END_SONG = 5;
 
+
+    private boolean mSocketIOConfigured;
     //The time that we are seeking to
     private long mSeekTime;
 
     //The time that the song will be resumed at
     private long mResumeTime;
+    private int mSongToEnd;
     private int mState;
 
     //The boolean used to tell if a value has been updated (for pause time)
@@ -45,6 +59,7 @@ public class AudioStatePublisher {
     public AudioStatePublisher(){
         mState = IDLE;
         mObservers = new ArrayList<>();
+        mSocketIOConfigured = false;
     }
 
     public static AudioStatePublisher getInstance(){
@@ -124,5 +139,20 @@ public class AudioStatePublisher {
     public void pause(){
         update(AudioStatePublisher.PAUSED);
     }
+
+    public void play(){
+        update(AudioStatePublisher.PLAYING);
+    }
+
+    public void endSong(int songID){
+        mSongToEnd = songID;
+        update(AudioStatePublisher.END_SONG);
+    }
+
+    public int getSongToEnd(){
+        return mSongToEnd;
+    }
+
+
 }
 

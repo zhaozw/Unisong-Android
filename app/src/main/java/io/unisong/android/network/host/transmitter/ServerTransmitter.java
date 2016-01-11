@@ -163,12 +163,20 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 try {
                     JSONObject object = new JSONObject();
                     object.put("resumeTime", mAudioStatePublisher.getResumeTime());
+                    object.put("songStartTime", TimeManager.getInstance().getSongStartTime());
                     mClient.emit("resume", object);
                 } catch (JSONException e){
                     e.printStackTrace();
                 }
                 break;
             case AudioStatePublisher.SEEK:
+                mClient.emit("seek" , mAudioStatePublisher.getSeekTime());
+                break;
+            case AudioStatePublisher.PLAYING:
+                mClient.emit("playing" , null);
+                break;
+            case AudioStatePublisher.END_SONG:
+                mClient.emit("end song" , mAudioStatePublisher.getSongToEnd());
                 break;
         }
     }

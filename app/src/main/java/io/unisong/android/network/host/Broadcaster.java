@@ -74,8 +74,8 @@ public class Broadcaster implements AudioObserver {
         //mLANTransmitter = new LANTransmitter(false , mUnisongSession);
         //mTransmitters.add(mLANTransmitter);
 
-        mServerTransmitter = new ServerTransmitter();
-        mTransmitters.add(mServerTransmitter);
+//        mServerTransmitter = new ServerTransmitter();
+//        mTransmitters.add(mServerTransmitter);
 
         mHandler = new Handler();
         sInstance = this;
@@ -117,6 +117,14 @@ public class Broadcaster implements AudioObserver {
             mAudioStatePublisher.update(AudioStatePublisher.PLAYING);
         }
     };
+
+    public void addTransmitter(Transmitter transmitter){
+        mTransmitters.add(transmitter);
+    }
+
+    public List<Transmitter> getTransmitters(){
+        return mTransmitters;
+    }
 
     //TODO: fix this up when rearchitecturing is done
     public void destroy(){

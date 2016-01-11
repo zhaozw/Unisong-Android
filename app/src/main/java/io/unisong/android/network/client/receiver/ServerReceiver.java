@@ -17,6 +17,7 @@ import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.song.UnisongSong;
 import io.unisong.android.network.user.CurrentUser;
 
 /**
@@ -45,12 +46,25 @@ public class ServerReceiver implements Receiver{
         mClient.on("data", mDataListener);
         mClient.on("start song", mSongStartListener);
         mClient.on("pause", mPauseListener);
+        mClient.on("add song", mAddSongListener);
+        mClient.on("delete song" , mDeleteSongListener);
         mClient.on("end song", mEndSongListener);
         mClient.on("end session", mEndSessionListener);
         mClient.on("seek" , mSeekListener);
         mClient.on("resume" , mResumeListener);
-
+        mClient.on("play" , mPlayListener);
     }
+
+    /**
+     * The listener for play events
+     */
+    private Emitter.Listener mPlayListener = new Emitter.Listener(){
+
+        @Override
+        public void call(Object... args) {
+            mListener.play();
+        }
+    };
 
 
     private boolean mFirstDataReceived = false;
@@ -99,7 +113,6 @@ public class ServerReceiver implements Receiver{
         @Override
         public void call(Object... args) {
             mListener.pause();
-
         }
     };
 
@@ -138,7 +151,8 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
-            mListener.endSong();
+            int songID = (Integer) args[0];
+            mListener.endSong(songID);
         }
     };
 
@@ -184,9 +198,8 @@ public class ServerReceiver implements Receiver{
      * The listener for when we receive a Resume event
      *
      * params
-     * args[0] - resumeTime : long
-     * The time in the song that we are resuming at in ms
-     * args[1] - newSongStartTime : long
+     *
+     *
      * the new song start time - ms
      *
      */
@@ -195,8 +208,12 @@ public class ServerReceiver implements Receiver{
         @Override
         public void call(Object... args) {
             try{
-                long resumeTime = (long) args[0];
-                long newSongStartTime = (long) args[1];
+                // Get the resumeTime and the new songStartTime
+                JSONObject resumeObject = (JSONObject) args[0];
+
+                // update them
+                long resumeTime = resumeObject.getLong("resumeTime");
+                Long newSongStartTime = resumeObject.getLong("songStartTime");
                 mListener.resume(resumeTime , newSongStartTime);
             } catch (Exception e){
                 e.printStackTrace();
@@ -204,8 +221,42 @@ public class ServerReceiver implements Receiver{
         }
     };
 
+    /**
+     * The socket.IO listener for when a song is added.
+     */
+    private Emitter.Listener mAddSongListener = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try{
 
+                JSONObject object = (JSONObject) args[0];
+                String type = object.getString("type");
+                if(type.equals(UnisongSong.TYPE_STRING)){
+                    UnisongSong song = new UnisongSong(object);
+                    mListener.addSong(song);
+                }
+                // TODO : when added add SoundcloudSong and Spotify/Google play songs.
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    };
 
+    /**
+     *
+     */
+    private Emitter.Listener mDeleteSongListener = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try{
+                int songID = (Integer) args[0];
+
+                mListener.deleteSong(songID);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    };
 
     /**
      * This will join the specified Server session.
@@ -213,6 +264,5 @@ public class ServerReceiver implements Receiver{
      */
     public void joinSession(int sessionID){
         mClient.joinSession(sessionID);
-
     }
 }

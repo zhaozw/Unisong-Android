@@ -1,6 +1,5 @@
 package io.unisong.android.network.session;
 
-import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
@@ -19,15 +18,16 @@ import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.client.Listener;
+import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.host.Broadcaster;
+import io.unisong.android.network.host.transmitter.ServerTransmitter;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.song.UnisongSong;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
@@ -179,9 +179,20 @@ public class UnisongSession {
             User user = CurrentUser.getInstance();
             if(user.getUUID().compareTo(UUID.fromString(mMaster)) == 0){
                 mIsMaster = true;
+
+                mSocketIOClient.on("add song", mAddSongListener);
+                // If we are the master and are getting updates, start u
                 if(Broadcaster.getInstance() == null) {
                     Broadcaster broadcaster = new Broadcaster(this);
+                    broadcaster.addTransmitter(new ServerTransmitter());
                 }
+
+            } else {
+                if(Listener.getInstance() == null){
+                    Listener listener = new Listener(this);
+                    listener.addReceiver(new ServerReceiver(listener));
+                }
+                mSocketIOClient.on("update session" , mGetSessionListener);
             }
         }
 
@@ -191,13 +202,17 @@ public class UnisongSession {
             for(int i = 0; i < array.length(); i++){
                 String uuid = array.getString(i);
 
-                User user = CurrentUser.getInstance();
+                User currentUser = CurrentUser.getInstance();
 
-                if(user != null)
-                    if(user.getUUID().toString().equals(uuid))
+                if(currentUser != null)
+                    if(currentUser.getUUID().toString().equals(uuid))
                         continue;
 
-                mMembers.add(UserUtils.getUser(UUID.fromString(uuid)));
+                User userToAdd = UserUtils.getUser(UUID.fromString(uuid));
+
+                // TODO : test that this works.
+                if(mMembers.indexOf(userToAdd) == -1)
+                    mMembers.add(userToAdd);
             }
 
 
@@ -210,7 +225,8 @@ public class UnisongSession {
 
         }
 
-        if(object.has("sessionState")){
+        // TODO : ensure that this works in sync with Listener.
+        if(object.has("sessionState") && !isMaster()){
             mSessionState = object.getString("sessionState");
             AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
@@ -364,20 +380,26 @@ public class UnisongSession {
             //startSong(song.getID());
         }
 
-        Log.d(LOG_TAG , "Creating song on server");
-        mSocketIOClient.emit("add song" , song.toJSON());
+        Log.d(LOG_TAG, "Creating song on server");
+
+        // If we are the master, then notify the server. If not, then we are simply responding.
+        if(isMaster())
+            mSocketIOClient.emit("add song" , song.toJSON());
     }
 
     /**
      * Remove a song from the SongSession, with an ID. calls "delete song" in the socket.io client
+     * if we are the session master
      * @param ID - the ID of the  given song
      */
-    public void removeSong(int ID){
+    public void deleteSong(int ID){
         if(!mIsMaster)
             return;
-        mSongQueue.removeSong(ID);
 
-        mSocketIOClient.emit("delete song" , ID);
+        mSongQueue.deleteSong(ID);
+
+        if(isMaster())
+            mSocketIOClient.emit("delete song" , ID);
     }
 
     private Emitter.Listener mGetSessionListener = new Emitter.Listener() {
@@ -388,7 +410,6 @@ public class UnisongSession {
                 parseJSONObject(object);
             } catch (Exception e){
                 e.printStackTrace();
-                // TODO : handle individual exceptions and report them to crashalytics/google analytics
             }
         }
     };
@@ -397,22 +418,17 @@ public class UnisongSession {
         @Override
         public void call(Object... args) {
             try{
-                if(isMaster())
-                    return;
 
                 JSONObject object = (JSONObject) args[0];
-                String type = object.getString("type");
-                if(type.equals(UnisongSong.TYPE_STRING)){
-                    UnisongSong song = new UnisongSong(object);
-                    mSongQueue.addSong(song);
-                }
-                // TODO : when added add SoundcloudSong and Spotify/Google play songs.
+
+                Log.d(LOG_TAG , "Add Song Response Received : " + object.toString());
+
             } catch (Exception e){
                 e.printStackTrace();
-                // TODO : handle individual exceptions and report them to crashalytics/google analytics
             }
         }
     };
+
 
     /**
      * Updates the session with information from the server.
@@ -433,9 +449,20 @@ public class UnisongSession {
         if(isMaster()){
             mSocketIOClient.emit("end session", this.getSessionID());
             mSocketIOClient.emit("leave" , new Object());
+
+            Broadcaster broadcaster = Broadcaster.getInstance();
+
+            if(broadcaster != null){
+                broadcaster.destroy();
+            }
         } else {
             mSocketIOClient.emit("leave" , new Object());
+            Listener listener = Listener.getInstance();
+
+
         }
+
+
 
         setCurrentSession(null);
         destroy();
