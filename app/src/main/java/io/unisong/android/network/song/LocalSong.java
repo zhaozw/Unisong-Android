@@ -32,7 +32,6 @@ public class LocalSong extends Song {
     private AACEncoder mEncoder;
     private SongFormat mFormat;
     private int mSessionID;
-    private int mSongID;
     private long mSongStartTime;
     private boolean mStarted;
     /**

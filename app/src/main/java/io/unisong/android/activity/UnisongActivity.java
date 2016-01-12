@@ -79,9 +79,10 @@ public class UnisongActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         mFriendsList = FriendsList.getInstance();
+        long currentTime = System.currentTimeMillis();
 
         while(mFriendsList == null){
-            long currentTime = System.currentTimeMillis();
+            Log.d(LOG_TAG , "Loading FriendsList, has been: " + (System.currentTimeMillis() - currentTime) + "ms");
             // TODO : investigate?
             if(System.currentTimeMillis() - currentTime > 1000){
                 break;
@@ -93,6 +94,8 @@ public class UnisongActivity extends AppCompatActivity {
             } catch (InterruptedException e){
                 e.printStackTrace();
             }
+
+            mFriendsList = FriendsList.getInstance();
         }
 
         // specify an adapter (see also next example)
@@ -113,6 +116,16 @@ public class UnisongActivity extends AppCompatActivity {
             username.setText("@" + user.getUsername());
         }
 
+        UnisongSession session = UnisongSession.getCurrentSession();
+
+        if(session != null){
+            Log.d(LOG_TAG , "UnisongSession Loaded!");
+            Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+            startActivity(intent);
+        } else {
+            UnisongSession.notifyWhenLoaded(this);
+            Log.d(LOG_TAG , "UnisongSession Not Loaded ):");
+        }
 
 
         new LoadCurrentUserProfile().execute();
@@ -303,7 +316,6 @@ public class UnisongActivity extends AppCompatActivity {
 
     private class LoadCurrentUserProfile extends AsyncTask<Void , Void, User> {
 
-
         @Override
         protected User doInBackground(Void... voids) {
 
@@ -338,8 +350,22 @@ public class UnisongActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * The method that will be called if the user is in a session, but it was not when this
+     * activity was
+     */
+    public void sessionLoaded(){
+        Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+        startActivity(intent);
+    }
 
+    /**
+     * The method called on the Floating Action Button click that will go to the
+     * MainSessionActivity and create a session if the user is not currently in one.
+     * @param view
+     */
     public void onFABClick(View view){
+        UnisongSession.notifyWhenLoaded(null);
         UnisongSession session = CurrentUser.getInstance().getSession();
         if(session != null){
             // TODO : if we're in a session, move to the Session screen

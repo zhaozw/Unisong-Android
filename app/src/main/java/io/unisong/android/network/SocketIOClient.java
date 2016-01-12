@@ -173,6 +173,10 @@ public class SocketIOClient {
         mSocket.emit(eventName , data);
     }
 
+    public void emit(String eventName, Object[] args){
+        mSocket.emit(eventName, args);
+    }
+
     private Thread getConnectionThread(){
         return new Thread(new Runnable() {
             @Override

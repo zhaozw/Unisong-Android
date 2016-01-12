@@ -10,8 +10,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.h6ah4i.android.widget.advrecyclerview.draggable.DraggableItemAdapter;
-import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
@@ -24,8 +22,7 @@ import io.unisong.android.network.user.User;
  * The adapter that adapts a session members
  * Created by ezturner on 9/27/2015.
  */
-public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAdapter.ViewHolder>
-        implements DraggableItemAdapter<SessionSongsAdapter.ViewHolder> {
+public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAdapter.ViewHolder>{
     private List<User> mDataset;
 
     private Handler mHandler;
@@ -106,19 +103,5 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
         return mDataset.size();
     }
 
-    @Override
-    public boolean onCheckCanStartDrag(SessionSongsAdapter.ViewHolder holder, int position, int x, int y) {
-        return false;
-    }
-
-    @Override
-    public ItemDraggableRange onGetItemDraggableRange(SessionSongsAdapter.ViewHolder holder, int position) {
-        return null;
-    }
-
-    @Override
-    public void onMoveItem(int fromPosition, int toPosition) {
-
-    }
 
 }

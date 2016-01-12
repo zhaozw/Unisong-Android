@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import io.socket.emitter.Emitter;
+import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
@@ -44,6 +45,7 @@ public class UnisongSession {
 
     private final static String LOG_TAG = UnisongSession.class.getSimpleName();
 
+    private static UnisongActivity sActivityToNotify;
     private static UnisongSession sCurrentSession;
 
     public static UnisongSession getCurrentSession(){
@@ -52,6 +54,14 @@ public class UnisongSession {
 
     public static void setCurrentSession(UnisongSession session) {
         sCurrentSession = session;
+        if(sActivityToNotify != null){
+            sActivityToNotify.sessionLoaded();
+            sActivityToNotify = null;
+        }
+    }
+
+    public static void notifyWhenLoaded(UnisongActivity activty){
+        sActivityToNotify = activty;
     }
 
     private int mNewSongID, mSessionID;
@@ -113,7 +123,6 @@ public class UnisongSession {
         mSongQueue = new SongQueue(this);
         mMembers = new ArrayList<>();
 
-        configureSocketIO();
         getInfoFromServer();
 
     }
@@ -162,15 +171,17 @@ public class UnisongSession {
         }
     }
 
+    private boolean onlyOnce = true;
     private void parseJSONObject(JSONObject object) throws JSONException{
 
+        if(!onlyOnce)
+            onlyOnce = false;
         if(object.has("master")){
             mMaster = object.getString("master");
             User user = CurrentUser.getInstance();
             if(user.getUUID().compareTo(UUID.fromString(mMaster)) == 0){
                 mIsMaster = true;
 
-                mSocketIOClient.on("add song", mAddSongListener);
                 // If we are the master and are getting updates, start u
                 if(Broadcaster.getInstance() == null) {
                     Broadcaster broadcaster = new Broadcaster(this);
@@ -182,7 +193,6 @@ public class UnisongSession {
                     Listener listener = new Listener(this);
                     listener.addReceiver(new ServerReceiver(listener));
                 }
-                mSocketIOClient.on("update session" , mGetSessionListener);
             }
         }
 
@@ -248,10 +258,10 @@ public class UnisongSession {
     }
 
     public void configureSocketIO(){
-        if(this == sCurrentSession) {
-            mSocketIOClient.on("add song", mAddSongListener);
-            mSocketIOClient.on("get session" , mGetSessionListener);
-        }
+        mSocketIOClient.on("add song", mAddSongListener);
+
+        if(!isMaster())
+            mSocketIOClient.on("update session" , mUpdateSessionListener);
     }
 
     public int incrementNewSongID(){
@@ -396,7 +406,7 @@ public class UnisongSession {
             mSocketIOClient.emit("delete song" , ID);
     }
 
-    private Emitter.Listener mGetSessionListener = new Emitter.Listener() {
+    private Emitter.Listener mUpdateSessionListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             try{
@@ -432,7 +442,10 @@ public class UnisongSession {
     }
 
     public void sendUpdate(){
-        mSocketIOClient.emit("update session" , this.toJSON());
+        Object[] array = new Object[2];
+        array[0] = mSessionID;
+        array[1] = this.toJSON();
+        mSocketIOClient.emit("update session" , array);
     }
 
     public boolean isMaster(){
@@ -477,7 +490,8 @@ public class UnisongSession {
                 users.put(user.getUUID().toString());
             }
 
-            object.put("users", object);
+
+            object.put("users", users);
 
             object.put("queue" , mSongQueue.getJSONQueue());
 

@@ -157,10 +157,10 @@ public class SongQueue {
         return mSongQueue.get(0);
     }
 
-    public void moveItem(int fromPosition, int toPosition){
+    public void move(int fromPosition, int toPosition){
         Song song = mSongQueue.get(fromPosition);
         mSongQueue.remove(fromPosition);
-        mSongQueue.add(song);
+        mSongQueue.add(toPosition , song);
 
         mParentSession.sendUpdate();
     }

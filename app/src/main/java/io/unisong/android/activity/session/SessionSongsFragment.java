@@ -9,17 +9,19 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SimpleAdapter;
 
-import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
-import com.h6ah4i.android.widget.advrecyclerview.animator.RefactoredDefaultItemAnimator;
-import com.h6ah4i.android.widget.advrecyclerview.decoration.ItemShadowDecorator;
-import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
+import com.marshalchen.ultimaterecyclerview.UltimateRecyclerView;
+import com.marshalchen.ultimaterecyclerview.animators.BaseItemAnimator;
+import com.marshalchen.ultimaterecyclerview.animators.FadeInAnimator;
+import com.marshalchen.ultimaterecyclerview.itemTouchHelper.SimpleItemTouchHelperCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +39,12 @@ public class SessionSongsFragment extends Fragment {
 
     private List<Song> mSongs;
     private UnisongSession mSession;
-    private RecyclerView mRecyclerView;
+    private UltimateRecyclerView mUltimateRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
     private SessionSongsAdapter mAdapter;
-    private RecyclerView.Adapter mWrappedAdapter;
-    private RecyclerViewDragDropManager mRecyclerViewDragDropManager;
+
+
+    private ItemTouchHelper mItemTouchHelper;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -50,29 +53,10 @@ public class SessionSongsFragment extends Fragment {
         View view =inflater.inflate(R.layout.fragment_session_songs, container, false);
 
         mSession = CurrentUser.getInstance().getSession();
-        mRecyclerView = (RecyclerView) view.findViewById(R.id.session_songs_recyclerview);
-
-        // TODO : add drag shadow?
-        mRecyclerViewDragDropManager = new RecyclerViewDragDropManager();
-        //mRecyclerViewDragDropManager.setInitiateOnLongPress(true);
-//        mRecyclerViewDragDropManager.setInitiateOnMove(false);
-
-//        mRecyclerViewDragDropManager.setDraggingItemShadowDrawable(
-//                (NinePatchDrawable) ContextCompat.getDrawable(getContext(), R.drawable.material_shadow_z3));
-//        if (supportsViewElevation()) {
-            // Lollipop or later has native drop shadow feature. ItemShadowDecorator is not required.
-//        } else {
-//            mRecyclerView.addItemDecoration(new ItemShadowDecorator((NinePatchDrawable) ContextCompat.getDrawable(getContext(), R.drawable.material_shadow_z1)));
-//        }
-
-        // use this setting to improve performance if you know that changes
-        // in content do not change the mLayout size of the RecyclerView
+        mUltimateRecyclerView = (UltimateRecyclerView) view.findViewById(R.id.session_songs_recyclerview);
 
         // use a linear mLayout manager
         mLayoutManager = new LinearLayoutManager(getContext());
-
-        final GeneralItemAnimator animator = new RefactoredDefaultItemAnimator();
-
 
         List<Song> songs = new ArrayList<>();
         for(Song song : mSession.getSongQueue().getQueue()){
@@ -81,22 +65,24 @@ public class SessionSongsFragment extends Fragment {
 
         mAdapter = new SessionSongsAdapter(songs, mSession.getSongQueue());
 
-        mWrappedAdapter = mRecyclerViewDragDropManager.createWrappedAdapter(mAdapter);      // wrap for dragging
+        mUltimateRecyclerView.setHasFixedSize(false);
 
         //mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat.getDrawable(getContext(), R.drawable.list_divider_h), true));
 
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(mWrappedAdapter);
-        mRecyclerView.setItemAnimator(animator);
+        mUltimateRecyclerView.setLayoutManager(mLayoutManager);
+        mUltimateRecyclerView.setAdapter(mAdapter);
 
-        mRecyclerViewDragDropManager.attachRecyclerView(mRecyclerView);
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mAdapter);
+        mItemTouchHelper = new ItemTouchHelper(callback);
+        mItemTouchHelper.attachToRecyclerView(mUltimateRecyclerView.mRecyclerView);
+        mAdapter.setOnDragStartListener(new SessionSongsAdapter.OnStartDragListener() {
+            @Override
+            public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
+                mItemTouchHelper.startDrag(viewHolder);
+            }
+        });
 
         return view;
-    }
-
-
-    private boolean supportsViewElevation() {
-        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP);
     }
 
 }
