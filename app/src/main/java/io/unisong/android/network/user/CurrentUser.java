@@ -147,6 +147,11 @@ public class CurrentUser {
 
         PrefUtils.deleteFromPrefs(sContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY);
 
+        FriendsList list = FriendsList.getInstance();
+
+        if(list != null)
+            list.destroy();
+
         Log.d(LOG_TAG , sContext.getCacheDir().getAbsolutePath().toString());
         // Delete cached files
         File dir = new File(sContext.getCacheDir().getAbsolutePath() + "/");
@@ -162,6 +167,7 @@ public class CurrentUser {
         }
 
         sContext = null;
+        System.gc();
     }
 
 }

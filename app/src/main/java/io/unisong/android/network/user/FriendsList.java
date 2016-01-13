@@ -425,4 +425,16 @@ public class FriendsList implements Serializable{
     private void checkFriendStatus(){
 
     }
+
+    public void destroy(){
+        sInstance = null;
+
+        mFriends = null;
+
+        mActiveUsers = null;
+        mClient = null;
+        mIdleUsers = null;
+        mIncomingRequests = null;
+        mOutgoingRequests = null;
+    }
 }

@@ -179,6 +179,18 @@ public class UnisongSession {
         if(object.has("master")){
             mMaster = object.getString("master");
             User user = CurrentUser.getInstance();
+            // If the user is null, then let's just wait for it
+            // TODO : ensure that this doesn't break any vital components
+            while(user == null){
+                try{
+                    synchronized (this){
+                        this.wait(1);
+                    }
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+                user = CurrentUser.getInstance();
+            }
             if(user.getUUID().compareTo(UUID.fromString(mMaster)) == 0){
                 mIsMaster = true;
 

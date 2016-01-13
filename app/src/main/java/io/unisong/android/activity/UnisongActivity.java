@@ -134,7 +134,7 @@ public class UnisongActivity extends AppCompatActivity {
             startActivity(intent);
         } else {
             UnisongSession.notifyWhenLoaded(this);
-            Log.d(LOG_TAG, "UnisongSession Not Loaded ):");
+            Log.d(LOG_TAG, "UnisongSession Not Loaded");
         }
 
 
@@ -473,6 +473,9 @@ public class UnisongActivity extends AppCompatActivity {
         }catch (ClassCastException e){
             e.printStackTrace();
             Log.d(LOG_TAG , "View tag was cast incorrectly!");
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Something was null in onFriendClick() !");
         }
     }
 }

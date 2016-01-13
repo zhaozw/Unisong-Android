@@ -109,6 +109,10 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         public LoadUserProfile(ViewHolder holder, User user){
             mHolder = holder;
             mUser = user;
+            mHolder.friendLayout.setTag(mUser.getUUID());
+            mHolder.profileView.setTag(mUser.getUUID());
+            mHolder.usernameView.setTag(mUser.getUUID());
+            mHolder.nameView.setTag(mUser.getUUID());
         }
 
         @Override
@@ -141,7 +145,6 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
             try {
                 Picasso.with(mHolder.profileView.getContext()).load(mUser.getProfileURL()).into((ImageView) mHolder.profileView.findViewById(R.id.friend_image));
 
-                mHolder.friendLayout.setTag(mUser.getUUID());
                 Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
                 TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
                 Log.d(LOG_TAG, "mUser: " + mUser.toString());

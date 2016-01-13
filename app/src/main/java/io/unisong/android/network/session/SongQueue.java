@@ -185,8 +185,6 @@ public class SongQueue {
         Song song = mSongQueue.get(fromPosition);
         mSongQueue.remove(fromPosition);
         mSongQueue.add(toPosition , song);
-
-        mParentSession.sendUpdate();
     }
 
     public JSONArray getJSONQueue(){

@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         // Check our current cookie-based login status
         if (mClient.isLoggedIn()) {
             // We are logged in, proceed to FriendsListActivity for now, and the new default for later.
-            Log.d(LOG_TAG , "We are logged in! Starting FriendsListActivity");
+            Log.d(LOG_TAG , "We are logged in! Starting UnisongActivity");
             startNewActivity(UnisongActivity.class);
         } else if(AccessToken.getCurrentAccessToken() != null && !AccessToken.getCurrentAccessToken().isExpired()){
             // If we're logged in with facebook and don't have a cookie, but our access token

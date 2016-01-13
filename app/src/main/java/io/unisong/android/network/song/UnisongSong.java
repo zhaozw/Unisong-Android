@@ -43,11 +43,15 @@ public class UnisongSong extends Song {
 
     public UnisongSong(JSONObject object) throws JSONException{
         // TODO : fix the imageURL stuff
-        super(object.getString("name"), object.getString("artist"), object.getInt("ID"), null);//object.getString("imageURL"));
-        mFormat = new SongFormat(object.getJSONObject("format"));
+        super(object.getString("name"), object.getString("artist"), object.getInt("songID"), null);//object.getString("imageURL"));
+
+        if(object.has("format")) {
+            mFormat = new SongFormat(object.getJSONObject("format"));
+            Log.d(LOG_TAG, mFormat.toString());
+        }
+
         mSongID = object.getInt("songID");
         mSessionID = object.getInt("sessionID");
-        Log.d(LOG_TAG, mFormat.toString());
         mSongDecoder = new SongDecoder(getFormat());
     }
 
