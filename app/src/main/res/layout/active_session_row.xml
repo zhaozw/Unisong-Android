@@ -6,8 +6,8 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/friend_image"
-        android:layout_width="@dimen/friend_image_radius"
-        android:layout_height="@dimen/friend_image_radius"
+        android:layout_width="@dimen/friend_image_diameter"
+        android:layout_height="@dimen/friend_image_diameter"
         android:layout_alignParentBottom="true"
         android:layout_alignParentTop="true"
         android:layout_marginEnd="@dimen/friend_image_margin"

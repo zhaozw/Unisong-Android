@@ -2,35 +2,15 @@ package io.unisong.android;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.PowerManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.unisong.android.activity.musicselect.MusicDataManager;
+import io.unisong.android.activity.session.musicselect.MusicDataManager;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
-import io.unisong.android.network.ConnectionUtils;
-import io.unisong.android.network.DiscoveryHandler;
-import io.unisong.android.network.TimeManager;
-import io.unisong.android.network.client.Listener;
-import io.unisong.android.network.host.Broadcaster;
-import io.unisong.android.network.ntp.SntpClient;
-import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.Contacts;
-import io.unisong.android.network.user.User;
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Action1;
-import rx.functions.Func1;
 
 /**
  * Created by Ethan on 1/25/2015.

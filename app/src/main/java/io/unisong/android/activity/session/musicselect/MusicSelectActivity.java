@@ -1,11 +1,7 @@
-package io.unisong.android.activity.musicselect;
+package io.unisong.android.activity.session.musicselect;
 
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -26,15 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import io.unisong.android.R;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
-import io.unisong.android.activity.session.SessionSongsAdapter;
-import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.user.CurrentUser;
@@ -162,7 +151,8 @@ public class MusicSelectActivity extends AppCompatActivity{
                 UnisongSession session = CurrentUser.getInstance().getSession();
                 if(session != null)
                     session.addSong(song);
-                onBackPressed();
+                Toast toast = Toast.makeText(getBaseContext() , "Song Added", Toast.LENGTH_LONG);
+                toast.show();
                 break;
         }
     }

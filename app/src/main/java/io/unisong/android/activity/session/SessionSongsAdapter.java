@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.List;
 
 import io.unisong.android.R;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.session.SongQueue;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
@@ -52,7 +53,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
         public TextView artistView;
         public ImageView profileView;
         public RelativeLayout mRelativeLayout;
-        public Button mRemoveButton;
+//        public Button mRemoveButton;
 
         public ViewHolder(View v, boolean isItem) {
             super(v);
@@ -65,14 +66,14 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
             profileView = (ImageView) v.findViewById(R.id.session_song_image);
             nameView = (TextView) v.findViewById(R.id.session_song_name);
             artistView = (TextView) v.findViewById(R.id.session_song_artist);
-            mRemoveButton = (Button) v.findViewById(R.id.session_song_remove);
-
-            IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(v.getContext());
-            iconicFontDrawable.setIcon("gmd-close");
-            iconicFontDrawable.setIconColor(ContextCompat.getColor(v.getContext(), R.color.secondaryText));
-            iconicFontDrawable.setIconPadding(24);
-
-            mRemoveButton.setBackground(iconicFontDrawable);
+//            mRemoveButton = (Button) v.findViewById(R.id.session_song_remove);
+//
+//            IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(v.getContext());
+//            iconicFontDrawable.setIcon("gmd-close");
+//            iconicFontDrawable.setIconColor(ContextCompat.getColor(v.getContext(), R.color.secondaryText));
+//            iconicFontDrawable.setIconPadding(24);
+//
+//            mRemoveButton.setBackground(iconicFontDrawable);
         }
     }
 
@@ -81,7 +82,6 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
      * @param song
      */
     public void add(Song song){
-        Log.d(LOG_TAG, "Song Added");
         mDataset.add(song);
         notifyItemInserted(mDataset.size());
     }
@@ -92,7 +92,6 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
      * @param song
      */
     public void add(int position, Song song) {
-        Log.d(LOG_TAG, "Song Added at " + position);
         mDataset.add(position, song);
         notifyItemInserted(position);
     }
@@ -149,7 +148,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
         Song song = mDataset.get(position);
 
         holder.mRelativeLayout.setTag(song.getID() + "");
-        holder.mRemoveButton.setTag(song.getID() + "");
+//        holder.mRemoveButton.setTag(song.getID() + "");
         if(song.getImageURL() != null)
             Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());
@@ -187,11 +186,24 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
         mDragStartListener = dragStartListener;
     }
 
+    @Override
+    public void onItemDismiss(int position) {
+        mSongQueue.remove(position);
+    }
 
     @Override
     public void onItemMove(int startPos, int endPosition){
+        // If we're playing and startPos or endPos == 0, then let's not interrupt the current song
+        if(AudioStatePublisher.getInstance().getState() == AudioStatePublisher.PLAYING) {
+            if (startPos == 0)
+                return;
+
+            if(endPosition == 0)
+                endPosition = 1;
+        }
+
         super.onItemMove(startPos, endPosition);
-        mSongQueue.move(startPos , endPosition);
+        mSongQueue.move(startPos, endPosition);
     }
 
 }

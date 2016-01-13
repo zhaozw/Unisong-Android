@@ -20,7 +20,7 @@
     <dimen name="main_profile_image_margin">24dp</dimen>
 
     <dimen name="friend_image_margin">16dp</dimen>
-    <dimen name="friend_image_radius">40dp</dimen>
+    <dimen name="friend_image_diameter">46dp</dimen>
     <dimen name="session_song_diameter">52dp</dimen>
 
     <dimen name="current_user_name_text_size">22sp</dimen>

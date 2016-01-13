@@ -261,7 +261,8 @@ public class UnisongSession {
         mSocketIOClient.on("add song", mAddSongListener);
 
         if(!isMaster())
-            mSocketIOClient.on("update session" , mUpdateSessionListener);
+            mSocketIOClient.on("update session", mUpdateSessionListener);
+
     }
 
     public int incrementNewSongID(){
@@ -402,8 +403,12 @@ public class UnisongSession {
 
         mSongQueue.deleteSong(ID);
 
+        Object[] args = new Object[2];
+        args[0] = ID;
+        args[1] = mSessionID;
+
         if(isMaster())
-            mSocketIOClient.emit("delete song" , ID);
+            mSocketIOClient.emit("delete song" , args);
     }
 
     private Emitter.Listener mUpdateSessionListener = new Emitter.Listener() {
@@ -446,6 +451,8 @@ public class UnisongSession {
         array[0] = mSessionID;
         array[1] = this.toJSON();
         mSocketIOClient.emit("update session" , array);
+
+        mSocketIOClient.emit("update songs" , mSongQueue.getSongsJSON());
     }
 
     public boolean isMaster(){
@@ -494,8 +501,8 @@ public class UnisongSession {
             object.put("users", users);
 
             object.put("queue" , mSongQueue.getJSONQueue());
-
             object.put("songs" , mSongQueue.getSongsJSON());
+
             object.put("master" , mMaster);
 
             if(sCurrentSession == this){

@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -36,10 +37,12 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         public TextView nameView;
         public TextView usernameView;
         public ImageView profileView;
+        public RelativeLayout friendLayout;
 
         public ViewHolder(View v) {
             super(v);
 
+            friendLayout = (RelativeLayout) v.findViewById(R.id.friend_row_layout);
             profileView = (ImageView) v.findViewById(R.id.friend_image);
             nameView = (TextView) v.findViewById(R.id.friend_first_line);
             usernameView = (TextView) v.findViewById(R.id.friend_second_line);
@@ -138,6 +141,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
             try {
                 Picasso.with(mHolder.profileView.getContext()).load(mUser.getProfileURL()).into((ImageView) mHolder.profileView.findViewById(R.id.friend_image));
 
+                mHolder.friendLayout.setTag(mUser.getUUID());
                 Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
                 TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
                 Log.d(LOG_TAG, "mUser: " + mUser.toString());

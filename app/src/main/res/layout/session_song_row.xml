@@ -10,8 +10,10 @@
         android:layout_width="@dimen/music_image_diameter"
         android:layout_height="@dimen/music_image_diameter"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/friend_image_margin"
+        android:layout_marginStart="@dimen/friend_image_margin"
         android:src="@drawable/ic_contact_picture" />
 
     <LinearLayout
@@ -19,8 +21,6 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/friend_text_left_margin"
         android:layout_marginStart="@dimen/friend_text_left_margin"
-        android:layout_marginRight="@dimen/session_song_margin_right"
-        android:layout_marginEnd="@dimen/session_song_margin_right"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <TextView
@@ -44,16 +44,6 @@
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
 
-
-    <Button
-        android:id="@+id/session_song_remove"
-        android:onClick="removeSong"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"/>
 
 
 </RelativeLayout>

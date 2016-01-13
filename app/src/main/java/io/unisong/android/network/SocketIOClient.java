@@ -1,5 +1,7 @@
 package io.unisong.android.network;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
 
@@ -28,9 +30,6 @@ public class SocketIOClient {
 
     private static SocketIOClient sInstance;
     public static SocketIOClient getInstance(){
-        if(sInstance == null){
-            sInstance = new SocketIOClient();
-        }
         return sInstance;
     }
     private final String LOG_TAG = SocketIOClient.class.getSimpleName();
@@ -39,8 +38,10 @@ public class SocketIOClient {
     private HttpClient mHttpClient;
     private Socket mSocket;
     private ServerReceiver mReceiver;
+    private Context mContext;
 
-    public SocketIOClient(){
+    public SocketIOClient(Context context){
+        mContext = context;
         Log.d(LOG_TAG, "Starting SocketIO Client");
         mHttpClient = HttpClient.getInstance();
 
@@ -50,6 +51,7 @@ public class SocketIOClient {
         mHandler = new Handler();
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
+        sInstance = this;
         connect();
     }
 
@@ -63,6 +65,8 @@ public class SocketIOClient {
         mSocket.on(Socket.EVENT_CONNECT , mConnectListener);
         mSocket.on(Socket.EVENT_RECONNECT, mReconnectListener);
         mSocket.on(Socket.EVENT_DISCONNECT , mDisconnectListener);
+        // TODO : see if there's a better place to put this
+        mSocket.on("invite user", mInviteListener);
 
     }
 
@@ -169,6 +173,28 @@ public class SocketIOClient {
 
     };
 
+    private Emitter.Listener mInviteListener = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try {
+                JSONObject object = (JSONObject) args[0];
+
+                String inviteMessage = object.getString("message");
+                int sessionID = object.getInt("sessionID");
+
+
+                Intent intent = new Intent();
+                intent.putExtra("sessionID" , sessionID);
+                intent.putExtra("message" , "invite");
+                intent.putExtra("inviteMessage", inviteMessage);
+
+                mContext.sendBroadcast(intent);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    };
+
     public void emit(String eventName, Object data){
         mSocket.emit(eventName , data);
     }
@@ -192,5 +218,11 @@ public class SocketIOClient {
         while(!mHttpClient.isLoggedIn()){
 
         }
+    }
+
+    // Destroys the object removes all references
+    public void destroy(){
+        mContext = null;
+        sInstance = null;
     }
 }

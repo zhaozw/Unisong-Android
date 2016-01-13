@@ -49,7 +49,7 @@ public class NetworkService extends Service {
 
         // TODO : only keep us connected when A: the user is using the app
         // TODO : and B: a user is logged in
-        mSocketIO = SocketIOClient.getInstance();
+        mSocketIO = new SocketIOClient(getApplicationContext());
 
 
         mSntpClient = new SntpClient();

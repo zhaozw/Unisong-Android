@@ -16,10 +16,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import io.unisong.android.R;
-import io.unisong.android.activity.musicselect.MusicSelectActivity;
+import io.unisong.android.activity.session.invite.InviteMemberActivity;
+import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
 import io.unisong.android.network.session.UnisongSession;
+import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 9/26/2015.
@@ -126,9 +132,9 @@ public class MainSessionActivity extends AppCompatActivity {
         }
     }
 
-    public void inviteFriend(View view){
-        Toast.makeText(this, "Invite a friend!", Toast.LENGTH_SHORT).show();
-
+    public void onFABClick(View view){
+        Intent intent = new Intent(getApplicationContext() , InviteMemberActivity.class);
+        startActivity(intent);
     }
 
     public void addSong(View view){

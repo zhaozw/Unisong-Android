@@ -8,14 +8,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
-import java.util.UUID;
 
-import io.unisong.android.activity.musicselect.MusicDataManager;
-import io.unisong.android.activity.musicselect.UISong;
+import io.unisong.android.activity.session.musicselect.MusicDataManager;
+import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
-import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 

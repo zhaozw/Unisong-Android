@@ -1,9 +1,8 @@
-package io.unisong.android.activity.musicselect;
+package io.unisong.android.activity.session.musicselect;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.MergeCursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -16,8 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import io.unisong.android.network.song.Song;
 
 /**
  * Created by Ethan on 10/3/2015.

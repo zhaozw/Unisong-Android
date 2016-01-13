@@ -39,8 +39,9 @@ public class ServerReceiver implements Receiver{
     }
 
     private void configureSocketIO(){
-        mClient = new SocketIOClient();
+        mClient = SocketIOClient.getInstance();
 
+        // TODO : check for nullpointerexception possibility here
         mClient.setServerReceiver(this);
 
         mClient.on("data", mDataListener);

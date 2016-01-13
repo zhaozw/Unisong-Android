@@ -9,7 +9,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
+import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.song.Song;
@@ -26,6 +28,7 @@ public class SongQueue {
     private List<Song> mSongQueue;
     private SessionSongsAdapter mAdapter;
     private UnisongSession mParentSession;
+    private SocketIOClient mSocketIOClient;
 
 
     public SongQueue(UnisongSession session){
@@ -70,6 +73,23 @@ public class SongQueue {
 
     public List<Song> getQueue(){
         return mSongQueue;
+    }
+
+    /**
+     * Removes the song at the given position and updates the dataset
+     * @param position
+     */
+    public void remove(int position){
+        Song songToRemove = mSongQueue.get(position);
+
+        if(songToRemove != null) {
+            mSongQueue.remove(songToRemove);
+            if(mAdapter != null)
+                mAdapter.remove(songToRemove);
+
+            mParentSession.deleteSong(songToRemove.getID());
+        }
+
     }
 
     public Song getSong(int songID){
@@ -133,6 +153,10 @@ public class SongQueue {
 
     }
 
+    /**
+     * Waits for MusicDataManager to load.
+     * @param songJSON
+     */
     private void getSongLoop(JSONObject songJSON){
         try {
             LocalSong newSong = new LocalSong(songJSON);

@@ -31,7 +31,7 @@
         fab:fab_icon="@drawable/ic_add_white_24dp"
         fab:fab_colorNormal="@color/colorAccent"
         fab:fab_colorPressed="@color/colorAccentPressed"
-        android:onClick="inviteFriend"
+        android:onClick="onFABClick"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"

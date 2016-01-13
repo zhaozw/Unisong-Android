@@ -1,23 +1,31 @@
-package io.unisong.android.activity.musicselect;
+package io.unisong.android.activity.session.musicselect;
+
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Ethan on 10/6/2015.
- */
-public class UIGenre implements MusicData {
 
+
+/**
+ * Created by Ethan on 2/26/2015.
+ */
+public class UIPlaylist implements MusicData{
+
+    private final static String LOG_TAG = UIPlaylist.class.getSimpleName();
     private long mID;
     private String mTitle;
+    private int mCount;
+    private String mData;
     private List<MusicData> mSongs;
 
     //The class for storing playlist information
-    public UIGenre(long playlistID, String playlistName) {
-        // TODO : figure out a better way to display genres
+    public UIPlaylist(long playlistID, String playlistName, String data) {
         mID = playlistID;
         mTitle = playlistName;
+        mData = data;
         mSongs = new ArrayList<>();
+        Log.d(LOG_TAG, "mData : " + mData);
     }
 
     public void addSong(UISong song){
@@ -31,11 +39,12 @@ public class UIGenre implements MusicData {
 
     public String getPrimaryText(){return mTitle;}
 
-    public String getImageURL(){return "";}
-
     public int getType(){
-        return GENRE;
+        return PLAYLIST;
     }
+
+    // TODO : see about some sort of playlist imagery?
+    public String getImageURL(){return "null";}
 
     public List<MusicData> getChildren(){
         return mSongs;

@@ -45,13 +45,4 @@
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/song_add_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:visibility="gone"
-        android:onClick="addItem"/>
-
 </RelativeLayout>

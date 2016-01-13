@@ -1,5 +1,7 @@
 package io.unisong.android.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -32,8 +34,12 @@ import com.afollestad.materialdialogs.Theme;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.MediaService;
@@ -46,8 +52,10 @@ import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FriendsList;
 import io.unisong.android.network.user.ImageUtilities;
 import io.unisong.android.network.user.User;
+import io.unisong.android.network.user.UserUtils;
 
 /**
+ * The main activity for the application, has friends list, adding friends, and creating sessions
  * Created by Ethan on 9/21/2015.
  */
 public class UnisongActivity extends AppCompatActivity {
@@ -62,6 +70,7 @@ public class UnisongActivity extends AppCompatActivity {
     private FriendsList mFriendsList;
     private RelativeLayout mUserProfileLayout;
     private CircleImageView mUserProfileImageView;
+    private BroadcastReceiver mBroadcastReceiver;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -82,6 +91,7 @@ public class UnisongActivity extends AppCompatActivity {
         long currentTime = System.currentTimeMillis();
 
         while(mFriendsList == null){
+            // TODO : check for NetworkService, if does not exist then create.
             Log.d(LOG_TAG , "Loading FriendsList, has been: " + (System.currentTimeMillis() - currentTime) + "ms");
             // TODO : investigate?
             if(System.currentTimeMillis() - currentTime > 1000){
@@ -124,7 +134,7 @@ public class UnisongActivity extends AppCompatActivity {
             startActivity(intent);
         } else {
             UnisongSession.notifyWhenLoaded(this);
-            Log.d(LOG_TAG , "UnisongSession Not Loaded ):");
+            Log.d(LOG_TAG, "UnisongSession Not Loaded ):");
         }
 
 
@@ -172,6 +182,26 @@ public class UnisongActivity extends AppCompatActivity {
 
         addFriendButton.setBackground(iconicFontDrawable);
 
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                try{
+                    String message = intent.getStringExtra("message");
+
+                    switch(message){
+                        case "invite":
+                            int sessionID = intent.getIntExtra("sessionID", -1);
+                            String inviteMessage = intent.getStringExtra("inviteMessage");
+                            if(sessionID != -1){
+                                displayInvite(sessionID, inviteMessage);
+                            }
+                            break;
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        };
     }
 
     public void onProfileClick(View view){
@@ -217,7 +247,22 @@ public class UnisongActivity extends AppCompatActivity {
         v.startAnimation(buttonClick);
         // TODO : have a MaterialDialog pop up for confirmation
         new Thread(mLogoutRunnable).start();
+    }
 
+    public void displayInvite(int sessionID, String inviteMessage){
+        // TODO : see if we need to run this on the UI Thread
+        new MaterialDialog.Builder(this)
+                .content(inviteMessage)
+                .positiveText(R.string.change)
+                .negativeText(R.string.cancel)
+                .theme(Theme.LIGHT)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        joinSession(sessionID);
+                    }
+                })
+                .show();
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
@@ -384,10 +429,50 @@ public class UnisongActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void joinSession(int ID ){
+        UnisongSession session = new UnisongSession(ID);
+
+        CurrentUser.getInstance().setSession(session);
+        UnisongSession.setCurrentSession(session);
+
+        session.configureSocketIO();
+
+        Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     protected void onDestroy(){
         super.onDestroy();
 
         stopService(new Intent(this, MediaService.class));
+    }
+
+    /**
+     * The method that will be called when a friend row is clicked
+     * If the friend is in a session we will join it, otherwise we will do nothing
+     * @param view
+     */
+    public void onFriendClick(View view){
+        try {
+            // TODO : add dialog/popup for confirmation?
+            String uuid = (String) view.getTag();
+
+            User user = UserUtils.getUser(UUID.fromString(uuid));
+
+            if(user.getSession() != null){
+                UnisongSession session = user.getSession();
+
+                UnisongSession.setCurrentSession(session);
+
+                Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+                startActivity(intent);
+            } else {
+                return;
+            }
+        }catch (ClassCastException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "View tag was cast incorrectly!");
+        }
     }
 }
