@@ -107,8 +107,8 @@ public class SntpClient
                     synchronized (this){
                         this.wait(200);
                     }
-                } catch (InterruptedException interruptedException){
-                    interruptedException.printStackTrace();
+                } catch (InterruptedException iE){
+//                    interruptedException.printStackTrace();
                 }
                 continue;
             }
@@ -192,7 +192,7 @@ public class SntpClient
         try {
             mSocket.receive(packet);
         } catch (SocketTimeoutException e){
-            Log.d(LOG_TAG , e.toString());
+//            Log.d(LOG_TAG , e.toString());
             // resend
             getOneOffset();
             return;

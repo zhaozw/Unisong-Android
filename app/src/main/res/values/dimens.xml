@@ -38,4 +38,5 @@
 
     <dimen name="session_song_margin_right">48dp</dimen>
 
+    <dimen name="music_footer_height">62dp</dimen>
 </resources>

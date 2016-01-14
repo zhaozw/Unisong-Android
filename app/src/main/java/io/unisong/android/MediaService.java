@@ -45,6 +45,7 @@ public class MediaService extends Service{
         // TODO : fix above bug
         mAudioTrackManager = new AudioTrackManager();
 
+
         mMusicDataManager = MusicDataManager.getInstance();
 
         if(mMusicDataManager == null){

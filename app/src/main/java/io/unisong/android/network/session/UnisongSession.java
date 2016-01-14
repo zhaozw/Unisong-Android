@@ -538,4 +538,8 @@ public class UnisongSession {
         return object;
     }
 
+
+    public void updateCurrentSong(){
+        mCurrentSong = mSongQueue.getCurrentSong();
+    }
 }

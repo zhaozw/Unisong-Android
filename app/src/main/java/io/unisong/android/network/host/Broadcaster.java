@@ -58,6 +58,8 @@ public class Broadcaster implements AudioObserver {
     public Broadcaster(UnisongSession session){
         //Get the singleton objects.
         mAudioStatePublisher = AudioStatePublisher.getInstance();
+        mAudioStatePublisher.attach(this);
+
         mTimeManager = TimeManager.getInstance();
         mUnisongSession = session;
 
@@ -69,9 +71,10 @@ public class Broadcaster implements AudioObserver {
         //mLANTransmitter = new LANTransmitter(false , mUnisongSession);
         //mTransmitters.add(mLANTransmitter);
 
-//        mServerTransmitter = new ServerTransmitter();
-//        mTransmitters.add(mServerTransmitter);
+        ServerTransmitter serverTransmitter = new ServerTransmitter();
+        mTransmitters.add(serverTransmitter);
 
+        Log.d(LOG_TAG , "Broadcaster Created!");
         mHandler = new Handler();
         sInstance = this;
     }
@@ -85,17 +88,14 @@ public class Broadcaster implements AudioObserver {
             mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
             mCurrentSong = song;
 
-            song.start();
+            if(!song.started())
+                song.start();
 
             // The start time in milliseconds
-
-            mHandler.postDelayed(mNotifyAudioPublisher, CONSTANTS.SONG_START_DELAY);
 
             for (Transmitter transmitter : mTransmitters) {
                 transmitter.startSong(song);
             }
-
-            mAudioTrackManager.startSong(song);
 
             mStreamRunning = true;
 
@@ -148,6 +148,10 @@ public class Broadcaster implements AudioObserver {
         switch (state){
             case AudioStatePublisher.SEEK:
                 seek(mAudioStatePublisher.getSeekTime());
+                break;
+            case AudioStatePublisher.PLAYING:
+                Log.d(LOG_TAG , "plz");
+                startSong(mUnisongSession.getCurrentSong());
                 break;
         }
     }

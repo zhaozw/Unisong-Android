@@ -41,19 +41,22 @@ public class LocalSong extends Song {
     public LocalSong(JSONObject songJSON) throws JSONException{
         super(songJSON.getString("name"), songJSON.getString("artist"), songJSON.getInt("songID")
                 ,MusicDataManager.getInstance().getSongImagePathByJSON(songJSON));
-        UISong song = null;
+        UISong uiSong = null;
         try{
-            song = MusicDataManager.getInstance().getSongByJSON(songJSON);
+            uiSong = MusicDataManager.getInstance().getSongByJSON(songJSON);
         } catch (JSONException e){
             e.printStackTrace();
         }
         // TODO : figure out what to do if this does equal null
-        if(song != null)
-            mPath = song.getPath();
+        if(uiSong != null)
+            mPath = uiSong.getPath();
         mStarted = false;
         mSessionID = songJSON.getInt("sessionID");
         Log.d(LOG_TAG, "LocalSong created, songID is : " + mSongID);
         Log.d(LOG_TAG , "SongID :" + songJSON.getInt("songID"));
+        mEncoder = new AACEncoder();
+        mEncoder.setSong(this);
+        mDecoder = new FileDecoder(mPath);
     }
 
     /**
@@ -85,6 +88,14 @@ public class LocalSong extends Song {
         if(mFormat != null)
             return mFormat.getDuration();
         return -1l;
+    }
+
+    @Override
+    public String getImageURL() {
+        if(mImageURL != null)
+            return mImageURL;
+
+        return null;
     }
 
     /**

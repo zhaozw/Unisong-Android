@@ -149,8 +149,11 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
 
         holder.mRelativeLayout.setTag(song.getID() + "");
 //        holder.mRemoveButton.setTag(song.getID() + "");
-        if(song.getImageURL() != null)
+        if(song.getImageURL() != null && !song.getImageURL().contains("http://")) {
             Picasso.with(holder.profileView.getContext()).load(new File(song.getImageURL())).into((holder.profileView));
+        } else {
+
+        }
         holder.nameView.setText(mDataset.get(position).getName());
         holder.artistView.setText(mDataset.get(position).getArtist());
 

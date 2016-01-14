@@ -14,7 +14,7 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/friend_image_margin"
         android:layout_marginStart="@dimen/friend_image_margin"
-        android:src="@drawable/ic_contact_picture" />
+        android:src="@drawable/default_artwork" />
 
     <LinearLayout
         android:orientation="vertical"
@@ -30,17 +30,14 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:textColor="@color/primaryText"
-            android:text="Placeholder Name"
             android:textSize="@dimen/text_size_row_primary" />
 
         <TextView
             android:id="@+id/session_song_artist"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/friend_first_line"
             android:singleLine="true"
             android:textColor="@color/secondaryText"
-            android:text="Artist"
             android:textSize="@dimen/text_size_row_secondary" />
     </LinearLayout>
 

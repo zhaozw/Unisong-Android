@@ -2,6 +2,7 @@ package io.unisong.android.activity.session;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -14,18 +15,28 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.squareup.picasso.Picasso;
+import com.thedazzler.droidicon.IconicFontDrawable;
+
+import java.io.File;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.R;
 import io.unisong.android.activity.session.invite.InviteMemberActivity;
 import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.user.CurrentUser;
-import io.unisong.android.network.user.User;
+import io.unisong.android.network.song.Song;
 
 /**
  * Created by Ethan on 9/26/2015.
@@ -36,9 +47,24 @@ public class MainSessionActivity extends AppCompatActivity {
     public final static String POSITION = "position";
 
 
+    private UnisongSession mSession;
+    private Song mCurrentSong;
+    private boolean mPlaying = false, mFooterOpen;
     private Toolbar mToolbar;
     private ViewPager mPager;
     private SlidingTabLayout mTabs;
+    private Handler mHandler;
+
+    private Button mPlayPauseButton;
+    private IconicFontDrawable mPlayDrawable;
+    private IconicFontDrawable mPauseDrawable;
+    private ScheduledThreadPoolExecutor mExecutor;
+
+    private RelativeLayout mFooter;
+    private TextView mFooterSongName;
+    private TextView mFooterSongArtist;
+    private ProgressBar mFooterProgressBar;
+    private ImageView mFooterSongImage;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -60,8 +86,148 @@ public class MainSessionActivity extends AppCompatActivity {
         mTabs.setViewPager(mPager);
         mTabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.white));
         mTabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
+
+        mPlayPauseButton = (Button) findViewById(R.id.play_pause_button);
+
+        mPauseDrawable = new IconicFontDrawable(this.getApplicationContext());
+        mPauseDrawable.setIcon("gmd-pause");
+        mPauseDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
+
+        mPlayDrawable = new IconicFontDrawable(this.getApplicationContext());
+        mPlayDrawable.setIcon("gmd-play-arrow");
+        mPlayDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
+        mPlayPauseButton.setBackground(mPlayDrawable);
+
+        mSession = UnisongSession.getCurrentSession();
+
+        mHandler = new Handler();
+
+        // Close the footer
+        mFooterOpen = false;
+
+        mFooter = (RelativeLayout) findViewById(R.id.music_footer);
+        mFooter.setVisibility(View.GONE);
+
+
+        mFooterSongArtist = (TextView) mFooter.findViewById(R.id.playing_song_artist);
+        mFooterSongName = (TextView) mFooter.findViewById(R.id.playing_song_name);
+        mFooterProgressBar = (ProgressBar) mFooter.findViewById(R.id.current_song_progress_bar);
+        mFooterSongImage = (ImageView) mFooter.findViewById(R.id.playing_song_image);
+
+        // TODO : call a method on this activity when current song changes
+        // TODO : call a method on this activity when we start playing.
+        mExecutor = new ScheduledThreadPoolExecutor(5);
+        mExecutor.scheduleAtFixedRate(this::updateFooter, 0, 100, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Updates the footer, opening, closing, and changing the progress bar as needed
+     * Will also change the image + song name and artist to the appropriate one
+     */
+    private void updateFooter(){
+        try {
+            boolean selected = isASongSelected();
+
+            int visibility = -1;
+
+            if (!selected && mFooterOpen) visibility = View.GONE;
+
+            if (selected && !mFooterOpen) visibility = View.VISIBLE;
+
+            if (visibility != -1)
+                mFooter.setVisibility(visibility);
+
+            if(!selected)
+                return;
+
+            boolean updateFooterInfo = false;
+
+            if ((mCurrentSong == null && mSession.getCurrentSong() != null) ||
+                    (mCurrentSong != null && mCurrentSong != mSession.getCurrentSong())) {
+                mCurrentSong = mSession.getCurrentSong();
+                updateFooterInfo = true;
+            }
+
+
+            // If we need to, update the footer info
+            if (updateFooterInfo) {
+
+                String url = mCurrentSong.getImageURL();
+
+                if(url == null){
+                    runOnUiThread(() -> {
+                        mFooterSongImage.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), R.drawable.default_artwork));
+                    });
+                } else {
+
+                    if (url.contains("http://")) {
+                        runOnUiThread(() ->{
+                            Picasso.with(getBaseContext()).load(mCurrentSong.getImageURL()).into(mFooterSongImage);
+                        });
+                        // TODO : method call should happen from main thread?
+                    } else {
+                        runOnUiThread(() -> {
+                            Picasso.with(getBaseContext()).load(new File(mCurrentSong.getImageURL())).into(mFooterSongImage);
+                        });
+                    }
+                }
+
+                runOnUiThread(() -> {
+                    mFooterSongArtist.setText(mCurrentSong.getArtist());
+                    mFooterSongName.setText(mCurrentSong.getName());
+                });
+            }
+
+
+            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+            // set the progress
+            int progress = mFooterProgressBar.getProgress();
+            long duration = mCurrentSong.getDuration();
+            int newProgress = progress;
+            long timePlayed = -1;
+
+            if(publisher.getState() == AudioStatePublisher.PLAYING){
+                timePlayed = System.currentTimeMillis() - TimeManager.getInstance().getSongStartTime();
+            } else if(publisher.getState() == AudioStatePublisher.PAUSED){
+                timePlayed = publisher.getResumeTime();
+            }
+
+            if(timePlayed != -1) {
+                newProgress = (int) ((duration / (double) timePlayed) * 100);
+            } else {
+                newProgress = 100;
+            }
+
+            if(progress != newProgress)
+                mFooterProgressBar.setProgress(newProgress);
+
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "NullPointerException called at some point in updateFooter!");
+        } catch (ClassCastException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "ClassCastException in updateFooter! Did we update a view and forget to change it in here?");
+        } catch (Exception e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Uncaught exception! This should not happen!");
+        }
+
+    }
+
+    /**
+     * Detects whether a current song is selected
+     * @return - true if a song is selected, false if not
+     */
+    private boolean isASongSelected(){
+        if(mSession.getCurrentSong() != null)
+            return true;
+
+        return false;
+    }
+
+    private void updateProgress(){
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -155,6 +321,23 @@ public class MainSessionActivity extends AppCompatActivity {
             // Catch NullPointerException and cast exception
             e.printStackTrace();
         }
+    }
+
+    public void playPause(View view){
+
+        AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+
+        publisher.play();
+
+        if(mPlaying){
+            mPlayPauseButton.setBackground(mPlayDrawable);
+        } else {
+            mPlayPauseButton.setBackground(mPauseDrawable);
+        }
+
+        mPlaying = !mPlaying;
+
+
     }
 
 }

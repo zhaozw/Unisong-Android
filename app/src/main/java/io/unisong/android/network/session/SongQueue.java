@@ -136,16 +136,14 @@ public class SongQueue {
             // then we will update the order
             // TODO : figure out how to reorder adapter.
             // same way?
-
-            for(int i = queue.length() - 1; i > 0; i--){
+            List<Song> orderedList = new ArrayList<>();
+            for(int i = queue.length() - 1; i >= 0; i--){
                 Song song = getSong(queue.getInt(i));
-                if(mSongQueue.indexOf(song) != i) {
-                    if (song != null) {
-                        deleteSong(song);
-                        addSong(0, song);
-                    }
-                }
+                if (song != null)
+                    orderedList.add(0 , song);
             }
+
+            mSongQueue = orderedList;
 
         } catch (JSONException e){
             e.printStackTrace();
@@ -184,7 +182,12 @@ public class SongQueue {
     public void move(int fromPosition, int toPosition){
         Song song = mSongQueue.get(fromPosition);
         mSongQueue.remove(fromPosition);
-        mSongQueue.add(toPosition , song);
+        mSongQueue.add(toPosition, song);
+
+        if(fromPosition == 0 || toPosition == 0)
+            mParentSession.updateCurrentSong();
+
+        mParentSession.sendUpdate();
     }
 
     public JSONArray getJSONQueue(){

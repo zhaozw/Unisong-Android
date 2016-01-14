@@ -15,6 +15,7 @@ public abstract class Song {
     
     protected String mName;
     protected String mArtist;
+    protected boolean mStarted;
 
     protected String mImageURL;
 
@@ -33,12 +34,14 @@ public abstract class Song {
         mArtist = artist;
         mImageURL = imageURL;
         mSongID = ID;
+        mStarted = false;
     }
 
     public Song(String name , String artist, String imageURL){
         mName = name;
         mArtist = artist;
         mImageURL = imageURL;
+        mStarted = false;
     }
 
     public int getID(){
@@ -87,5 +90,5 @@ public abstract class Song {
 
     public abstract void update(JSONObject songJSON);
 
-
+    public abstract boolean started();
 }

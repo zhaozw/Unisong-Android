@@ -6,6 +6,8 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * This handles the format of a given song's transmitted data. Currently only created fron UISong
  * and used in UnisongSong
@@ -36,7 +38,7 @@ public class SongFormat {
                 mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             // if duration is 0, we are probably playing a live stream
             if(format.containsKey(MediaFormat.KEY_DURATION))
-                mDuration = format.getLong(MediaFormat.KEY_DURATION);
+                mDuration = TimeUnit.MICROSECONDS.convert(format.getLong(MediaFormat.KEY_DURATION) , TimeUnit.MILLISECONDS);
             if(format.containsKey(MediaFormat.KEY_BIT_RATE))
                 mBitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e){

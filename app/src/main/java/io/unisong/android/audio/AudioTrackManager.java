@@ -83,6 +83,8 @@ public class AudioTrackManager implements AudioObserver {
 
         mHandler = new Handler();
         sInstance = this;
+
+        Log.d(LOG_TAG , "AudioTrackManager created and attached to AudioStatePublisher");
     }
 
     private boolean mStartSongRunning = false;
@@ -272,6 +274,7 @@ public class AudioTrackManager implements AudioObserver {
                 break;
 
             case AudioStatePublisher.PLAYING:
+                Log.d(LOG_TAG , "Playing Received");
                 UnisongSession session = UnisongSession.getCurrentSession();
                 try {
                     startSong(session.getCurrentSong());

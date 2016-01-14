@@ -123,6 +123,7 @@ public class FileDecoder implements Decoder{
             return;
         }
 
+        Log.d(LOG_TAG , mCurrentFile.getPath());
         // Read track header
         try {
             mInputFormat = mExtractor.getTrackFormat(0);
@@ -131,7 +132,8 @@ public class FileDecoder implements Decoder{
             channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             // if duration is 0, we are probably playing a live stream
             duration = mInputFormat.getLong(MediaFormat.KEY_DURATION);
-            bitrate = mInputFormat.getInteger(MediaFormat.KEY_BIT_RATE);
+            if(mInputFormat.containsKey(MediaFormat.KEY_BIT_RATE))
+                bitrate = mInputFormat.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
             e.printStackTrace();

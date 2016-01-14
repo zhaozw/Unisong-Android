@@ -10,6 +10,7 @@ import java.util.List;
 import io.socket.emitter.Emitter;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.host.Broadcaster;
 
 /**
  * An Implementation of the Observer/Subject design pattern, this is the publisher
@@ -40,6 +41,7 @@ public class AudioStatePublisher {
     public static final int END_SONG = 5;
 
 
+    private Broadcaster mBroadcaster;
     private boolean mSocketIOConfigured;
     //The time that we are seeking to
     private long mSeekTime;
@@ -95,6 +97,10 @@ public class AudioStatePublisher {
             mResumeTime = mManager.getLastFrameTime();
         }
 
+        if(mBroadcaster != null){
+            mBroadcaster.update(state);
+            mObservers.remove(mObservers.indexOf(mBroadcaster));
+        }
         notifyObservers(state);
     }
 
@@ -103,6 +109,9 @@ public class AudioStatePublisher {
         for(AudioObserver observer : mObservers) {
             observer.update(state);
         }
+
+        if(mBroadcaster != null)
+            mObservers.add(mBroadcaster);
     }
 
     public void setState(int state){
@@ -153,5 +162,12 @@ public class AudioStatePublisher {
         return mSongToEnd;
     }
 
+    /**
+     * This method is so that the songStartTime can be set before notifying all of the other
+     * AudioSubscribers
+     */
+    public void setBroadcaster(Broadcaster broadcaster){
+        mBroadcaster = broadcaster;
+    }
 }
 
