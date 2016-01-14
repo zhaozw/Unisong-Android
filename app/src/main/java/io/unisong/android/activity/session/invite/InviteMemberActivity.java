@@ -1,6 +1,7 @@
 package io.unisong.android.activity.session.invite;
 
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -48,8 +49,11 @@ public class InviteMemberActivity extends AppCompatActivity{
 
         // Configure the action bar.
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
+        ActionBar bar = getSupportActionBar();
+        if(bar != null) {
+            bar.setDisplayShowHomeEnabled(true);
+            bar.setHomeButtonEnabled(true);
+        }
 
         mFriendsList = FriendsList.getInstance();
 
@@ -87,7 +91,7 @@ public class InviteMemberActivity extends AppCompatActivity{
             JSONObject object = new JSONObject();
 
             object.put("userID", uuid);
-            object.put("message" , inviteMessage);
+            object.put("message", inviteMessage);
             object.put("sessionID", session.getSessionID());
 
             SocketIOClient client = SocketIOClient.getInstance();

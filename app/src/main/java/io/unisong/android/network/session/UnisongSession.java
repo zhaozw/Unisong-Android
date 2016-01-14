@@ -54,7 +54,7 @@ public class UnisongSession {
 
     public static void setCurrentSession(UnisongSession session) {
         sCurrentSession = session;
-        if(sActivityToNotify != null){
+        if(sActivityToNotify != null && session != null){
             sActivityToNotify.sessionLoaded();
             sActivityToNotify = null;
         }
@@ -76,7 +76,6 @@ public class UnisongSession {
     private List<User> mMembers;
     private List<Client> mClients;
     private HttpClient mClient;
-    private Host host;
     private SessionSongsAdapter mAdapter;
 
     /**

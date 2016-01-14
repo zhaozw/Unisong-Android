@@ -51,9 +51,7 @@ public abstract class Song {
 
     public String getArtist(){return mArtist;}
 
-    public String getImageURL(){
-        return mImageURL;
-    }
+    public abstract String getImageURL();
 
     /**
      * Returns the encoded frame with the specified ID

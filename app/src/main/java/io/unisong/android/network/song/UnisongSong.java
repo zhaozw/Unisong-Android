@@ -10,6 +10,9 @@ import java.util.UUID;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.client.SongDecoder;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
 
 /**
  * This class handles songs that are broadcasted over the Unisong network.
@@ -79,6 +82,9 @@ public class UnisongSong extends Song {
         return mSongDecoder.hasFrame(ID);
     }
 
+    public String getImageURL(){
+        return NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/song/" + mSongID +"/picture";
+    }
     /**
      * Starts the decoding of the song.
      */
