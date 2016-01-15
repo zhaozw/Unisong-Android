@@ -121,9 +121,12 @@ public class LocalSong extends Song {
      * Begins the PCM decoding and AAC encoding.
      */
     public void start(){
-        mSongStartTime = TimeManager.getInstance().getSongStartTime();
-        mDecoder.startDecode();
-        mEncoder.encode(0 , super.getID() , mPath);
+        if(!mStarted) {
+            mSongStartTime = TimeManager.getInstance().getSongStartTime();
+            mDecoder.startDecode();
+            mEncoder.encode(0, super.getID(), mPath);
+            mStarted = true;
+        }
     }
 
     public boolean hasFrame(int ID){

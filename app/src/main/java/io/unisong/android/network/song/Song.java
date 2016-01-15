@@ -90,5 +90,7 @@ public abstract class Song {
 
     public abstract void update(JSONObject songJSON);
 
-    public abstract boolean started();
+    public boolean started(){
+        return mStarted;
+    }
 }

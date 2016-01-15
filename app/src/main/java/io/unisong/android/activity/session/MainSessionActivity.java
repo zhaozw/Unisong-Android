@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,7 +64,7 @@ public class MainSessionActivity extends AppCompatActivity {
     private RelativeLayout mFooter;
     private TextView mFooterSongName;
     private TextView mFooterSongArtist;
-    private ProgressBar mFooterProgressBar;
+    private SeekBar mFooterProgressBar;
     private ImageView mFooterSongImage;
 
     @Override
@@ -111,7 +112,7 @@ public class MainSessionActivity extends AppCompatActivity {
 
         mFooterSongArtist = (TextView) mFooter.findViewById(R.id.playing_song_artist);
         mFooterSongName = (TextView) mFooter.findViewById(R.id.playing_song_name);
-        mFooterProgressBar = (ProgressBar) mFooter.findViewById(R.id.current_song_progress_bar);
+        mFooterProgressBar = (SeekBar) mFooter.findViewById(R.id.current_song_progress_bar);
         mFooterSongImage = (ImageView) mFooter.findViewById(R.id.playing_song_image);
 
         // TODO : call a method on this activity when current song changes

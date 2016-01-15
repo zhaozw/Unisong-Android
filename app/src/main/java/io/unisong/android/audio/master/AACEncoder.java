@@ -26,7 +26,7 @@ public class AACEncoder{
     //The media codec object used to encode the files
     private MediaCodec mCodec;
 
-    private boolean mStop = false;
+    private boolean mStop, mKeepFrames;
     private int mSongID;
 
     String mime = null;
@@ -44,6 +44,7 @@ public class AACEncoder{
     private Map<Integer , AudioFrame> mOutputFrames;
     private Map<Integer, AudioFrame> mInputFrames;
 
+
     private int mCurrentInputFrameID = 0;
 
     //The last frame, a signal that the input is ending
@@ -56,7 +57,8 @@ public class AACEncoder{
     private int mHighestFrameUsed;
 
     public AACEncoder(){
-
+        mStop = false;
+        mKeepFrames = true;
         mHighestFrameUsed = 0;
 
         mInputFrames = new TreeMap<>();
@@ -444,5 +446,9 @@ public class AACEncoder{
             return mOutputFrames.get(ID);
         }
 
+    }
+
+    public void setKeepFrames(boolean keepFrames){
+        mKeepFrames = keepFrames;
     }
 }

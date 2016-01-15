@@ -55,13 +55,15 @@ public class UnisongSong extends Song {
 
         mSongID = object.getInt("songID");
         mSessionID = object.getInt("sessionID");
-        mSongDecoder = new SongDecoder(getFormat());
+
+        if(mFormat != null)
+            mSongDecoder = new SongDecoder(getFormat());
     }
 
-    // TODO : write and actually implement.
     public long getDuration(){
         return getFormat().getDuration();
     }
+
     @Override
     public AudioFrame getFrame(int ID) {
         return mSongDecoder.getFrame(ID);
@@ -90,7 +92,10 @@ public class UnisongSong extends Song {
      */
     @Override
     public void start() {
+        if(!mStarted){
         mSongDecoder.decode(0);
+        mStarted = true;
+        }
     }
 
     @Override
@@ -135,6 +140,12 @@ public class UnisongSong extends Song {
     // TODO : figure out a situation where this must be updated?
     @Override
     public void update(JSONObject songJSON) {
+        try {
+            if (songJSON.has("format") && mFormat == null)
+                mFormat = new SongFormat(songJSON.getJSONObject("format"));
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
 
     }
 
