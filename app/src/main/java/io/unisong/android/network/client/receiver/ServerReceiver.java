@@ -127,16 +127,14 @@ public class ServerReceiver implements Receiver{
                 JSONObject object = (JSONObject) args[0];
                 long songStartTime;
                 int songID;
-                int channels;
                 try {
                     songStartTime = object.getLong("songStartTime");
                     songID = object.getInt("songID");
-                    channels = object.getInt("channels");
                 } catch (JSONException e) {
                     e.printStackTrace();
                     return;
                 }
-                mListener.startSong(songStartTime, channels, songID);
+                mListener.startSong(songStartTime, songID);
             } catch (Exception e){
                 e.printStackTrace();
             }

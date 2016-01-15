@@ -55,6 +55,7 @@ public class CurrentUser {
             return;
 
         String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+        String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
         sContext = context;
 
@@ -62,7 +63,7 @@ public class CurrentUser {
            // If it's a facebook account load the access token.
             sCurrentUser = new User(AccessToken.getCurrentAccessToken());
         } else {
-            sCurrentUser = new User(username);
+            sCurrentUser = new User(username, password);
         }
 
         mFriendsList = FriendsList.getInstance();

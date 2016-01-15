@@ -59,6 +59,7 @@ public class Broadcaster implements AudioObserver {
         //Get the singleton objects.
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mAudioStatePublisher.attach(this);
+        mAudioStatePublisher.setBroadcaster(this);
 
         mTimeManager = TimeManager.getInstance();
         mUnisongSession = session;
@@ -85,7 +86,9 @@ public class Broadcaster implements AudioObserver {
         Log.d(LOG_TAG , "Starting Song stream");
 
         try {
+
             mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
+
             mCurrentSong = song;
 
             if(!song.started())
@@ -150,7 +153,6 @@ public class Broadcaster implements AudioObserver {
                 seek(mAudioStatePublisher.getSeekTime());
                 break;
             case AudioStatePublisher.PLAYING:
-                Log.d(LOG_TAG , "plz");
                 startSong(mUnisongSession.getCurrentSong());
                 break;
         }

@@ -33,8 +33,11 @@ public class SongQueue {
 
     public SongQueue(UnisongSession session){
         mClient = HttpClient.getInstance();
+        mSocketIOClient = SocketIOClient.getInstance();
         mSongQueue = new ArrayList<>();
         mParentSession = session;
+
+        mSocketIOClient.on("update song" , mUpdateSongListener);
     }
 
     /**
@@ -176,6 +179,9 @@ public class SongQueue {
     }
 
     public Song getCurrentSong(){
+        if(mSongQueue.size () == 0)
+            return null;
+
         return mSongQueue.get(0);
     }
 
@@ -209,5 +215,26 @@ public class SongQueue {
 
         return array;
     }
+
+    private Emitter.Listener mUpdateSongListener = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try{
+                JSONObject object = (JSONObject) args[0];
+
+                int songID = object.getInt("songID");
+
+                Song song = getSong(songID);
+
+                song.update(object);
+
+            } catch (JSONException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "JSON parsed incorrectly!");
+            } catch (ClassCastException e){
+                Log.d(LOG_TAG , "Format was wrong for 'song update'");
+            }
+        }
+    };
 
 }

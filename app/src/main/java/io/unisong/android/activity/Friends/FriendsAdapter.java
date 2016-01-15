@@ -84,6 +84,11 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         // - replace the contents of the view with that element
 
         User user = mDataset.get(position);
+
+        holder.friendLayout.setTag(user.getUUID());
+        holder.profileView.setTag(user.getUUID());
+        holder.usernameView.setTag(user.getUUID());
+        holder.nameView.setTag(user.getUUID());
         if(user.getName() != null && user.getUsername() != null) {
             Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
             holder.nameView.setText(mDataset.get(position).getName());
@@ -109,10 +114,6 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         public LoadUserProfile(ViewHolder holder, User user){
             mHolder = holder;
             mUser = user;
-            mHolder.friendLayout.setTag(mUser.getUUID());
-            mHolder.profileView.setTag(mUser.getUUID());
-            mHolder.usernameView.setTag(mUser.getUUID());
-            mHolder.nameView.setTag(mUser.getUUID());
         }
 
         @Override

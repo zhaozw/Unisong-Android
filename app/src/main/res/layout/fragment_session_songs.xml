@@ -17,7 +17,6 @@
         android:text="@string/songs"
         android:textSize="16sp"/>
 
-
     <com.marshalchen.ultimaterecyclerview.UltimateRecyclerView
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
@@ -39,6 +38,6 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="8dp"/>
 
 </RelativeLayout>

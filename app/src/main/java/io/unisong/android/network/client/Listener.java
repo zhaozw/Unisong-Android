@@ -97,13 +97,15 @@ public class Listener{
     }
 
     // TODO : rewrite this method with Song integration/
-    public void startSong(long startTime , int channels , int songID){
+    public void startSong(long startTime , int songID){
 
         //TODO : calculate the current frame to play?
         //mSongDecoder = new SongDecoder(channels);
 
         mTimeManager.setSongStartTime(startTime);
-        mSession.startSong(songID);
+
+
+        Song song = mSession.getSongQueue().getSong(songID);
 
     }
 

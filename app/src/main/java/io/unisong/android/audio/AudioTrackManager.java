@@ -11,6 +11,7 @@ import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -114,7 +115,7 @@ public class AudioTrackManager implements AudioObserver {
         mRunCount = 0;
 
         //Wait until it's time, and then start the song
-
+        mTimeUntilSongStart = (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
         try {
             synchronized (this) {
                 this.wait(Math.abs(mTimeUntilSongStart));
@@ -145,6 +146,10 @@ public class AudioTrackManager implements AudioObserver {
                 Log.d(LOG_TAG , "mFrames size is :" + mFrames.size());
 
             }*/
+
+            if(!mSong.hasPCMFrame(mFrameToPlay)){
+                Log.d(LOG_TAG , "Song does not have frame #" + mFrameToPlay);
+            }
 
             while (!mSong.hasPCMFrame(mFrameToPlay)) {
                 try {
@@ -190,15 +195,17 @@ public class AudioTrackManager implements AudioObserver {
 
         mSong = song;
 
+
         double millisTillSongStart =  (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
-        mTimeUntilSongStart = (long) millisTillSongStart;
+        Log.d(LOG_TAG , "TimeStartTime : " + new Date(mTimeManager.getSongStartTime()).toString());
         Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mTimeManager.getOffset() is :" + mTimeManager.getOffset());
         mHandler.post(mStartSong);
     }
 
     private void startPlaying() {
-        Log.d(LOG_TAG, "Write Started, difference is: " + (System.currentTimeMillis() - (mTimeManager.getSongStartTime() - mTimeManager.getOffset())) + " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
+        Log.d(LOG_TAG, "Write Started, difference is: " + ((mTimeManager.getSongStartTime() - mTimeManager.getOffset()) -System.currentTimeMillis()) + " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
 
+        // TODO : get info from song
         createAudioTrack(44100 , 2);
         mIsPlaying = true;
         mWriteThread = getWriteThread();

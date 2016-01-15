@@ -73,7 +73,7 @@ public class UnisongSession {
     private String mMaster , mSessionState;
 
     private SocketIOClient mSocketIOClient;
-    private List<User> mMembers;
+    private SessionMembers mMembers;
     private List<Client> mClients;
     private HttpClient mClient;
     private SessionSongsAdapter mAdapter;
@@ -91,7 +91,7 @@ public class UnisongSession {
         }
 
         mSongQueue = new SongQueue(this);
-        mMembers = new ArrayList<>();
+        mMembers = new SessionMembers();
         mIsMaster = true;
 
         mMaster = CurrentUser.getInstance().getUUID().toString();
@@ -120,7 +120,7 @@ public class UnisongSession {
         mSocketIOClient = SocketIOClient.getInstance();
 
         mSongQueue = new SongQueue(this);
-        mMembers = new ArrayList<>();
+        mMembers = new SessionMembers();
 
         getInfoFromServer();
 
@@ -210,23 +210,7 @@ public class UnisongSession {
         if(object.has("users")){
             JSONArray array = object.getJSONArray("users");
 
-            for(int i = 0; i < array.length(); i++){
-                String uuid = array.getString(i);
-
-                User currentUser = CurrentUser.getInstance();
-
-                if(currentUser != null)
-                    if(currentUser.getUUID().toString().equals(uuid))
-                        continue;
-
-                User userToAdd = UserUtils.getUser(UUID.fromString(uuid));
-
-                // TODO : test that this works.
-                if(mMembers.indexOf(userToAdd) == -1)
-                    mMembers.add(userToAdd);
-            }
-
-
+            mMembers.update(array);
         }
 
         if(object.has("songs") && object.has("queue")){
@@ -270,9 +254,9 @@ public class UnisongSession {
 
     public void configureSocketIO(){
         mSocketIOClient.on("add song", mAddSongListener);
-
-        if(!isMaster())
-            mSocketIOClient.on("update session", mUpdateSessionListener);
+        mSocketIOClient.on("user joined" , mUserJoined);
+        Log.d(LOG_TAG , "Configured Socket.IO");
+        mSocketIOClient.on("update session", mUpdateSessionListener);
 
     }
 
@@ -337,7 +321,10 @@ public class UnisongSession {
     }
 
     public Song getCurrentSong(){
-        return mSongQueue.getCurrentSong();
+        if(mSongQueue != null)
+            return mSongQueue.getCurrentSong();
+
+        return null;
     }
 
     public void startSong(int songID){
@@ -371,10 +358,12 @@ public class UnisongSession {
 
     public void addFrame(AudioFrame frame){
         Song song = mSongQueue.getSong(frame.getSongID());
-        song.addFrame(frame);
+        // TODO : store frames without a song in case we miss a create song
+        if(song != null)
+            song.addFrame(frame);
     }
 
-    public List<User> getMembers(){
+    public SessionMembers getMembers(){
         return mMembers;
     }
 
@@ -504,7 +493,7 @@ public class UnisongSession {
                     users.put(user.getUUID().toString());
             }
 
-            for (User user : mMembers) {
+            for (User user : mMembers.getList()) {
                 users.put(user.getUUID().toString());
             }
 
@@ -542,4 +531,22 @@ public class UnisongSession {
     public void updateCurrentSong(){
         mCurrentSong = mSongQueue.getCurrentSong();
     }
+
+
+    private Emitter.Listener mUserJoined = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try {
+                String UUID = (String) args[0];
+
+                User user = UserUtils.getUser(java.util.UUID.fromString(UUID));
+
+                mMembers.add(user);
+                Log.d(LOG_TAG , "User " + user.toString() + "  joined session!");
+            } catch (ClassCastException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Format error in 'user joined'");
+            }
+        }
+    };
 }

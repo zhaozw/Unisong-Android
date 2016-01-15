@@ -152,7 +152,7 @@ public class AACEncoder{
         format.setInteger(MediaFormat.KEY_BIT_RATE, 64000 * channels);
         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
 
-        mSong.setFormat(format);
+        //mSong.setFormat(format);
 
         mCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mCodec.start();

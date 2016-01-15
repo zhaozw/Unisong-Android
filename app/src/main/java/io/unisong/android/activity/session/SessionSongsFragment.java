@@ -52,7 +52,7 @@ public class SessionSongsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view =inflater.inflate(R.layout.fragment_session_songs, container, false);
 
-        mSession = CurrentUser.getInstance().getSession();
+        mSession = UnisongSession.getCurrentSession();
         mUltimateRecyclerView = (UltimateRecyclerView) view.findViewById(R.id.session_songs_recyclerview);
 
         // use a linear mLayout manager

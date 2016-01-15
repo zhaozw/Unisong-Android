@@ -79,9 +79,10 @@ public class User implements Serializable {
     }
 
 
-    public User(String username){
+    public User(String username, String password){
         this();
         mUsername = username;
+        mPassword = password;
 
         // TODO : load rest of info from server and save.
     }

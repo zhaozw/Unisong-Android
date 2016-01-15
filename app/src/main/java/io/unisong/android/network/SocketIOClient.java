@@ -79,7 +79,12 @@ public class SocketIOClient {
     }
 
     public void joinSession(int sessionID){
-        mSocket.emit("join session", sessionID);
+        Object[] args = new Object[2];
+
+        args[0] = CurrentUser.getInstance().getUUID().toString();
+        args[1] = sessionID;
+
+        mSocket.emit("join session", args);
     }
 
     private Runnable mLoginRunnable = () -> login();
@@ -108,6 +113,7 @@ public class SocketIOClient {
                 object.put("accessToken", AccessToken.getCurrentAccessToken().getToken());
             } else {
                 // otherwise, use password
+                Log.d(LOG_TAG , "User Password : " + user.getPassword());
                 object.put("password", user.getPassword());
             }
             mSocket.emit("authenticate", object);

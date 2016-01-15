@@ -14,6 +14,8 @@ import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 
@@ -32,13 +34,14 @@ public class LocalSong extends Song {
     private int mSessionID;
     private long mSongStartTime;
     private boolean mStarted;
+
     /**
      * This is the constructor for a song created from a network source. We do not need the path
      * since we will be taking it in over wifi.
      *
      * @param songJSON - the JSON representation of the song
      */
-    public LocalSong(JSONObject songJSON) throws JSONException{
+    public LocalSong(JSONObject songJSON) throws JSONException, NullPointerException{
         super(songJSON.getString("name"), songJSON.getString("artist"), songJSON.getInt("songID")
                 ,MusicDataManager.getInstance().getSongImagePathByJSON(songJSON));
         UISong uiSong = null;
@@ -47,9 +50,8 @@ public class LocalSong extends Song {
         } catch (JSONException e){
             e.printStackTrace();
         }
-        // TODO : figure out what to do if this does equal null
-        if(uiSong != null)
-            mPath = uiSong.getPath();
+
+        mPath = uiSong.getPath();
         mStarted = false;
         mSessionID = songJSON.getInt("sessionID");
         Log.d(LOG_TAG, "LocalSong created, songID is : " + mSongID);
@@ -57,6 +59,12 @@ public class LocalSong extends Song {
         mEncoder = new AACEncoder();
         mEncoder.setSong(this);
         mDecoder = new FileDecoder(mPath);
+
+        if(songJSON.has("format")) {
+            mFormat = new SongFormat(songJSON.getJSONObject("format"));
+        } else {
+            mFormat = new SongFormat(mPath);
+        }
     }
 
     /**
@@ -77,10 +85,16 @@ public class LocalSong extends Song {
         mEncoder = new AACEncoder();
         mEncoder.setSong(this);
         mDecoder = new FileDecoder(mPath);
+        mFormat = new SongFormat(mPath);
     }
 
     public void setFormat(MediaFormat format){
         mFormat = new SongFormat(format);
+
+        SocketIOClient client = SocketIOClient.getInstance();
+
+        if(client != null)
+            client.emit("update song" , toJSON());
     }
 
 
@@ -95,7 +109,7 @@ public class LocalSong extends Song {
         if(mImageURL != null)
             return mImageURL;
 
-        return null;
+        return NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/songID/" + mSongID + "/picture";
     }
 
     /**

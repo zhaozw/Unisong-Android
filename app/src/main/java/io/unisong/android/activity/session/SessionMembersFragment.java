@@ -30,7 +30,7 @@ public class SessionMembersFragment extends Fragment{
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_session_members, container, false);
 
-        mSession = CurrentUser.getInstance().getSession();
+        mSession = UnisongSession.getCurrentSession();
         mRecyclerView = (RecyclerView) view.findViewById(R.id.members_recyclerview);
 
         // use this setting to improve performance if you know that changes

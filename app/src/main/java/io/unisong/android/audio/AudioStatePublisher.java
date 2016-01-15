@@ -97,10 +97,12 @@ public class AudioStatePublisher {
             mResumeTime = mManager.getLastFrameTime();
         }
 
+        // set the songStartTime first
         if(mBroadcaster != null){
             mBroadcaster.update(state);
             mObservers.remove(mObservers.indexOf(mBroadcaster));
         }
+
         notifyObservers(state);
     }
 
@@ -170,4 +172,3 @@ public class AudioStatePublisher {
         mBroadcaster = broadcaster;
     }
 }
-

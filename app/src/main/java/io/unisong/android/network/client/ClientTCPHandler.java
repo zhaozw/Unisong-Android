@@ -347,7 +347,7 @@ public class ClientTCPHandler {
 
         mCanRequest = true;
 
-        mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID());
+//        mListener.startSong(packet.getSongStartTime(), packet.getChannels(), packet.getStreamID());
         Log.d(LOG_TAG, "UISong Starting!");
     }
 
@@ -358,7 +358,7 @@ public class ClientTCPHandler {
         mCanRequest = true;
 
 
-        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID());
+//        mListener.startSong(packet.getSongStartTime() , packet.getChannels(), packet.getStreamID());
 
         mTopPacket = packet.getCurrentPacket();
 

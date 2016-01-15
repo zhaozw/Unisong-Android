@@ -1,11 +1,14 @@
 package io.unisong.android.network.song;
 
+import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,6 +48,37 @@ public class SongFormat {
             e.printStackTrace();
             Log.d(LOG_TAG, "Creation of SongFormat failed.");
         }
+    }
+
+    // TODO : see if this doesn't work?
+    public SongFormat(String path){
+        mMime = "audio/mp4a-latm";
+        mChannels = 2;
+        mBitrate = 128000;
+        mSampleRate = 44100;
+
+        MediaExtractor extractor = new MediaExtractor();
+        // try to set the source, this might fail
+        try {
+            extractor.setDataSource(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+            //TODO : Handle this exception
+            return;
+        }
+
+        // Read duration
+        try {
+            MediaFormat mediaFormat = extractor.getTrackFormat(0);
+
+            // if duration is 0, we are probably playing a live stream
+            mDuration = mediaFormat.getLong(MediaFormat.KEY_DURATION);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
+            e.printStackTrace();
+            // don't exit, tolerate this error, we'll fail later if this is critical
+        }
+
     }
 
     /**

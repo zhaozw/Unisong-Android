@@ -112,8 +112,9 @@ public class HttpClient {
                 }
 
                 if(response.code() == 200) {
-                    Log.d(LOG_TAG , "Login Success");
+                    Log.d(LOG_TAG, "Login Success");
                     PrefUtils.saveToPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+                    CurrentUser user = new CurrentUser(mContext , "unisong");
                     mIsLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Login Failure");

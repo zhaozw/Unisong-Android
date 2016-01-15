@@ -75,7 +75,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                         e.printStackTrace();
                     }
                 }
-                continue;
+
             } else if(mStop){
                 break;
             }
@@ -108,7 +108,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             e.printStackTrace();
         }
 
-        //mClient.emit("upload data", obj);
+        mClient.emit("upload data", obj);
     }
 
     @Override

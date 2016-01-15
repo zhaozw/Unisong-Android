@@ -47,6 +47,7 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.session.MainSessionActivity;
+import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FriendsList;
@@ -456,18 +457,28 @@ public class UnisongActivity extends AppCompatActivity {
     public void onFriendClick(View view){
         try {
             // TODO : add dialog/popup for confirmation?
-            String uuid = (String) view.getTag();
+            UUID uuid = (UUID) view.getTag();
 
-            User user = UserUtils.getUser(UUID.fromString(uuid));
+            Log.d(LOG_TAG , view.getTag().toString());
+            User user = UserUtils.getUser(uuid);
 
             if(user.getSession() != null){
+                Log.d(LOG_TAG , "Selected user has a session! Joining");
                 UnisongSession session = user.getSession();
+
+                User currentUser = CurrentUser.getInstance();
+                currentUser.setSession(session);
+
+                SocketIOClient client = SocketIOClient.getInstance();
+
+                client.joinSession(session.getSessionID());
 
                 UnisongSession.setCurrentSession(session);
 
                 Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
                 startActivity(intent);
             } else {
+                Log.d(LOG_TAG , "User does not have a session, therefore we cannot join");
                 return;
             }
         }catch (ClassCastException e){

@@ -1,5 +1,6 @@
 package io.unisong.android.network.song;
 
+import android.media.MediaFormat;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -61,7 +62,11 @@ public class UnisongSong extends Song {
     }
 
     public long getDuration(){
-        return getFormat().getDuration();
+        SongFormat format = getFormat();
+        if(format != null)
+            return getFormat().getDuration();
+
+        return -1;
     }
 
     @Override
