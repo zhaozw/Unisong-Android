@@ -20,7 +20,7 @@
     <dimen name="main_profile_image_margin">24dp</dimen>
 
     <dimen name="friend_image_margin">16dp</dimen>
-    <dimen name="friend_image_diameter">46dp</dimen>
+    <dimen name="friend_image_diameter">48dp</dimen>
     <dimen name="session_song_diameter">52dp</dimen>
 
     <dimen name="current_user_name_text_size">22sp</dimen>
@@ -38,5 +38,5 @@
 
     <dimen name="session_song_margin_right">48dp</dimen>
 
-    <dimen name="music_footer_height">70dp</dimen>
+    <dimen name="music_footer_height">68dp</dimen>
 </resources>

@@ -48,6 +48,7 @@ import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.session.MainSessionActivity;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.session.SessionUtils;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FriendsList;
@@ -431,7 +432,7 @@ public class UnisongActivity extends AppCompatActivity {
     }
 
     public void joinSession(int ID ){
-        UnisongSession session = new UnisongSession(ID);
+        UnisongSession session = SessionUtils.getSessionByID(ID);
 
         CurrentUser.getInstance().setSession(session);
         UnisongSession.setCurrentSession(session);

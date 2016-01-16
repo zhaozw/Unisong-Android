@@ -38,6 +38,7 @@ import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * Created by Ethan on 9/26/2015.
@@ -250,7 +251,7 @@ public class MainSessionActivity extends AppCompatActivity {
             Toast.makeText(this, "Invite a friend!", Toast.LENGTH_SHORT).show();
             return true;
         } else if(id == R.id.action_leave_session){
-            UnisongSession.getCurrentSession().leave();
+            CurrentUser.leaveSession();
             onBackPressed();
             return true;
         }

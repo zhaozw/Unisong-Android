@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.session.UnisongSession;
 
@@ -121,7 +122,6 @@ public class CurrentUser {
         try {
             client.syncPost(NetworkUtilities.HTTP_URL + "/logout", new JSONObject());
         } catch (IOException e){
-            // TODO : manually delete cookie.
             e.printStackTrace();
         }
 
@@ -133,7 +133,6 @@ public class CurrentUser {
             Log.d(LOG_TAG, cookie.toString());
             if(cookie.getName().equals("connect.sid")){
                 try {
-                    // TODO : change this code when we switch to unisong.io
                     manager.getCookieStore().remove(new URI(NetworkUtilities.EC2_INSTANCE + "/"), cookie);
                 } catch (URISyntaxException e){
                     e.printStackTrace();
@@ -169,6 +168,20 @@ public class CurrentUser {
 
         sContext = null;
         System.gc();
+    }
+
+
+    public static void leaveSession(){
+        // TODO : see if we need to do anything else? I think these are all the components that need to be dissasembled
+        // but I could be wrong.
+        UnisongSession session = UnisongSession.getCurrentSession();
+
+        session.leave();
+
+        UnisongSession.setCurrentSession(null);
+        sCurrentUser.setSession(null);
+
+
     }
 
 }

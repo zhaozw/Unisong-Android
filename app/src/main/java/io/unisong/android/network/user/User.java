@@ -15,6 +15,7 @@ import com.facebook.AccessToken;
 
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.session.SessionUtils;
 import io.unisong.android.network.session.UnisongSession;
 
 import com.squareup.okhttp.Callback;
@@ -137,7 +138,7 @@ public class User implements Serializable {
                 int id = Integer.parseInt(response.body().string());
 
                 Log.d(LOG_TAG , "Session created");
-                mSession = new UnisongSession(id);
+                mSession = SessionUtils.getSessionByID(id);
 
                 User currentUser = CurrentUser.getInstance();
                 if(currentUser != null && this.equals(currentUser)){
@@ -149,6 +150,7 @@ public class User implements Serializable {
             e.printStackTrace();
         } catch (NullPointerException e){
             e.printStackTrace();
+            Log.d(LOG_TAG , "NullPointerException in checkSessionStatus, perhaps HttpClient was destroyed?");
         }
     }
 
