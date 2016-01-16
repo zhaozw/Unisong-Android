@@ -413,7 +413,7 @@ public class UnisongActivity extends AppCompatActivity {
      */
     public void onFABClick(View view){
         UnisongSession.notifyWhenLoaded(null);
-        UnisongSession session = CurrentUser.getInstance().getSession();
+        UnisongSession session = UnisongSession.getCurrentSession();
         if(session != null){
             // TODO : if we're in a session, move to the Session screen
         } else {
@@ -424,7 +424,6 @@ public class UnisongActivity extends AppCompatActivity {
             CurrentUser.getInstance().setSession(session);
             UnisongSession.setCurrentSession(session);
 
-            session.configureSocketIO();
         }
 
         Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);

@@ -101,6 +101,7 @@ public class MainSessionActivity extends AppCompatActivity {
         mPlayPauseButton.setBackground(mPlayDrawable);
 
         mSession = UnisongSession.getCurrentSession();
+        mSession.configureSocketIO();
 
         mHandler = new Handler();
 
@@ -136,8 +137,15 @@ public class MainSessionActivity extends AppCompatActivity {
 
             if (selected && !mFooterOpen) visibility = View.VISIBLE;
 
-            if (visibility != -1)
-                mFooter.setVisibility(visibility);
+            if (visibility == View.GONE) {
+                runOnUiThread(() -> {
+                    mFooter.setVisibility(View.GONE);
+                });
+            } else if(visibility == View.VISIBLE){
+                runOnUiThread(() -> {
+                    mFooter.setVisibility(View.VISIBLE);
+                });
+            }
 
             if(!selected)
                 return;
@@ -221,7 +229,7 @@ public class MainSessionActivity extends AppCompatActivity {
      * @return - true if a song is selected, false if not
      */
     private boolean isASongSelected(){
-        if(mSession.getCurrentSong() != null)
+        if(mSession != null && mSession.getCurrentSong() != null)
             return true;
 
         return false;

@@ -67,6 +67,7 @@ public class SocketIOClient {
         mSocket.on(Socket.EVENT_DISCONNECT , mDisconnectListener);
         // TODO : see if there's a better place to put this
         mSocket.on("invite user", mInviteListener);
+        mSocket.on("join session result" , mJoinResultListener);
 
     }
 
@@ -231,4 +232,13 @@ public class SocketIOClient {
         mContext = null;
         sInstance = null;
     }
+
+    private Emitter.Listener mJoinResultListener = new Emitter.Listener() {
+
+        @Override
+        public void call(Object... args) {
+            Log.d(LOG_TAG , "Join Result Received!");
+        }
+
+    };
 }

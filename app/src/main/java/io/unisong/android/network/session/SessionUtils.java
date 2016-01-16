@@ -20,4 +20,16 @@ public class SessionUtils {
 
         return new UnisongSession(sessionID);
     }
+
+    public static void removeSession(int sessionID){
+        UnisongSession toRemove = null;
+        for(UnisongSession session : sSessions){
+            if(session.getSessionID() == sessionID){
+                toRemove = session;
+            }
+        }
+
+        if(toRemove != null)
+            sSessions.remove(toRemove);
+    }
 }

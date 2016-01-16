@@ -470,16 +470,16 @@ public class UnisongSession {
                 broadcaster.destroy();
             }
         } else {
-            mSocketIOClient.emit("leave" , new Object());
+            mSocketIOClient.emit("leave", new Object());
             Listener listener = Listener.getInstance();
-
+            destroy();
+            SessionUtils.removeSession(mSessionID);
 
         }
 
 
-
         setCurrentSession(null);
-        destroy();
+
     }
 
     public JSONObject toJSON(){
@@ -536,6 +536,7 @@ public class UnisongSession {
     private Emitter.Listener mUserJoined = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(LOG_TAG , "User joined received");
             try {
                 String UUID = (String) args[0];
 

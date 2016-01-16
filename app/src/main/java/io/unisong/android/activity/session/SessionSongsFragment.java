@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.unisong.android.R;
+import io.unisong.android.network.session.SongQueue;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.user.CurrentUser;
@@ -59,7 +60,9 @@ public class SessionSongsFragment extends Fragment {
         mLayoutManager = new LinearLayoutManager(getContext());
 
         List<Song> songs = new ArrayList<>();
-        for(Song song : mSession.getSongQueue().getQueue()){
+        SongQueue queue = mSession.getSongQueue();
+
+        for(Song song : queue.getQueue()){
             songs.add(song);
         }
 

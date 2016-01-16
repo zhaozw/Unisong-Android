@@ -123,7 +123,7 @@ public class ServerReceiver implements Receiver{
         public void call(Object... args) {
 
             try {
-                Log.d(LOG_TAG, "Server UISong Start received.");
+                Log.d(LOG_TAG, "Server Song Start received.");
                 JSONObject object = (JSONObject) args[0];
                 long songStartTime;
                 int songID;

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import io.unisong.android.network.user.CurrentUser;
  */
 public class SessionMembersFragment extends Fragment{
 
+    private final static String LOG_TAG = SessionMembersFragment.class.getSimpleName();
 
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
@@ -31,6 +33,9 @@ public class SessionMembersFragment extends Fragment{
         View view =  inflater.inflate(R.layout.fragment_session_members, container, false);
 
         mSession = UnisongSession.getCurrentSession();
+        if(mSession == null)
+            Log.d(LOG_TAG, "Session is null!");
+
         mRecyclerView = (RecyclerView) view.findViewById(R.id.members_recyclerview);
 
         // use this setting to improve performance if you know that changes
