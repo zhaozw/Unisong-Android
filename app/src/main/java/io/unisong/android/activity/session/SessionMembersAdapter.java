@@ -1,8 +1,10 @@
 package io.unisong.android.activity.session;
 
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,10 +15,12 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.unisong.android.R;
 import io.unisong.android.network.session.SessionMembers;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.User;
 
 /**
@@ -24,9 +28,13 @@ import io.unisong.android.network.user.User;
  * Created by ezturner on 9/27/2015.
  */
 public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAdapter.ViewHolder>{
+    private final static String LOG_TAG = SessionMembersAdapter.class.getSimpleName();
     private List<User> mDataset;
 
-    private Handler mHandler;
+    public static final int ADD = 1823139;
+    public static final int REMOVE = 142789;
+    private IncomingHandler mHandler;
+    private SessionMembers mMembers;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -47,12 +55,20 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
             kickButton = (Button) v.findViewById(R.id.kick_friend_button);
 
 
-            IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(v.getContext());
-            iconicFontDrawable.setIcon("gmd-close");
-            iconicFontDrawable.setIconColor(ContextCompat.getColor(v.getContext(), R.color.secondaryText));
-            iconicFontDrawable.setIconPadding(24);
+            UnisongSession session = UnisongSession.getCurrentSession();
 
-            kickButton.setBackground(iconicFontDrawable);
+            // If we are the session master, then assign a drawable to the kickButton.
+            if(session.isMaster()) {
+                IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(v.getContext());
+                iconicFontDrawable.setIcon("gmd-close");
+                iconicFontDrawable.setIconColor(ContextCompat.getColor(v.getContext(), R.color.secondaryText));
+                iconicFontDrawable.setIconPadding(24);
+
+                kickButton.setBackground(iconicFontDrawable);
+            } else {
+                // If not, then hide it
+                kickButton.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -63,26 +79,36 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
 
     public void remove(User user) {
         int position = mDataset.indexOf(user);
+        remove(position);
+    }
+
+    public void remove(int position){
         mDataset.remove(position);
         notifyItemRemoved(position);
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public SessionMembersAdapter(SessionMembers members) {
-        mDataset = members.getList();
-        members.registerAdapter(this);
+
+        mHandler = new IncomingHandler(this);
+        mDataset = new ArrayList<>();
+
+        for(User user : members.getList()){
+            mDataset.add(user);
+        }
+
+        mMembers = members;
+        mMembers.registerHandler(mHandler);
     }
 
     // Create new views (invoked by the layout manager)
     @Override
     public SessionMembersAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                    int viewType) {
-        mHandler = new Handler();
         // create a new view
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.session_member_row, parent, false);
         // set the view's size, margins, paddings and layout parameters
-        ViewHolder vh = new ViewHolder(v);
-        return vh;
+        return new ViewHolder(v);
     }
 
     // Replace the contents of a view (invoked by the layout manager)
@@ -95,7 +121,8 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
         holder.kickButton.setTag(user.getUUID());
         Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
         holder.nameView.setText(mDataset.get(position).getName());
-        holder.usernameView.setText("@" + mDataset.get(position).getUsername());
+        String userNameText = "@" + mDataset.get(position).getUsername();
+        holder.usernameView.setText(userNameText);
 
     }
 
@@ -106,4 +133,33 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
     }
 
 
+    public static class IncomingHandler extends Handler{
+
+        private SessionMembersAdapter mAdapter;
+        public IncomingHandler(SessionMembersAdapter adapter){
+            super();
+            mAdapter = adapter;
+        }
+
+
+        @Override
+        public void handleMessage(Message message) {
+
+            switch (message.what){
+                case ADD:
+                    User user;
+                    try{
+                        user = (User) message.obj;
+                    } catch (ClassCastException e){
+                        Log.d(LOG_TAG, "ClassCatchException thrown in handleMessage()!");
+                        return;
+                    }
+                    mAdapter.add(message.arg1 , user);
+                    break;
+                case REMOVE:
+                    mAdapter.remove(message.arg1);
+                    break;
+            }
+        }
+    }
 }

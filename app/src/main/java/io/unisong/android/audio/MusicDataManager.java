@@ -1,4 +1,4 @@
-package io.unisong.android.activity.session.musicselect;
+package io.unisong.android.audio;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -15,6 +15,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.unisong.android.activity.session.musicselect.MusicData;
+import io.unisong.android.activity.session.musicselect.UIAlbum;
+import io.unisong.android.activity.session.musicselect.UIArtist;
+import io.unisong.android.activity.session.musicselect.UIGenre;
+import io.unisong.android.activity.session.musicselect.UIPlaylist;
+import io.unisong.android.activity.session.musicselect.UISong;
 
 /**
  * Created by Ethan on 10/3/2015.
@@ -287,8 +294,9 @@ public class MusicDataManager {
                 membersCursor.close();
             }
             while (playlistCursor.moveToNext());
-            playlistCursor.close();
         }
+        if(playlistCursor != null)
+            playlistCursor.close();
 
 
         // Merge the internal and external cursors.
@@ -344,8 +352,10 @@ public class MusicDataManager {
                 }
             }
             while (genreCursor.moveToNext());
-            genreCursor.close();
         }
+
+        if(genreCursor != null)
+            genreCursor.close();
     }
 
     public UIArtist getArtistByName(String artist){

@@ -1,9 +1,15 @@
 package io.unisong.android.network.host.transmitter;
 
+import android.os.Handler;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
@@ -26,35 +32,17 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     private Thread mBroadcastThread;
     private AudioStatePublisher mAudioStatePublisher;
     private TimeManager mTimeManager;
+    private int mFrameToUpload;
+    private ScheduledFuture<?> mScheduledFuture;
+    private ScheduledExecutorService mWorker;
 
     public ServerTransmitter(){
         mTimeManager = TimeManager.getInstance();
         mAudioStatePublisher = AudioStatePublisher.getInstance();
         mClient = SocketIOClient.getInstance();
+        mWorker = Executors.newSingleThreadScheduledExecutor();
     }
 
-    private Thread getBroadcastThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                if(mTransmitting){
-                    mStop = true;
-                    while(mTransmitting) {
-                        try {
-                            synchronized (this) {
-                                this.wait(5);
-                            }
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-            broadcast();
-        }
-    });
-}
 
     private boolean mStop = false;
     private Song mSong;
@@ -121,37 +109,37 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             startSongJSON.put("songID", song.getID());
             SongFormat format = song.getFormat();
 
-            // TODO : something. This will hang up the UI thread if it's any length at all.
-            int runs = 50;
-            while(format == null){
-
-                runs--;
-                if(runs <= 0)
-                    break;
-
-                synchronized (this){
-                    try{
-                        this.wait(1);
-                    } catch (InterruptedException e){
-
-                    }
-                }
-                format = song.getFormat();
-
-            }
-
             if(format != null)
                 startSongJSON.put("format", format.toJSON());
         } catch (JSONException e){
             e.printStackTrace();
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG, "NullPointerException in startSong()! Was the SongFormat null?");
         }
 
         mClient.emit("start song" , startSongJSON);
 
+        mFrameToUpload = 0;
         mSong = song;
-        mBroadcastThread = getBroadcastThread();
-        mBroadcastThread.start();
+
+        if(mScheduledFuture != null)
+            mScheduledFuture.cancel(true);
+
+        mScheduledFuture = mWorker.scheduleAtFixedRate(mBroadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
     }
+
+    private Runnable mBroadcastRunnable = () -> {
+
+        if(mSong.hasFrame(mFrameToUpload)){
+            AudioFrame frame = mSong.getFrame(mFrameToUpload);
+
+            uploadFrame(frame);
+
+            mFrameToUpload++;
+        }
+
+    };
 
     @Override
     public void update(int state) {

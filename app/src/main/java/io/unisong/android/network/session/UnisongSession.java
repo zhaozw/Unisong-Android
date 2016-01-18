@@ -58,6 +58,9 @@ public class UnisongSession {
             sActivityToNotify.sessionLoaded();
             sActivityToNotify = null;
         }
+        if(session != null){
+            session.configureSocketIO();
+        }
     }
 
     public static void notifyWhenLoaded(UnisongActivity activty){
@@ -86,9 +89,6 @@ public class UnisongSession {
 
         mClient = HttpClient.getInstance();
         mSocketIOClient = SocketIOClient.getInstance();
-        if(mSocketIOClient != null){
-            mSocketIOClient.on("add song" , mAddSongListener);
-        }
 
         mSongQueue = new SongQueue(this);
         mMembers = new SessionMembers();
@@ -253,10 +253,10 @@ public class UnisongSession {
     }
 
     public void configureSocketIO(){
-        mSocketIOClient.on("add song", mAddSongListener);
         mSocketIOClient.on("user joined" , mUserJoined);
         Log.d(LOG_TAG , "Configured Socket.IO");
         mSocketIOClient.on("update session", mUpdateSessionListener);
+        mSocketIOClient.on("user left" , mUserLeft);
 
     }
 
@@ -264,11 +264,6 @@ public class UnisongSession {
         int oldSongID = mNewSongID;
         mNewSongID++;
         return oldSongID;
-    }
-
-    public void setSongAdapter(SessionSongsAdapter adapter){
-        mAdapter = adapter;
-        mSongQueue.setAdapter(adapter);
     }
 
 
@@ -286,6 +281,8 @@ public class UnisongSession {
                         JSONObject object = new JSONObject(body);
                         mSessionID = object.getInt("sessionID");
                         Log.d(LOG_TAG , "Session ID : " + mSessionID);
+
+                        mSocketIOClient.joinSession(mSessionID);
                     }
                 } catch (IOException e){
                     e.printStackTrace();
@@ -398,9 +395,6 @@ public class UnisongSession {
      * @param ID - the ID of the  given song
      */
     public void deleteSong(int ID){
-        if(!mIsMaster)
-            return;
-
         mSongQueue.deleteSong(ID);
 
         Object[] args = new Object[2];
@@ -417,21 +411,6 @@ public class UnisongSession {
             try{
                 JSONObject object = (JSONObject) args[0];
                 parseJSONObject(object);
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-    };
-
-    private Emitter.Listener mAddSongListener = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            try{
-
-                JSONObject object = (JSONObject) args[0];
-
-                Log.d(LOG_TAG , "Add Song Response Received : " + object.toString());
-
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -462,18 +441,20 @@ public class UnisongSession {
     public void leave(){
         if(isMaster()){
             mSocketIOClient.emit("end session", this.getSessionID());
-            mSocketIOClient.emit("leave" , new Object());
+            mSocketIOClient.emit("leave" , mSessionID);
 
             Broadcaster broadcaster = Broadcaster.getInstance();
 
             if(broadcaster != null){
                 broadcaster.destroy();
             }
-        } else {
-            mSocketIOClient.emit("leave", new Object());
-            Listener listener = Listener.getInstance();
+
             destroy();
-            SessionUtils.removeSession(mSessionID);
+        } else {
+            mSocketIOClient.emit("leave", mSessionID);
+            Listener listener = Listener.getInstance();
+            if(listener != null)
+                listener.destroy();
 
         }
 
@@ -533,6 +514,7 @@ public class UnisongSession {
     }
 
 
+    // The listener for when a user joins a session
     private Emitter.Listener mUserJoined = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
@@ -543,11 +525,33 @@ public class UnisongSession {
                 User user = UserUtils.getUser(java.util.UUID.fromString(UUID));
 
                 mMembers.add(user);
-                Log.d(LOG_TAG , "User " + user.toString() + "  joined session!");
+                Log.d(LOG_TAG, "User " + user.toString() + "  joined session!");
             } catch (ClassCastException e){
                 e.printStackTrace();
                 Log.d(LOG_TAG , "Format error in 'user joined'");
             }
         }
     };
+
+    // The listener for when a user leaves a session
+    private Emitter.Listener mUserLeft = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            Log.d(LOG_TAG , "user left received");
+            try {
+                String UUID = (String) args[0];
+
+                User user = UserUtils.getUser(java.util.UUID.fromString(UUID));
+
+                mMembers.remove(user);
+            } catch (ClassCastException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Format error in 'user joined'");
+            }
+        }
+    };
+
+    public void updateSong(JSONObject object){
+        mSongQueue.updateSong(object);
+    }
 }

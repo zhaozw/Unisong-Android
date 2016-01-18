@@ -347,11 +347,20 @@ public class User implements Serializable {
         return mHasProfilePicture;
     }
 
+    // TODO : make async
+    private Thread getSessionStatusThread(){
+        return new Thread(this::checkSessionStatus);
+    }
+
     public boolean profileRetrievalFailed(){
         return mRetrieveProfilePictureFailed;
     }
 
     public String getFacebookID(){
         return mFacebookID;
+    }
+
+    public void update(){
+        getSessionStatusThread().start();
     }
 }

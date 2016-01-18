@@ -1,6 +1,7 @@
 package io.unisong.android.activity.session;
 
 import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -41,6 +42,9 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
     private final static String LOG_TAG = SessionSongsAdapter.class.getSimpleName();
 
     private SongQueue mSongQueue;
+
+    public static final int ADD = 1823139;
+    public static final int REMOVE = 142789;
 
     // NOTE: Make accessible with short name
 
@@ -98,23 +102,22 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
 
     public void remove(Song song) {
         int position = mDataset.indexOf(song);
+        remove(position);
+    }
+
+    public void remove(int position) {
         mDataset.remove(position);
         notifyItemRemoved(position);
     }
+
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public SessionSongsAdapter(List<Song> myDataset, SongQueue queue) {
         mDataset = myDataset;
         mSongQueue = queue;
         // Give the dataset to the session so that it can be updated manually
-        try {
-            User user = CurrentUser.getInstance();
-            UnisongSession session = user.getSession();
-            session.setSongAdapter(this);
-        } catch (NullPointerException e){
-            e.printStackTrace();
-        }
 
+        queue.registerHandler(new IncomingHandler(this));
         setHasStableIds(true);
     }
 
@@ -126,8 +129,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.session_song_row, parent, false);
 
         // set the view's size, margins, paddings and layout parameters
-        ViewHolder vh = new ViewHolder(v, true);
-        return vh;
+        return new ViewHolder(v, true);
     }
 
     @Override
@@ -191,7 +193,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
 
     @Override
     public void onItemDismiss(int position) {
-        mSongQueue.remove(position);
+        mSongQueue.remove(position, true);
     }
 
     @Override
@@ -208,5 +210,36 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
         super.onItemMove(startPos, endPosition);
         mSongQueue.move(startPos, endPosition);
     }
+
+    public static class IncomingHandler extends Handler{
+
+        private SessionSongsAdapter mAdapter;
+        public IncomingHandler(SessionSongsAdapter adapter){
+            super();
+            mAdapter = adapter;
+        }
+
+
+        @Override
+        public void handleMessage(Message message) {
+
+            switch (message.what){
+                case ADD:
+                    Song song;
+                    try{
+                        song = (Song) message.obj;
+                    } catch (ClassCastException e){
+                        Log.d(LOG_TAG, "ClassCatchException thrown in handleMessage()!");
+                        return;
+                    }
+                    mAdapter.add(message.arg1 , song);
+                    break;
+                case REMOVE:
+                    mAdapter.remove(message.arg1);
+                    break;
+            }
+        }
+    }
+
 
 }

@@ -63,7 +63,7 @@ public class FileDecoder implements Decoder{
         mCurrentFrameID = 0;
         mSamples = 0l;
 
-        mFrameBufferSize  = 50;
+        mFrameBufferSize  = 20;
 
         //Create the file and start the Thread.
         mCurrentFile = new File(path);
@@ -98,6 +98,10 @@ public class FileDecoder implements Decoder{
 
     public void setEncoder(AACEncoder encoder){
         mEncoder = encoder;
+    }
+
+    public void setFrameBufferSize(int size){
+        mFrameBufferSize = size;
     }
     private long mSize;
     //A boolean telling us when the first Output format is changed, so that we can start the AAC Encoder
@@ -351,7 +355,15 @@ public class FileDecoder implements Decoder{
     @Override
     public void seek(long seekTime) {
         mStop = true;
-        while (mRunning){}
+        while (mRunning){
+            synchronized (this){
+                try{
+                    this.wait(1);
+                } catch (InterruptedException e){
+                    Log.d(LOG_TAG , "Thread interrupted while waiting in seek()");
+                }
+            }
+        }
         mSeekTime = seekTime;
         mDecodeThread = getDecode();
         mDecodeThread.start();

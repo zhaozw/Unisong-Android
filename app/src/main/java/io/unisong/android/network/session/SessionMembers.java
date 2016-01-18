@@ -1,5 +1,6 @@
 package io.unisong.android.network.session;
 
+import android.os.Message;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -21,7 +22,7 @@ public class SessionMembers {
     private final static String LOG_TAG = SessionMembers.class.getSimpleName();
 
     private List<User> mMembers;
-    private SessionMembersAdapter mAdapter;
+    private SessionMembersAdapter.IncomingHandler mHandler;
 
 
     public SessionMembers(){
@@ -41,28 +42,24 @@ public class SessionMembers {
         }
     }
 
-    public void registerAdapter(SessionMembersAdapter adapter){
-        mAdapter = adapter;
-    }
-
-    public int indexOf(User user){
-        return mMembers.indexOf(user);
-    }
-
     public void add(User user){
-        mMembers.add(user);
+        if(mMembers.indexOf(user) != -1)
+            return;
 
-        if(mAdapter != null)
-            mAdapter.notifyItemInserted(mMembers.size());
+        mMembers.add(user);
+        sendAdd(mMembers.indexOf(user) , user);
+
     }
 
     public void remove(User user){
         int index = mMembers.indexOf(user);
 
-        mMembers.remove(user);
+        if(index == -1)
+            return;
 
-        if(mAdapter != null)
-            mAdapter.notifyItemRemoved(index);
+        mMembers.remove(user);
+        sendRemove(mMembers.indexOf(user));
+
     }
 
     public List<User> getList(){
@@ -81,5 +78,34 @@ public class SessionMembers {
         } catch (JSONException e){
             Log.d(LOG_TAG , "Retrieving userIDs from JSONArray failed in SessionMembers.update()");
         }
+    }
+
+    public void registerHandler(SessionMembersAdapter.IncomingHandler handler){
+        mHandler = handler;
+    }
+
+    private void sendAdd(int position, User user){
+        if(mHandler == null)
+            return;
+
+        Message message = new Message();
+
+        message.what = SessionMembersAdapter.ADD;
+        message.arg1 = position;
+        message.obj = user;
+
+        mHandler.sendMessage(message);
+    }
+
+    private void sendRemove(int position){
+        if(mHandler == null)
+            return;
+
+        Message message = new Message();
+
+        message.what = SessionMembersAdapter.REMOVE;
+        message.arg1 = position;
+
+        mHandler.sendMessage(message);
     }
 }

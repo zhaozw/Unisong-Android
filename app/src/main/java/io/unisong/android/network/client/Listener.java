@@ -3,6 +3,8 @@ package io.unisong.android.network.client;
 import android.content.Context;
 import android.util.Log;
 
+import org.json.JSONObject;
+
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
@@ -77,6 +79,7 @@ public class Listener{
 
         mReceivers = new ArrayList<>();
 
+        sInstance = this;
     }
 
 
@@ -123,6 +126,10 @@ public class Listener{
 
     public void addSong(Song song){
         mSession.addSong(song);
+    }
+
+    public void updateSong(JSONObject object){
+        mSession.updateSong(object);
     }
 
     public void addFrame(AudioFrame frame){

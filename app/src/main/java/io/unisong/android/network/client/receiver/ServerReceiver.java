@@ -54,6 +54,7 @@ public class ServerReceiver implements Receiver{
         mClient.on("seek" , mSeekListener);
         mClient.on("resume" , mResumeListener);
         mClient.on("play" , mPlayListener);
+        mClient.on("update song" , mUpdateSongListener);
     }
 
     /**
@@ -226,6 +227,7 @@ public class ServerReceiver implements Receiver{
     private Emitter.Listener mAddSongListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(LOG_TAG , "add song received from server");
             try{
 
                 JSONObject object = (JSONObject) args[0];
@@ -247,12 +249,28 @@ public class ServerReceiver implements Receiver{
     private Emitter.Listener mDeleteSongListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(LOG_TAG , "Delete song received");
             try{
                 int songID = (Integer) args[0];
 
                 mListener.deleteSong(songID);
             } catch (Exception e){
                 e.printStackTrace();
+            }
+        }
+    };
+
+    private Emitter.Listener mUpdateSongListener = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try{
+                JSONObject object = (JSONObject) args[1];
+                mListener.updateSong(object);
+            } catch (ClassCastException e){
+                Log.d(LOG_TAG , "UpdateSongListener threw ClassCastException!");
+            } catch (NullPointerException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "UpdateSongListener threw NullPointerException!");
             }
         }
     };

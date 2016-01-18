@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
+ * Takes in PCM data and encodes to AAC
  * Created by Ethan on 4/27/2015.
  */
 public class AACEncoder{
@@ -55,8 +56,11 @@ public class AACEncoder{
 
     //The highest frame # used.
     private int mHighestFrameUsed;
+    private int mFrameBufferSize;
+    private boolean mRemoveFrames;
 
     public AACEncoder(){
+        mFrameBufferSize = 20;
         mStop = false;
         mKeepFrames = true;
         mHighestFrameUsed = 0;
@@ -71,16 +75,30 @@ public class AACEncoder{
         mRunning = false;
     }
 
+    public void setBufferSize(int size){
+        mFrameBufferSize = size;
+    }
+
+    /**
+     * Tell the AACEncoder whether to remove frames after they are used.
+     * Set to false by default.
+     */
+    public void setRemoveFrames(boolean remove){
+        mRemoveFrames = remove;
+    }
+
     public void encode(long startTime, int songID, String filePath){
-        Log.d(LOG_TAG , "Starting encode()");
-        mSongID = songID;
-        mCurrentOutputID = (int)(startTime / (1024000.0 / 44100.0));
-        mDecoder = new FileDecoder(filePath);
-        mDecoder.setEncoder(this);
-        mDecoder.startDecode(startTime);
-        mEncodeThread = getEncode();
-        mEncodeThread.start();
-        Log.d(LOG_TAG , "Done with encode()");
+        try {
+            mSongID = songID;
+            mCurrentOutputID = (int) (startTime / (1024000.0 / 44100.0));
+            mDecoder = new FileDecoder(filePath);
+            mDecoder.setEncoder(this);
+            mDecoder.startDecode(startTime);
+            mEncodeThread = getEncode();
+            mEncodeThread.start();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private Thread getEncode(){
@@ -204,7 +222,7 @@ public class AACEncoder{
             }
 
 
-            while(mHighestFrameUsed + 20 <= mCurrentOutputID){
+            while(mHighestFrameUsed + mFrameBufferSize <= mCurrentOutputID){
                 try{
                     synchronized (this){
                         this.wait(10);
@@ -373,22 +391,16 @@ public class AACEncoder{
         mStop = true;
     }
 
-    //The number of AAC samples processed so far. Used to calculate play time.
-    private long mLastTime = 0;
-
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
-        //TODO: get rid of these and remove from the packets
-        //TODO : figure out what this ^^ is referencing?
-        long playTime = mLastTime;
-
         AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mSongID);
         mCurrentOutputID++;
 
         if(frame == null){
-            Log.d(LOG_TAG , "FRAME IS ALSO NULL WTF");
+            Log.d(LOG_TAG , "AudioFrame is Null. It certainly should not be.");
+        } else {
+            mOutputFrames.put(frame.getID(), frame);
         }
-        mOutputFrames.put(frame.getID(), frame);
 
     }
 
@@ -443,9 +455,13 @@ public class AACEncoder{
         if(ID > mHighestFrameUsed) mHighestFrameUsed = ID;
 
         synchronized (mOutputFrames){
-            return mOutputFrames.get(ID);
-        }
+            AudioFrame frame = mOutputFrames.get(ID);
 
+            if(mRemoveFrames)
+                mOutputFrames.remove(ID);
+
+            return frame;
+        }
     }
 
     public void setKeepFrames(boolean keepFrames){

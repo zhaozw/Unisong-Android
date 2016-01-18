@@ -34,7 +34,8 @@
             android:minHeight="4dp"
             android:maxHeight="4dp"
             android:progress="20"
-            android:progressDrawable="@drawable/greenprogress" />
+            android:progressDrawable="@drawable/greenprogress"
+            android:enabled="false"/>
 
         <ImageView
             android:layout_marginTop="8dp"

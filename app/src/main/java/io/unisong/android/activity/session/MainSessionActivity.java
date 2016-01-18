@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -17,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -41,6 +41,7 @@ import io.unisong.android.network.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 
 /**
+ * The main activity for an UnisongSession. Has the fragments for SessionMembers and
  * Created by Ethan on 9/26/2015.
  */
 public class MainSessionActivity extends AppCompatActivity {
@@ -75,10 +76,14 @@ public class MainSessionActivity extends AppCompatActivity {
 
         mToolbar = (Toolbar) findViewById(R.id.session_bar);
 
+        Log.d(LOG_TAG , "Creating MainSessionActivity");
         // Configure the action bar.
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
+        ActionBar bar = getSupportActionBar();
+        if(bar != null) {
+            bar.setDisplayShowHomeEnabled(true);
+            bar.setHomeButtonEnabled(true);
+        }
 
         mPager = (ViewPager) findViewById(R.id.session_pager);
         mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
@@ -101,7 +106,6 @@ public class MainSessionActivity extends AppCompatActivity {
         mPlayPauseButton.setBackground(mPlayDrawable);
 
         mSession = UnisongSession.getCurrentSession();
-        mSession.configureSocketIO();
 
         mHandler = new Handler();
 
@@ -188,6 +192,8 @@ public class MainSessionActivity extends AppCompatActivity {
                 });
             }
 
+            if(mCurrentSong == null)
+                return;
 
             AudioStatePublisher publisher = AudioStatePublisher.getInstance();
             // set the progress
@@ -229,14 +235,7 @@ public class MainSessionActivity extends AppCompatActivity {
      * @return - true if a song is selected, false if not
      */
     private boolean isASongSelected(){
-        if(mSession != null && mSession.getCurrentSong() != null)
-            return true;
-
-        return false;
-    }
-
-    private void updateProgress(){
-
+        return mSession != null && mSession.getCurrentSong() != null;
     }
 
     @Override
@@ -259,8 +258,8 @@ public class MainSessionActivity extends AppCompatActivity {
             Toast.makeText(this, "Invite a friend!", Toast.LENGTH_SHORT).show();
             return true;
         } else if(id == R.id.action_leave_session){
-            CurrentUser.leaveSession();
             onBackPressed();
+            CurrentUser.leaveSession();
             return true;
         }
 
@@ -318,35 +317,17 @@ public class MainSessionActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void removeSong(View view){
-        UnisongSession session = UnisongSession.getCurrentSession();
-
-        try {
-            int songID = Integer.parseInt((String)view.getTag());
-            Log.d(LOG_TAG , "ID : " + getResources().getResourceEntryName(view.getId()));
-            Log.d(LOG_TAG , "Tag : " +  view.getTag());
-            Log.d(LOG_TAG, "SongID : " + songID);
-            session.deleteSong(songID);
-        } catch (Exception e){
-            // Catch NullPointerException and cast exception
-            e.printStackTrace();
-        }
-    }
-
     public void playPause(View view){
-
         AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
-        publisher.play();
-
-        if(mPlaying){
+        if(publisher.getState() == AudioStatePublisher.PLAYING){
             mPlayPauseButton.setBackground(mPlayDrawable);
-        } else {
+            publisher.pause();
+        } else if(publisher.getState() == AudioStatePublisher.PAUSED ||
+                    publisher.getState() == AudioStatePublisher.IDLE){
             mPlayPauseButton.setBackground(mPauseDrawable);
+            publisher.play();
         }
-
-        mPlaying = !mPlaying;
-
 
     }
 

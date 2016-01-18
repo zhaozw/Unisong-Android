@@ -32,23 +32,25 @@ public class SessionMembersFragment extends Fragment{
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_session_members, container, false);
 
-        mSession = UnisongSession.getCurrentSession();
-        if(mSession == null)
-            Log.d(LOG_TAG, "Session is null!");
+        try {
+            mSession = UnisongSession.getCurrentSession();
 
-        mRecyclerView = (RecyclerView) view.findViewById(R.id.members_recyclerview);
+            mRecyclerView = (RecyclerView) view.findViewById(R.id.members_recyclerview);
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the mLayout size of the RecyclerView
+            // use this setting to improve performance if you know that changes
+            // in content do not change the mLayout size of the RecyclerView
 
-        // use a linear mLayout manager
-        mLayoutManager = new LinearLayoutManager(getContext());
-        mRecyclerView.setLayoutManager(mLayoutManager);
+            // use a linear mLayout manager
+            mLayoutManager = new LinearLayoutManager(getContext());
+            mRecyclerView.setLayoutManager(mLayoutManager);
 
 
-        // specify an adapter (see also next example)
-        mAdapter = new SessionMembersAdapter(mSession.getMembers());
-        mRecyclerView.setAdapter(mAdapter);
+            // specify an adapter (see also next example)
+            mAdapter = new SessionMembersAdapter(mSession.getMembers());
+            mRecyclerView.setAdapter(mAdapter);
+        } catch (NullPointerException e){
+            e.printStackTrace();
+        }
         return view;
     }
 

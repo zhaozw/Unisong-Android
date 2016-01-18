@@ -67,6 +67,9 @@ public class CurrentUser {
             sCurrentUser = new User(username, password);
         }
 
+        if(sCurrentUser == null)
+            Log.d(LOG_TAG , "Current user is null!");
+
         mFriendsList = FriendsList.getInstance();
 
         if(mFriendsList == null)

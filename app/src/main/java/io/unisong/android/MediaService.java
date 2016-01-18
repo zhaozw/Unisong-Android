@@ -7,7 +7,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import io.unisong.android.activity.session.musicselect.MusicDataManager;
+import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.user.Contacts;

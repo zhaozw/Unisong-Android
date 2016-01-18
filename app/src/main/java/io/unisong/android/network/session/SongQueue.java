@@ -1,5 +1,6 @@
 package io.unisong.android.network.session;
 
+import android.os.Message;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -10,12 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.socket.emitter.Emitter;
+import io.unisong.android.activity.session.SessionMembersAdapter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.song.UnisongSong;
+import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 9/12/2015.
@@ -26,7 +29,7 @@ public class SongQueue {
 
     private HttpClient mClient;
     private List<Song> mSongQueue;
-    private SessionSongsAdapter mAdapter;
+    private SessionSongsAdapter.IncomingHandler mHandler;
     private UnisongSession mParentSession;
     private SocketIOClient mSocketIOClient;
 
@@ -36,8 +39,6 @@ public class SongQueue {
         mSocketIOClient = SocketIOClient.getInstance();
         mSongQueue = new ArrayList<>();
         mParentSession = session;
-
-        mSocketIOClient.on("update song" , mUpdateSongListener);
     }
 
     /**
@@ -46,13 +47,15 @@ public class SongQueue {
      */
 
     public void addSong(Song song){
-        addSong(mSongQueue.size(), song);
+        if(mSongQueue.indexOf(song) == -1)
+            addSong(mSongQueue.size(), song);
     }
 
+    // Adds a song and notifies
     public void addSong(int position, Song song){
         mSongQueue.add(position, song);
-        if(mAdapter != null)
-            mAdapter.add(position , song);
+
+        sendAdd(position, song);
     }
 
     public void deleteSong(int songID){
@@ -64,9 +67,7 @@ public class SongQueue {
         }
 
         if(songToRemove != null) {
-            mSongQueue.remove(songToRemove);
-            if(mAdapter != null)
-                mAdapter.remove(songToRemove);
+            remove(mSongQueue.indexOf(songToRemove), false);
         }
     }
 
@@ -79,18 +80,24 @@ public class SongQueue {
     }
 
     /**
-     * Removes the song at the given position and updates the dataset
-     * @param position
+     * Removes the song at the given position and updates the dataset.
+     * @param fromUI - whether this action if from the UI - this variable tells us whether to update
+     *               the UI or the server
+     * @param position - the position to remove from
      */
-    public void remove(int position){
+    public void remove(int position, boolean fromUI){
+        if(position == -1)
+            return;
+
         Song songToRemove = mSongQueue.get(position);
 
         if(songToRemove != null) {
             mSongQueue.remove(songToRemove);
-            if(mAdapter != null)
-                mAdapter.remove(songToRemove);
 
-            mParentSession.deleteSong(songToRemove.getID());
+            sendRemove(position);
+
+            if(mParentSession.isMaster() && fromUI)
+                mParentSession.deleteSong(songToRemove.getID());
         }
 
     }
@@ -174,8 +181,8 @@ public class SongQueue {
         }
     }
 
-    public void setAdapter(SessionSongsAdapter adapter){
-        mAdapter = adapter;
+    public void registerHandler(SessionSongsAdapter.IncomingHandler handler){
+        mHandler = handler;
     }
 
     public Song getCurrentSong(){
@@ -236,5 +243,49 @@ public class SongQueue {
             }
         }
     };
+    private void sendAdd(int position, Song song){
+        if(mHandler == null)
+            return;
+
+        Message message = new Message();
+
+        message.what = SessionSongsAdapter.ADD;
+        message.arg1 = position;
+        message.obj = song;
+
+        mHandler.sendMessage(message);
+    }
+
+    private void sendRemove(int position){
+        if(mHandler == null)
+            return;
+
+        Message message = new Message();
+
+        message.what = SessionSongsAdapter.REMOVE;
+        message.arg1 = position;
+
+        mHandler.sendMessage(message);
+    }
+
+    public void updateSong(JSONObject object){
+        try{
+            int songID = object.getInt("songID");
+
+
+            Song song = getSong(songID);
+
+            if(song != null){
+                song.update(object);
+            } else {
+                song = new UnisongSong(object);
+                addSong(song);
+                mParentSession.getUpdate();
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Getting fields from JSONObject or updating the song failed!");
+        }
+    }
 
 }

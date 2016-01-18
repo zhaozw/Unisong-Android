@@ -114,7 +114,7 @@ public class UnisongActivity extends AppCompatActivity {
         mAdapter = new FriendsAdapter(mFriendsList.getFriends());
         mRecyclerView.setAdapter(mAdapter);
 
-        Log.d(LOG_TAG, "Starting thread");
+        Log.d(LOG_TAG, "creating UnisongActivity");
 
         User currentUser = CurrentUser.getInstance();
 
@@ -436,8 +436,6 @@ public class UnisongActivity extends AppCompatActivity {
         CurrentUser.getInstance().setSession(session);
         UnisongSession.setCurrentSession(session);
 
-        session.configureSocketIO();
-
         Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
         startActivity(intent);
     }
@@ -478,6 +476,10 @@ public class UnisongActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
                 startActivity(intent);
             } else {
+                user.update();
+                mTempUserCheck = user;
+                mHandler.removeCallbacks(mCheckUserSession);
+                mHandler.postDelayed(mCheckUserSession, 200);
                 Log.d(LOG_TAG , "User does not have a session, therefore we cannot join");
                 return;
             }
@@ -489,4 +491,28 @@ public class UnisongActivity extends AppCompatActivity {
             Log.d(LOG_TAG , "Something was null in onFriendClick() !");
         }
     }
+
+    private User mTempUserCheck;
+    private Runnable mCheckUserSession = () ->{
+        if(mTempUserCheck != null){
+            if(mTempUserCheck.getSession() != null){
+                Log.d(LOG_TAG , "Selected user has a session! Joining");
+                UnisongSession session = mTempUserCheck.getSession();
+
+                User currentUser = CurrentUser.getInstance();
+                currentUser.setSession(session);
+
+                SocketIOClient client = SocketIOClient.getInstance();
+
+                client.joinSession(session.getSessionID());
+
+                UnisongSession.setCurrentSession(session);
+
+                Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+                startActivity(intent);
+            }
+        }
+
+        mTempUserCheck = null;
+    };
 }

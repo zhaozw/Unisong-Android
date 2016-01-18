@@ -9,7 +9,7 @@ import org.json.JSONObject;
 
 import java.util.Map;
 
-import io.unisong.android.activity.session.musicselect.MusicDataManager;
+import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.master.AACEncoder;
@@ -20,6 +20,7 @@ import io.unisong.android.network.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 
 /**
+ * A song that is on this device.
  * Created by Ethan on 10/3/2015.
  */
 public class LocalSong extends Song {
@@ -44,21 +45,14 @@ public class LocalSong extends Song {
     public LocalSong(JSONObject songJSON) throws JSONException, NullPointerException{
         super(songJSON.getString("name"), songJSON.getString("artist"), songJSON.getInt("songID")
                 ,MusicDataManager.getInstance().getSongImagePathByJSON(songJSON));
-        UISong uiSong = null;
-        try{
-            uiSong = MusicDataManager.getInstance().getSongByJSON(songJSON);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+
+        UISong uiSong = MusicDataManager.getInstance().getSongByJSON(songJSON);
 
         mPath = uiSong.getPath();
         mStarted = false;
         mSessionID = songJSON.getInt("sessionID");
-        Log.d(LOG_TAG, "LocalSong created, songID is : " + mSongID);
+        Log.d(LOG_TAG, "LocalSong created from JSON, songID is : " + mSongID);
         Log.d(LOG_TAG , "SongID :" + songJSON.getInt("songID"));
-        mEncoder = new AACEncoder();
-        mEncoder.setSong(this);
-        mDecoder = new FileDecoder(mPath);
 
         if(songJSON.has("format")) {
             mFormat = new SongFormat(songJSON.getJSONObject("format"));
@@ -82,9 +76,6 @@ public class LocalSong extends Song {
             // this will call if the session is either improperly initialized or not at all.
         }
         mPath = uiSong.getPath();
-        mEncoder = new AACEncoder();
-        mEncoder.setSong(this);
-        mDecoder = new FileDecoder(mPath);
         mFormat = new SongFormat(mPath);
     }
 
@@ -136,6 +127,10 @@ public class LocalSong extends Song {
      */
     public void start(){
         if(!mStarted) {
+            mEncoder = new AACEncoder();
+            mEncoder.setSong(this);
+            mDecoder = new FileDecoder(mPath);
+
             mSongStartTime = TimeManager.getInstance().getSongStartTime();
             mDecoder.startDecode();
             mEncoder.encode(0, super.getID(), mPath);
