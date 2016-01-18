@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.audio.AudioFrame;
@@ -29,7 +30,6 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
     private SocketIOClient mClient;
     private boolean mTransmitting;
-    private Thread mBroadcastThread;
     private AudioStatePublisher mAudioStatePublisher;
     private TimeManager mTimeManager;
     private int mFrameToUpload;
@@ -124,7 +124,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         mSong = song;
 
         if(mScheduledFuture != null)
-            mScheduledFuture.cancel(true);
+            mScheduledFuture.cancel(false);
 
         mScheduledFuture = mWorker.scheduleAtFixedRate(mBroadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
     }

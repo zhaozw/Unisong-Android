@@ -183,8 +183,6 @@ public class CurrentUser {
 
         UnisongSession.setCurrentSession(null);
         sCurrentUser.setSession(null);
-
-
     }
 
 }

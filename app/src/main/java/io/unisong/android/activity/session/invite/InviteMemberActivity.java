@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.Socket;
+import java.util.UUID;
 
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
@@ -86,11 +87,13 @@ public class InviteMemberActivity extends AppCompatActivity{
 
             inviteMessage = user.getName() + inviteMessage;
 
-            String uuid = (String) view.getTag();
+
+            UUID uuid = (UUID) view.getTag();
 
             JSONObject object = new JSONObject();
+            Log.d(LOG_TAG , "UUID : " + uuid);
 
-            object.put("userID", uuid);
+            object.put("userIDString", uuid.toString());
             object.put("message", inviteMessage);
             object.put("sessionID", session.getSessionID());
 

@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SimpleAdapter;
 
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.marshalchen.ultimaterecyclerview.UltimateRecyclerView;
 import com.marshalchen.ultimaterecyclerview.animators.BaseItemAnimator;
 import com.marshalchen.ultimaterecyclerview.animators.FadeInAnimator;
@@ -44,6 +45,7 @@ public class SessionSongsFragment extends Fragment {
     private UnisongSession mSession;
     private UltimateRecyclerView mUltimateRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
+    private FloatingActionButton mFAB;
     private SessionSongsAdapter mAdapter;
 
 
@@ -74,6 +76,12 @@ public class SessionSongsFragment extends Fragment {
             for (Song song : queue.getQueue()) {
                 songs.add(song);
             }
+
+            mFAB = (FloatingActionButton)  view.findViewById(R.id.unisong_fab);
+
+
+            if(!mSession.isMaster())
+                mFAB.setVisibility(View.GONE);
 
             mAdapter = new SessionSongsAdapter(songs, mSession.getSongQueue());
 

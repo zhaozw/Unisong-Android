@@ -3,6 +3,7 @@ package io.unisong.android.activity.session;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -26,11 +27,15 @@ import android.widget.Toast;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.R;
+import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.activity.session.invite.InviteMemberActivity;
 import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
@@ -66,7 +71,7 @@ public class MainSessionActivity extends AppCompatActivity {
     private RelativeLayout mFooter;
     private TextView mFooterSongName;
     private TextView mFooterSongArtist;
-    private SeekBar mFooterProgressBar;
+    private SeekBar mFooterSeekBar;
     private ImageView mFooterSongImage;
 
     @Override
@@ -118,13 +123,19 @@ public class MainSessionActivity extends AppCompatActivity {
 
         mFooterSongArtist = (TextView) mFooter.findViewById(R.id.playing_song_artist);
         mFooterSongName = (TextView) mFooter.findViewById(R.id.playing_song_name);
-        mFooterProgressBar = (SeekBar) mFooter.findViewById(R.id.current_song_progress_bar);
+        mFooterSeekBar = (SeekBar) mFooter.findViewById(R.id.current_song_progress_bar);
         mFooterSongImage = (ImageView) mFooter.findViewById(R.id.playing_song_image);
 
         // TODO : call a method on this activity when current song changes
         // TODO : call a method on this activity when we start playing.
         mExecutor = new ScheduledThreadPoolExecutor(5);
         mExecutor.scheduleAtFixedRate(this::updateFooter, 0, 100, TimeUnit.MILLISECONDS);
+
+        if(mSession.isMaster())
+            mFooterSeekBar.setEnabled(true);
+
+        if(!mSession.isMaster())
+            mPlayPauseButton.setVisibility(View.GONE);
     }
 
     /**
@@ -197,7 +208,7 @@ public class MainSessionActivity extends AppCompatActivity {
 
             AudioStatePublisher publisher = AudioStatePublisher.getInstance();
             // set the progress
-            int progress = mFooterProgressBar.getProgress();
+            int progress = mFooterSeekBar.getProgress();
             long duration = mCurrentSong.getDuration();
             int newProgress = progress;
             long timePlayed = -1;
@@ -215,7 +226,7 @@ public class MainSessionActivity extends AppCompatActivity {
             }
 
             if(progress != newProgress)
-                mFooterProgressBar.setProgress(newProgress);
+                mFooterSeekBar.setProgress(newProgress);
 
         } catch (NullPointerException e){
             e.printStackTrace();

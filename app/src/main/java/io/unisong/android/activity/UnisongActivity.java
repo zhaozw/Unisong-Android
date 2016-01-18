@@ -3,12 +3,14 @@ package io.unisong.android.activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -62,9 +64,10 @@ import io.unisong.android.network.user.UserUtils;
  */
 public class UnisongActivity extends AppCompatActivity {
 
+    public static final int INVITE = 241293;
     private final static String LOG_TAG = UnisongActivity.class.getSimpleName();
 
-    private Handler mHandler;
+    private IncomingHandler mHandler;
     private Toolbar mToolbar;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
@@ -142,7 +145,10 @@ public class UnisongActivity extends AppCompatActivity {
 
         new LoadCurrentUserProfile().execute();
 
-        mHandler = new Handler();
+        mHandler = new IncomingHandler(this);
+        SocketIOClient client = SocketIOClient.getInstance();
+
+        client.registerInviteHandler(mHandler);
 
         mUserProfileImageView = (CircleImageView) findViewById(R.id.user_image);
 
@@ -184,26 +190,7 @@ public class UnisongActivity extends AppCompatActivity {
 
         addFriendButton.setBackground(iconicFontDrawable);
 
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                try{
-                    String message = intent.getStringExtra("message");
 
-                    switch(message){
-                        case "invite":
-                            int sessionID = intent.getIntExtra("sessionID", -1);
-                            String inviteMessage = intent.getStringExtra("inviteMessage");
-                            if(sessionID != -1){
-                                displayInvite(sessionID, inviteMessage);
-                            }
-                            break;
-                    }
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        };
     }
 
     public void onProfileClick(View view){
@@ -255,7 +242,7 @@ public class UnisongActivity extends AppCompatActivity {
         // TODO : see if we need to run this on the UI Thread
         new MaterialDialog.Builder(this)
                 .content(inviteMessage)
-                .positiveText(R.string.change)
+                .positiveText(R.string.join)
                 .negativeText(R.string.cancel)
                 .theme(Theme.LIGHT)
                 .callback(new MaterialDialog.ButtonCallback() {
@@ -385,7 +372,9 @@ public class UnisongActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(User user) {
-            Picasso.with(getApplicationContext()).load(user.getProfileURL()).into((ImageView) findViewById(R.id.user_image));
+            Picasso.with(getApplicationContext())
+                    .load(user.getProfileURL())
+                    .into((ImageView) findViewById(R.id.user_image));
 
             Log.d(LOG_TAG , "Current User done loading profile picture, assigning to ImageView");
             TextView name = (TextView) findViewById(R.id.current_user_name);
@@ -454,12 +443,19 @@ public class UnisongActivity extends AppCompatActivity {
      */
     public void onFriendClick(View view){
         try {
-            // TODO : add dialog/popup for confirmation?
+
             UUID uuid = (UUID) view.getTag();
 
             Log.d(LOG_TAG , view.getTag().toString());
             User user = UserUtils.getUser(uuid);
+            user.update();
+            mTempUserCheck = user;
+            mHandler.removeCallbacks(mCheckUserSession);
+            mHandler.postDelayed(mCheckUserSession, 200);
 
+            // TODO : add dialog/popup for confirmation?
+
+            /*
             if(user.getSession() != null){
                 Log.d(LOG_TAG , "Selected user has a session! Joining");
                 UnisongSession session = user.getSession();
@@ -476,13 +472,9 @@ public class UnisongActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
                 startActivity(intent);
             } else {
-                user.update();
-                mTempUserCheck = user;
-                mHandler.removeCallbacks(mCheckUserSession);
-                mHandler.postDelayed(mCheckUserSession, 200);
                 Log.d(LOG_TAG , "User does not have a session, therefore we cannot join");
                 return;
-            }
+            }*/
         }catch (ClassCastException e){
             e.printStackTrace();
             Log.d(LOG_TAG , "View tag was cast incorrectly!");
@@ -506,7 +498,10 @@ public class UnisongActivity extends AppCompatActivity {
 
                 client.joinSession(session.getSessionID());
 
+                // Remember to nullify sessionToNotify
+                UnisongSession.notifyWhenLoaded(null);
                 UnisongSession.setCurrentSession(session);
+                session.getMembers().add(currentUser);
 
                 Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
                 startActivity(intent);
@@ -515,4 +510,39 @@ public class UnisongActivity extends AppCompatActivity {
 
         mTempUserCheck = null;
     };
+
+
+    public static class IncomingHandler extends Handler{
+
+        private UnisongActivity mActivity;
+        public IncomingHandler(UnisongActivity activity){
+            super();
+            mActivity = activity;
+        }
+
+
+        @Override
+        public void handleMessage(Message message) {
+
+            switch (message.what){
+                case INVITE:
+
+                    try {
+                        JSONObject object = (JSONObject) message.obj;
+                        int sessionID = object.getInt("sessionID");
+                        String inviteMessage = object.getString("message");
+                        mActivity.displayInvite(sessionID , inviteMessage);
+
+                    } catch(ClassCastException e){
+                        e.printStackTrace();
+                        Log.d(LOG_TAG , "Class cast incorrectly for invite!");
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                        Log.d(LOG_TAG , "JSONObject not in expected format for invite message!");
+                    }
+                    break;
+
+            }
+        }
+    }
 }

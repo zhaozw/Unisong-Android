@@ -3,6 +3,7 @@ package io.unisong.android.network;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 
@@ -14,6 +15,7 @@ import org.json.JSONObject;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.session.UnisongSession;
@@ -34,7 +36,7 @@ public class SocketIOClient {
     }
     private final String LOG_TAG = SocketIOClient.class.getSimpleName();
 
-    private Handler mHandler;
+    private Handler mInviteHandler;
     private HttpClient mHttpClient;
     private Socket mSocket;
     private ServerReceiver mReceiver;
@@ -48,7 +50,7 @@ public class SocketIOClient {
         IO.Options opts = new IO.Options();
         opts.forceNew = true;
 
-        mHandler = new Handler();
+        mInviteHandler = new Handler();
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
         sInstance = this;
@@ -99,7 +101,7 @@ public class SocketIOClient {
         User user = CurrentUser.getInstance();
 
         if(user == null || user.getUsername() == null) {
-            mHandler.postDelayed(mLoginRunnable, 2000l);
+            mInviteHandler.postDelayed(mLoginRunnable, 2000l);
             return;
         }
 
@@ -132,15 +134,15 @@ public class SocketIOClient {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG, "Connection event.");
-            mHandler.postDelayed(new Runnable() {
+            mInviteHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mHandler.removeCallbacks(mLoginRunnable);
+                    mInviteHandler.removeCallbacks(mLoginRunnable);
                     login();
 
                     UnisongSession currentSession = UnisongSession.getCurrentSession();
 
-                    if(currentSession != null){
+                    if (currentSession != null) {
                         joinSession(currentSession.getSessionID());
                         currentSession.getUpdate();
                     }
@@ -183,19 +185,21 @@ public class SocketIOClient {
     private Emitter.Listener mInviteListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(LOG_TAG , "invite user received");
             try {
                 JSONObject object = (JSONObject) args[0];
 
                 String inviteMessage = object.getString("message");
                 int sessionID = object.getInt("sessionID");
 
+                Message message = new Message();
 
-                Intent intent = new Intent();
-                intent.putExtra("sessionID" , sessionID);
-                intent.putExtra("message" , "invite");
-                intent.putExtra("inviteMessage", inviteMessage);
+                message.what = UnisongActivity.INVITE;
+                message.obj = object;
 
-                mContext.sendBroadcast(intent);
+                if(mInviteHandler != null)
+                    mInviteHandler.sendMessage(message);
+
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -241,4 +245,8 @@ public class SocketIOClient {
         }
 
     };
+
+    public void registerInviteHandler(UnisongActivity.IncomingHandler handler){
+        mInviteHandler = handler;
+    }
 }

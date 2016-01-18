@@ -45,6 +45,7 @@
     <string name="add_friend_label">Add Friend</string>
     <string name="friends_label">Friends</string>
 
+    <string name="join">Join</string>
     <string name="change">Change</string>
     <string name="cancel">Cancel</string>
     <string name="change_profile_picture">Change profile picture?</string>

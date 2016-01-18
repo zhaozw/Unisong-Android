@@ -57,8 +57,8 @@ public class SessionMembers {
         if(index == -1)
             return;
 
-        mMembers.remove(user);
         sendRemove(mMembers.indexOf(user));
+        mMembers.remove(user);
 
     }
 

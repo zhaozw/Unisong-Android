@@ -170,11 +170,8 @@ public class UnisongSession {
         }
     }
 
-    private boolean onlyOnce = true;
     private void parseJSONObject(JSONObject object) throws JSONException{
 
-        if(!onlyOnce)
-            onlyOnce = false;
         if(object.has("master")){
             mMaster = object.getString("master");
             User user = CurrentUser.getInstance();
@@ -221,6 +218,8 @@ public class UnisongSession {
         }
 
         // TODO : ensure that this works in sync with Listener.
+        // TODO : figure out how to know when to update the Master's audiosessionstate, and when to
+        // update the server instead
         if(object.has("sessionState") && !isMaster()){
             mSessionState = object.getString("sessionState");
             AudioStatePublisher publisher = AudioStatePublisher.getInstance();
@@ -254,10 +253,10 @@ public class UnisongSession {
 
     public void configureSocketIO(){
         mSocketIOClient.on("user joined" , mUserJoined);
-        Log.d(LOG_TAG , "Configured Socket.IO");
         mSocketIOClient.on("update session", mUpdateSessionListener);
         mSocketIOClient.on("user left" , mUserLeft);
-
+        mSocketIOClient.on("end session" , mEndSession);
+        Log.d(LOG_TAG, "Configured Socket.IO");
     }
 
     public int incrementNewSongID(){
@@ -268,41 +267,41 @@ public class UnisongSession {
 
 
     private Thread getCreateThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Response response;
-                Log.d(LOG_TAG , "Creating Unisong session.");
-                try {
-                    response = mClient.syncPost(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
+        return new Thread(() ->{
+            Response response;
+            Log.d(LOG_TAG , "Creating Unisong session.");
+            try {
+                response = mClient.syncPost(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
 
-                    if(response.code() == 200){
-                        String body = response.body().string();
-                        JSONObject object = new JSONObject(body);
-                        mSessionID = object.getInt("sessionID");
-                        Log.d(LOG_TAG , "Session ID : " + mSessionID);
+                if(response.code() == 200){
+                    String body = response.body().string();
+                    JSONObject object = new JSONObject(body);
+                    Log.d(LOG_TAG , object.toString());
+                    mSessionID = object.getInt("sessionID");
+                    Log.d(LOG_TAG , "Session ID : " + mSessionID);
 
-                        mSocketIOClient.joinSession(mSessionID);
-                    }
-                } catch (IOException e){
-                    e.printStackTrace();
-                    return;
-                } catch (JSONException e){
-                    Log.d(LOG_TAG, "JSON Parsing failed.");
+                    mSocketIOClient.joinSession(mSessionID);
+                    mMembers.add(CurrentUser.getInstance());
                 }
-
-                try {
-                    JSONObject credentials = new JSONObject();
-                    User user = CurrentUser.getInstance();
-                    credentials.put("username" , user.getUsername());
-                    credentials.put("password" , user.getPassword());
-                    mSocketIOClient.emit("authenticate" , credentials);
-                } catch (JSONException e){
-                    e.printStackTrace();
-                }
-
+            } catch (IOException e){
+                e.printStackTrace();
+                return;
+            } catch (JSONException e){
+                Log.d(LOG_TAG, "JSON Parsing failed.");
             }
+
+            try {
+                JSONObject credentials = new JSONObject();
+                User user = CurrentUser.getInstance();
+                credentials.put("username" , user.getUsername());
+                credentials.put("password" , user.getPassword());
+                mSocketIOClient.emit("authenticate" , credentials);
+            } catch (JSONException e){
+                e.printStackTrace();
+            }
+
         });
+
     }
 
     public void addClient(Client client){
@@ -333,20 +332,17 @@ public class UnisongSession {
     }
 
     public void endSession(){
-        // TODO : end session and disconnect hosts
-        // can only do if host
-        mSocketIOClient.emit("end session", new JSONObject());
+
     }
 
     public void disconnect(){
-        // TODO : disconnects user from session
-
+        mSocketIOClient.emit("leave" , getSessionID());
     }
 
     public void destroy(){
-        if(mIsMaster){
-            endSession();
-        }
+        if(mIsMaster)
+            mSocketIOClient.emit("end session" , getSessionID());
+
         disconnect();
 
         mSongQueue = null;
@@ -440,8 +436,6 @@ public class UnisongSession {
 
     public void leave(){
         if(isMaster()){
-            mSocketIOClient.emit("end session", this.getSessionID());
-            mSocketIOClient.emit("leave" , mSessionID);
 
             Broadcaster broadcaster = Broadcaster.getInstance();
 
@@ -449,30 +443,21 @@ public class UnisongSession {
                 broadcaster.destroy();
             }
 
-            destroy();
         } else {
-            mSocketIOClient.emit("leave", mSessionID);
             Listener listener = Listener.getInstance();
             if(listener != null)
                 listener.destroy();
 
         }
 
-
+        destroy();
         setCurrentSession(null);
-
     }
 
     public JSONObject toJSON(){
         JSONObject object = new JSONObject();
         try {
             JSONArray users = new JSONArray();
-
-            if(mIsMaster) {
-                User user = CurrentUser.getInstance();
-                if(user != null)
-                    users.put(user.getUUID().toString());
-            }
 
             for (User user : mMembers.getList()) {
                 users.put(user.getUUID().toString());
@@ -550,6 +535,25 @@ public class UnisongSession {
             }
         }
     };
+
+
+    // The listener for when a user leaves a session
+    private Emitter.Listener mEndSession = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            try{
+                int sessionID = (Integer) args[0];
+
+                if(mSessionID == sessionID && !isMaster())
+                    endSession();
+
+            } catch (ClassCastException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Format error in 'end session'");
+            }
+        }
+    };
+
 
     public void updateSong(JSONObject object){
         mSongQueue.updateSong(object);

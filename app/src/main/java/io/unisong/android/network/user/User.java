@@ -144,6 +144,8 @@ public class User implements Serializable {
                 if(currentUser != null && this.equals(currentUser)){
                     UnisongSession.setCurrentSession(mSession);
                 }
+            } else if(response.code() == 404){
+                mSession = null;
             }
 
         } catch (IOException e){
