@@ -41,7 +41,6 @@ public class SessionSongsFragment extends Fragment {
 
     private final static String LOG_TAG = SessionSongsFragment.class.getSimpleName();
 
-    private List<Song> mSongs;
     private UnisongSession mSession;
     private UltimateRecyclerView mUltimateRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;

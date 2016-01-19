@@ -225,8 +225,8 @@ public class MainSessionActivity extends AppCompatActivity {
                 newProgress = 100;
             }
 
-            if(progress != newProgress)
-                mFooterSeekBar.setProgress(newProgress);
+//            if(progress != newProgress)
+//                mFooterSeekBar.setProgress(newProgress);
 
         } catch (NullPointerException e){
             e.printStackTrace();

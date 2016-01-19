@@ -72,9 +72,6 @@ public class Broadcaster implements AudioObserver {
         //mLANTransmitter = new LANTransmitter(false , mUnisongSession);
         //mTransmitters.add(mLANTransmitter);
 
-        ServerTransmitter serverTransmitter = new ServerTransmitter();
-        mTransmitters.add(serverTransmitter);
-
         Log.d(LOG_TAG , "Broadcaster Created!");
         mHandler = new Handler();
         sInstance = this;
@@ -95,7 +92,7 @@ public class Broadcaster implements AudioObserver {
                 song.start();
 
             // The start time in milliseconds
-
+            Log.d(LOG_TAG , "Transmitters: " +mTransmitters.size());
             for (Transmitter transmitter : mTransmitters) {
                 transmitter.startSong(song);
             }

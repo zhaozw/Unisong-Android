@@ -2,6 +2,7 @@ package io.unisong.android.network.host.transmitter;
 
 import android.os.Handler;
 import android.util.Log;
+import android.widget.ProgressBar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -122,6 +123,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
         mFrameToUpload = 0;
         mSong = song;
+        Log.d(LOG_TAG , "Start song x232");
 
         if(mScheduledFuture != null)
             mScheduledFuture.cancel(false);
@@ -133,11 +135,15 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
         if(mSong.hasFrame(mFrameToUpload)){
             AudioFrame frame = mSong.getFrame(mFrameToUpload);
-
+            Log.d(LOG_TAG , "Frame #" + mFrameToUpload + " uploaded");
+            Log.d(LOG_TAG , "Frame is null? " + (frame == null));
             uploadFrame(frame);
 
             mFrameToUpload++;
+        } else {
+            Log.d(LOG_TAG , "Looking for frame #" + mFrameToUpload + " while size is : " + mSong.getPCMFrames().size());
         }
+
 
     };
 

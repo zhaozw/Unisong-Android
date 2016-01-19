@@ -43,6 +43,7 @@
     </LinearLayout>
 
     <Button
+        android:layout_centerVertical="true"
         android:id = "@+id/kick_friend_button"
         android:layout_height="48dp"
         android:layout_width="48dp"
