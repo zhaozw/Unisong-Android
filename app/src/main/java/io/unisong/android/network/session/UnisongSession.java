@@ -257,6 +257,7 @@ public class UnisongSession {
         mSocketIOClient.on("user left" , mUserLeft);
         mSocketIOClient.on("end session" , mEndSession);
         Log.d(LOG_TAG, "Configured Socket.IO");
+
     }
 
     public int incrementNewSongID(){
@@ -354,6 +355,7 @@ public class UnisongSession {
         // TODO : store frames without a song in case we miss a create song
         if(song != null)
             song.addFrame(frame);
+
     }
 
     public SessionMembers getMembers(){

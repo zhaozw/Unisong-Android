@@ -131,17 +131,24 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         mScheduledFuture = mWorker.scheduleAtFixedRate(mBroadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
     }
 
+    private int mUploadCount = 0;
+
     private Runnable mBroadcastRunnable = () -> {
 
         if(mSong.hasFrame(mFrameToUpload)){
             AudioFrame frame = mSong.getFrame(mFrameToUpload);
-            Log.d(LOG_TAG , "Frame #" + mFrameToUpload + " uploaded");
-            Log.d(LOG_TAG , "Frame is null? " + (frame == null));
-            uploadFrame(frame);
+//            Log.d(LOG_TAG, "Frame is null? " + (frame == null));
+            if(frame != null) {
+//                Log.d(LOG_TAG, "Frame #" + mFrameToUpload + " uploaded");
+                uploadFrame(frame);
 
-            mFrameToUpload++;
+                if(mUploadCount >= 100){
+                    Log.d(LOG_TAG , "Frame #" + mFrameToUpload + " uploaded");
+                }
+                mFrameToUpload++;
+            }
         } else {
-            Log.d(LOG_TAG , "Looking for frame #" + mFrameToUpload + " while size is : " + mSong.getPCMFrames().size());
+//            Log.d(LOG_TAG , "Looking for frame #" + mFrameToUpload + " while size is : " + mSong.getPCMFrames().size());
         }
 
 
@@ -157,7 +164,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 try {
                     JSONObject object = new JSONObject();
                     object.put("resumeTime", mAudioStatePublisher.getResumeTime());
-                    object.put("songStartTime", TimeManager.getInstance().getSongStartTime());
+                    object.put("songStartTime", TimeManager.getInstance().getSongStartTime() - TimeManager.getInstance().getOffset());
                     mClient.emit("resume", object);
                 } catch (JSONException e){
                     e.printStackTrace();

@@ -2,6 +2,7 @@ package io.unisong.android.network.ntp;
 
 import android.util.Log;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.xbill.DNS.Address;
 
 import java.io.IOException;
@@ -82,6 +83,7 @@ public class SntpClient
         }
 
         mResults = new ArrayList<>();
+        Log.d(LOG_TAG , "SntpClient created");
         mThread = getClientThread();
         mThread.start();
 
@@ -113,17 +115,12 @@ public class SntpClient
                 continue;
             }
 
-            if(count > 20 && total < 25){
-                count = 0;
-                calculateOffset();
-            } else if(count > 50 && total < 200){
-                count = 0;
-                calculateOffset();
-            } else if(count > 100){
+            if(total % 50 == 0){
                 calculateOffset();
             }
 
-            if(total >= 10){
+            if(total >= 200){
+                calculateOffset();
                 return;
             }
         }
@@ -132,11 +129,18 @@ public class SntpClient
     private void calculateOffset(){
         double offset = 0;
 
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+
         for(int i = 0; i < mResults.size(); i++){
             offset += mResults.get(i).getOffset();
+            stats.addValue(mResults.get(i).getOffset());
         }
 
-        offset = offset / mResults.size();
+        Log.d(LOG_TAG , "Mean is: " + stats.getMean());
+        Log.d(LOG_TAG , "Standard Deviation is : " + stats.getStandardDeviation());
+        Log.d(LOG_TAG , "Median is : " + stats.getPercentile(50));
+
+        offset = stats.getPercentile(50);
 
         mTimeOffset = offset;
     }
@@ -173,7 +177,7 @@ public class SntpClient
         InetAddress address = Address.getByName(sServerAddress);
         //Log.d(LOG_TAG , "address is " + address.toString());
         byte[] buf = new NtpMessage().toByteArray();
-        //TODO: change this to NTP_PORT
+
         DatagramPacket packet =
                 new DatagramPacket(buf, buf.length, address, 123);
 
@@ -188,10 +192,19 @@ public class SntpClient
         // Get response
         //Log.d(LOG_TAG , "NTP request sent to : " + sServerAddress +" , waiting for response...");
         packet = new DatagramPacket(buf, buf.length);
-        mSocket.setSoTimeout(500);
+        // TODO : vary timeout with connection type, and prefer wifi/34/4g etc
+        mSocket.setSoTimeout(750);
         try {
             mSocket.receive(packet);
         } catch (SocketTimeoutException e){
+            try{
+                synchronized (this){
+                    this.wait(1000);
+                }
+            } catch (InterruptedException iE){
+//                    interruptedException.printStackTrace();
+            }
+
 //            Log.d(LOG_TAG , e.toString());
             // resend
             getOneOffset();

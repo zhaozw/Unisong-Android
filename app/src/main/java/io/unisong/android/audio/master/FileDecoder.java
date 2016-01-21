@@ -171,7 +171,7 @@ public class FileDecoder implements Decoder{
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
         int noOutputCounter = 0;
-        int noOutputCounterLimit = 10;
+        int noOutputCounterLimit = 25;
 
         mStop = false;
 
@@ -230,11 +230,6 @@ public class FileDecoder implements Decoder{
 
                     waitForFrameUse();
 
-                	/*if(this.state.get() != PlayerStates.PLAYING) {
-                		if (events != null) handler.post(new Runnable() { @Override public void run() { events.onPlay();  } });
-            			state.set(PlayerStates.PLAYING);
-                	}*/
-
                 }
 
                 try {
@@ -246,6 +241,7 @@ public class FileDecoder implements Decoder{
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0){
                     Log.d(LOG_TAG, "saw output EOS.");
                     sawOutputEOS = true;
+                    mStop = true;
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED){
                 codecOutputBuffers = mCodec.getOutputBuffers();
@@ -271,6 +267,12 @@ public class FileDecoder implements Decoder{
 
         Log.d(LOG_TAG , "mStop : "  +mStop);
         Log.d(LOG_TAG , "No Output Index: " + noOutputCounter);
+
+        if(!mStop){
+            // TODO : this is an interim fix. It'd be great to have a 'smarter' fault tolerance system
+            Log.d(LOG_TAG, "We are stopping but mStop is false! Restarting at current time");
+            this.startDecode(mPlayTime);
+        }
 
         releaseCodec();
     }

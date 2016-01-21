@@ -21,6 +21,7 @@ import java.util.List;
 import io.unisong.android.R;
 import io.unisong.android.network.session.SessionMembers;
 import io.unisong.android.network.session.UnisongSession;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 
 /**
@@ -123,6 +124,10 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
         holder.nameView.setText(mDataset.get(position).getName());
         String userNameText = "@" + mDataset.get(position).getUsername();
         holder.usernameView.setText(userNameText);
+
+        if(CurrentUser.getInstance() != null && CurrentUser.getInstance() == user)
+            holder.kickButton.setVisibility(View.GONE);
+
 
     }
 

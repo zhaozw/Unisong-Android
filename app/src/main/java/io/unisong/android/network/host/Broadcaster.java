@@ -84,7 +84,7 @@ public class Broadcaster implements AudioObserver {
 
         try {
 
-            mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY + mTimeManager.getOffset());
+            mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY);
 
             mCurrentSong = song;
 

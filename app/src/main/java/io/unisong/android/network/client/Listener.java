@@ -105,10 +105,13 @@ public class Listener{
         //TODO : calculate the current frame to play?
         //mSongDecoder = new SongDecoder(channels);
 
-        mTimeManager.setSongStartTime(startTime);
-
+        mTimeManager.setSongStartTime(startTime - TimeManager.getInstance().getOffset());
 
         Song song = mSession.getSongQueue().getSong(songID);
+        if(!song.started())
+            song.start();
+
+        AudioStatePublisher.getInstance().play();
 
     }
 

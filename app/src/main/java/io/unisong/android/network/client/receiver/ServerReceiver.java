@@ -72,6 +72,7 @@ public class ServerReceiver implements Receiver{
     private boolean mFirstDataReceived = false;
     private long mFirstDataReceivedTime;
     private int mDataReceived = 0;
+    private int mCount = 0;
 
     /**
      * The listener for when we get data.
@@ -82,12 +83,14 @@ public class ServerReceiver implements Receiver{
         @Override
         public void call(Object... args) {
             mDataReceived++;
+            mCount ++;
             if(!mFirstDataReceived){
                 mFirstDataReceived = true;
                 mFirstDataReceivedTime = System.currentTimeMillis();
-            } else if(mDataReceived % 500 == 0 || (mDataReceived < 50 && mDataReceived % 5 == 0)){
+            } else if(mCount >= 100){
                 long timeSince = System.currentTimeMillis() - mFirstDataReceivedTime;
                 double avgTime = timeSince / mDataReceived;
+                mCount = 0;
 
                 Log.d(LOG_TAG, "Average time per frame: " + avgTime + "ms, at " + mDataReceived + " frames received.");
             }
@@ -104,6 +107,7 @@ public class ServerReceiver implements Receiver{
                 e.printStackTrace();
                 return;
             }
+
 
             mListener.addFrame(frame);
         }

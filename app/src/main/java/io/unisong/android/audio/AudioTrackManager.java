@@ -160,6 +160,7 @@ public class AudioTrackManager implements AudioObserver {
 
                 }
                 if (!isPlaying()) {
+                    Log.d(LOG_TAG , "We have stopped playing!");
                     return;
                 }
             }

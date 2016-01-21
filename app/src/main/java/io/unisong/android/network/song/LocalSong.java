@@ -139,10 +139,16 @@ public class LocalSong extends Song {
     }
 
     public boolean hasFrame(int ID){
+        if(mEncoder == null)
+            return false;
+
         return mEncoder.hasFrame(ID);
     }
 
     public boolean hasPCMFrame(int ID){
+        if(mDecoder == null)
+            return false;
+
         return mDecoder.hasFrame(ID);
     }
 

@@ -391,15 +391,23 @@ public class AACEncoder{
         mStop = true;
     }
 
+    private int mCount = 0;
     //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
     private void createFrame(byte[] data){
         AudioFrame frame = new AudioFrame(data, mCurrentOutputID , mSongID);
         mCurrentOutputID++;
 
+        if(mCount == 100){
+            mCount = 0;
+            Log.d(LOG_TAG , "Frame #" + mCurrentOutputID + " created");
+        }
+
         if(frame == null){
             Log.d(LOG_TAG , "AudioFrame is Null. It certainly should not be.");
         } else {
-            mOutputFrames.put(frame.getID(), frame);
+            synchronized (mOutputFrames) {
+                mOutputFrames.put(frame.getID(), frame);
+            }
         }
 
     }
@@ -456,6 +464,9 @@ public class AACEncoder{
 
         synchronized (mOutputFrames){
             AudioFrame frame = mOutputFrames.get(ID);
+
+            if(frame == null)
+                Log.d(LOG_TAG , "Frame is null! Error!");
 
             if(mRemoveFrames)
                 mOutputFrames.remove(ID);

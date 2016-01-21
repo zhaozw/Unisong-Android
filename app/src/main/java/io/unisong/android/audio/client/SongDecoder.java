@@ -319,13 +319,17 @@ public class SongDecoder implements Decoder {
         }
     }
 
+    private int mDebugCount = 0;
     private void createPCMFrame(byte[] data){
         long bitsProcessed = mSamples * 8000;
         long playTime = bitsProcessed  / CONSTANTS.PCM_BITRATE + mTimeAdjust;
 
 
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);
-        Log.d(LOG_TAG , "Frame #" + mCurrentID + " created.");
+        if(mDebugCount >= 100) {
+            Log.d(LOG_TAG, "Frame #" + mCurrentID + " created.");
+            mDebugCount = 0;
+        }
         mCurrentID++;
 
         mSamples += data.length;
