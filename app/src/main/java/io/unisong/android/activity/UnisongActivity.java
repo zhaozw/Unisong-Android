@@ -382,7 +382,6 @@ public class UnisongActivity extends AppCompatActivity {
 
             TextView username = (TextView) findViewById(R.id.current_user_username);
             username.setText("@" + user.getUsername());
-
         }
     }
 

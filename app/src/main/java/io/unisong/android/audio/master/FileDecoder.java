@@ -63,7 +63,7 @@ public class FileDecoder implements Decoder{
         mCurrentFrameID = 0;
         mSamples = 0l;
 
-        mFrameBufferSize  = 20;
+        mFrameBufferSize  = 50;
 
         //Create the file and start the Thread.
         mCurrentFile = new File(path);

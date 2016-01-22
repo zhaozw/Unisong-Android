@@ -115,7 +115,7 @@ public class AudioTrackManager implements AudioObserver {
         mRunCount = 0;
 
         //Wait until it's time, and then start the song
-        mTimeUntilSongStart = (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
+        mTimeUntilSongStart = mTimeManager.getSongStartTime() - System.currentTimeMillis();
         try {
             synchronized (this) {
                 this.wait(Math.abs(mTimeUntilSongStart));
@@ -123,6 +123,7 @@ public class AudioTrackManager implements AudioObserver {
         } catch (InterruptedException e){
             e.printStackTrace();
         }
+        int count = 0;
 
         mAudioTrack.play();
         Log.d(LOG_TAG , "Starting Write");
@@ -153,6 +154,7 @@ public class AudioTrackManager implements AudioObserver {
 
             while (!mSong.hasPCMFrame(mFrameToPlay)) {
                 try {
+//                    Log.d(LOG_TAG , "Waiting for frame #" + mFrameToPlay);
                     synchronized (this) {
                         this.wait(1);
                     }
@@ -167,7 +169,14 @@ public class AudioTrackManager implements AudioObserver {
 
             AudioFrame frame = mSong.getPCMFrame(mFrameToPlay);
 
-            synchronizePlayTime();
+            count++;
+            if(count >= 50){
+                count = 0;
+                long UTCplayTime = mTimeManager.getSongStartTime() + frame.getPlayTime();
+                Log.d(LOG_TAG , "Time difference : " + (System.currentTimeMillis() - UTCplayTime));
+                synchronizePlayTime(System.currentTimeMillis() - UTCplayTime);
+            }
+
 
             mLastFrameTime = frame.getPlayTime();
             mFrameToPlay++;
@@ -197,14 +206,14 @@ public class AudioTrackManager implements AudioObserver {
         mSong = song;
 
 
-        double millisTillSongStart =  (mTimeManager.getSongStartTime() - mTimeManager.getOffset()) - System.currentTimeMillis();
+        double millisTillSongStart =  mTimeManager.getSongStartTime() - System.currentTimeMillis();
         Log.d(LOG_TAG , "TimeStartTime : " + new Date(mTimeManager.getSongStartTime()).toString());
         Log.d(LOG_TAG , "Milliseconds until song start: " + millisTillSongStart + " and mTimeManager.getOffset() is :" + mTimeManager.getOffset());
         mHandler.post(mStartSong);
     }
 
     private void startPlaying() {
-        Log.d(LOG_TAG, "Write Started, difference is: " + ((mTimeManager.getSongStartTime() - mTimeManager.getOffset()) -System.currentTimeMillis()) + " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
+        Log.d(LOG_TAG, "Write Started, difference is: " + ((mTimeManager.getSongStartTime()) -System.currentTimeMillis()) + " mTimeManager.getOffset() is : " + mTimeManager.getOffset());
 
         // TODO : get info from song
         createAudioTrack(44100 , 2);
@@ -346,54 +355,41 @@ public class AudioTrackManager implements AudioObserver {
         return  mLastFrameTime;
     }
 
-    private void synchronizePlayTime(){
+    private void synchronizePlayTime(long difference){
+
         /*
             //TODO :take a look at this code and see if we can improve it to limit audio skips/the artifacts I hear sometimes
             // note : this was causing the artifacts, and it looks like they stay in sync pretty well. Revisit this if they at times get out of sync.
-            mRunCount++;
-            if (mRunCount > 10) {
-                mRunCount = 0;
-//                Log.d(LOG_TAG , "Checking Difference: " + difference);
-                if (difference <= -30) {
 
+        if (difference <= -30) {
+            synchronized (this) {
+                try {
+                    this.wait(Math.abs(difference));
+//                           Log.d(LOG_TAG , "Waiting " + difference + "ms");
+                } catch (InterruptedException e) {
+                }
+            }
+        } else {
+            int index = mFrameToPlay;
+            while (difference >= 30) {
+                index++;
+                // TODO : synchronize this?
+                AudioFrame nextFrame = mSong.getPCMFrame(index);
+
+                if (nextFrame != null) {
+                    difference = mTimeManager.getPCMDifference(nextFrame.getPlayTime());
+                } else {
                     synchronized (this) {
                         try {
-                            this.wait(Math.abs(difference));
-//                            Log.d(LOG_TAG , "Waiting " + difference + "ms");
+                            this.wait(4);
                         } catch (InterruptedException e) {
-
                         }
                     }
-                } else {
-                    int index = mFrameToPlay;
 
-                    while (difference >= 30) {
-                        index++;
-
-                        AudioFrame nextFrame = null;
-                        synchronized (mFrames) {
-                            nextFrame = mFrames.get(index);
-                            mFrames.remove(index);
-                        }
-
-                        if (nextFrame != null) {
-                            difference = mTimeManager.getPCMDifference(nextFrame.getPlayTime());
-                        } else {
-                            synchronized (this) {
-                                try {
-                                    this.wait(4);
-                                } catch (InterruptedException e) {
-
-                                }
-                            }
-
-                            if (!isPlaying()) return;
-
-                        }
-                    }
-//                    Log.d(LOG_TAG , "Skipped " + (index - mFrameToPlay) + " frames.");
-                    mFrameToPlay = index;
                 }
-            }*/
+            }
+//                   Log.d(LOG_TAG , "Skipped " + (index - mFrameToPlay) + " frames.");
+            mFrameToPlay = index;
+        }*/
     }
 }

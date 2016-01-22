@@ -321,8 +321,8 @@ public class SongDecoder implements Decoder {
 
     private int mDebugCount = 0;
     private void createPCMFrame(byte[] data){
-        long bitsProcessed = mSamples * 8000;
-        long playTime = bitsProcessed  / CONSTANTS.PCM_BITRATE + mTimeAdjust;
+        long bitsProcessed = mSamples * 8; // * 8000;
+        long playTime = (bitsProcessed * 1000)   / CONSTANTS.PCM_BITRATE + mTimeAdjust;
 
 
         AudioFrame frame = new AudioFrame(data, mCurrentID, playTime);

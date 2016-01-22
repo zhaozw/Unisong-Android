@@ -106,7 +106,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         JSONObject startSongJSON = new JSONObject();
 
         try {
-            startSongJSON.put("songStartTime", mTimeManager.getSongStartTime());
+            startSongJSON.put("songStartTime", mTimeManager.getSongStartTime() + mTimeManager.getOffset());
             startSongJSON.put("songID", song.getID());
             SongFormat format = song.getFormat();
 

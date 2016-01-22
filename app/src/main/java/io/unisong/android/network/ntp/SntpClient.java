@@ -13,6 +13,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -115,6 +116,10 @@ public class SntpClient
                 continue;
             }
 
+            if(total == 10){
+                calculateOffset();
+            }
+
             if(total % 50 == 0){
                 calculateOffset();
             }
@@ -127,22 +132,69 @@ public class SntpClient
     }
 
     private void calculateOffset(){
-        double offset = 0;
 
+        // TODO: figure out a way to create a method here?
+        // note : i think making a method here would be counterproductive
+        // because using reflection would take longer than it would save
         DescriptiveStatistics stats = new DescriptiveStatistics();
+        List<NtpEntry> entries = new ArrayList<>(mResults);
 
         for(int i = 0; i < mResults.size(); i++){
-            offset += mResults.get(i).getOffset();
             stats.addValue(mResults.get(i).getOffset());
         }
 
-        Log.d(LOG_TAG , "Mean is: " + stats.getMean());
+        Log.d(LOG_TAG , "Unfiltered, size is : " + mResults.size());
+        Log.d(LOG_TAG, "Mean is: " + stats.getMean());
         Log.d(LOG_TAG , "Standard Deviation is : " + stats.getStandardDeviation());
-        Log.d(LOG_TAG , "Median is : " + stats.getPercentile(50));
+        Log.d(LOG_TAG, "Median is : " + stats.getPercentile(50));
 
-        offset = stats.getPercentile(50);
 
-        mTimeOffset = offset;
+        // Inter-quartile range
+        double IQR = stats.getPercentile(75) - stats.getPercentile(25);
+        double lowerOutlierBound = stats.getPercentile(25) - IQR;
+        double higherOutlierBount = stats.getPercentile(75) - IQR;
+
+        for(int i = 0; i < entries.size(); i++){
+            // If we are an outlier, remove it
+            if(entries.get(i).getOffset() <= lowerOutlierBound ||
+                    entries.get(i).getOffset() <= higherOutlierBount ){
+                entries.remove(i);
+                i--;
+            }
+        }
+
+        stats = new DescriptiveStatistics();
+
+        for(int i = 0; i < entries.size(); i++){
+            stats.addValue(entries.get(i).getLatency());
+        }
+
+        // Inter-quartile range
+        IQR = stats.getPercentile(75) - stats.getPercentile(25);
+        lowerOutlierBound = stats.getPercentile(25) - IQR;
+        higherOutlierBount = stats.getPercentile(75) - IQR;
+
+        for(int i = 0; i < entries.size(); i++){
+            // If we are an outlier, remove it
+            if(entries.get(i).getLatency() <= lowerOutlierBound ||
+                    entries.get(i).getLatency() <= higherOutlierBount ){
+                entries.remove(i);
+                i--;
+            }
+        }
+
+        stats = new DescriptiveStatistics();
+        for(int i = 0; i < entries.size(); i++){
+            stats.addValue(entries.get(i).getOffset());
+        }
+
+        Log.d(LOG_TAG , "Filtering done, current size is: " + entries.size());
+        Log.d(LOG_TAG, "Mean is: " + stats.getMean());
+        Log.d(LOG_TAG , "Standard Deviation is : " + stats.getStandardDeviation());
+        Log.d(LOG_TAG, "Median is : " + stats.getPercentile(50));
+
+        mTimeOffset = stats.getPercentile(50);
+
     }
 
     public long getOffset(){

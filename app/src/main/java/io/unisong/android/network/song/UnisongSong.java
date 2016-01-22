@@ -75,7 +75,7 @@ public class UnisongSong extends Song {
     }
 
     @Override
-    public AudioFrame getPCMFrame(int ID) {
+    public synchronized AudioFrame getPCMFrame(int ID) {
         return mSongDecoder.getFrame(ID);
     }
 
