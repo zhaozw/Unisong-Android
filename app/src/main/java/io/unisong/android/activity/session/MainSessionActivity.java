@@ -3,7 +3,6 @@ package io.unisong.android.activity.session;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -27,20 +26,16 @@ import android.widget.Toast;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.R;
-import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.activity.session.invite.InviteMemberActivity;
 import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.user.CurrentUser;

@@ -4,10 +4,9 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
-import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 
@@ -114,19 +113,19 @@ public class AudioTrackManager implements AudioObserver {
         mThreadRunning = true;
         mRunCount = 0;
 
-        //Wait until it's time, and then start the song
-        mTimeUntilSongStart = mTimeManager.getSongStartTime() - System.currentTimeMillis();
-        try {
-            synchronized (this) {
-                this.wait(Math.abs(mTimeUntilSongStart));
+        int count = 0;
+
+        try{
+            synchronized (this){
+                this.wait((mTimeManager.getSongStartTime() - System.currentTimeMillis()));
             }
         } catch (InterruptedException e){
             e.printStackTrace();
         }
-        int count = 0;
+
 
         mAudioTrack.play();
-        Log.d(LOG_TAG , "Starting Write");
+        Log.d(LOG_TAG , "Starting Write, " + (mTimeManager.getSongStartTime() - System.currentTimeMillis()) + "ms until song start time.");
         while(isPlaying()) {
 
             if (mFrameToPlay == mLastFrameID) {

@@ -4,8 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Looper;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.facebook.FacebookSdk;
@@ -14,6 +12,7 @@ import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.ntp.SntpClient;
+import io.unisong.android.network.ntp.TimeManager;
 
 /**
  * Created by Ethan on 12/31/2015.

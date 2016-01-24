@@ -1,8 +1,6 @@
 package io.unisong.android.network.host.transmitter;
 
-import android.os.Handler;
 import android.util.Log;
-import android.widget.ProgressBar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,14 +8,13 @@ import org.json.JSONObject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.SocketIOClient;
-import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.song.SongFormat;
 
@@ -164,7 +161,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 try {
                     JSONObject object = new JSONObject();
                     object.put("resumeTime", mAudioStatePublisher.getResumeTime());
-                    object.put("songStartTime", TimeManager.getInstance().getSongStartTime() - TimeManager.getInstance().getOffset());
+                    object.put("songStartTime", TimeManager.getInstance().getSongStartTime() + TimeManager.getInstance().getOffset());
                     mClient.emit("resume", object);
                 } catch (JSONException e){
                     e.printStackTrace();

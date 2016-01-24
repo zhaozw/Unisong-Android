@@ -1,15 +1,13 @@
 package io.unisong.android.audio.client;
 
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.Decoder;
-import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.song.SongFormat;
 
 import java.io.IOException;

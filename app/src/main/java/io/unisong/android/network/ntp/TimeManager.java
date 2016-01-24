@@ -1,7 +1,8 @@
-package io.unisong.android.network;
+package io.unisong.android.network.ntp;
+
+import android.util.Log;
 
 import io.unisong.android.audio.AudioObserver;
-import io.unisong.android.network.ntp.SntpClient;
 
 /**
  * Created by Ethan on 5/8/2015.
@@ -23,6 +24,9 @@ public class TimeManager implements AudioObserver {
     // The time that the current song starts at, with the offset applied
     // To convert to this device's local time, subtract mSntpClient.getOffset().
     private long mSongStartTime;
+
+    // mSongStartTime configured with nanoTime();
+    private long mNanoSongStartTime;
 
     public TimeManager(SntpClient client){
         mSntpClient = client;

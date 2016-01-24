@@ -2,7 +2,7 @@ package io.unisong.android.network.packets.tcp;
 
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.TimeManager;
+import io.unisong.android.network.ntp.TimeManager;
 
 import java.io.IOException;
 import java.io.InputStream;
