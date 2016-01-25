@@ -42,7 +42,6 @@ public class UnisongSong extends Song {
         mFormat = inputFormat;
         mSessionID = sessionID;
         Log.d(LOG_TAG, mFormat.toString());
-        mSongDecoder = new SongDecoder(inputFormat);
     }
 
     public UnisongSong(JSONObject object) throws JSONException{
@@ -57,8 +56,6 @@ public class UnisongSong extends Song {
         mSongID = object.getInt("songID");
         mSessionID = object.getInt("sessionID");
 
-        if(mFormat != null)
-            mSongDecoder = new SongDecoder(getFormat());
     }
 
     public long getDuration(){
@@ -98,8 +95,9 @@ public class UnisongSong extends Song {
     @Override
     public void start() {
         if(!mStarted){
-        mSongDecoder.decode(0);
-        mStarted = true;
+            mSongDecoder = new SongDecoder(getFormat());
+            mSongDecoder.decode(0);
+            mStarted = true;
         }
     }
 

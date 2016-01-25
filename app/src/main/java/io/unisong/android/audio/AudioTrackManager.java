@@ -123,6 +123,10 @@ public class AudioTrackManager implements AudioObserver {
             e.printStackTrace();
         }
 
+        if(!mSong.started()){
+            Log.d(LOG_TAG , "Song has not been started! Starting now.");
+            mSong.start();
+        }
 
         mAudioTrack.play();
         Log.d(LOG_TAG , "Starting Write, " + (mTimeManager.getSongStartTime() - System.currentTimeMillis()) + "ms until song start time.");
@@ -172,7 +176,7 @@ public class AudioTrackManager implements AudioObserver {
             if(count >= 50){
                 count = 0;
                 long UTCplayTime = mTimeManager.getSongStartTime() + frame.getPlayTime();
-                Log.d(LOG_TAG , "Time difference : " + (System.currentTimeMillis() - UTCplayTime));
+                Log.d(LOG_TAG , "Time difference : " + (System.currentTimeMillis() - UTCplayTime) + " and playTime : " +  frame.getPlayTime());
                 synchronizePlayTime(System.currentTimeMillis() - UTCplayTime);
             }
 

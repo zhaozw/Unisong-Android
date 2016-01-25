@@ -22,10 +22,28 @@
         >
 
 
-        <SeekBar
-            android:layout_marginTop="-10.5dp"
+        <ImageView
+            android:layout_marginLeft="6dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginTop="18dp"
+            android:layout_width= "48dp"
+            android:layout_height="48dp"
             android:layout_alignParentTop="true"
-            android:padding="0dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/default_artwork"
+            android:id="@+id/playing_song_image"/>
+
+        <SeekBar
+            android:thumbOffset="0px"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:paddingTop="17dp"
+            android:paddingBottom="12dp"
+            android:layout_marginTop="-24dp"
+            android:layout_alignParentTop="true"
             android:id="@+id/current_song_progress_bar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
@@ -37,21 +55,10 @@
             android:progressDrawable="@drawable/greenprogress"
             android:enabled="false"/>
 
-        <ImageView
-            android:layout_marginTop="8dp"
-            android:layout_width= "60dp"
-            android:layout_height="60dp"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/default_artwork"
-            android:id="@+id/playing_song_image"/>
-
         <LinearLayout
             android:layout_alignParentTop="true"
             android:orientation="vertical"
-            android:layout_marginTop="13dp"
+            android:layout_marginTop="17dp"
             android:layout_marginLeft="72dp"
             android:layout_marginStart="72dp"
             android:layout_marginRight="72dp"
@@ -83,6 +90,7 @@
             android:id="@+id/play_pause_button"
             android:layout_width= "22dp"
             android:layout_height="22dp"
+            android:padding="18dp"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_marginTop="26dp"

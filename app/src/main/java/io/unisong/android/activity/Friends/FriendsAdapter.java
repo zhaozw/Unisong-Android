@@ -159,8 +159,9 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
                 // TODO : handle null exception with a runnable.
 
                 if(name != null) {
-                    Log.d(LOG_TAG , "Name is null! Loading TextView failed!");
                     name.setText(usersName);
+                } else {
+                    Log.d(LOG_TAG , "Name is null! Loading TextView failed!");
                 }
 
 

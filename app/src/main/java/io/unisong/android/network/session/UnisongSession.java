@@ -27,6 +27,7 @@ import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
+import io.unisong.android.network.host.transmitter.Transmitter;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.CurrentUser;
@@ -172,75 +173,100 @@ public class UnisongSession {
 
     private void parseJSONObject(JSONObject object) throws JSONException{
 
-        if(object.has("master")){
-            mMaster = object.getString("master");
-            User user = CurrentUser.getInstance();
-            // If the user is null, then let's just wait for it
-            // TODO : ensure that this doesn't break any vital components
-            while(user == null){
-                try{
-                    synchronized (this){
-                        this.wait(1);
+        try {
+            if (object.has("master")) {
+                mMaster = object.getString("master");
+                User user = CurrentUser.getInstance();
+                // If the user is null, then let's just wait for it
+                // TODO : ensure that this doesn't break any vital components
+
+                while (user == null) {
+                    try {
+                        synchronized (this) {
+                            this.wait(1);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                } catch (InterruptedException e){
-                    e.printStackTrace();
+                    user = CurrentUser.getInstance();
+                    // TODO : moderate this logging
+                    Log.d(LOG_TAG, "waiting for CurrentUser");
                 }
-                user = CurrentUser.getInstance();
-            }
-            if(user.getUUID().compareTo(UUID.fromString(mMaster)) == 0){
-                mIsMaster = true;
+                Log.d(LOG_TAG, "CurrentUser retrieved");
+                if (user.getUUID() == null)
+                    return;
 
-                // If we are the master and are getting updates, start u
-                if(Broadcaster.getInstance() == null) {
-                    Broadcaster broadcaster = new Broadcaster(this);
-                    broadcaster.addTransmitter(new ServerTransmitter());
-                }
+                if (user.getUUID().compareTo(UUID.fromString(mMaster)) == 0) {
+                    mIsMaster = true;
 
-            } else {
-                if(Listener.getInstance() == null){
-                    Listener listener = new Listener(this);
-                    listener.addReceiver(new ServerReceiver(listener));
-                }
-            }
-        }
+                    // If we are the master and are getting updates, start u
+                    if (Broadcaster.getInstance() == null) {
+                        Broadcaster broadcaster = new Broadcaster(this);
+                        broadcaster.addTransmitter(new ServerTransmitter());
+                    } else {
+                        Broadcaster broadcaster = Broadcaster.getInstance();
+                        List<Transmitter> transmitters = broadcaster.getTransmitters();
+                        boolean hasServer = false;
+                        for (Transmitter obj : transmitters) {
+                            hasServer = obj.getClass().equals(ServerTransmitter.class);
 
-        if(object.has("users")){
-            JSONArray array = object.getJSONArray("users");
+                            if (hasServer)
+                                break;
+                        }
 
-            mMembers.update(array);
-        }
+                        if (!hasServer)
+                            broadcaster.addTransmitter(new ServerTransmitter());
+                    }
 
-        if(object.has("songs") && object.has("queue")){
-            JSONArray songArray = object.getJSONArray("songs");
-            JSONArray queueArray = object.getJSONArray("queue");
-            mSongQueue.update(songArray, queueArray);
-
-        }
-
-        // TODO : ensure that this works in sync with Listener.
-        // TODO : figure out how to know when to update the Master's audiosessionstate, and when to
-        // update the server instead
-        if(object.has("sessionState") && !isMaster()){
-            mSessionState = object.getString("sessionState");
-            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
-
-            if(mSessionState.equals("idle")){
-                if(publisher.getState() != AudioStatePublisher.IDLE){
-                    publisher.update(AudioStatePublisher.IDLE);
-                }
-            } else if(mSessionState.equals("paused")){
-                if(publisher.getState() != AudioStatePublisher.PAUSED){
-                    publisher.update(AudioStatePublisher.PAUSED);
-                }
-            } else if(mSessionState.equals("playing")){
-                if(publisher.getState() != AudioStatePublisher.PLAYING){
-                    publisher.update(AudioStatePublisher.PLAYING);
+                } else {
+                    if (Listener.getInstance() == null) {
+                        Listener listener = new Listener(this);
+                        listener.addReceiver(new ServerReceiver(listener));
+                    }
                 }
             }
-        }
 
-        if(object.has("songID")){
-            mNewSongID = object.getInt("songID");
+            if (object.has("users")) {
+                JSONArray array = object.getJSONArray("users");
+                mMembers.update(array);
+            }
+
+            if (object.has("songs") && object.has("queue")) {
+                JSONArray songArray = object.getJSONArray("songs");
+                JSONArray queueArray = object.getJSONArray("queue");
+                mSongQueue.update(songArray, queueArray);
+            }
+
+            // TODO : ensure that this works in sync with Listener.
+            // TODO : figure out how to know when to update the Master's audiosessionstate, and when to
+            // update the server instead
+            if (object.has("sessionState") && !isMaster()) {
+                mSessionState = object.getString("sessionState");
+                AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+
+                if (mSessionState.equals("idle")) {
+                    if (publisher.getState() != AudioStatePublisher.IDLE) {
+                        publisher.update(AudioStatePublisher.IDLE);
+                    }
+                } else if (mSessionState.equals("paused")) {
+                    if (publisher.getState() != AudioStatePublisher.PAUSED) {
+                        publisher.update(AudioStatePublisher.PAUSED);
+                    }
+                } else if (mSessionState.equals("playing")) {
+                    if (publisher.getState() != AudioStatePublisher.PLAYING) {
+                        publisher.update(AudioStatePublisher.PLAYING);
+                    }
+                }
+            }
+
+            if (object.has("songID")) {
+                mNewSongID = object.getInt("songID");
+            }
+
+            Log.d(LOG_TAG, "Parsing complete");
+        } catch (Exception e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Unknown Exception in UnisongSession.parseJSON!");
         }
     }
 
@@ -257,7 +283,6 @@ public class UnisongSession {
         mSocketIOClient.on("user left" , mUserLeft);
         mSocketIOClient.on("end session" , mEndSession);
         Log.d(LOG_TAG, "Configured Socket.IO");
-
     }
 
     public int incrementNewSongID(){

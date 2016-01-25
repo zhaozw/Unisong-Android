@@ -1,5 +1,7 @@
 package io.unisong.android.audio;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -127,6 +129,7 @@ public class AudioStatePublisher {
      * The Seek method. It updates the seek time and then executes an update()
      */
     public void seek(long time){
+        // TODO : if we are playing, pause then resume
         mSeekTime = time;
         mResumeTime = time;
         update(AudioStatePublisher.SEEK);
@@ -141,6 +144,7 @@ public class AudioStatePublisher {
     }
 
     public void pause(){
+        Log.d(LOG_TAG, "Pausing");
         update(AudioStatePublisher.PAUSED);
     }
 

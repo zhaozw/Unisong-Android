@@ -349,7 +349,7 @@ public class SongDecoder implements Decoder {
     private void waitForFrame(int size){
         //TODO: Rewrite this to feed blank AAC frames instead of creating an empty PCM one
         while(!mInputFrames.containsKey(mCurrentFrame)){
-            Log.d(LOG_TAG , "Current frame # is :" + mCurrentFrame + " and input frames size is : " + mInputFrames.size());
+//            Log.d(LOG_TAG , "Current frame # is :" + mCurrentFrame + " and input frames size is : " + mInputFrames.size());
 //                if(mStartFrame != 0)    Log.d(LOG_TAG , "Frame #" + mCurrentFrame + " not found.");
             if(mStop){
                 break;

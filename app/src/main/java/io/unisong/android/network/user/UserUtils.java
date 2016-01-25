@@ -20,14 +20,18 @@ public class UserUtils {
     }
 
     public static User getUser(UUID uuid){
-        for(User user : sUsers){
-            if(user.getUUID() != null && user.getUUID().equals(uuid)){
-                return user;
+        synchronized (sUsers) {
+            for (User user : sUsers) {
+                if (user.getUUID() != null && user.getUUID().equals(uuid)) {
+                    return user;
+                }
             }
         }
 
         User user = new User(uuid);
-        sUsers.add(user);
+        synchronized (sUsers) {
+            sUsers.add(user);
+        }
 
         return user;
     }

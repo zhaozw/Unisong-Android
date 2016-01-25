@@ -112,6 +112,7 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
+            Log.d(LOG_TAG , "Pause received from server.");
             mListener.pause();
         }
     };

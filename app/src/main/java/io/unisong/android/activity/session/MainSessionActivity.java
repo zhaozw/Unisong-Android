@@ -119,6 +119,8 @@ public class MainSessionActivity extends AppCompatActivity {
         mFooterSongArtist = (TextView) mFooter.findViewById(R.id.playing_song_artist);
         mFooterSongName = (TextView) mFooter.findViewById(R.id.playing_song_name);
         mFooterSeekBar = (SeekBar) mFooter.findViewById(R.id.current_song_progress_bar);
+        if(mSession != null && mSession.isMaster())
+            mFooterSeekBar.setOnSeekBarChangeListener(mOnSeekChangeListener);
         mFooterSongImage = (ImageView) mFooter.findViewById(R.id.playing_song_image);
 
         // TODO : call a method on this activity when current song changes
@@ -204,7 +206,7 @@ public class MainSessionActivity extends AppCompatActivity {
             AudioStatePublisher publisher = AudioStatePublisher.getInstance();
             // set the progress
             int progress = mFooterSeekBar.getProgress();
-            long duration = mCurrentSong.getDuration();
+            long duration = mCurrentSong.getDuration() / 1000;
             int newProgress = progress;
             long timePlayed = -1;
 
@@ -214,14 +216,23 @@ public class MainSessionActivity extends AppCompatActivity {
                 timePlayed = publisher.getResumeTime();
             }
 
+//            Log.d(LOG_TAG , "Duration : " + duration);
+//            Log.d(LOG_TAG , "timePlayed: " + timePlayed);
+
             if(timePlayed != -1) {
-                newProgress = (int) ((duration / (double) timePlayed) * 100);
+                double percentage = (double) timePlayed /  (double)duration ;
+//                Log.d(LOG_TAG , "Percentage : " + percentage);
+                newProgress = (int) (percentage * 100);
             } else {
                 newProgress = 100;
             }
 
-//            if(progress != newProgress)
-//                mFooterSeekBar.setProgress(newProgress);
+//            Log.d(LOG_TAG , "progress : " + progress + " newProgress: " + newProgress);
+            if(progress != newProgress && newProgress >= 0) {
+                mFooterSeekBar.setProgress(newProgress);
+            } else if(newProgress < 0 && progress != 0){
+                mFooterSeekBar.setProgress(0);
+            }
 
         } catch (NullPointerException e){
             e.printStackTrace();
@@ -236,6 +247,31 @@ public class MainSessionActivity extends AppCompatActivity {
 
     }
 
+    private SeekBar.OnSeekBarChangeListener mOnSeekChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if(fromUser)
+                Log.d(LOG_TAG , "New Progress: " + progress);
+//            if(progress)
+//            seekBar.setProgress(progress);
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+            if(mCurrentSong == null || publisher.getState() == AudioStatePublisher.IDLE)
+                return;
+
+            long seekTime = (long)((mCurrentSong.getDuration() / 1000) * (seekBar.getProgress() / 100.0));
+            Log.d(LOG_TAG , "Progress is : " + mFooterSeekBar.getProgress() + " and we are seeking to : " + seekTime);
+            publisher.seek(seekTime);
+        }
+    };
     /**
      * Detects whether a current song is selected
      * @return - true if a song is selected, false if not

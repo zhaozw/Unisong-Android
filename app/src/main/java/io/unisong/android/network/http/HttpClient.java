@@ -114,7 +114,7 @@ public class HttpClient {
                 if(response.code() == 200) {
                     Log.d(LOG_TAG, "Login Success");
                     PrefUtils.saveToPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
-                    CurrentUser user = new CurrentUser(mContext , "unisong");
+                    CurrentUser user = new CurrentUser(mContext , new User(username, password));
                     mIsLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Login Failure");
@@ -227,7 +227,7 @@ public class HttpClient {
 
         for(HttpCookie cookie : cookies){
             if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
-                Log.d(LOG_TAG , "Cookie found, we are logged in.");
+                Log.d(LOG_TAG , "Cookie found, we are logged in , account type is : " + accountType);
                 mIsLoggedIn = true;
                 mLoginDone = true;
 

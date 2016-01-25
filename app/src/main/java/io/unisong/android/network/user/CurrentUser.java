@@ -61,11 +61,15 @@ public class CurrentUser {
         sContext = context;
 
         if(accountType.equals("facebook")){
+            Log.d(LOG_TAG , "Creating Facebook user through saved access token.");
            // If it's a facebook account load the access token.
             sCurrentUser = new User(AccessToken.getCurrentAccessToken());
         } else {
+            Log.d(LOG_TAG , "Creating Unisong user through saved username and pass.");
             sCurrentUser = new User(username, password);
         }
+
+        Log.d(LOG_TAG , "Current User : " + sCurrentUser.toString());
 
         if(sCurrentUser == null)
             Log.d(LOG_TAG , "Current user is null!");

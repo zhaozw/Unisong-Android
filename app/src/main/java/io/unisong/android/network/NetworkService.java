@@ -13,6 +13,8 @@ import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.ntp.SntpClient;
 import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.ntp.UtpClient;
+import io.unisong.android.network.ntp.UtpServer;
 
 /**
  * Created by Ethan on 12/31/2015.
@@ -30,6 +32,9 @@ public class NetworkService extends Service {
     private DiscoveryHandler mDiscoveryHandler;
     private HttpClient mClient;
     private SocketIOClient mSocketIO;
+
+//    private UtpServer mUtpServer = new UtpServer();
+//    private UtpClient mUtpClient = new UtpClient();
 
     private TimeManager mTimeManager;
 

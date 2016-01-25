@@ -70,6 +70,7 @@ public class SocketIOClient {
         // TODO : see if there's a better place to put this
         mSocket.on("invite user", mInviteListener);
         mSocket.on("join session result" , mJoinResultListener);
+        mSocket.on("authentication result" , mAuthenticationResult);
 
     }
 
@@ -82,12 +83,8 @@ public class SocketIOClient {
     }
 
     public void joinSession(int sessionID){
-        Object[] args = new Object[2];
-
-        args[0] = CurrentUser.getInstance().getUUID().toString();
-        args[1] = sessionID;
-
-        mSocket.emit("join session", args);
+        if(mSocket.connected())
+            mSocket.emit("join session", sessionID);
     }
 
     private Runnable mLoginRunnable = () -> login();
@@ -142,10 +139,6 @@ public class SocketIOClient {
 
                     UnisongSession currentSession = UnisongSession.getCurrentSession();
 
-                    if (currentSession != null) {
-                        joinSession(currentSession.getSessionID());
-                        currentSession.getUpdate();
-                    }
 
                 }
             }, 250);
@@ -207,11 +200,13 @@ public class SocketIOClient {
     };
 
     public void emit(String eventName, Object data){
-        mSocket.emit(eventName , data);
+        if(mSocket.connected())
+            mSocket.emit(eventName , data);
     }
 
     public void emit(String eventName, Object[] args){
-        mSocket.emit(eventName, args);
+        if(mSocket.connected())
+            mSocket.emit(eventName, args);
     }
 
     private Thread getConnectionThread(){
@@ -249,4 +244,29 @@ public class SocketIOClient {
     public void registerInviteHandler(UnisongActivity.IncomingHandler handler){
         mInviteHandler = handler;
     }
+
+    private Emitter.Listener mAuthenticationResult = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            int code = -1;
+            try{
+                code = (Integer) args[0];
+            } catch (ClassCastException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "ClassCastException thrown in Authentication Result!");
+                return;
+            }
+
+            if (code == 200) {
+                UnisongSession currentSession = UnisongSession.getCurrentSession();
+
+                if (currentSession != null) {
+                    joinSession(currentSession.getSessionID());
+                    currentSession.getUpdate();
+                }
+            }else if(code == 401){
+                Log.d(LOG_TAG , "Authentication failed!");
+            }
+        }
+    };
 }

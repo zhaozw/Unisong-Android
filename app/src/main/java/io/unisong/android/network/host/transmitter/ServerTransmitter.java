@@ -37,6 +37,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     public ServerTransmitter(){
         mTimeManager = TimeManager.getInstance();
         mAudioStatePublisher = AudioStatePublisher.getInstance();
+        mAudioStatePublisher.attach(this);
         mClient = SocketIOClient.getInstance();
         mWorker = Executors.newSingleThreadScheduledExecutor();
     }
@@ -155,7 +156,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     public void update(int state) {
         switch (state){
             case AudioStatePublisher.PAUSED:
-                mClient.emit("pause", null);
+                mClient.emit("pause", "pause");
                 break;
             case AudioStatePublisher.RESUME:
                 try {
@@ -171,7 +172,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 mClient.emit("seek" , mAudioStatePublisher.getSeekTime());
                 break;
             case AudioStatePublisher.PLAYING:
-                mClient.emit("playing" , null);
+                mClient.emit("playing" , "playing");
                 break;
             case AudioStatePublisher.END_SONG:
                 mClient.emit("end song" , mAudioStatePublisher.getSongToEnd());

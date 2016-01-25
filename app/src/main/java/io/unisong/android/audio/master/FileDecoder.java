@@ -257,7 +257,6 @@ public class FileDecoder implements Decoder{
         }
 
 
-        mRunning = false;
         Log.d(LOG_TAG, "stopping...");
 
         long finishTime = System.currentTimeMillis();
@@ -274,7 +273,12 @@ public class FileDecoder implements Decoder{
             this.startDecode(mPlayTime);
         }
 
-        releaseCodec();
+        try {
+            releaseCodec();
+        } catch (IllegalStateException e){
+            e.printStackTrace();
+        }
+        mRunning = false;
     }
 
     public void waitForFrameUse(){

@@ -11,14 +11,13 @@ import java.net.InetAddress;
 /**
  * Created by Ethan on 2/10/2015.
  */
-public class NtpServer {
+public class UtpServer {
 
-    private final int NTP_PORT = 46232;
+    public static final int UTP_PORT = 46232;
 
-    private static final String LOG_TAG = "NtpServer";
+    private static final String LOG_TAG = UtpServer.class.getSimpleName();
 
-    private static final int NTP_PACKET_MAX_SIZE = 256;
-    private static Thread mNtpListener;
+    private static Thread mUtpListener;
 
     //boolean
     private static boolean mListening = false;
@@ -26,15 +25,15 @@ public class NtpServer {
     //The socket for listening for NTP packets
     private static DatagramSocket mSocket;
 
-    public NtpServer(){
+    public UtpServer(){
         mListening = true;
         try {
             mSocket = new DatagramSocket(46232);
         } catch (IOException e){
             e.printStackTrace();
         }
-        mNtpListener = startNtpListener();
-        mNtpListener.start();
+        mUtpListener = startNtpListener();
+        mUtpListener.start();
     }
 
 
@@ -51,40 +50,39 @@ public class NtpServer {
 
     //Listens for NTP packets
     private void listenForNtpPackets(){
-        byte[] data = new byte[NTP_PACKET_MAX_SIZE];
+        byte[] data = new byte[UtpMessage.UTP_PACKET_SIZE];
         DatagramPacket packet = new DatagramPacket(data , data.length);
 
         try {
             mSocket.receive(packet);
-            handleNtpPacket(packet);
+            handleUtpPacket(packet);
         } catch(IOException e){
             e.printStackTrace();
         }
     }
 
     //Handles an incoming NTP packet
-    private void handleNtpPacket(DatagramPacket packet){
+    private void handleUtpPacket(DatagramPacket packet){
 
-        Log.d(LOG_TAG, "NTP packet received!");
         InetAddress address = packet.getAddress();
-        byte[] buf = new NtpMessage().toByteArray();
-        DatagramPacket responsePacket =
-                new DatagramPacket(buf, buf.length, address,  46233);
 
-        // Set the transmit timestamp *just* before sending the packet
-        // ToDo: Does this actually improve performance or not?
-        NtpMessage.encodeTimestamp(packet.getData(), 40,
-                (System.currentTimeMillis() / 1000.0) + 2208988800.0);
+        byte[] data = packet.getData();
+        UtpMessage message = new UtpMessage(data);
+
+
+        message.setT2(System.currentTimeMillis());
+
+        data = packet.getData();
+        DatagramPacket responsePacket = new DatagramPacket(data ,0, data.length,address, UTP_PORT + 1);
 
         try {
             mSocket.send(responsePacket);
-            Log.d(LOG_TAG , "NTP Response sent");
         } catch(IOException e){
             e.printStackTrace();
         }
     }
 
-    public void stopNtpServer(){
+    public void stopUtpServer(){
         mListening = false;
         mSocket.close();
     }

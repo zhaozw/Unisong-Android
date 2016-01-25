@@ -57,6 +57,7 @@ public class Listener{
 
         mSession = session;
         mTimeManager = TimeManager.getInstance();
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
 
         Log.d(LOG_TAG, "Audio Listener Started");
 
@@ -106,10 +107,17 @@ public class Listener{
         mTimeManager.setSongStartTime(startTime - TimeManager.getInstance().getOffset());
 
         Song song = mSession.getSongQueue().getSong(songID);
-        if(!song.started())
-            song.start();
+        if(song == null){
+            Log.d(LOG_TAG , "We do not have the song! Update the session!");
+            mSession.getUpdate();
+        } else {
+            if (!song.started()) {
+                Log.d(LOG_TAG , "Starting song");
+                song.start();
+            }
 
-        AudioStatePublisher.getInstance().play();
+            AudioStatePublisher.getInstance().play();
+        }
 
     }
 
