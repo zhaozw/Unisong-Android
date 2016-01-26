@@ -14,6 +14,9 @@ import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
 
 /**
+ * This class is essentially a wrapper for a List<User> that contains the local copy
+ * of a session's members. This class will notify a SessionMembersAdapter of any changes to the
+ * data model, thereby keeping the UI in sync
  * Created by ezturner on 1/15/2016.
  */
 public class SessionMembers {
@@ -83,6 +86,11 @@ public class SessionMembers {
         mHandler = handler;
     }
 
+    /**
+     * Notifies the SessionMembersAdapter that we are adding a member
+     * @param position
+     * @param user
+     */
     private void sendAdd(int position, User user){
         if(mHandler == null)
             return;
@@ -96,6 +104,10 @@ public class SessionMembers {
         mHandler.sendMessage(message);
     }
 
+    /**
+     * Notifies the SessionMembersAdapter that we are removing a member
+     * @param position
+     */
     private void sendRemove(int position){
         if(mHandler == null)
             return;
@@ -106,5 +118,15 @@ public class SessionMembers {
         message.arg1 = position;
 
         mHandler.sendMessage(message);
+    }
+
+
+    /**
+     * Returns true if the given user is in the local session members list
+     * @param user - the user to be checked
+     * @return
+     */
+    public boolean contains(User user){
+        return mMembers.contains(user);
     }
 }

@@ -36,7 +36,6 @@ public class AudioStatePublisher {
     public static final int RESUME = 4;
     public static final int END_SONG = 5;
 
-
     private Broadcaster mBroadcaster;
     private boolean mSocketIOConfigured;
     //The time that we are seeking to

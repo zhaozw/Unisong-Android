@@ -1,8 +1,10 @@
 package io.unisong.android.activity.session;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -23,10 +25,16 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -39,12 +47,17 @@ import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.network.user.User;
+import io.unisong.android.network.user.UserUtils;
 
 /**
  * The main activity for an UnisongSession. Has the fragments for SessionMembers and
  * Created by Ethan on 9/26/2015.
  */
 public class MainSessionActivity extends AppCompatActivity {
+
+    // The message code for when we have been kicked out of a session
+    public static final int KICKED = 23929;
 
     private static final String LOG_TAG = MainSessionActivity.class.getSimpleName();
     public final static String POSITION = "position";
@@ -56,7 +69,7 @@ public class MainSessionActivity extends AppCompatActivity {
     private Toolbar mToolbar;
     private ViewPager mPager;
     private SlidingTabLayout mTabs;
-    private Handler mHandler;
+    private SessionMessageHandler mHandler;
 
     private Button mPlayPauseButton;
     private IconicFontDrawable mPlayDrawable;
@@ -107,7 +120,8 @@ public class MainSessionActivity extends AppCompatActivity {
 
         mSession = UnisongSession.getCurrentSession();
 
-        mHandler = new Handler();
+        mHandler = new SessionMessageHandler(this);
+        mSession.setSessionActivityHandler(mHandler);
 
         // Close the footer
         mFooterOpen = false;
@@ -268,8 +282,9 @@ public class MainSessionActivity extends AppCompatActivity {
                 return;
 
             long seekTime = (long)((mCurrentSong.getDuration() / 1000) * (seekBar.getProgress() / 100.0));
-            Log.d(LOG_TAG , "Progress is : " + mFooterSeekBar.getProgress() + " and we are seeking to : " + seekTime);
-            publisher.seek(seekTime);
+            Log.d(LOG_TAG, "Progress is : " + mFooterSeekBar.getProgress() + " and we are seeking to : " + seekTime);
+            if(mSession.isMaster())
+                publisher.seek(seekTime);
         }
     };
     /**
@@ -371,6 +386,112 @@ public class MainSessionActivity extends AppCompatActivity {
             publisher.play();
         }
 
+    }
+
+    public void kickUser(View view){
+
+        try{
+            UUID uuid = (UUID) view.getTag();
+
+            confirmKick(uuid);
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "NullPointerException in kickUser!");
+        } catch (ClassCastException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Tag casting failed in kickUser");
+        }
+    }
+
+    /**
+     * Launches a MaterialDialog confirming that a user should be kicked
+     * @param uuid
+     */
+    private void confirmKick(UUID uuid){
+        try {
+            String kickMessage = getResources().getString(R.string.kick_message);
+
+            User user = UserUtils.getUser(uuid);
+
+            kickMessage = kickMessage.replace("USER_NAME" , user.getName());
+            new MaterialDialog.Builder(this)
+                    .content(kickMessage)
+                    .positiveText(R.string.kick)
+                    .negativeText(R.string.cancel)
+                    .theme(Theme.LIGHT)
+                    .callback(new MaterialDialog.ButtonCallback() {
+                        @Override
+                        public void onPositive(MaterialDialog dialog) {
+                            UnisongSession session = UnisongSession.getCurrentSession();
+
+                            if(session != null && session.isMaster()){
+                                session.kick(user);
+                            }
+                        }
+                    })
+                    .show();
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "User retrieval failed!");
+        } catch (Resources.NotFoundException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "kickMessage not found!");
+        }
+    }
+
+    private void kicked(){
+        try {
+            String kickedMessage = getResources().getString(R.string.kicked_message);
+            new MaterialDialog.Builder(this)
+                    .content(kickedMessage)
+                    .positiveText(R.string.sorry)
+                    .theme(Theme.LIGHT)
+                    .callback(new MaterialDialog.ButtonCallback() {
+                        @Override
+                        public void onPositive(MaterialDialog dialog) {
+                            onBackPressed();
+                        }
+
+                        @Override
+                        public void onNegative(MaterialDialog dialog){
+                            onBackPressed();
+                        }
+                    })
+            .show();
+        } catch (Resources.NotFoundException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "kicked_message not found! Please rename something if you change it.");
+        }
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        mSession.setSessionActivityHandler(null);
+    }
+
+    public static class SessionMessageHandler extends Handler{
+
+        private MainSessionActivity mActivity;
+        public SessionMessageHandler(MainSessionActivity activity){
+            super();
+            mActivity = activity;
+        }
+
+
+        @Override
+        public void handleMessage(Message message) {
+
+            switch (message.what){
+                case KICKED:
+                    mActivity.runOnUiThread(() ->{
+                        mActivity.kicked();
+                    });
+
+                    break;
+
+            }
+        }
     }
 
 }

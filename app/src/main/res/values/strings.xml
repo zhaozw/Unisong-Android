@@ -73,4 +73,8 @@
         <item>gmd-power-settings-new</item>
     </string-array>
 
+    <string name="kick_message">Would you like to kick USER_NAME?</string>
+    <string name="kick">Kick</string>
+    <string name="kicked_message">You have been kicked out of the session</string>
+    <string name="sorry">Sorry</string>
 </resources>

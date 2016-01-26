@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.UUID;
 
+import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.session.SessionUtils;
@@ -59,7 +60,6 @@ public class User implements Serializable {
         mClient = HttpClient.getInstance();
         mHasProfilePicture = false;
         mRetrieveProfilePictureFailed = false;
-        getUserInfoThread().start();
     }
 
 
@@ -67,6 +67,7 @@ public class User implements Serializable {
         this();
         mUsername = username;
         mPassword = password;
+        getUserInfoThread().start();
 
         // TODO : load rest of info from server and save.
     }
@@ -74,6 +75,7 @@ public class User implements Serializable {
     public User(UUID uuid){
         this();
         mUUID = uuid;
+        getUserInfoThread().start();
     }
 
 
@@ -88,6 +90,7 @@ public class User implements Serializable {
         mFacebookID = accessToken.getUserId();
         mIsFacebookUser = true;
         Log.d(LOG_TAG, "Initializing facebook user.");
+        getUserInfoThread().start();
     }
 
     private Thread getUserInfoThread(){

@@ -1,6 +1,7 @@
 package io.unisong.android.network.session;
 
 import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 import com.squareup.okhttp.Response;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.activity.UnisongActivity;
+import io.unisong.android.activity.session.MainSessionActivity;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
@@ -69,11 +71,12 @@ public class UnisongSession {
     private int mNewSongID, mSessionID;
     private Song mCurrentSong;
 
-    private boolean mIsMaster;
+    private boolean mIsMaster, mSocketIOConfigured;
 
     private SongQueue mSongQueue;
     private String mMaster , mSessionState;
 
+    private MainSessionActivity.SessionMessageHandler mSessionHandler;
     private SocketIOClient mSocketIOClient;
     private SessionMembers mMembers;
     private List<Client> mClients;
@@ -98,6 +101,7 @@ public class UnisongSession {
         create();
         mNewSongID = 0;
 
+        mSocketIOConfigured = false;
         Broadcaster broadcaster = new Broadcaster(this);
     }
 
@@ -121,6 +125,7 @@ public class UnisongSession {
         mSongQueue = new SongQueue(this);
         mMembers = new SessionMembers();
 
+        mSocketIOConfigured = false;
         getInfoFromServer();
 
     }
@@ -276,10 +281,16 @@ public class UnisongSession {
     }
 
     public void configureSocketIO(){
+        if(mSocketIOConfigured)
+            return;
+
+        mSocketIOConfigured = true;
         mSocketIOClient.on("user joined" , mUserJoined);
         mSocketIOClient.on("update session", mUpdateSessionListener);
         mSocketIOClient.on("user left" , mUserLeft);
         mSocketIOClient.on("end session" , mEndSession);
+        mSocketIOClient.on("kick" , mKickListener);
+        mSocketIOClient.on("kick result" , mKickResultListener);
         Log.d(LOG_TAG, "Configured Socket.IO");
     }
 
@@ -467,6 +478,7 @@ public class UnisongSession {
             if(broadcaster != null){
                 broadcaster.destroy();
             }
+            destroy();
 
         } else {
             Listener listener = Listener.getInstance();
@@ -475,9 +487,99 @@ public class UnisongSession {
 
         }
 
-        destroy();
         setCurrentSession(null);
     }
+
+    /**
+     * Broadcasts a 'kick' event to the Socket.IO server to kick the
+     * selected user. Will only work if the current user is the session master
+     * and authenticated
+     * @param user
+     */
+    public void kick(User user){
+        mSocketIOClient.emit("kick", user.getUUID().toString());
+    }
+
+    /**
+     * Listens for the result of attempting to kick a user
+     * args ->
+     * args[0] - JSONObject:
+     * {
+     *     code : HTTP status code,
+     *     response : descriptive but probably unhelpful string
+     * }
+     */
+    private Emitter.Listener mKickResultListener = (Object[] args) -> {
+        try{
+            JSONObject response = (JSONObject) args[0];
+
+            if(response.getInt("code") == 200){
+                Log.d(LOG_TAG, "Kick successful! Response received");
+
+                String uuid = response.getString("response");
+
+                User user = UserUtils.getUser(uuid);
+
+                Log.d(LOG_TAG , user.toString() + " to be kicked");
+                mMembers.remove(user);
+
+            } else if(response.getInt("code") == 400){
+                Log.d(LOG_TAG , "Bad request on kick! Response : " + response.getString("response"));
+            } else if(response.getInt("code") == 403) {
+                Log.d(LOG_TAG , "Unauthorized! Are we not the session master?");
+            }
+
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "NullPointerException in KickResultListener! Bad Parameters?");
+        } catch (ClassCastException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "ClassCastException in KickResultListener! Bad documentation or server bug?");
+        } catch (JSONException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "JSON parsing failed in KickResultListener!");
+        }
+    };
+
+    /**
+     * Listens for a user being kicked. If that user happens to be the current one, then remove
+     * us from the session.
+     *
+     * args ->
+     * args[0] - String uuid - the UUID of the user to be kicked
+     */
+    private Emitter.Listener mKickListener = (Object[] args) -> {
+        try{
+            String uuid = (String) args[0];
+
+            User user = UserUtils.getUser(uuid);
+
+            Log.d(LOG_TAG , "Kick received for user : " + user);
+
+            if(mMembers.contains(user)){
+                mMembers.remove(user);
+            }
+
+            if(user.equals(CurrentUser.getInstance())){
+                leave();
+                // TODO : remove us from the session and move us back to the main screen
+                // to do this we'll need a broadcast receiver in the invite friends activity and MainSessionActivty
+                if(mSessionHandler != null) {
+                    Message message = new Message();
+                    message.what = MainSessionActivity.KICKED;
+                    mSessionHandler.sendMessage(message);
+                }
+                Log.d(LOG_TAG, "We are being kicked!");
+            }
+
+        } catch (ClassCastException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Casting failed in KickListener!");
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "NullPointerException in KickListener! Is CurrentUser.sInstance null?");
+        }
+    };
 
     public JSONObject toJSON(){
         JSONObject object = new JSONObject();
@@ -583,4 +685,9 @@ public class UnisongSession {
     public void updateSong(JSONObject object){
         mSongQueue.updateSong(object);
     }
+
+    public void setSessionActivityHandler(MainSessionActivity.SessionMessageHandler handler){
+        mSessionHandler = handler;
+    }
+
 }
