@@ -1,12 +1,12 @@
 package io.unisong.android.network.packets;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.NetworkUtilities;
-
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
 
 /**
  * Created by Ethan on 5/15/2015.

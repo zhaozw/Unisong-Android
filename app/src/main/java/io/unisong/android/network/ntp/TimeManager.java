@@ -1,7 +1,5 @@
 package io.unisong.android.network.ntp;
 
-import android.util.Log;
-
 import io.unisong.android.audio.AudioObserver;
 
 /**
@@ -28,8 +26,9 @@ public class TimeManager implements AudioObserver {
     // mSongStartTime configured with nanoTime();
     private long mNanoSongStartTime;
 
-    public TimeManager(SntpClient client){
-        mSntpClient = client;
+    public TimeManager(){
+        mSntpClient = new SntpClient();
+        // TODO : listen for clock change events
         mSeekTime = 0;
         sIntance = this;
     }

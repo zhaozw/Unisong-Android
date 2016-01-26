@@ -12,10 +12,10 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import io.unisong.android.R;
-
 import java.io.File;
 import java.util.List;
+
+import io.unisong.android.R;
 
 /**
  * Created by Ethan on 2/26/2015.

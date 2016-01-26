@@ -1,14 +1,14 @@
 package io.unisong.android.network.packets.tcp;
 
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.song.Song;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.OutputStream;
+
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.song.Song;
 
 /**
  * A class for sending all of the relevant information on a UISong,

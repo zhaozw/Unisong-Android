@@ -5,14 +5,14 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.network.song.LocalSong;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.network.song.LocalSong;
 
 /**
  * Takes in PCM data and encodes to AAC

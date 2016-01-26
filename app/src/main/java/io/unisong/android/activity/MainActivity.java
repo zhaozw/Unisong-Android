@@ -1,10 +1,8 @@
 package io.unisong.android.activity;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,28 +10,18 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 
 import com.facebook.AccessToken;
-import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
 
 import io.unisong.android.MediaService;
 import io.unisong.android.MyApplication;
 import io.unisong.android.PrefUtils;
-import io.unisong.android.R;
-import io.unisong.android.network.Host;
-import io.unisong.android.MediaService.MediaServiceBinder;
 import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.user.FriendsList;
-
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 

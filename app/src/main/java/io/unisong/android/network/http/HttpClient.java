@@ -23,10 +23,10 @@ import java.net.CookiePolicy;
 import java.net.HttpCookie;
 import java.util.List;
 
-import io.unisong.android.network.user.FacebookAccessToken;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.network.user.FacebookAccessToken;
 import io.unisong.android.network.user.User;
 
 /**

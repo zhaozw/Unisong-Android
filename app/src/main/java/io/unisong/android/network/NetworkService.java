@@ -11,10 +11,7 @@ import com.facebook.FacebookSdk;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.ntp.SntpClient;
 import io.unisong.android.network.ntp.TimeManager;
-import io.unisong.android.network.ntp.UtpClient;
-import io.unisong.android.network.ntp.UtpServer;
 
 /**
  * Created by Ethan on 12/31/2015.
@@ -28,7 +25,6 @@ public class NetworkService extends Service {
 
     private Listener mListener;
     private Broadcaster mBroadcaster;
-    private SntpClient mSntpClient;
     private DiscoveryHandler mDiscoveryHandler;
     private HttpClient mClient;
     private SocketIOClient mSocketIO;
@@ -55,9 +51,7 @@ public class NetworkService extends Service {
         // TODO : and B: a user is logged in
         mSocketIO = new SocketIOClient(getApplicationContext());
 
-
-        mSntpClient = new SntpClient();
-        mTimeManager = new TimeManager(mSntpClient);
+        mTimeManager = new TimeManager();
 
         ConnectionUtils utils = new ConnectionUtils();
         ConnectionUtils.setInstance(utils);
@@ -96,11 +90,10 @@ public class NetworkService extends Service {
             mListener = null;
         }
 
-        if(mSntpClient != null){
-            mSntpClient.destroy();
-            mSntpClient = null;
+        if(mDiscoveryHandler != null){
+            mDiscoveryHandler.destroy();
+            mDiscoveryHandler = null;
         }
-
         mTimeManager = null;
     }
 }

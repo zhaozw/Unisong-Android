@@ -2,19 +2,12 @@ package io.unisong.android.activity;
 
 import android.accounts.AccountManager;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-
-import io.unisong.android.network.user.FacebookAccessToken;
-import io.unisong.android.PrefUtils;
-import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.http.HttpClient;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -35,7 +28,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.FacebookAccessToken;
 
 /**
  * Created by ezturner on 7/14/2015.

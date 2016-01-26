@@ -3,24 +3,11 @@ package io.unisong.android.network.user;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
-import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.ImageView;
 
 import com.facebook.AccessToken;
-
-import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.session.SessionUtils;
-import io.unisong.android.network.session.UnisongSession;
-
 import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
@@ -28,18 +15,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.UUID;
+
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.session.SessionUtils;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * The class for containing user information.

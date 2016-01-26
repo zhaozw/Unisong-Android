@@ -1,27 +1,18 @@
 package io.unisong.android.activity.session;
 
 
-import android.graphics.drawable.NinePatchDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.SimpleAdapter;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.marshalchen.ultimaterecyclerview.UltimateRecyclerView;
-import com.marshalchen.ultimaterecyclerview.animators.BaseItemAnimator;
-import com.marshalchen.ultimaterecyclerview.animators.FadeInAnimator;
 import com.marshalchen.ultimaterecyclerview.itemTouchHelper.SimpleItemTouchHelperCallback;
 
 import java.util.ArrayList;
@@ -31,7 +22,6 @@ import io.unisong.android.R;
 import io.unisong.android.network.session.SongQueue;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
-import io.unisong.android.network.user.CurrentUser;
 
 /**
  * The fragment containing information about the SessionSongs. Displays them to the user.

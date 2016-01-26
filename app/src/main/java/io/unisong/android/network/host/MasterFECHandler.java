@@ -2,14 +2,14 @@ package io.unisong.android.network.host;
 
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.NetworkUtilities;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
 
 /**
  * This class encodes the Audio Frames into

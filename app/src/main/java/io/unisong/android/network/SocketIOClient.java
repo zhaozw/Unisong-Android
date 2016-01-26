@@ -1,11 +1,9 @@
 package io.unisong.android.network;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-
 
 import com.facebook.AccessToken;
 

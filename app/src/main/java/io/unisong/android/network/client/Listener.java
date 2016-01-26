@@ -4,20 +4,20 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
+import java.net.DatagramPacket;
+import java.util.ArrayList;
+import java.util.List;
+
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.AudioTrackManager;
 import io.unisong.android.network.Host;
-import io.unisong.android.network.client.receiver.Receiver;
-import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.client.receiver.LANReceiver;
+import io.unisong.android.network.client.receiver.Receiver;
 import io.unisong.android.network.client.receiver.ServerReceiver;
+import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
-
-import java.net.DatagramPacket;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**

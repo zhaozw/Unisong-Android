@@ -1,5 +1,6 @@
 package io.unisong.android.audio;
 
+import android.os.Handler;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class AudioStatePublisher {
     private long mResumeTime;
     private int mSongToEnd;
     private int mState;
+    private Handler mHandler;
 
     //The boolean used to tell if a value has been updated (for pause time)
     private boolean mUpdated;
@@ -54,15 +56,14 @@ public class AudioStatePublisher {
 
     //Sets the state for Idle and instantiates the Observers arraylist
     public AudioStatePublisher(){
+        mHandler = new Handler();
         mState = IDLE;
         mObservers = new ArrayList<>();
         mSocketIOConfigured = false;
+        sInstance = this;
     }
 
     public static AudioStatePublisher getInstance(){
-        if(sInstance == null){
-            sInstance = new AudioStatePublisher();
-        }
         return sInstance;
     }
 
@@ -130,6 +131,9 @@ public class AudioStatePublisher {
      */
     public void seek(long time){
         // TODO : if we are playing, pause then resume
+        if(mState == PLAYING){
+            update(AudioStatePublisher.PAUSED);
+        }
         mSeekTime = time;
         mResumeTime = time;
         update(AudioStatePublisher.SEEK);
@@ -167,5 +171,12 @@ public class AudioStatePublisher {
      */
     public void setBroadcaster(Broadcaster broadcaster){
         mBroadcaster = broadcaster;
+    }
+
+
+    public void destroy(){
+        mObservers = new ArrayList<>();
+        mManager = null;
+        mBroadcaster = null;
     }
 }

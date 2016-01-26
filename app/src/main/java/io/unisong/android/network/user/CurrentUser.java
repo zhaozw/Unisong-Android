@@ -1,26 +1,22 @@
 package io.unisong.android.network.user;
 
 import android.content.Context;
-import android.os.Handler;
 import android.util.Log;
 
 import com.facebook.AccessToken;
 import com.facebook.login.LoginManager;
-import com.squareup.okhttp.Response;
 
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieManager;
-import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.session.UnisongSession;
 

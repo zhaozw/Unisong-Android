@@ -8,10 +8,6 @@ import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.View;
 
-import io.unisong.android.PrefUtils;
-import io.unisong.android.R;
-import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.NetworkUtilities;
 import com.iangclifton.android.floatlabel.FloatLabel;
 import com.squareup.okhttp.Response;
 
@@ -19,6 +15,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+
+import io.unisong.android.PrefUtils;
+import io.unisong.android.R;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
 
 /**
  * Created by ezturner on 7/15/2015.

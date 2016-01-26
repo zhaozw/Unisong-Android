@@ -10,7 +10,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +19,6 @@ import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.Client;
-import io.unisong.android.network.Host;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.client.Listener;
@@ -28,8 +26,8 @@ import io.unisong.android.network.client.receiver.ServerReceiver;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
 import io.unisong.android.network.host.transmitter.Transmitter;
-import io.unisong.android.network.song.Song;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;

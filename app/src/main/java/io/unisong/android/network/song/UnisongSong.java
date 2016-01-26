@@ -1,19 +1,15 @@
 package io.unisong.android.network.song;
 
-import android.media.MediaFormat;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
-import java.util.UUID;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.client.SongDecoder;
-import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.http.HttpClient;
 
 /**
  * This class handles songs that are broadcasted over the Unisong network.

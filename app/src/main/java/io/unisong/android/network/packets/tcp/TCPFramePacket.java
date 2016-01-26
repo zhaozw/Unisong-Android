@@ -2,15 +2,15 @@ package io.unisong.android.network.packets.tcp;
 
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.NetworkUtilities;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
 
 /**
  * Created by ezturner on 5/6/2015.

@@ -1,8 +1,8 @@
 package io.unisong.android.audio;
 
-import io.unisong.android.network.NetworkUtilities;
-
 import java.util.ArrayList;
+
+import io.unisong.android.network.NetworkUtilities;
 
 /**
  * Created by Ethan on 2/12/2015.

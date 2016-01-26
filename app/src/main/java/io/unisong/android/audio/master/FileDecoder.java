@@ -5,15 +5,15 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.Decoder;
-import io.unisong.android.network.CONSTANTS;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.Decoder;
+import io.unisong.android.network.CONSTANTS;
 
 /**
  * Created by ezturner on 5/20/2015.

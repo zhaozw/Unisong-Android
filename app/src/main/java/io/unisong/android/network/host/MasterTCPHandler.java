@@ -1,14 +1,6 @@
 package io.unisong.android.network.host;
 
 import android.util.Log;
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioObserver;
-import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.Client;
-import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.ntp.TimeManager;
-import io.unisong.android.network.host.transmitter.LANTransmitter;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,6 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioObserver;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.Client;
+import io.unisong.android.network.host.transmitter.LANTransmitter;
+import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * Created by Ethan on 2/11/2015.

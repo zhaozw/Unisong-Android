@@ -15,13 +15,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.R;
 import io.unisong.android.activity.musicplayer.DrawerAdapter;
 import io.unisong.android.activity.musicplayer.DrawerInformation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**

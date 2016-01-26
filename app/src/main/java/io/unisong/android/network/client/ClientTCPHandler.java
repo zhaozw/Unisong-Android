@@ -4,18 +4,6 @@ package io.unisong.android.network.client;
 import android.os.Handler;
 import android.util.Log;
 
-import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.packets.tcp.TCPAcknowledgePacket;
-import io.unisong.android.network.packets.tcp.TCPFramePacket;
-import io.unisong.android.network.packets.tcp.TCPRequestPacket;
-import io.unisong.android.network.packets.tcp.TCPResumePacket;
-import io.unisong.android.network.packets.tcp.TCPRetransmitPacket;
-import io.unisong.android.network.packets.tcp.TCPSeekPacket;
-import io.unisong.android.network.packets.tcp.TCPSongInProgressPacket;
-import io.unisong.android.network.packets.tcp.TCPSongStartPacket;
-import io.unisong.android.network.packets.tcp.TCPSwitchMasterPacket;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -30,6 +18,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.packets.tcp.TCPAcknowledgePacket;
+import io.unisong.android.network.packets.tcp.TCPFramePacket;
+import io.unisong.android.network.packets.tcp.TCPRequestPacket;
+import io.unisong.android.network.packets.tcp.TCPResumePacket;
+import io.unisong.android.network.packets.tcp.TCPRetransmitPacket;
+import io.unisong.android.network.packets.tcp.TCPSeekPacket;
+import io.unisong.android.network.packets.tcp.TCPSongInProgressPacket;
+import io.unisong.android.network.packets.tcp.TCPSongStartPacket;
+import io.unisong.android.network.packets.tcp.TCPSwitchMasterPacket;
 
 /**
  * Created by ezturner on 2/16/2015.

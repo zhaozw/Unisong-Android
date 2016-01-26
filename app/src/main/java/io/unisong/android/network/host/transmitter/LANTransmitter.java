@@ -2,20 +2,6 @@ package io.unisong.android.network.host.transmitter;
 
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.ntp.TimeManager;
-import io.unisong.android.network.Client;
-import io.unisong.android.network.host.MasterFECHandler;
-import io.unisong.android.network.host.MasterTCPHandler;
-import io.unisong.android.network.packets.FramePacket;
-import io.unisong.android.network.packets.NetworkPacket;
-import io.unisong.android.network.song.Song;
-import io.unisong.android.network.user.CurrentUser;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -27,6 +13,20 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.Client;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.host.MasterFECHandler;
+import io.unisong.android.network.host.MasterTCPHandler;
+import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.packets.FramePacket;
+import io.unisong.android.network.packets.NetworkPacket;
+import io.unisong.android.network.session.UnisongSession;
+import io.unisong.android.network.song.Song;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * This class handles the Broadcast/Multicast functionality

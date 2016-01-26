@@ -2,22 +2,6 @@ package io.unisong.android.network;
 
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.host.MasterTCPHandler;
-import io.unisong.android.network.host.transmitter.LANTransmitter;
-import io.unisong.android.network.ntp.TimeManager;
-import io.unisong.android.network.packets.tcp.TCPAcknowledgePacket;
-import io.unisong.android.network.packets.tcp.TCPEndSongPacket;
-import io.unisong.android.network.packets.tcp.TCPFramePacket;
-import io.unisong.android.network.packets.tcp.TCPPausePacket;
-import io.unisong.android.network.packets.tcp.TCPRequestPacket;
-import io.unisong.android.network.packets.tcp.TCPResumePacket;
-import io.unisong.android.network.packets.tcp.TCPSeekPacket;
-import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.user.CurrentUser;
-import io.unisong.android.network.user.User;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -35,6 +19,22 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.network.host.MasterTCPHandler;
+import io.unisong.android.network.host.transmitter.LANTransmitter;
+import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.packets.tcp.TCPAcknowledgePacket;
+import io.unisong.android.network.packets.tcp.TCPEndSongPacket;
+import io.unisong.android.network.packets.tcp.TCPFramePacket;
+import io.unisong.android.network.packets.tcp.TCPPausePacket;
+import io.unisong.android.network.packets.tcp.TCPRequestPacket;
+import io.unisong.android.network.packets.tcp.TCPResumePacket;
+import io.unisong.android.network.packets.tcp.TCPSeekPacket;
+import io.unisong.android.network.session.UnisongSession;
+import io.unisong.android.network.user.CurrentUser;
+import io.unisong.android.network.user.User;
 
 /**
  * Created by ezturner on 4/29/2015.

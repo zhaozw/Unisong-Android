@@ -2,13 +2,6 @@ package io.unisong.android.network.client.receiver;
 
 import android.util.Log;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.Host;
-import io.unisong.android.network.client.Listener;
-import io.unisong.android.network.packets.FramePacket;
-import io.unisong.android.network.packets.NetworkPacket;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,6 +9,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+
+import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.Host;
+import io.unisong.android.network.client.Listener;
+import io.unisong.android.network.packets.FramePacket;
+import io.unisong.android.network.packets.NetworkPacket;
 
 /**
  * Created by ezturner on 6/8/2015.

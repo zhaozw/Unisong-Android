@@ -2,25 +2,18 @@ package io.unisong.android.activity.session;
 
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.marshalchen.ultimaterecyclerview.UltimateDifferentViewTypeAdapter;
 import com.marshalchen.ultimaterecyclerview.UltimateRecyclerviewViewHolder;
 import com.marshalchen.ultimaterecyclerview.UltimateViewAdapter;
-import com.marshalchen.ultimaterecyclerview.dragsortadapter.DragSortAdapter;
 import com.squareup.picasso.Picasso;
-import com.thedazzler.droidicon.IconicFontDrawable;
 
 import java.io.File;
 import java.util.List;
@@ -28,10 +21,7 @@ import java.util.List;
 import io.unisong.android.R;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.session.SongQueue;
-import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
-import io.unisong.android.network.user.CurrentUser;
-import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 10/2/2015.

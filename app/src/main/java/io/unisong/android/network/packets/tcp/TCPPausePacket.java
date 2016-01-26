@@ -1,10 +1,10 @@
 package io.unisong.android.network.packets.tcp;
 
-import io.unisong.android.network.CONSTANTS;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import io.unisong.android.network.CONSTANTS;
 
 /**
  * Created by ezturner on 5/5/2015.

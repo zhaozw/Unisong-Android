@@ -6,12 +6,12 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.util.Log;
 
+import java.util.Date;
+import java.util.Map;
+
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.song.Song;
-
-import java.util.Date;
-import java.util.Map;
 
 /**
  * Created by Ethan on 2/12/2015.

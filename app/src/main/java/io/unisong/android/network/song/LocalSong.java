@@ -9,9 +9,9 @@ import org.json.JSONObject;
 
 import java.util.Map;
 
-import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
 import io.unisong.android.network.NetworkUtilities;
@@ -77,6 +77,7 @@ public class LocalSong extends Song {
         }
         mPath = uiSong.getPath();
         mFormat = new SongFormat(mPath);
+        uploadPicture();
     }
 
     public void setFormat(MediaFormat format){
@@ -199,6 +200,14 @@ public class LocalSong extends Song {
 
     @Override
     public void update(JSONObject songJSON) {
+
+    }
+
+    /**
+     * Uploads the song picture to the server so that the clients
+     * can see it
+     */
+    private void uploadPicture(){
 
     }
 

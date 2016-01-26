@@ -1,12 +1,12 @@
 package io.unisong.android.network.packets.tcp;
 
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.NetworkUtilities;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
 
 /**
  * The packet for seeking from one time in a song to another

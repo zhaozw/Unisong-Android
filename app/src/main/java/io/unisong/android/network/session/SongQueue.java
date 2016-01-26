@@ -11,14 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.socket.emitter.Emitter;
-import io.unisong.android.activity.session.SessionMembersAdapter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.LocalSong;
 import io.unisong.android.network.song.Song;
 import io.unisong.android.network.song.UnisongSong;
-import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 9/12/2015.

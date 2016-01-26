@@ -8,7 +8,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.User;
 

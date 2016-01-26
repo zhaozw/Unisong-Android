@@ -1,13 +1,13 @@
 package io.unisong.android.network.packets.tcp;
 
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.ntp.TimeManager;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.ntp.TimeManager;
 
 /**
  * Created by ezturner on 5/13/2015.
