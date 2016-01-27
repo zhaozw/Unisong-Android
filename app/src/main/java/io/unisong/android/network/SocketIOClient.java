@@ -69,7 +69,6 @@ public class SocketIOClient {
         mSocket.on("invite user", mInviteListener);
         mSocket.on("join session result" , mJoinResultListener);
         mSocket.on("authentication result" , mAuthenticationResult);
-
     }
 
     public boolean isConnected(){

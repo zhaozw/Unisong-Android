@@ -54,13 +54,16 @@ public class MusicDataManager {
 
     //The list of albums on the device
     private List<MusicData> mGenres;
+    private boolean mDoneLoading;
 
     private Context mContext;
     private Handler mHandler;
 
     public MusicDataManager(Context applicationContext){
+        Log.d(LOG_TAG , "MusicDataManager created");
         mContext = applicationContext;
         mHandler = new Handler();
+        mDoneLoading = false;
         mHandler.post(mGetMusicInfoRunnable);
     }
 
@@ -356,6 +359,8 @@ public class MusicDataManager {
 
         if(genreCursor != null)
             genreCursor.close();
+
+        mDoneLoading = true;
     }
 
     public UIArtist getArtistByName(String artist){
@@ -473,5 +478,9 @@ public class MusicDataManager {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean isDoneLoading(){
+        return mDoneLoading;
     }
 }

@@ -48,12 +48,9 @@ public class MediaService extends Service{
         mAudioTrackManager = new AudioTrackManager();
 
 
-        mMusicDataManager = MusicDataManager.getInstance();
+        mMusicDataManager = new MusicDataManager(getApplicationContext());
+        MusicDataManager.setInstance(mMusicDataManager);
 
-        if(mMusicDataManager == null){
-            mMusicDataManager = new MusicDataManager(getApplicationContext());
-            MusicDataManager.setInstance(mMusicDataManager);
-        }
         // Start ConnectionUtils and assign it to the static instance.
 
     }

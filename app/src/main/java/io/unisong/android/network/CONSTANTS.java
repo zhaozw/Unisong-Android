@@ -81,7 +81,7 @@ public class CONSTANTS {
 
     public static final byte TCP_SONG_INFO_PACKET = 18;
 
-    public static final int PCM_BITRATE = 1441200;
+    public static final int PCM_BITRATE = 1411200;
 
     //The packet size for FEC data
     public static final int FEC_SYMBOL_SIZE = 512;
@@ -90,11 +90,11 @@ public class CONSTANTS {
 
     public static final int FEC_DATA_LENGTH = FEC_SYMBOL_SIZE * FEC_NUM_SRC_BLOCKS;
 
-
-
     public static final int PACKET_SEND_DELAY = 500;
 
     public static final int SONG_START_DELAY = 2000 + PACKET_SEND_DELAY;
+
+    public static final int RESUME_DELAY = 500;
 
 
 }

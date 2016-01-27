@@ -81,9 +81,6 @@ public class Broadcaster implements AudioObserver {
 
             mCurrentSong = song;
 
-            if(!song.started())
-                song.start();
-
             // The start time in milliseconds
             Log.d(LOG_TAG , "Transmitters: " +mTransmitters.size());
             for (Transmitter transmitter : mTransmitters) {
@@ -131,18 +128,10 @@ public class Broadcaster implements AudioObserver {
 
     }
 
-    private void seek(long time){
-        mCurrentSong.seek(time);
-    }
-
-
     @Override
     public void update(int state){
         switch (state){
-            case AudioStatePublisher.SEEK:
-                seek(mAudioStatePublisher.getSeekTime());
-                break;
-            case AudioStatePublisher.PLAYING:
+            case AudioStatePublisher.START_SONG:
                 startSong(mUnisongSession.getCurrentSong());
                 break;
         }

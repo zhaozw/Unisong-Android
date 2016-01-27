@@ -4,9 +4,12 @@ import android.os.Handler;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.host.Broadcaster;
+import io.unisong.android.network.ntp.TimeManager;
 
 /**
  * An Implementation of the Observer/Subject design pattern, this is the publisher
@@ -35,6 +38,7 @@ public class AudioStatePublisher {
     public static final int PLAYING = 3;
     public static final int RESUME = 4;
     public static final int END_SONG = 5;
+    public static final int START_SONG = 6;
 
     private Broadcaster mBroadcaster;
     private boolean mSocketIOConfigured;
@@ -83,7 +87,7 @@ public class AudioStatePublisher {
             mState = state;
         }
 
-        if(state == PAUSED){
+        if(state == PAUSED && mResumeTime != 0){
             // If I put this into the constructor it causes a loop of instantiation between
             // AudioTrackManager and this class due to their dual singleton design pattern.
             if(mManager == null){
@@ -136,6 +140,9 @@ public class AudioStatePublisher {
         mSeekTime = time;
         mResumeTime = time;
         update(AudioStatePublisher.SEEK);
+        mHandler.postDelayed( () ->{
+            resume(mResumeTime);
+        } , 5);
     }
 
     /**
@@ -143,6 +150,10 @@ public class AudioStatePublisher {
      */
     public void resume(long resumeTime){
         mResumeTime = resumeTime;
+        TimeManager timeManager = TimeManager.getInstance();
+        long newStartTime = System.currentTimeMillis() - resumeTime + CONSTANTS.RESUME_DELAY;
+        timeManager.setSongStartTime(newStartTime);
+        Log.d(LOG_TAG , "Setting new songStartTime to : " + new Date(newStartTime).toString());
         update(AudioStatePublisher.RESUME);
     }
 
@@ -151,11 +162,19 @@ public class AudioStatePublisher {
         update(AudioStatePublisher.PAUSED);
     }
 
+    public void startSong(){
+        mResumeTime = 0;
+        update(AudioStatePublisher.START_SONG);
+        update(AudioStatePublisher.PLAYING);
+    }
+
     public void play(){
+        mResumeTime = 0;
         update(AudioStatePublisher.PLAYING);
     }
 
     public void endSong(int songID){
+        mResumeTime = 0;
         mSongToEnd = songID;
         update(AudioStatePublisher.END_SONG);
     }

@@ -242,7 +242,7 @@ public class MainSessionActivity extends AppCompatActivity {
             }
 
 //            Log.d(LOG_TAG , "progress : " + progress + " newProgress: " + newProgress);
-            if(progress != newProgress && newProgress >= 0) {
+            if(progress != newProgress && newProgress >= 0 && newProgress <= 100) {
                 mFooterSeekBar.setProgress(newProgress);
             } else if(newProgress < 0 && progress != 0){
                 mFooterSeekBar.setProgress(0);
@@ -380,10 +380,12 @@ public class MainSessionActivity extends AppCompatActivity {
         if(publisher.getState() == AudioStatePublisher.PLAYING){
             mPlayPauseButton.setBackground(mPlayDrawable);
             publisher.pause();
-        } else if(publisher.getState() == AudioStatePublisher.PAUSED ||
-                    publisher.getState() == AudioStatePublisher.IDLE){
+        } else if(publisher.getState() == AudioStatePublisher.PAUSED){
             mPlayPauseButton.setBackground(mPauseDrawable);
             publisher.play();
+        } else if(publisher.getState() == AudioStatePublisher.IDLE && mSession.getCurrentSong() != null){
+            mPlayPauseButton.setBackground(mPauseDrawable);
+            publisher.startSong();
         }
 
     }
@@ -439,6 +441,11 @@ public class MainSessionActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Displays a dialog notifying the user that they have been kicked.
+     * When they press the 'Sorry' button, they are taken back to the main page
+     * NOTE : they can still re-join
+     */
     private void kicked(){
         try {
             String kickedMessage = getResources().getString(R.string.kicked_message);

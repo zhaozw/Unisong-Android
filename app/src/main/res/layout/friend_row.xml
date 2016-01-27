@@ -4,6 +4,8 @@
     android:id="@+id/friend_row_layout"
     android:layout_height="@dimen/friend_row_height"
     android:onClick="onFriendClick"
+    android:layout_marginRight="72dp"
+    android:layout_marginEnd="72dp"
     >
 
     <de.hdodenhof.circleimageview.CircleImageView
@@ -22,8 +24,6 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/friend_text_left_margin"
         android:layout_marginStart="@dimen/friend_text_left_margin"
-        android:layout_marginRight="@dimen/friend_text_right_margin"
-        android:layout_marginEnd="@dimen/friend_text_right_margin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <TextView

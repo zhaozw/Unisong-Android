@@ -51,6 +51,9 @@ public class AudioTrackManager implements AudioObserver {
     //The class that handles all of the time calculations
     private TimeManager mTimeManager;
 
+    // The time we will be resuming at.
+    private long mResumeTime;
+
     //The boolean telling us if we have received a seek command
     private boolean mSeek = false;
 
@@ -115,9 +118,16 @@ public class AudioTrackManager implements AudioObserver {
 
         int count = 0;
 
+        long waitTime = mTimeManager.getSongStartTime() + mResumeTime - System.currentTimeMillis() ;
+        Log.d(LOG_TAG, "Waiting for " + waitTime + "ms, and resume time is :" + mResumeTime);
         try{
-            synchronized (this){
-                this.wait((mTimeManager.getSongStartTime() - System.currentTimeMillis()));
+
+            if(waitTime > 0) {
+                synchronized (this) {
+                    this.wait(waitTime);
+                }
+            } else {
+                Log.d(LOG_TAG , "Wait time was less than 0!");
             }
         } catch (InterruptedException e){
             e.printStackTrace();
@@ -129,7 +139,11 @@ public class AudioTrackManager implements AudioObserver {
         }
 
         mAudioTrack.play();
-        Log.d(LOG_TAG , "Starting Write, " + (mTimeManager.getSongStartTime() - System.currentTimeMillis()) + "ms until song start time.");
+        if(mResumeTime == 0) {
+            Log.d(LOG_TAG, "Starting Write, " + (mTimeManager.getSongStartTime() - System.currentTimeMillis()) + "ms until song start time.");
+        } else {
+            Log.d(LOG_TAG , "Starting Write, " + (mTimeManager.getSongStartTime() + mResumeTime - System.currentTimeMillis())  + "ms until song start time." );
+        }
         while(isPlaying()) {
 
             if (mFrameToPlay == mLastFrameID) {
@@ -155,9 +169,13 @@ public class AudioTrackManager implements AudioObserver {
                 Log.d(LOG_TAG , "Song does not have frame #" + mFrameToPlay);
             }
 
+            boolean firstWait = true;
             while (!mSong.hasPCMFrame(mFrameToPlay)) {
                 try {
-//                    Log.d(LOG_TAG , "Waiting for frame #" + mFrameToPlay);
+                    if(firstWait) {
+                        Log.d(LOG_TAG, "Waiting for frame #" + mFrameToPlay);
+                        firstWait = false;
+                    }
                     synchronized (this) {
                         this.wait(1);
                     }
@@ -191,7 +209,6 @@ public class AudioTrackManager implements AudioObserver {
         }
 
 
-        mAudioTrack = null;
         Log.d(LOG_TAG , "Write Thread done");
         mThreadRunning = false;
     }
@@ -206,8 +223,11 @@ public class AudioTrackManager implements AudioObserver {
 
     public void startSong(Song song){
 
+        mResumeTime = 0;
         mSong = song;
 
+        // TODO : figure out a more elegant solution than this for the OOI problem of having MediaService go first
+        if(mTimeManager == null)    mTimeManager = TimeManager.getInstance();
 
         double millisTillSongStart =  mTimeManager.getSongStartTime() - System.currentTimeMillis();
         Log.d(LOG_TAG , "TimeStartTime : " + new Date(mTimeManager.getSongStartTime()).toString());
@@ -249,7 +269,6 @@ public class AudioTrackManager implements AudioObserver {
     public void seek(long seekTime){
         mSeek = true;
         mFrameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
-        mSong.seek(seekTime);
         Log.d(LOG_TAG , "mFrameToPlay is : " + mFrameToPlay);
     }
 
@@ -286,11 +305,8 @@ public class AudioTrackManager implements AudioObserver {
                 break;
 
             case AudioStatePublisher.SEEK:
-                pause();
-                long seekTime = mAudioStatePublisher.getSeekTime();
-                seek(seekTime);
-
-                resume(mAudioStatePublisher.getResumeTime());
+//                long seekTime = mAudioStatePublisher.getSeekTime();
+//                seek(seekTime);
                 break;
 
             case AudioStatePublisher.PLAYING:
@@ -306,17 +322,18 @@ public class AudioTrackManager implements AudioObserver {
     }
 
     public void resume(long resumeTime){
+        mResumeTime = resumeTime;
         // TODO : re
         if(!mSeek){
             Map<Integer, AudioFrame> frames = mSong.getPCMFrames();
             synchronized (frames){
                 Log.d(LOG_TAG, frames.size() + " ");
-                for (int i = 0; i < frames.size(); i++) {
+                for (Map.Entry<Integer, AudioFrame> entry : frames.entrySet()) {
 
-                    long diff = frames.get(i).getPlayTime() - resumeTime;
+                    long diff = entry.getValue().getPlayTime() - resumeTime;
 
                     if (Math.abs(diff) <= 22) {
-                        mFrameToPlay = i;
+                        mFrameToPlay = entry.getKey();
                         break;
                     }
                 }

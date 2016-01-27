@@ -3,6 +3,7 @@ package io.unisong.android.network.user;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 
@@ -97,6 +98,7 @@ public class User implements Serializable {
         return new Thread(new Runnable() {
             @Override
             public void run() {
+                Looper.prepare();
                 getUserInfo();
                 checkSessionStatus();
                 //loadProfilePicture();

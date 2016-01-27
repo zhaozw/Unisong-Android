@@ -93,6 +93,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             obj.put("songID", frame.getSongID());
         } catch (JSONException e){
             e.printStackTrace();
+            return;
         }
 
         mClient.emit("upload data", obj);
@@ -121,7 +122,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
         mFrameToUpload = 0;
         mSong = song;
-        Log.d(LOG_TAG , "Start song x232");
+        Log.d(LOG_TAG , "Start song");
 
         if(mScheduledFuture != null)
             mScheduledFuture.cancel(false);

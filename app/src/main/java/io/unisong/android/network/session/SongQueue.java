@@ -1,5 +1,6 @@
 package io.unisong.android.network.session;
 
+import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
@@ -12,6 +13,8 @@ import java.util.List;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.song.LocalSong;
@@ -30,13 +33,16 @@ public class SongQueue {
     private SessionSongsAdapter.IncomingHandler mHandler;
     private UnisongSession mParentSession;
     private SocketIOClient mSocketIOClient;
-
+    private AudioStatePublisher mPublisher;
+    private Handler mQueueHandler;
 
     public SongQueue(UnisongSession session){
         mClient = HttpClient.getInstance();
         mSocketIOClient = SocketIOClient.getInstance();
         mSongQueue = new ArrayList<>();
         mParentSession = session;
+        mPublisher = AudioStatePublisher.getInstance();
+        mQueueHandler = new Handler();
     }
 
     /**
@@ -47,13 +53,23 @@ public class SongQueue {
     public void addSong(Song song){
         if(mSongQueue.indexOf(song) == -1)
             addSong(mSongQueue.size(), song);
+
+        if(mSongQueue.size() == 1)
+            mPublisher.attach(mSongQueue.get(0));
     }
 
-    // Adds a song and notifies
+    // Adds a song and notifies the adapter
     public void addSong(int position, Song song){
+
+        if(position == 0 && mSongQueue.size() > 0){
+            mPublisher.detach(mSongQueue.get(0));
+            mPublisher.attach(song);
+        }
+
         mSongQueue.add(position, song);
 
         sendAdd(position, song);
+
     }
 
     public void deleteSong(int songID){
@@ -119,9 +135,33 @@ public class SongQueue {
      */
     public void update(JSONArray songArray, JSONArray queue){
 
+        Runnable parse = () -> {parseUpdate(songArray , queue);};
         // TODO : figure out a way to
         // First we will update the songs
         Log.d(LOG_TAG, songArray.toString());
+        MusicDataManager manager = MusicDataManager.getInstance();
+        if(manager.isDoneLoading()){
+            mQueueHandler.post(parse);
+        } else {
+            mSongArray = songArray;
+            mQueue = queue;
+            mQueueHandler.postDelayed(this::checkMusicLoadingStatus , 100);
+        }
+
+    }
+
+    // temp variables for waiting for MusicDataManager to load
+    private JSONArray mSongArray;
+    private JSONArray mQueue;
+    private void checkMusicLoadingStatus(){
+        if(MusicDataManager.getInstance().isDoneLoading()){
+            parseUpdate(mSongArray , mQueue);
+        } else {
+            mQueueHandler.postDelayed(this::checkMusicLoadingStatus , 100);
+        }
+    }
+
+    private void parseUpdate(JSONArray songArray , JSONArray queue){
         try {
             for (int i = 0; i < songArray.length(); i++) {
                 JSONObject songJSON = songArray.getJSONObject(i);
@@ -130,7 +170,8 @@ public class SongQueue {
                 Song song = getSong(ID);
                 if(song == null){
                     if(mParentSession.isMaster()) {
-                        getSongLoop(songJSON);
+                        LocalSong newSong = new LocalSong(songJSON);
+                        addSong(newSong);
                     } else {
                         UnisongSong newSong = new UnisongSong(songJSON);
                         addSong(newSong);
@@ -142,7 +183,6 @@ public class SongQueue {
 
 
             // then we will update the order
-            // TODO : figure out how to reorder adapter.
             // same way?
             List<Song> orderedList = new ArrayList<>();
             for(int i = queue.length() - 1; i >= 0; i--){
@@ -153,16 +193,21 @@ public class SongQueue {
 
             mSongQueue = orderedList;
 
+            sendChanged();
+
         } catch (JSONException e){
             e.printStackTrace();
         }
 
+        mSongArray = null;
+        mQueue = null;
     }
-
     /**
      * Waits for MusicDataManager to load.
      * @param songJSON
      */
+
+    // TODO : replace this with a better implementation
     private void getSongLoop(JSONObject songJSON){
         try {
             LocalSong newSong = new LocalSong(songJSON);
@@ -262,6 +307,16 @@ public class SongQueue {
 
         message.what = SessionSongsAdapter.REMOVE;
         message.arg1 = position;
+
+        mHandler.sendMessage(message);
+    }
+
+    private void sendChanged(){
+        if(mHandler == null)
+            return;
+
+        Message message = new Message();
+        message.what = SessionSongsAdapter.CHANGED;
 
         mHandler.sendMessage(message);
     }

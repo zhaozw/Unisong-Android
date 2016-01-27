@@ -11,6 +11,7 @@ import java.util.Map;
 
 import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.master.AACEncoder;
 import io.unisong.android.audio.master.FileDecoder;
@@ -178,7 +179,6 @@ public class LocalSong extends Song {
         JSONObject object = new JSONObject();
 
         try {
-
             object.put("name" , getName());
             object.put("artist" , getArtist());
             object.put("sessionID" , mSessionID);
@@ -203,12 +203,32 @@ public class LocalSong extends Song {
 
     }
 
+    // TODO : see if we need to do anything special for this.
+    public void endSong(){
+
+    }
+
     /**
      * Uploads the song picture to the server so that the clients
      * can see it
      */
     private void uploadPicture(){
 
+    }
+
+    @Override
+    public void update(int state){
+        switch(state) {
+            case AudioStatePublisher.START_SONG:
+                start();
+                break;
+            case AudioStatePublisher.END_SONG:
+                endSong();
+                break;
+            case AudioStatePublisher.SEEK:
+                seek(AudioStatePublisher.getInstance().getSeekTime());
+                break;
+        }
     }
 
 }

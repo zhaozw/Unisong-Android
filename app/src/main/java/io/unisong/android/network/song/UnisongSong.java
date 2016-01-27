@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.client.SongDecoder;
 import io.unisong.android.network.NetworkUtilities;
 
@@ -146,6 +147,18 @@ public class UnisongSong extends Song {
             e.printStackTrace();
         }
 
+    }
+
+    @Override
+    public void update(int state){
+        switch (state){
+            case AudioStatePublisher.START_SONG:
+                start();
+                break;
+            case AudioStatePublisher.SEEK:
+                seek(AudioStatePublisher.getInstance().getSeekTime());
+                break;
+        }
     }
 
 }

@@ -56,10 +56,10 @@ public class MainActivity extends AppCompatActivity {
         if(!hasStarted) {
 
             //Start MediaService
-            Intent ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
-            bindService(ServiceIntent, mNetworkConnection, Context.BIND_AUTO_CREATE);
-            ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
+            Intent ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
             bindService(ServiceIntent, mMediaConnection, Context.BIND_AUTO_CREATE);
+            ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
+            bindService(ServiceIntent, mNetworkConnection, Context.BIND_AUTO_CREATE);
 
 
             mIntent.putExtra("has-started"  , true);

@@ -155,8 +155,8 @@ public class AACEncoder{
                 e.printStackTrace();
             }
         }
-        channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-        sampleRate = mInputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+        channels = 2;
+        sampleRate = 44100;
         mime = "audio/mp4a-latm";
         bitrate = channels * 64000;
 
@@ -311,6 +311,10 @@ public class AACEncoder{
         } else {
             mSeek = false;
         }
+
+
+        // TODO : notify clients of last frame?
+        // TODO : implement fault tolerance
         mRunning = false;
 
         Log.d(LOG_TAG, "stopping...");

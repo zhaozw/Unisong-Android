@@ -24,6 +24,8 @@ import io.unisong.android.network.session.SongQueue;
 import io.unisong.android.network.song.Song;
 
 /**
+ * This is the adpater class that handles adapting the SongQueue to the
+ * Session songs display.
  * Created by Ethan on 10/2/2015.
  */
 public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter.ViewHolder> {
@@ -33,6 +35,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
 
     private SongQueue mSongQueue;
 
+    public static final int CHANGED = 231892;
     public static final int ADD = 1823139;
     public static final int REMOVE = 142789;
 

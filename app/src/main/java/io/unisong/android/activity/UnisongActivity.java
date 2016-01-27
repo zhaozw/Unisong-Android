@@ -1,13 +1,17 @@
 package io.unisong.android.activity;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
@@ -46,6 +50,7 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.session.MainSessionActivity;
+import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.session.SessionUtils;
 import io.unisong.android.network.session.UnisongSession;
@@ -73,6 +78,8 @@ public class UnisongActivity extends AppCompatActivity {
     private RelativeLayout mUserProfileLayout;
     private CircleImageView mUserProfileImageView;
     private BroadcastReceiver mBroadcastReceiver;
+    private NetworkService mNetworkService;
+    private MediaService mMediaService;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -91,13 +98,24 @@ public class UnisongActivity extends AppCompatActivity {
 
         mFriendsList = FriendsList.getInstance();
         long currentTime = System.currentTimeMillis();
+        boolean restartedServices = false;
 
         while(mFriendsList == null){
             // TODO : check for NetworkService, if does not exist then create.
             Log.d(LOG_TAG , "Loading FriendsList, has been: " + (System.currentTimeMillis() - currentTime) + "ms");
             // TODO : investigate?
             if(System.currentTimeMillis() - currentTime > 1000){
-                break;
+
+                if(!restartedServices) {
+                    Intent ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
+                    bindService(ServiceIntent, mMediaConnection, Context.BIND_AUTO_CREATE);
+                    ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
+                    bindService(ServiceIntent, mNetworkConnection, Context.BIND_AUTO_CREATE);
+                    currentTime = System.currentTimeMillis();
+                    restartedServices = true;
+                } else {
+                    break;
+                }
             }
             try{
                 synchronized (this){
@@ -429,7 +447,13 @@ public class UnisongActivity extends AppCompatActivity {
     protected void onDestroy(){
         super.onDestroy();
 
-        stopService(new Intent(this, MediaService.class));
+        if(mNetworkService != null)
+            mNetworkService.onDestroy();
+        mNetworkService = null;
+
+        if(mMediaService != null)
+            mMediaService.onDestroy();
+        mMediaService = null;
     }
 
     /**
@@ -541,4 +565,36 @@ public class UnisongActivity extends AppCompatActivity {
             }
         }
     }
+
+    private ServiceConnection mNetworkConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            NetworkService.NetworkServiceBinder binder = (NetworkService.NetworkServiceBinder)service;
+            //get service
+            mNetworkService = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
+    private ServiceConnection mMediaConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            MediaService.MediaServiceBinder binder = (MediaService.MediaServiceBinder)service;
+            //get service
+            mMediaService = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 }
