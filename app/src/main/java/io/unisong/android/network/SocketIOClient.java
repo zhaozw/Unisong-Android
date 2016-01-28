@@ -79,6 +79,10 @@ public class SocketIOClient {
         mSocket.on(eventName , listener);
     }
 
+    public void off(String eventName, Emitter.Listener listener){
+        mSocket.off(eventName, listener);
+    }
+
     public void joinSession(int sessionID){
         if(mSocket.connected())
             mSocket.emit("join session", sessionID);

@@ -1,5 +1,6 @@
 package io.unisong.android.network.client;
 
+import android.os.Handler;
 import android.util.Log;
 
 import org.json.JSONObject;
@@ -49,6 +50,7 @@ public class Listener{
     private ServerReceiver mServerReceiever;
     private List<Receiver> mReceivers;
 
+    private Handler mHandler;
     private UnisongSession mSession;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
@@ -63,21 +65,18 @@ public class Listener{
 
 //        mSlaveDiscoveryHandler = new ClientDiscoveryHandler(this);
 
-        /* - let's see what commenting this out breaks.
-        synchronized (this){
-            try{
-                this.wait(500);
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }*/
         //mServerReceiever = new ServerReceiver(this);
 
         // TODO : set session.
         //mSession = UnisongSession.getInstance();
 
         mReceivers = new ArrayList<>();
+        mHandler = new Handler();
 
+        if(sInstance != null)
+            Log.d(LOG_TAG , "Listener double instantiated!");
+
+        // Set this instance to the singleton
         sInstance = this;
     }
 
@@ -98,7 +97,14 @@ public class Listener{
 
     }
 
-    // TODO : rewrite this method with Song integration/
+    //
+    private long mLastUpdate = 0;
+
+    /**
+     * This will start a song with the
+     * @param startTime
+     * @param songID
+     */
     public void startSong(long startTime , int songID){
 
         //TODO : calculate the current frame to play?
@@ -109,7 +115,14 @@ public class Listener{
         Song song = mSession.getSongQueue().getSong(songID);
         if(song == null){
             Log.d(LOG_TAG , "We do not have the song! Update the session!");
-            mSession.getUpdate();
+            if(System.currentTimeMillis() - mLastUpdate >= 1000) {
+                mSession.getUpdate();
+                mLastUpdate = System.currentTimeMillis();
+            }
+
+            mHandler.postDelayed(() -> {
+                startSong(startTime, songID);
+            } , 100);
         } else {
 
             AudioStatePublisher.getInstance().startSong();

@@ -20,7 +20,7 @@ public abstract class Song implements AudioObserver {
     protected String mImageURL;
 
     //The # of the song
-    protected int mSongID;
+    protected int songID;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -33,7 +33,7 @@ public abstract class Song implements AudioObserver {
         mName = name;
         mArtist = artist;
         mImageURL = imageURL;
-        mSongID = ID;
+        songID = ID;
         mStarted = false;
     }
 
@@ -45,7 +45,7 @@ public abstract class Song implements AudioObserver {
     }
 
     public int getID(){
-        return mSongID;
+        return songID;
     }
 
     public String getName(){

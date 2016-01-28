@@ -7,55 +7,55 @@ import io.unisong.android.audio.AudioObserver;
  */
 public class TimeManager implements AudioObserver {
 
-    private static TimeManager sIntance;
+    private static TimeManager instance;
     public static TimeManager getInstance(){
-        return sIntance;
+        return instance;
     }
 
     private static final String LOG_TAG = TimeManager.class.getSimpleName();
     //The time offset returned by the SntpClient class
-    private SntpClient mSntpClient;
+    private SntpClient sntpClient;
 
     //The seek time adjustment
-    private long mSeekTime;
+    private long seekTime;
 
     // The time that the current song starts at, with the offset applied
-    // To convert to this device's local time, subtract mSntpClient.getOffset().
-    private long mSongStartTime;
+    // To convert to this device's local time, subtract sntpClient.getOffset().
+    private long songStartTime;
 
-    // mSongStartTime configured with nanoTime();
+    // songStartTime configured with nanoTime();
     private long mNanoSongStartTime;
 
     public TimeManager(){
-        mSntpClient = new SntpClient();
+        sntpClient = new SntpClient();
         // TODO : listen for clock change events
-        mSeekTime = 0;
-        sIntance = this;
+        seekTime = 0;
+        instance = this;
     }
 
     public void setSongStartTime(long songStartTime){
-        mSongStartTime = songStartTime;
+        this.songStartTime = songStartTime;
     }
 
-    //TODO: make sure that my mSeekTime thing works
+    //TODO: make sure that my seekTime thing works
     public long getAACPlayTime(int ID){
-        return mSongStartTime - mSntpClient.getOffset() + (long)(((1024.0 * ID) / 44100.0) * 1000.0);
+        return songStartTime - sntpClient.getOffset() + (long)(((1024.0 * ID) / 44100.0) * 1000.0);
     }
 
     public long getPCMDifference(long playTime){
-        return System.currentTimeMillis() - (mSongStartTime + playTime - mSntpClient.getOffset());
+        return System.currentTimeMillis() - (songStartTime + playTime - sntpClient.getOffset());
     }
 
     public long getOffset(){
-        return mSntpClient.getOffset();
+        return sntpClient.getOffset();
     }
 
     public long getSongStartTime(){
-        return mSongStartTime;
+        return songStartTime;
     }
 
     @Override
     public void update(int state) {
-        //TODO : update mSongStartTime on resume
+        //TODO : update songStartTime on resume
     }
 }

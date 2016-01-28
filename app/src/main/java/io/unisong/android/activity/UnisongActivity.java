@@ -1,6 +1,5 @@
 package io.unisong.android.activity;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -28,7 +27,6 @@ import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -69,38 +67,37 @@ public class UnisongActivity extends AppCompatActivity {
     public static final int INVITE = 241293;
     private final static String LOG_TAG = UnisongActivity.class.getSimpleName();
 
-    private IncomingHandler mHandler;
+    private IncomingHandler handler;
     private Toolbar mToolbar;
-    private RecyclerView mRecyclerView;
-    private LinearLayoutManager mLayoutManager;
-    private FriendsAdapter mAdapter;
-    private FriendsList mFriendsList;
-    private RelativeLayout mUserProfileLayout;
-    private CircleImageView mUserProfileImageView;
-    private BroadcastReceiver mBroadcastReceiver;
-    private NetworkService mNetworkService;
-    private MediaService mMediaService;
+    private RecyclerView recyclerView;
+    private LinearLayoutManager layoutManager;
+    private FriendsAdapter adapter;
+    private FriendsList friendsList;
+    private CircleImageView userProfileImageView;
+    private NetworkService networkService;
+    private MediaService mediaService;
+    
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_unisong);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
+        recyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the mLayout size of the RecyclerView
-        mRecyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(true);
 
         // use a linear mLayout manager
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
 
-        mFriendsList = FriendsList.getInstance();
+        friendsList = FriendsList.getInstance();
         long currentTime = System.currentTimeMillis();
         boolean restartedServices = false;
 
-        while(mFriendsList == null){
+        while(friendsList == null){
             // TODO : check for NetworkService, if does not exist then create.
             Log.d(LOG_TAG , "Loading FriendsList, has been: " + (System.currentTimeMillis() - currentTime) + "ms");
             // TODO : investigate?
@@ -125,12 +122,12 @@ public class UnisongActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            mFriendsList = FriendsList.getInstance();
+            friendsList = FriendsList.getInstance();
         }
 
         // specify an adapter (see also next example)
-        mAdapter = new FriendsAdapter(mFriendsList.getFriends());
-        mRecyclerView.setAdapter(mAdapter);
+        adapter = new FriendsAdapter(friendsList.getFriends());
+        recyclerView.setAdapter(adapter);
 
         Log.d(LOG_TAG, "creating UnisongActivity");
 
@@ -160,15 +157,15 @@ public class UnisongActivity extends AppCompatActivity {
 
         new LoadCurrentUserProfile().execute();
 
-        mHandler = new IncomingHandler(this);
+        handler = new IncomingHandler(this);
         SocketIOClient client = SocketIOClient.getInstance();
 
-        client.registerInviteHandler(mHandler);
+        client.registerInviteHandler(handler);
 
-        mUserProfileImageView = (CircleImageView) findViewById(R.id.user_image);
+        userProfileImageView = (CircleImageView) findViewById(R.id.user_image);
 
         if(PrefUtils.getFromPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong").equals("unisong")){
-            mUserProfileImageView.setOnClickListener(new View.OnClickListener() {
+            userProfileImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     onProfileClick(view);
@@ -289,7 +286,7 @@ public class UnisongActivity extends AppCompatActivity {
                 bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
                         bitmap.getHeight(), matrix, true);
 
-                mUserProfileImageView.setImageBitmap(bitmap);
+                userProfileImageView.setImageBitmap(bitmap);
             } catch (FileNotFoundException e){
                 e.printStackTrace();
                 return;
@@ -447,13 +444,13 @@ public class UnisongActivity extends AppCompatActivity {
     protected void onDestroy(){
         super.onDestroy();
 
-        if(mNetworkService != null)
-            mNetworkService.onDestroy();
-        mNetworkService = null;
+        if(networkService != null)
+            networkService.onDestroy();
+        networkService = null;
 
-        if(mMediaService != null)
-            mMediaService.onDestroy();
-        mMediaService = null;
+        if(mediaService != null)
+            mediaService.onDestroy();
+        mediaService = null;
     }
 
     /**
@@ -470,8 +467,8 @@ public class UnisongActivity extends AppCompatActivity {
             User user = UserUtils.getUser(uuid);
             user.update();
             mTempUserCheck = user;
-            mHandler.removeCallbacks(mCheckUserSession);
-            mHandler.postDelayed(mCheckUserSession, 200);
+            handler.removeCallbacks(mCheckUserSession);
+            handler.postDelayed(mCheckUserSession, 200);
 
             // TODO : add dialog/popup for confirmation?
 
@@ -573,7 +570,7 @@ public class UnisongActivity extends AppCompatActivity {
 
             NetworkService.NetworkServiceBinder binder = (NetworkService.NetworkServiceBinder)service;
             //get service
-            mNetworkService = binder.getService();
+            networkService = binder.getService();
         }
 
         @Override
@@ -589,7 +586,7 @@ public class UnisongActivity extends AppCompatActivity {
 
             MediaService.MediaServiceBinder binder = (MediaService.MediaServiceBinder)service;
             //get service
-            mMediaService = binder.getService();
+            mediaService = binder.getService();
         }
 
         @Override

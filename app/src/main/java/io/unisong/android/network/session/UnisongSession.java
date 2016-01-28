@@ -69,7 +69,6 @@ public class UnisongSession {
     }
 
     private int mNewSongID, mSessionID;
-    private Song mCurrentSong;
 
     private boolean mIsMaster, mSocketIOConfigured;
 
@@ -140,13 +139,10 @@ public class UnisongSession {
     private void getInfoFromServer(){
         Log.d(LOG_TAG , "Posting");
         // TODO : don't use thread here.
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(LOG_TAG , "calling download");
-                Looper.prepare();
-                downloadInfo();
-            }
+        new Thread(() ->{
+            Log.d(LOG_TAG , "calling download");
+            Looper.prepare();
+            downloadInfo();
         }).start();
     }
 
@@ -269,7 +265,7 @@ public class UnisongSession {
             Log.d(LOG_TAG, "Parsing complete");
         } catch (Exception e){
             e.printStackTrace();
-            Log.d(LOG_TAG , "Unknown Exception in UnisongSession.parseJSON!");
+            Log.d(LOG_TAG, "Unknown Exception in UnisongSession.parseJSON!");
         }
     }
 
@@ -280,10 +276,15 @@ public class UnisongSession {
         getCreateThread().start();
     }
 
+    /**
+     * Configures the SocketIOClient with the event listeners required to keep us up to date with
+     * the session information
+     */
     public void configureSocketIO(){
         if(mSocketIOConfigured)
             return;
 
+        // NOTE : be sure to keep this up to doate with disconnectSocketIO()
         mSocketIOConfigured = true;
         mSocketIOClient.on("user joined" , mUserJoined);
         mSocketIOClient.on("update session", mUpdateSessionListener);
@@ -292,6 +293,23 @@ public class UnisongSession {
         mSocketIOClient.on("kick" , mKickListener);
         mSocketIOClient.on("kick result" , mKickResultListener);
         Log.d(LOG_TAG, "Configured Socket.IO");
+    }
+
+    /**
+     * Removes all listeners for this session from socketIOClient
+     */
+    public void disconnectSocketIO(){
+        if(!mSocketIOConfigured)
+            return;
+
+        mSocketIOConfigured = false;
+        mSocketIOClient.off("user joined" , mUserJoined);
+        mSocketIOClient.off("update session", mUpdateSessionListener);
+        mSocketIOClient.off("user left" , mUserLeft);
+        mSocketIOClient.off("end session" , mEndSession);
+        mSocketIOClient.off("kick" , mKickListener);
+        mSocketIOClient.off("kick result" , mKickResultListener);
+        Log.d(LOG_TAG , "Socket.IO disconnected for session #" + mSessionID);
     }
 
     public int incrementNewSongID(){
@@ -348,7 +366,7 @@ public class UnisongSession {
     }
 
     public int getCurrentSongID(){
-        return mCurrentSong.getID();
+        return mSongQueue.getCurrentSong().getID();
     }
 
     public Song getCurrentSong(){
@@ -359,10 +377,9 @@ public class UnisongSession {
     }
 
     public void startSong(int songID){
-        mCurrentSong = mSongQueue.getSong(songID);
         if(mIsMaster){
             Log.d(LOG_TAG , "Sending start song.");
-            Broadcaster.getInstance().startSong(mCurrentSong);
+            Broadcaster.getInstance().startSong(mSongQueue.getSong(songID));
         }
     }
 
@@ -487,6 +504,7 @@ public class UnisongSession {
 
         }
 
+        disconnectSocketIO();
         setCurrentSession(null);
     }
 

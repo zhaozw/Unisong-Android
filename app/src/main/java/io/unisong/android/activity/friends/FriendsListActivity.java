@@ -24,37 +24,37 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
 
     private final static String LOG_TAG = FriendsListActivity.class.getSimpleName();
 
-    private Toolbar mToolbar;
-    private RecyclerView mRecyclerView;
-    private LinearLayoutManager mLayoutManager;
-    private FriendsAdapter mAdapter;
-    private FriendsList mFriendsList;
+    private Toolbar toolbar;
+    private RecyclerView recyclerView;
+    private LinearLayoutManager layoutManager;
+    private FriendsAdapter adapter;
+    private FriendsList friendsList;
 
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(io.unisong.android.R.layout.activity_friends);
-        mRecyclerView = (RecyclerView) findViewById(io.unisong.android.R.id.friendsRecyclerView);
+        recyclerView = (RecyclerView) findViewById(io.unisong.android.R.id.friendsRecyclerView);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
-        mRecyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(true);
 
         // use a linear layout manager
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
 
-        mFriendsList = FriendsList.getInstance();
+        friendsList = FriendsList.getInstance();
 
         // specify an adapter (see also next example)
-        mAdapter = new FriendsAdapter(mFriendsList.getFriends());
-        mRecyclerView.setAdapter(mAdapter);
+        adapter = new FriendsAdapter(friendsList.getFriends());
+        recyclerView.setAdapter(adapter);
 
         Log.d(LOG_TAG , "Starting thread");
 
-        mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
+        toolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -62,7 +62,7 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(io.unisong.android.R.id.fragment_navigation_drawer);
 
-        drawerFragment.setUp((DrawerLayout)findViewById(io.unisong.android.R.id.drawer_layout) , mToolbar , io.unisong.android.R.id.fragment_navigation_drawer);
+        drawerFragment.setUp((DrawerLayout)findViewById(io.unisong.android.R.id.drawer_layout) , toolbar, io.unisong.android.R.id.fragment_navigation_drawer);
 
     }
 

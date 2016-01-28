@@ -41,44 +41,44 @@ public class LoginActivity extends ActionBarActivity {
 
     private static final String LOG_TAG = LoginActivity.class.getSimpleName();
 
-    private Toolbar mToolbar;
+    private Toolbar toolbar;
 
-    private HttpClient mClient;
+    private HttpClient client;
 
-    private FloatLabel mUsername;
-    private FloatLabel mPassword;
+    private FloatLabel username;
+    private FloatLabel password;
 
-    private Thread mLoginThread;
-    private boolean mLoginInProgress;
+    private Thread loginThread;
+    private boolean loginInProgress;
 
-    private LoginButton mLoginButton;
-    private CallbackManager mCallbackManager;
+    private LoginButton loginButton;
+    private CallbackManager callbackManager;
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mClient = HttpClient.getInstance();
+        client = HttpClient.getInstance();
 
 
         Log.d(LOG_TAG, "LoginActivity onCreate called");
-        mUsername = (FloatLabel) findViewById(R.id.loginUsername);
-        mPassword = (FloatLabel) findViewById(R.id.login_password);
+        username = (FloatLabel) findViewById(R.id.loginUsername);
+        password = (FloatLabel) findViewById(R.id.login_password);
 
-        mToolbar = (Toolbar) findViewById(R.id.login_bar);
+        toolbar = (Toolbar) findViewById(R.id.login_bar);
 
-        mCallbackManager = CallbackManager.Factory.create();
-        mLoginButton = (LoginButton) this.findViewById(R.id.facebook_login_button);
+        callbackManager = CallbackManager.Factory.create();
+        loginButton = (LoginButton) this.findViewById(R.id.facebook_login_button);
         List<String> readPermissions = new ArrayList<>();
         readPermissions.add("user_friends");
         readPermissions.add("email");
-        mLoginButton.setReadPermissions(readPermissions);
+        loginButton.setReadPermissions(readPermissions);
 
 
         // Other app specific specialization
 
         // Callback registration
-        LoginManager.getInstance().registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+        LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(final LoginResult loginResult) {
                 Log.d(LOG_TAG, loginResult.getAccessToken().toString());
@@ -107,10 +107,10 @@ public class LoginActivity extends ActionBarActivity {
             }
         });
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        mLoginInProgress = false;
+        loginInProgress = false;
         setCredentials();
 
     }
@@ -128,7 +128,7 @@ public class LoginActivity extends ActionBarActivity {
                 Response httpResponse;
 
                 try {
-                    httpResponse = mClient.syncGet(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + loginResult.getAccessToken().getUserId());
+                    httpResponse = client.syncGet(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + loginResult.getAccessToken().getUserId());
                 } catch (IOException e){
                     e.printStackTrace();
                     return;
@@ -180,7 +180,7 @@ public class LoginActivity extends ActionBarActivity {
                 } else if(httpResponse.toString().contains("code=200")){
                     //If a user exists with that FB ID then we can proceed straight to FriendsActivity
 
-                    mClient.loginFacebook(loginResult.getAccessToken());
+                    client.loginFacebook(loginResult.getAccessToken());
 
                     startActivity(UnisongActivity.class);
 
@@ -191,16 +191,16 @@ public class LoginActivity extends ActionBarActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        mCallbackManager.onActivityResult(requestCode,
+        callbackManager.onActivityResult(requestCode,
                 resultCode, data);
     }
 
     public void login(View view){
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong");
-        if(!mLoginInProgress){
-            mLoginInProgress = true;
-            mLoginThread  = getLoginThread();
-            mLoginThread.start();
+        if(!loginInProgress){
+            loginInProgress = true;
+            loginThread = getLoginThread();
+            loginThread.start();
         }
 
     }
@@ -217,11 +217,11 @@ public class LoginActivity extends ActionBarActivity {
     private void loginRequest(){
         HttpClient client = HttpClient.getInstance();
 
-        String username = mUsername.getEditText().getText().toString();
-        String password = mPassword.getEditText().getText().toString();
+        String username = this.username.getEditText().getText().toString();
+        String password = this.password.getEditText().getText().toString();
 
-        mClient.login(username , password);
-        while (!mClient.isLoginDone()) {
+        this.client.login(username, password);
+        while (!this.client.isLoginDone()) {
             try {
                 synchronized (this) {
                     this.wait(20);
@@ -230,19 +230,19 @@ public class LoginActivity extends ActionBarActivity {
                 e.printStackTrace();
             }
         }
-        Log.d(LOG_TAG , "Login Request Done.");
+        Log.d(LOG_TAG, "Login Request Done.");
 
         //TODO: make code for various exceptions
-        if(mClient.isLoggedIn()){
+        if(this.client.isLoggedIn()){
             loginSuccess(username , password);
         } else {
             loginFailure();
         }
 
-        Log.d(LOG_TAG , "# cookies: " + mClient.getCookieManager().getCookieStore().getCookies().size());
+        Log.d(LOG_TAG, "# cookies: " + this.client.getCookieManager().getCookieStore().getCookies().size());
 
 
-        mLoginInProgress = false;
+        loginInProgress = false;
         //TODO: save credentials with AccountManager
     }
 
@@ -280,11 +280,11 @@ public class LoginActivity extends ActionBarActivity {
         String password = PrefUtils.getFromPrefs(this, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
         if(!username.equals("")){
-            mUsername.setText(username);
+            this.username.setText(username);
         }
 
         if(!password.equals("")){
-            mPassword.setText(password);
+            this.password.setText(password);
         }
     }
 

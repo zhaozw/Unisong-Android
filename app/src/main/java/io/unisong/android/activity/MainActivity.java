@@ -20,6 +20,7 @@ import com.facebook.appevents.AppEventsLogger;
 import io.unisong.android.MediaService;
 import io.unisong.android.MyApplication;
 import io.unisong.android.PrefUtils;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.http.HttpClient;
 
@@ -54,13 +55,12 @@ public class MainActivity extends AppCompatActivity {
 
 
         if(!hasStarted) {
-
+            AudioStatePublisher publisher = new AudioStatePublisher();
             //Start MediaService
-            Intent ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
-            bindService(ServiceIntent, mMediaConnection, Context.BIND_AUTO_CREATE);
-            ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
+            Intent ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
             bindService(ServiceIntent, mNetworkConnection, Context.BIND_AUTO_CREATE);
-
+            ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
+            bindService(ServiceIntent, mMediaConnection, Context.BIND_AUTO_CREATE);
 
             mIntent.putExtra("has-started"  , true);
         }

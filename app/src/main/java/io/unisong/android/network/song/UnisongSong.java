@@ -50,7 +50,7 @@ public class UnisongSong extends Song {
             Log.d(LOG_TAG, mFormat.toString());
         }
 
-        mSongID = object.getInt("songID");
+        songID = object.getInt("songID");
         mSessionID = object.getInt("sessionID");
 
     }
@@ -84,7 +84,7 @@ public class UnisongSong extends Song {
     }
 
     public String getImageURL(){
-        return NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/song/" + mSongID +"/picture";
+        return NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/song/" + songID +"/picture";
     }
     /**
      * Starts the decoding of the song.
@@ -127,7 +127,7 @@ public class UnisongSong extends Song {
             if(getFormat() != null)
                 object.put("format", getFormat().toJSON());
             object.put("type" , TYPE_STRING);
-            object.put("songID" , mSongID);
+            object.put("songID" , songID);
             object.put("sessionID" , mSessionID);
 
         } catch (JSONException e){

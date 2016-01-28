@@ -9,14 +9,14 @@ import io.unisong.android.activity.ActiveSessionsAdapter;
  */
 public class ConnectionUtils {
 
-    private static ConnectionUtils sInstance;
+    private static ConnectionUtils instance;
 
     public static ConnectionUtils getInstance(){
-        return sInstance;
+        return instance;
     }
 
     public static void setInstance(ConnectionUtils utils){
-        sInstance = utils;
+        instance = utils;
     }
 
     private Handler mHandler;

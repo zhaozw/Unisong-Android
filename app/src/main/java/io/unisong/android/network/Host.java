@@ -11,50 +11,50 @@ import java.util.ArrayList;
  */
 public class Host implements Serializable{
 
-    private int mPort;
-    private String mPhoneNumber;
-    private InetAddress mIP;
-    private DatagramSocket mSocket;
+    private int port;
+    private String phoneNumber;
+    private InetAddress ip;
+    private DatagramSocket socket;
 
     //The packets that are received while deciding which master to use
-    private ArrayList<DatagramPacket> mPackets;
+    private ArrayList<DatagramPacket> packets;
 
     public Host(int port, String number, InetAddress IP){
-        mPort = port;
-        mPhoneNumber = number;
-        mIP = IP;
-        mPackets = new ArrayList<DatagramPacket>();
+        this.port = port;
+        phoneNumber = number;
+        ip = IP;
+        packets = new ArrayList<DatagramPacket>();
     }
 
     public void addPacket(DatagramPacket packet){
-        mPackets.add(packet);
+        packets.add(packet);
     }
 
     public ArrayList<DatagramPacket> getPackets(){
-        return mPackets;
+        return packets;
     }
 
     public int getPort(){
-        return mPort;
+        return port;
     }
 
     public void setSocket(DatagramSocket socket){
-        mSocket = socket;
+        this.socket = socket;
     }
 
     public void closeSocket(){
-        mSocket.close();
+        socket.close();
     }
 
     public String getPhoneNumber(){
-        return mPhoneNumber;
+        return phoneNumber;
     }
 
     public InetAddress getIP(){
-        return mIP;
+        return ip;
     }
 
     public DatagramSocket getSocket(){
-        return mSocket;
+        return socket;
     }
 }

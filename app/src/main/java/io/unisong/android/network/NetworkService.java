@@ -23,10 +23,10 @@ public class NetworkService extends Service {
     private final static String LOG_TAG = NetworkService.class.getSimpleName();
     private IBinder mBinder = new NetworkServiceBinder();
 
-    private Listener mListener;
-    private Broadcaster mBroadcaster;
-    private DiscoveryHandler mDiscoveryHandler;
-    private HttpClient mClient;
+    private Listener listener;
+    private Broadcaster broadcaster;
+    private DiscoveryHandler discoveryHandler;
+    private HttpClient client;
     private SocketIOClient mSocketIO;
 
 //    private UtpServer mUtpServer = new UtpServer();
@@ -41,10 +41,10 @@ public class NetworkService extends Service {
 
         Log.d(LOG_TAG, "Creating NetworkService");
 
-        mClient = HttpClient.getInstance();
-        if(mClient == null) {
-            mClient = new HttpClient(getApplicationContext());
-            mClient.checkIfLoggedIn();
+        client = HttpClient.getInstance();
+        if(client == null) {
+            client = new HttpClient(getApplicationContext());
+            client.checkIfLoggedIn();
         }
 
         // TODO : only keep us connected when A: the user is using the app
@@ -56,7 +56,7 @@ public class NetworkService extends Service {
         ConnectionUtils utils = new ConnectionUtils();
         ConnectionUtils.setInstance(utils);
 
-        mDiscoveryHandler = new DiscoveryHandler();
+        discoveryHandler = new DiscoveryHandler();
 
     }
 
@@ -80,19 +80,19 @@ public class NetworkService extends Service {
     public void onDestroy(){
         super.onDestroy();
 
-        if(mBroadcaster != null){
-            mBroadcaster.destroy();
-            mBroadcaster = null;
+        if(broadcaster != null){
+            broadcaster.destroy();
+            broadcaster = null;
         }
 
-        if(mListener != null){
-            mListener.destroy();
-            mListener = null;
+        if(listener != null){
+            listener.destroy();
+            listener = null;
         }
 
-        if(mDiscoveryHandler != null){
-            mDiscoveryHandler.destroy();
-            mDiscoveryHandler = null;
+        if(discoveryHandler != null){
+            discoveryHandler.destroy();
+            discoveryHandler = null;
         }
         mTimeManager = null;
     }

@@ -12,7 +12,7 @@ public class SessionUtils {
 
     private final static String LOG_TAG = SessionUtils.class.getSimpleName();
 
-    private static List<UnisongSession> sSessions = new ArrayList<>();
+    private static List<UnisongSession> sessions = new ArrayList<>();
 
     /**
      * Retrieves the session with the selected ID if it exists,
@@ -23,9 +23,9 @@ public class SessionUtils {
     public static UnisongSession getSessionByID(int sessionID){
 
         UnisongSession session;
-        synchronized (sSessions) {
+        synchronized (sessions) {
             // check to see if we have the session
-            for (UnisongSession sess : sSessions) {
+            for (UnisongSession sess : sessions) {
                 if (sess.getSessionID() == sessionID) {
                     return sess;
                 }
@@ -34,28 +34,28 @@ public class SessionUtils {
             Log.d(LOG_TAG, "No session with ID #" + sessionID + " found. Creating a new one.");
 
             session = new UnisongSession(sessionID);
-            sSessions.add(session);
+            sessions.add(session);
 
         }
         return session;
     }
 
     /**
-     * Remove the session with the selected ID from sSessions
+     * Remove the session with the selected ID from sessions
      * @param sessionID
      */
     public static void removeSession(int sessionID){
 
-        synchronized (sSessions) {
+        synchronized (sessions) {
             UnisongSession toRemove = null;
-            for (UnisongSession session : sSessions) {
+            for (UnisongSession session : sessions) {
                 if (session.getSessionID() == sessionID) {
                     toRemove = session;
                 }
             }
 
             if (toRemove != null)
-                sSessions.remove(toRemove);
+                sessions.remove(toRemove);
         }
     }
 }

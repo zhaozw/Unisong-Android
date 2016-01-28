@@ -80,29 +80,31 @@ public class AudioStatePublisher {
     }
 
     public void update(int state){
-        //Set the state
-        if(state == RESUME || state == SEEK ){
-            mState = PLAYING;
-        } else {
-            mState = state;
-        }
-
-        if(state == PAUSED && mResumeTime != 0){
-            // If I put this into the constructor it causes a loop of instantiation between
-            // AudioTrackManager and this class due to their dual singleton design pattern.
-            if(mManager == null){
-                mManager = AudioTrackManager.getInstance();
+        synchronized (mObservers) {
+            //Set the state
+            if (state == RESUME || state == SEEK) {
+                mState = PLAYING;
+            } else {
+                mState = state;
             }
-            mResumeTime = mManager.getLastFrameTime();
-        }
 
-        // set the songStartTime first
-        if(mBroadcaster != null){
-            mBroadcaster.update(state);
-            mObservers.remove(mObservers.indexOf(mBroadcaster));
-        }
+            if (state == PAUSED && mResumeTime != 0) {
+                // If I put this into the constructor it causes a loop of instantiation between
+                // AudioTrackManager and this class due to their dual singleton design pattern.
+                if (mManager == null) {
+                    mManager = AudioTrackManager.getInstance();
+                }
+                mResumeTime = mManager.getLastFrameTime();
+            }
 
-        notifyObservers(state);
+            // set the songStartTime first
+            if (mBroadcaster != null) {
+                mBroadcaster.update(state);
+                mObservers.remove(mObservers.indexOf(mBroadcaster));
+            }
+
+            notifyObservers(state);
+        }
     }
 
     public void notifyObservers(int state){

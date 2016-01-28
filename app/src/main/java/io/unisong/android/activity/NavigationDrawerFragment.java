@@ -43,13 +43,13 @@ public class NavigationDrawerFragment extends Fragment {
     private static final String ARG_PARAM2 = "param2";
 
     // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private String param1;
+    private String param2;
 
-    private OnFragmentInteractionListener mListener;
+    private OnFragmentInteractionListener listener;
 
-    private ActionBarDrawerToggle mDrawerToggle;
-    private DrawerLayout mDrawerLayout;
+    private ActionBarDrawerToggle drawerToggle;
+    private DrawerLayout drawerLayout;
 
     private boolean mUserLearnedDrawer;
     private boolean mFromSavedInstanceState;
@@ -57,9 +57,9 @@ public class NavigationDrawerFragment extends Fragment {
 
     private View mContainerView;
 
-    private RecyclerView mRecyclerView;
+    private RecyclerView recyclerView;
 
-    private DrawerAdapter mAdapter;
+    private DrawerAdapter adapter;
 
     /**
      * Use this factory method to create a new instance of
@@ -87,8 +87,8 @@ public class NavigationDrawerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            param1 = getArguments().getString(ARG_PARAM1);
+            param2 = getArguments().getString(ARG_PARAM2);
         }
 
         mUserLearnedDrawer = Boolean.getBoolean(readFromPreferences(getActivity() , KEY_USER_LEARNED_DRAWER , "false"));
@@ -105,7 +105,7 @@ public class NavigationDrawerFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View layout = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
-        mRecyclerView = (RecyclerView) layout.findViewById(R.id.drawerList);
+        recyclerView = (RecyclerView) layout.findViewById(R.id.drawerList);
 
         List<DrawerInformation> info = new ArrayList<>();
         String[] drawerText = getResources().getStringArray(R.array.drawer_text);
@@ -115,23 +115,23 @@ public class NavigationDrawerFragment extends Fragment {
             info.add(new DrawerInformation(drawerIcons[i] , drawerText[i]));
         }
 
-        mAdapter = new DrawerAdapter(getActivity() , info);
+        adapter = new DrawerAdapter(getActivity() , info);
 
         /*
         mProfilePictureView = (CircleImageView) getView().findViewById(R.id.drawer_profile_picture);
         mProfilePictureView.setImageBitmap(CurrentUser.getInstance().getUser().getProfilePicture());
         */
 
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         return layout;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
+        if (listener != null) {
+            listener.onFragmentInteraction(uri);
         }
     }
 
@@ -139,7 +139,7 @@ public class NavigationDrawerFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            listener = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
@@ -149,7 +149,7 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
+        listener = null;
     }
 
     /**
@@ -171,8 +171,8 @@ public class NavigationDrawerFragment extends Fragment {
 
         mContainerView = getActivity().findViewById(fragmentID);
 
-        mDrawerLayout = drawerLayout;
-        mDrawerToggle = new ActionBarDrawerToggle(getActivity() , drawerLayout , toolbar , R.string.drawer_open , R.string.drawer_close){
+        this.drawerLayout = drawerLayout;
+        drawerToggle = new ActionBarDrawerToggle(getActivity() , drawerLayout , toolbar , R.string.drawer_open , R.string.drawer_close){
 
             @Override
             public void onDrawerOpened(View drawerView){
@@ -188,13 +188,13 @@ public class NavigationDrawerFragment extends Fragment {
                 getActivity().invalidateOptionsMenu();
             }
         };
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        this.drawerLayout.setDrawerListener(drawerToggle);
 
 
-        mDrawerLayout.post(new Runnable() {
+        this.drawerLayout.post(new Runnable() {
             @Override
             public void run() {
-                mDrawerToggle.syncState();
+                drawerToggle.syncState();
             }
         });
     }

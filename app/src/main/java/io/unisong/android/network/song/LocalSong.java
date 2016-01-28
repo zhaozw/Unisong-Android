@@ -29,13 +29,13 @@ public class LocalSong extends Song {
     private final static String LOG_TAG = LocalSong.class.getSimpleName();
 
     public final static String TYPE_STRING = "LocalSong";
-    private String mPath;
-    private FileDecoder mDecoder;
-    private AACEncoder mEncoder;
-    private SongFormat mFormat;
-    private int mSessionID;
-    private long mSongStartTime;
-    private boolean mStarted;
+    private String path;
+    private FileDecoder decoder;
+    private AACEncoder encoder;
+    private SongFormat format;
+    private int sessionID;
+    private long songStartTime;
+    private boolean started;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -49,16 +49,16 @@ public class LocalSong extends Song {
 
         UISong uiSong = MusicDataManager.getInstance().getSongByJSON(songJSON);
 
-        mPath = uiSong.getPath();
-        mStarted = false;
-        mSessionID = songJSON.getInt("sessionID");
-        Log.d(LOG_TAG, "LocalSong created from JSON, songID is : " + mSongID);
+        path = uiSong.getPath();
+        started = false;
+        sessionID = songJSON.getInt("sessionID");
+        Log.d(LOG_TAG, "LocalSong created from JSON, songID is : " + songID);
         Log.d(LOG_TAG , "SongID :" + songJSON.getInt("songID"));
 
         if(songJSON.has("format")) {
-            mFormat = new SongFormat(songJSON.getJSONObject("format"));
+            format = new SongFormat(songJSON.getJSONObject("format"));
         } else {
-            mFormat = new SongFormat(mPath);
+            format = new SongFormat(path);
         }
     }
 
@@ -70,19 +70,19 @@ public class LocalSong extends Song {
         super(uiSong.getName() , uiSong.getArtist() , uiSong.getImageURL());
         try {
             UnisongSession session = UnisongSession.getCurrentSession();
-            mSessionID = session.getSessionID();
-            mSongID = session.incrementNewSongID();
+            sessionID = session.getSessionID();
+            songID = session.incrementNewSongID();
         } catch (NullPointerException e){
             e.printStackTrace();
             // this will call if the session is either improperly initialized or not at all.
         }
-        mPath = uiSong.getPath();
-        mFormat = new SongFormat(mPath);
+        path = uiSong.getPath();
+        format = new SongFormat(path);
         uploadPicture();
     }
 
     public void setFormat(MediaFormat format){
-        mFormat = new SongFormat(format);
+        this.format = new SongFormat(format);
 
         SocketIOClient client = SocketIOClient.getInstance();
 
@@ -92,8 +92,8 @@ public class LocalSong extends Song {
 
 
     public long getDuration(){
-        if(mFormat != null)
-            return mFormat.getDuration();
+        if(format != null)
+            return format.getDuration();
         return -1l;
     }
 
@@ -102,7 +102,7 @@ public class LocalSong extends Song {
         if(mImageURL != null)
             return mImageURL;
 
-        return NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/songID/" + mSongID + "/picture";
+        return NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/songID/" + songID + "/picture";
     }
 
     /**
@@ -111,7 +111,7 @@ public class LocalSong extends Song {
      * @return
      */
     public AudioFrame getFrame(int ID) {
-        return mEncoder.getFrame(ID);
+        return encoder.getFrame(ID);
     }
 
     /**
@@ -121,52 +121,52 @@ public class LocalSong extends Song {
      */
     @Override
     public AudioFrame getPCMFrame(int ID) {
-        return mDecoder.getFrame(ID);
+        return decoder.getFrame(ID);
     }
 
     /**
      * Begins the PCM decoding and AAC encoding.
      */
     public void start(){
-        if(!mStarted) {
-            mEncoder = new AACEncoder();
-            mEncoder.setSong(this);
-            mDecoder = new FileDecoder(mPath);
+        if(!started) {
+            encoder = new AACEncoder();
+            encoder.setSong(this);
+            decoder = new FileDecoder(path);
 
-            mSongStartTime = TimeManager.getInstance().getSongStartTime();
-            mDecoder.startDecode();
-            mEncoder.encode(0, super.getID(), mPath);
-            mStarted = true;
+            songStartTime = TimeManager.getInstance().getSongStartTime();
+            decoder.startDecode();
+            encoder.encode(0, super.getID(), path);
+            started = true;
         }
     }
 
     public boolean hasFrame(int ID){
-        if(mEncoder == null)
+        if(encoder == null)
             return false;
 
-        return mEncoder.hasFrame(ID);
+        return encoder.hasFrame(ID);
     }
 
     public boolean hasPCMFrame(int ID){
-        if(mDecoder == null)
+        if(decoder == null)
             return false;
 
-        return mDecoder.hasFrame(ID);
+        return decoder.hasFrame(ID);
     }
 
     public void seek(long seekTime){
-        mDecoder.seek(seekTime);
-        mEncoder.seek(seekTime);
+        decoder.seek(seekTime);
+        encoder.seek(seekTime);
     }
 
     @Override
     public Map<Integer, AudioFrame> getPCMFrames() {
-        return mDecoder.getFrames();
+        return decoder.getFrames();
     }
 
     @Override
     public SongFormat getFormat() {
-        return mFormat;
+        return format;
     }
 
     @Override
@@ -181,11 +181,11 @@ public class LocalSong extends Song {
         try {
             object.put("name" , getName());
             object.put("artist" , getArtist());
-            object.put("sessionID" , mSessionID);
-            object.put("songID" , mSongID);
+            object.put("sessionID" , sessionID);
+            object.put("songID" , songID);
 
-            if(mSongStartTime != 0l)
-                object.put("songStartTime" , mSongStartTime);
+            if(songStartTime != 0l)
+                object.put("songStartTime" , songStartTime);
 
             if(getFormat() != null)
                 object.put("format", getFormat().toJSON());

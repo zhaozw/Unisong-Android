@@ -23,12 +23,12 @@ public class SessionMembers {
 
     private final static String LOG_TAG = SessionMembers.class.getSimpleName();
 
-    private List<User> mMembers;
-    private SessionMembersAdapter.IncomingHandler mHandler;
+    private List<User> members;
+    private SessionMembersAdapter.IncomingHandler handler;
 
 
     public SessionMembers(){
-        mMembers = new ArrayList<>();
+        members = new ArrayList<>();
     }
 
     public SessionMembers(JSONArray members){
@@ -36,7 +36,7 @@ public class SessionMembers {
 
         try {
             for (int i = 0; i < members.length(); i++) {
-                mMembers.add(UserUtils.getUser(members.getString(i)));
+                this.members.add(UserUtils.getUser(members.getString(i)));
             }
         } catch (JSONException e){
             e.printStackTrace();
@@ -45,27 +45,27 @@ public class SessionMembers {
     }
 
     public void add(User user){
-        if(mMembers.indexOf(user) != -1)
+        if(members.indexOf(user) != -1)
             return;
 
-        mMembers.add(user);
-        sendAdd(mMembers.indexOf(user) , user);
+        members.add(user);
+        sendAdd(members.indexOf(user) , user);
 
     }
 
     public void remove(User user){
-        int index = mMembers.indexOf(user);
+        int index = members.indexOf(user);
 
         if(index == -1)
             return;
 
-        sendRemove(mMembers.indexOf(user));
-        mMembers.remove(user);
+        sendRemove(members.indexOf(user));
+        members.remove(user);
 
     }
 
     public List<User> getList(){
-        return mMembers;
+        return members;
     }
 
     public void update(JSONArray array){
@@ -73,8 +73,8 @@ public class SessionMembers {
             for (int i = 0; i < array.length(); i++) {
                 User user = UserUtils.getUser(array.getString(i));
 
-                if(mMembers.indexOf(user) == -1){
-                    mMembers.add(user);
+                if(members.indexOf(user) == -1){
+                    members.add(user);
                 }
             }
         } catch (JSONException e){
@@ -83,7 +83,7 @@ public class SessionMembers {
     }
 
     public void registerHandler(SessionMembersAdapter.IncomingHandler handler){
-        mHandler = handler;
+        this.handler = handler;
     }
 
     /**
@@ -92,7 +92,7 @@ public class SessionMembers {
      * @param user
      */
     private void sendAdd(int position, User user){
-        if(mHandler == null)
+        if(handler == null)
             return;
 
         Message message = new Message();
@@ -101,7 +101,7 @@ public class SessionMembers {
         message.arg1 = position;
         message.obj = user;
 
-        mHandler.sendMessage(message);
+        handler.sendMessage(message);
     }
 
     /**
@@ -109,7 +109,7 @@ public class SessionMembers {
      * @param position
      */
     private void sendRemove(int position){
-        if(mHandler == null)
+        if(handler == null)
             return;
 
         Message message = new Message();
@@ -117,7 +117,7 @@ public class SessionMembers {
         message.what = SessionMembersAdapter.REMOVE;
         message.arg1 = position;
 
-        mHandler.sendMessage(message);
+        handler.sendMessage(message);
     }
 
 
@@ -127,6 +127,6 @@ public class SessionMembers {
      * @return
      */
     public boolean contains(User user){
-        return mMembers.contains(user);
+        return members.contains(user);
     }
 }

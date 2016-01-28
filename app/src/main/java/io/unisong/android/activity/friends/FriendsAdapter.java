@@ -26,9 +26,9 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
     private final static String LOG_TAG = FriendsAdapter.class.getSimpleName();
 
-    private List<User> mDataset;
+    private List<User> dataset;
 
-    private Handler mHandler;
+    private Handler handler;
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
@@ -50,26 +50,26 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     }
 
     public void add(int position, User user) {
-        mDataset.add(position, user);
+        dataset.add(position, user);
         notifyItemInserted(position);
     }
 
     public void remove(User user) {
-        int position = mDataset.indexOf(user);
-        mDataset.remove(position);
+        int position = dataset.indexOf(user);
+        dataset.remove(position);
         notifyItemRemoved(position);
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public FriendsAdapter(List<User> myDataset) {
-        mDataset = myDataset;
+        dataset = myDataset;
     }
 
     // Create new views (invoked by the layout manager)
     @Override
     public FriendsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                    int viewType) {
-        mHandler = new Handler();
+        handler = new Handler();
         // create a new view
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.friend_row, parent, false);
         // set the view's size, margins, paddings and layout parameters
@@ -83,7 +83,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
 
-        User user = mDataset.get(position);
+        User user = dataset.get(position);
 
         holder.friendLayout.setTag(user.getUUID());
         holder.profileView.setTag(user.getUUID());
@@ -91,8 +91,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         holder.nameView.setTag(user.getUUID());
         if(user.getName() != null && user.getUsername() != null) {
             Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
-            holder.nameView.setText(mDataset.get(position).getName());
-            holder.usernameView.setText("@" + mDataset.get(position).getUsername());
+            holder.nameView.setText(dataset.get(position).getName());
+            holder.usernameView.setText("@" + dataset.get(position).getUsername());
         } else {
             new LoadUserProfile(holder, user).execute();
         }
@@ -102,18 +102,18 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mDataset.size();
+        return dataset.size();
     }
 
     private class LoadUserProfile extends AsyncTask<Void , Void, Void> {
 
 
-        private ViewHolder mHolder;
-        private User mUser;
+        private ViewHolder holder;
+        private User user;
 
         public LoadUserProfile(ViewHolder holder, User user){
-            mHolder = holder;
-            mUser = user;
+            this.holder = holder;
+            this.user = user;
         }
 
         @Override
@@ -127,7 +127,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
                 }
             }
 
-            while(mUser.getName() == null || mUser.getUsername() == null){
+            while(user.getName() == null || user.getUsername() == null){
 
                 synchronized (this){
                     try {
@@ -144,15 +144,15 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         @Override
         protected void onPostExecute(Void nullObj) {
             try {
-                Picasso.with(mHolder.profileView.getContext())
-                        .load(mUser.getProfileURL())
-                        .into((ImageView) mHolder.profileView.findViewById(R.id.friend_image));
+                Picasso.with(holder.profileView.getContext())
+                        .load(user.getProfileURL())
+                        .into((ImageView) holder.profileView.findViewById(R.id.friend_image));
 
                 Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
-                TextView name = (TextView) mHolder.profileView.findViewById(R.id.current_user_name);
-                Log.d(LOG_TAG, "mUser: " + mUser.toString());
+                TextView name = (TextView) holder.profileView.findViewById(R.id.current_user_name);
+                Log.d(LOG_TAG, "user: " + user.toString());
 
-                String usersName = mUser.getName();
+                String usersName = user.getName();
 
                 Log.d(LOG_TAG, usersName);
 
@@ -165,10 +165,10 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
                 }
 
 
-                TextView username = (TextView) mHolder.profileView.findViewById(R.id.current_user_username);
+                TextView username = (TextView) holder.profileView.findViewById(R.id.current_user_username);
 
                 if(username != null)
-                    username.setText("@" + mUser.getUsername());
+                    username.setText("@" + user.getUsername());
             } catch (NullPointerException e){
                 e.printStackTrace();
             }

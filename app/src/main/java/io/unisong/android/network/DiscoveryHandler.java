@@ -13,26 +13,26 @@ import java.net.SocketException;
  */
 public class DiscoveryHandler {
 
-    private static DiscoveryHandler sInstance;
+    private static DiscoveryHandler instance;
 
     public static DiscoveryHandler getInstance(){
-        return sInstance;
+        return instance;
     }
 
     public static void setInstance(DiscoveryHandler handler){
-        sInstance = handler;
+        instance = handler;
     }
 
     private ConnectionUtils mConnection;
     private final static String LOG_TAG = DiscoveryHandler.class.getSimpleName();
-    private DatagramSocket mSocket;
+    private DatagramSocket socket;
     private Handler mHandler;
-    private boolean mStop = false;
+    private boolean stop = false;
 
     public DiscoveryHandler(){
         try {
-            mSocket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT);
-            mSocket.setBroadcast(true);
+            socket = new DatagramSocket(CONSTANTS.DISCOVERY_PORT);
+            socket.setBroadcast(true);
         } catch (SocketException e){
             e.printStackTrace();
             Log.d(LOG_TAG, "Creating discovery socket failed!");
@@ -45,11 +45,11 @@ public class DiscoveryHandler {
         return new Thread(new Runnable() {
             @Override
             public void run() {
-                while(!mStop) {
+                while(!stop) {
                     sendDiscoveryPacket();
                     listenForDiscoveryPackets();
                     // TODO : implement this stuff
-                    mStop = true;
+                    stop = true;
                 }
             }
         });
@@ -64,7 +64,7 @@ public class DiscoveryHandler {
     }
 
     public void destroy(){
-        mStop = true;
+        stop = true;
 
     }
 

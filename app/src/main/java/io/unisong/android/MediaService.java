@@ -40,8 +40,11 @@ public class MediaService extends Service{
         super.onCreate();
         Log.d(LOG_TAG, "Starting MediaService");
 
+        mAudioStatePublisher = AudioStatePublisher.getInstance();
+
+        if(mAudioStatePublisher == null)
+            mAudioStatePublisher = new AudioStatePublisher();
         // Create AudioStatePublisher first, because many other components will try to access it
-        mAudioStatePublisher = new AudioStatePublisher();
 
         //The instanatiation of AudioTrackManager needs to be after that of TimeManager!
         // TODO : fix above bug

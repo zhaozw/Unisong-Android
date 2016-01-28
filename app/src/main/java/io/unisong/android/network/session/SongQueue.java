@@ -29,9 +29,9 @@ public class SongQueue {
     private static final String LOG_TAG = SongQueue.class.getSimpleName();
 
     private HttpClient mClient;
-    private List<Song> mSongQueue;
-    private SessionSongsAdapter.IncomingHandler mHandler;
-    private UnisongSession mParentSession;
+    private List<Song> songQueue;
+    private SessionSongsAdapter.IncomingHandler handler;
+    private UnisongSession parentSession;
     private SocketIOClient mSocketIOClient;
     private AudioStatePublisher mPublisher;
     private Handler mQueueHandler;
@@ -39,8 +39,8 @@ public class SongQueue {
     public SongQueue(UnisongSession session){
         mClient = HttpClient.getInstance();
         mSocketIOClient = SocketIOClient.getInstance();
-        mSongQueue = new ArrayList<>();
-        mParentSession = session;
+        songQueue = new ArrayList<>();
+        parentSession = session;
         mPublisher = AudioStatePublisher.getInstance();
         mQueueHandler = new Handler();
     }
@@ -51,22 +51,22 @@ public class SongQueue {
      */
 
     public void addSong(Song song){
-        if(mSongQueue.indexOf(song) == -1)
-            addSong(mSongQueue.size(), song);
+        if(songQueue.indexOf(song) == -1)
+            addSong(songQueue.size(), song);
 
-        if(mSongQueue.size() == 1)
-            mPublisher.attach(mSongQueue.get(0));
+        if(songQueue.size() == 1)
+            mPublisher.attach(songQueue.get(0));
     }
 
     // Adds a song and notifies the adapter
     public void addSong(int position, Song song){
 
-        if(position == 0 && mSongQueue.size() > 0){
-            mPublisher.detach(mSongQueue.get(0));
+        if(position == 0 && songQueue.size() > 0){
+            mPublisher.detach(songQueue.get(0));
             mPublisher.attach(song);
         }
 
-        mSongQueue.add(position, song);
+        songQueue.add(position, song);
 
         sendAdd(position, song);
 
@@ -74,14 +74,14 @@ public class SongQueue {
 
     public void deleteSong(int songID){
         Song songToRemove = null;
-        for(Song song : mSongQueue){
+        for(Song song : songQueue){
             if(song.getID() == songID){
                 songToRemove = song;
             }
         }
 
         if(songToRemove != null) {
-            remove(mSongQueue.indexOf(songToRemove), false);
+            remove(songQueue.indexOf(songToRemove), false);
         }
     }
 
@@ -90,7 +90,7 @@ public class SongQueue {
     }
 
     public List<Song> getQueue(){
-        return mSongQueue;
+        return songQueue;
     }
 
     /**
@@ -103,21 +103,21 @@ public class SongQueue {
         if(position == -1)
             return;
 
-        Song songToRemove = mSongQueue.get(position);
+        Song songToRemove = songQueue.get(position);
 
         if(songToRemove != null) {
-            mSongQueue.remove(songToRemove);
+            songQueue.remove(songToRemove);
 
             sendRemove(position);
 
-            if(mParentSession.isMaster() && fromUI)
-                mParentSession.deleteSong(songToRemove.getID());
+            if(parentSession.isMaster() && fromUI)
+                parentSession.deleteSong(songToRemove.getID());
         }
 
     }
 
     public Song getSong(int songID){
-        for(Song song : mSongQueue){
+        for(Song song : songQueue){
             if(song.getID() == songID){
                 return song;
             }
@@ -126,7 +126,7 @@ public class SongQueue {
     }
 
     public int size(){
-        return mSongQueue.size();
+        return songQueue.size();
     }
 
     /**
@@ -141,22 +141,26 @@ public class SongQueue {
         Log.d(LOG_TAG, songArray.toString());
         MusicDataManager manager = MusicDataManager.getInstance();
         if(manager.isDoneLoading()){
-            mQueueHandler.post(parse);
+            Log.d(LOG_TAG , "MusicDataManager loaded, parsing update");
+            parseUpdate(songArray, queue);
         } else {
-            mSongArray = songArray;
-            mQueue = queue;
+            Log.d(LOG_TAG , "Not Loaded! Delaying");
+            this.songArray = songArray;
+            this.queue = queue;
             mQueueHandler.postDelayed(this::checkMusicLoadingStatus , 100);
         }
 
     }
 
     // temp variables for waiting for MusicDataManager to load
-    private JSONArray mSongArray;
-    private JSONArray mQueue;
+    private JSONArray songArray;
+    private JSONArray queue;
     private void checkMusicLoadingStatus(){
         if(MusicDataManager.getInstance().isDoneLoading()){
-            parseUpdate(mSongArray , mQueue);
+            parseUpdate(songArray, queue);
+            Log.d(LOG_TAG , "Parsing update!");
         } else {
+            Log.d(LOG_TAG , "MusicDataManager not loaded, waiting");
             mQueueHandler.postDelayed(this::checkMusicLoadingStatus , 100);
         }
     }
@@ -164,12 +168,13 @@ public class SongQueue {
     private void parseUpdate(JSONArray songArray , JSONArray queue){
         try {
             for (int i = 0; i < songArray.length(); i++) {
+                Log.d(LOG_TAG , "Creating song with index i : " + i);
                 JSONObject songJSON = songArray.getJSONObject(i);
                 int ID = songArray.getJSONObject(i).getInt("songID");
 
                 Song song = getSong(ID);
                 if(song == null){
-                    if(mParentSession.isMaster()) {
+                    if(parentSession.isMaster()) {
                         LocalSong newSong = new LocalSong(songJSON);
                         addSong(newSong);
                     } else {
@@ -191,7 +196,7 @@ public class SongQueue {
                     orderedList.add(0 , song);
             }
 
-            mSongQueue = orderedList;
+            songQueue = orderedList;
 
             sendChanged();
 
@@ -199,8 +204,8 @@ public class SongQueue {
             e.printStackTrace();
         }
 
-        mSongArray = null;
-        mQueue = null;
+        this.songArray = null;
+        this.queue = null;
     }
     /**
      * Waits for MusicDataManager to load.
@@ -225,32 +230,32 @@ public class SongQueue {
     }
 
     public void registerHandler(SessionSongsAdapter.IncomingHandler handler){
-        mHandler = handler;
+        this.handler = handler;
     }
 
     public Song getCurrentSong(){
-        if(mSongQueue.size () == 0)
+        if(songQueue.size () == 0)
             return null;
 
-        return mSongQueue.get(0);
+        return songQueue.get(0);
     }
 
     public void move(int fromPosition, int toPosition){
-        Song song = mSongQueue.get(fromPosition);
-        mSongQueue.remove(fromPosition);
-        mSongQueue.add(toPosition, song);
+        Song song = songQueue.get(fromPosition);
+        songQueue.remove(fromPosition);
+        songQueue.add(toPosition, song);
 
         if(fromPosition == 0 || toPosition == 0)
-            mParentSession.updateCurrentSong();
+            parentSession.updateCurrentSong();
 
-        mParentSession.sendUpdate();
+        parentSession.sendUpdate();
     }
 
     public JSONArray getJSONQueue(){
         JSONArray array = new JSONArray();
 
-        for(int i = 0; i < mSongQueue.size(); i++){
-            array.put(mSongQueue.get(i).getID());
+        for(int i = 0; i < songQueue.size(); i++){
+            array.put(songQueue.get(i).getID());
         }
 
         return array;
@@ -259,8 +264,8 @@ public class SongQueue {
     public JSONArray getSongsJSON(){
         JSONArray array = new JSONArray();
 
-        for(int i = 0; i < mSongQueue.size(); i++){
-            array.put(mSongQueue.get(i).toJSON());
+        for(int i = 0; i < songQueue.size(); i++){
+            array.put(songQueue.get(i).toJSON());
         }
 
         return array;
@@ -286,8 +291,9 @@ public class SongQueue {
             }
         }
     };
+
     private void sendAdd(int position, Song song){
-        if(mHandler == null)
+        if(handler == null)
             return;
 
         Message message = new Message();
@@ -296,11 +302,11 @@ public class SongQueue {
         message.arg1 = position;
         message.obj = song;
 
-        mHandler.sendMessage(message);
+        handler.sendMessage(message);
     }
 
     private void sendRemove(int position){
-        if(mHandler == null)
+        if(handler == null)
             return;
 
         Message message = new Message();
@@ -308,23 +314,22 @@ public class SongQueue {
         message.what = SessionSongsAdapter.REMOVE;
         message.arg1 = position;
 
-        mHandler.sendMessage(message);
+        handler.sendMessage(message);
     }
 
     private void sendChanged(){
-        if(mHandler == null)
+        if(handler == null)
             return;
 
         Message message = new Message();
         message.what = SessionSongsAdapter.CHANGED;
 
-        mHandler.sendMessage(message);
+        handler.sendMessage(message);
     }
 
     public void updateSong(JSONObject object){
         try{
             int songID = object.getInt("songID");
-
 
             Song song = getSong(songID);
 
@@ -333,7 +338,7 @@ public class SongQueue {
             } else {
                 song = new UnisongSong(object);
                 addSong(song);
-                mParentSession.getUpdate();
+                parentSession.getUpdate();
             }
         } catch (JSONException e){
             e.printStackTrace();
