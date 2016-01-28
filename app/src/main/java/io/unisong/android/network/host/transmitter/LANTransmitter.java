@@ -25,7 +25,7 @@ import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 
 /**

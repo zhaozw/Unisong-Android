@@ -1,4 +1,4 @@
-package io.unisong.android.network.song;
+package io.unisong.android.audio.song;
 
 import org.json.JSONObject;
 
@@ -13,11 +13,11 @@ import io.unisong.android.audio.AudioObserver;
  */
 public abstract class Song implements AudioObserver {
     
-    protected String mName;
-    protected String mArtist;
-    protected boolean mStarted;
+    protected String name;
+    protected String artist;
+    protected boolean started;
 
-    protected String mImageURL;
+    protected String imageURL;
 
     //The # of the song
     protected int songID;
@@ -30,18 +30,18 @@ public abstract class Song implements AudioObserver {
      * @param imageURL
      */
     public Song(String name , String artist, int ID , String imageURL){
-        mName = name;
-        mArtist = artist;
-        mImageURL = imageURL;
+        this.name = name;
+        this.artist = artist;
+        this.imageURL = imageURL;
         songID = ID;
-        mStarted = false;
+        started = false;
     }
 
     public Song(String name , String artist, String imageURL){
-        mName = name;
-        mArtist = artist;
-        mImageURL = imageURL;
-        mStarted = false;
+        this.name = name;
+        this.artist = artist;
+        this.imageURL = imageURL;
+        started = false;
     }
 
     public int getID(){
@@ -49,10 +49,10 @@ public abstract class Song implements AudioObserver {
     }
 
     public String getName(){
-        return mName;
+        return name;
     }
 
-    public String getArtist(){return mArtist;}
+    public String getArtist(){return artist;}
 
     public abstract String getImageURL();
 
@@ -91,6 +91,6 @@ public abstract class Song implements AudioObserver {
     public abstract void update(JSONObject songJSON);
 
     public boolean started(){
-        return mStarted;
+        return started;
     }
 }

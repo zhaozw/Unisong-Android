@@ -29,7 +29,7 @@ import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
 import io.unisong.android.network.host.transmitter.Transmitter;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
@@ -92,7 +92,7 @@ public class UnisongSession {
         mSocketIOClient = SocketIOClient.getInstance();
 
         mSongQueue = new SongQueue(this);
-        mMembers = new SessionMembers();
+        mMembers = new SessionMembers(this);
         mIsMaster = true;
 
         mMaster = CurrentUser.getInstance().getUUID().toString();
@@ -122,7 +122,7 @@ public class UnisongSession {
         mSocketIOClient = SocketIOClient.getInstance();
 
         mSongQueue = new SongQueue(this);
-        mMembers = new SessionMembers();
+        mMembers = new SessionMembers(this);
 
         mSocketIOConfigured = false;
         getInfoFromServer();
@@ -425,7 +425,6 @@ public class UnisongSession {
 
         if(mSongQueue.size() == 1 && mIsMaster){
             Log.d(LOG_TAG, "The first song has been added, automatically playing");
-            mCurrentSong = song;
 
             // TODO : investigate if the first song should auto-play
             //startSong(song.getID());
@@ -636,11 +635,6 @@ public class UnisongSession {
         }
 
         return object;
-    }
-
-
-    public void updateCurrentSong(){
-        mCurrentSong = mSongQueue.getCurrentSong();
     }
 
 

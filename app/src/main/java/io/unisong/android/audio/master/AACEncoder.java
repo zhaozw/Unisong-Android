@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.network.song.LocalSong;
+import io.unisong.android.audio.song.LocalSong;
 
 /**
  * Takes in PCM data and encodes to AAC

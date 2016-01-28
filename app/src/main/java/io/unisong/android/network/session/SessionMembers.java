@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.unisong.android.activity.session.SessionMembersAdapter;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
 
@@ -24,24 +25,13 @@ public class SessionMembers {
     private final static String LOG_TAG = SessionMembers.class.getSimpleName();
 
     private List<User> members;
+    private UnisongSession parentSession;
     private SessionMembersAdapter.IncomingHandler handler;
 
 
-    public SessionMembers(){
+    public SessionMembers(UnisongSession session){
         members = new ArrayList<>();
-    }
-
-    public SessionMembers(JSONArray members){
-        this();
-
-        try {
-            for (int i = 0; i < members.length(); i++) {
-                this.members.add(UserUtils.getUser(members.getString(i)));
-            }
-        } catch (JSONException e){
-            e.printStackTrace();
-            Log.d(LOG_TAG, "JSONException in SessionMembers' initialization ");
-        }
+        parentSession = session;
     }
 
     public void add(User user){
@@ -49,7 +39,7 @@ public class SessionMembers {
             return;
 
         members.add(user);
-        sendAdd(members.indexOf(user) , user);
+        sendAdd(members.indexOf(user), user);
 
     }
 
@@ -80,6 +70,12 @@ public class SessionMembers {
         } catch (JSONException e){
             Log.d(LOG_TAG , "Retrieving userIDs from JSONArray failed in SessionMembers.update()");
         }
+
+        if(parentSession == UnisongSession.getCurrentSession()){
+            if(members.indexOf(CurrentUser.getInstance()) == -1)
+                members.add(CurrentUser.getInstance());
+        }
+
     }
 
     public void registerHandler(SessionMembersAdapter.IncomingHandler handler){

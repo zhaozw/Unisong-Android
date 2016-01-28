@@ -30,9 +30,6 @@ import com.afollestad.materialdialogs.Theme;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -45,7 +42,7 @@ import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
@@ -312,7 +309,7 @@ public class MainSessionActivity extends AppCompatActivity {
             Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
             return true;
         } else if(id == R.id.action_invite_friend){
-            Toast.makeText(this, "Invite a friend!", Toast.LENGTH_SHORT).show();
+            inviteFriend();
             return true;
         } else if(id == R.id.action_leave_session){
             onBackPressed();
@@ -364,7 +361,11 @@ public class MainSessionActivity extends AppCompatActivity {
         }
     }
 
-    public void onFABClick(View view){
+    public void inviteFriendClick(View view){
+        inviteFriend();
+    }
+
+    public void inviteFriend(){
         Intent intent = new Intent(getApplicationContext() , InviteMemberActivity.class);
         startActivity(intent);
     }

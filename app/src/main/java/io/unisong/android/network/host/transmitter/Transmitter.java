@@ -1,7 +1,7 @@
 package io.unisong.android.network.host.transmitter;
 
 import io.unisong.android.audio.AudioObserver;
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 
 /**
  * Created by Ethan on 5/22/2015.

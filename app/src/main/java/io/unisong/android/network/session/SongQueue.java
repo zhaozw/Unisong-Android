@@ -1,6 +1,5 @@
 package io.unisong.android.network.session;
 
-import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
@@ -10,16 +9,17 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.network.SocketIOClient;
-import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.song.LocalSong;
-import io.unisong.android.network.song.Song;
-import io.unisong.android.network.song.UnisongSong;
+import io.unisong.android.audio.song.LocalSong;
+import io.unisong.android.audio.song.Song;
+import io.unisong.android.audio.song.UnisongSong;
 
 /**
  * Created by Ethan on 9/12/2015.
@@ -28,21 +28,26 @@ public class SongQueue {
 
     private static final String LOG_TAG = SongQueue.class.getSimpleName();
 
-    private HttpClient mClient;
     private List<Song> songQueue;
     private SessionSongsAdapter.IncomingHandler handler;
     private UnisongSession parentSession;
-    private SocketIOClient mSocketIOClient;
-    private AudioStatePublisher mPublisher;
-    private Handler mQueueHandler;
+    private SocketIOClient socketIOClient;
+    private AudioStatePublisher publisher;
+    private Timer timer;
+
+    private TimerTask checkManagerStatusTask = new TimerTask() {
+        @Override
+        public void run() {
+            checkMusicLoadingStatus();
+        }
+    };
 
     public SongQueue(UnisongSession session){
-        mClient = HttpClient.getInstance();
-        mSocketIOClient = SocketIOClient.getInstance();
+        socketIOClient = SocketIOClient.getInstance();
         songQueue = new ArrayList<>();
         parentSession = session;
-        mPublisher = AudioStatePublisher.getInstance();
-        mQueueHandler = new Handler();
+        publisher = AudioStatePublisher.getInstance();
+        timer = new Timer();
     }
 
     /**
@@ -55,15 +60,15 @@ public class SongQueue {
             addSong(songQueue.size(), song);
 
         if(songQueue.size() == 1)
-            mPublisher.attach(songQueue.get(0));
+            publisher.attach(songQueue.get(0));
     }
 
     // Adds a song and notifies the adapter
     public void addSong(int position, Song song){
 
         if(position == 0 && songQueue.size() > 0){
-            mPublisher.detach(songQueue.get(0));
-            mPublisher.attach(song);
+            publisher.detach(songQueue.get(0));
+            publisher.attach(song);
         }
 
         songQueue.add(position, song);
@@ -140,17 +145,16 @@ public class SongQueue {
         // First we will update the songs
         Log.d(LOG_TAG, songArray.toString());
         MusicDataManager manager = MusicDataManager.getInstance();
-        if(manager.isDoneLoading()){
-            Log.d(LOG_TAG , "MusicDataManager loaded, parsing update");
+        // TODO : revert isLoaded to manager.isDoneLoading()
+        if( manager.isDoneLoading()){
             parseUpdate(songArray, queue);
         } else {
-            Log.d(LOG_TAG , "Not Loaded! Delaying");
             this.songArray = songArray;
             this.queue = queue;
-            mQueueHandler.postDelayed(this::checkMusicLoadingStatus , 100);
+            timer.scheduleAtFixedRate(checkManagerStatusTask, 100, 1000);
         }
-
     }
+
 
     // temp variables for waiting for MusicDataManager to load
     private JSONArray songArray;
@@ -158,14 +162,12 @@ public class SongQueue {
     private void checkMusicLoadingStatus(){
         if(MusicDataManager.getInstance().isDoneLoading()){
             parseUpdate(songArray, queue);
-            Log.d(LOG_TAG , "Parsing update!");
-        } else {
-            Log.d(LOG_TAG , "MusicDataManager not loaded, waiting");
-            mQueueHandler.postDelayed(this::checkMusicLoadingStatus , 100);
+            timer.cancel();
         }
     }
 
     private void parseUpdate(JSONArray songArray , JSONArray queue){
+        Log.d(LOG_TAG , "Parsing SongQueue data");
         try {
             for (int i = 0; i < songArray.length(); i++) {
                 Log.d(LOG_TAG , "Creating song with index i : " + i);
@@ -207,46 +209,35 @@ public class SongQueue {
         this.songArray = null;
         this.queue = null;
     }
-    /**
-     * Waits for MusicDataManager to load.
-     * @param songJSON
-     */
-
-    // TODO : replace this with a better implementation
-    private void getSongLoop(JSONObject songJSON){
-        try {
-            LocalSong newSong = new LocalSong(songJSON);
-            addSong(newSong);
-        } catch (Exception e){
-            synchronized (this){
-                try{
-                    this.wait(20);
-                } catch (InterruptedException dc){
-
-                }
-            }
-            getSongLoop(songJSON);
-        }
-    }
 
     public void registerHandler(SessionSongsAdapter.IncomingHandler handler){
         this.handler = handler;
     }
 
     public Song getCurrentSong(){
-        if(songQueue.size () == 0)
+        if(songQueue.size() == 0)
             return null;
 
         return songQueue.get(0);
     }
 
+    /**
+     * Moves a song from fromPosition to toPosition, unless we are currently playing
+     * @param fromPosition
+     * @param toPosition
+     */
     public void move(int fromPosition, int toPosition){
+        if(AudioStatePublisher.getInstance().getState() == AudioStatePublisher.PLAYING) {
+            if (toPosition == 0)
+                toPosition = 1;
+
+            if(fromPosition == 0)
+                return;
+        }
+
         Song song = songQueue.get(fromPosition);
         songQueue.remove(fromPosition);
         songQueue.add(toPosition, song);
-
-        if(fromPosition == 0 || toPosition == 0)
-            parentSession.updateCurrentSong();
 
         parentSession.sendUpdate();
     }

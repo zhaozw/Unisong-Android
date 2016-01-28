@@ -21,7 +21,7 @@ import java.util.List;
 import io.unisong.android.R;
 import io.unisong.android.network.session.SongQueue;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 
 /**
  * The fragment containing information about the SessionSongs. Displays them to the user.

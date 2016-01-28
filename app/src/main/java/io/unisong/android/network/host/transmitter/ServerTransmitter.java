@@ -15,8 +15,8 @@ import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.ntp.TimeManager;
-import io.unisong.android.network.song.Song;
-import io.unisong.android.network.song.SongFormat;
+import io.unisong.android.audio.song.Song;
+import io.unisong.android.audio.song.SongFormat;
 
 /**
  * The class to handle transmissions to the backend

@@ -48,6 +48,7 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.session.MainSessionActivity;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.session.SessionUtils;
@@ -74,8 +75,8 @@ public class UnisongActivity extends AppCompatActivity {
     private FriendsAdapter adapter;
     private FriendsList friendsList;
     private CircleImageView userProfileImageView;
-    private NetworkService networkService;
-    private MediaService mediaService;
+    private Intent networkIntent;
+    private Intent mediaIntent;
     
 
     @Override
@@ -104,10 +105,11 @@ public class UnisongActivity extends AppCompatActivity {
             if(System.currentTimeMillis() - currentTime > 1000){
 
                 if(!restartedServices) {
-                    Intent ServiceIntent = new Intent(getApplicationContext(), MediaService.class);
-                    bindService(ServiceIntent, mMediaConnection, Context.BIND_AUTO_CREATE);
-                    ServiceIntent = new Intent(getApplicationContext(), NetworkService.class);
-                    bindService(ServiceIntent, mNetworkConnection, Context.BIND_AUTO_CREATE);
+                    new AudioStatePublisher();
+                    networkIntent = new Intent(getApplicationContext(), MediaService.class);
+                    startService(networkIntent);
+                    mediaIntent = new Intent(getApplicationContext(), NetworkService.class);
+                    startService(mediaIntent);
                     currentTime = System.currentTimeMillis();
                     restartedServices = true;
                 } else {
@@ -444,13 +446,14 @@ public class UnisongActivity extends AppCompatActivity {
     protected void onDestroy(){
         super.onDestroy();
 
-        if(networkService != null)
-            networkService.onDestroy();
-        networkService = null;
+        if(networkIntent != null)
+            stopService(networkIntent);
 
-        if(mediaService != null)
-            mediaService.onDestroy();
-        mediaService = null;
+        if(mediaIntent != null)
+            stopService(mediaIntent);
+
+        networkIntent = null;
+        mediaIntent = null;
     }
 
     /**
@@ -562,36 +565,4 @@ public class UnisongActivity extends AppCompatActivity {
             }
         }
     }
-
-    private ServiceConnection mNetworkConnection = new ServiceConnection(){
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-
-            NetworkService.NetworkServiceBinder binder = (NetworkService.NetworkServiceBinder)service;
-            //get service
-            networkService = binder.getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
-
-    private ServiceConnection mMediaConnection = new ServiceConnection(){
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-
-            MediaService.MediaServiceBinder binder = (MediaService.MediaServiceBinder)service;
-            //get service
-            mediaService = binder.getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
 }

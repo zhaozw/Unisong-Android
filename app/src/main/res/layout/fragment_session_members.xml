@@ -32,7 +32,7 @@
         android:layout_above="@id/music_footer"
         fab:fab_colorNormal="@color/colorAccent"
         fab:fab_colorPressed="@color/colorAccentPressed"
-        android:onClick="onFABClick"
+        android:onClick="inviteFriendClick"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"

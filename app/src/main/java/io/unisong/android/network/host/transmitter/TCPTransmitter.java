@@ -1,6 +1,6 @@
 package io.unisong.android.network.host.transmitter;
 
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 
 /**
  * This class will handle point to point transmissions in an environment where multicast/broadcast does

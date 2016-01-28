@@ -11,7 +11,7 @@ import java.util.Map;
 
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.network.song.Song;
+import io.unisong.android.audio.song.Song;
 
 /**
  * Created by Ethan on 2/12/2015.
@@ -174,8 +174,19 @@ public class AudioTrackManager implements AudioObserver {
                 try {
                     if(firstWait) {
                         Log.d(LOG_TAG, "Waiting for frame #" + frameToPlay);
+                        Log.d(LOG_TAG , "Song has :" + song.getPCMFrames().size() + " frames");
+
+                        int top = -1;
+                        for(Integer key : song.getPCMFrames().keySet()){
+                            if(key > top)
+                                top = key;
+                        }
+
+                        Log.d(LOG_TAG , "Highest frame #" + top);
+
                         firstWait = false;
                     }
+
                     synchronized (this) {
                         this.wait(1);
                     }
@@ -198,7 +209,6 @@ public class AudioTrackManager implements AudioObserver {
                 synchronizePlayTime(System.currentTimeMillis() - UTCplayTime);
             }
 
-
             lastFrameTime = frame.getPlayTime();
             frameToPlay++;
 
@@ -209,7 +219,7 @@ public class AudioTrackManager implements AudioObserver {
         }
 
 
-        Log.d(LOG_TAG , "Write Thread done");
+        Log.d(LOG_TAG , "Write Thread done, last frame #" + frameToPlay);
         threadRunning = false;
     }
 
@@ -265,7 +275,7 @@ public class AudioTrackManager implements AudioObserver {
     }
     public void seek(long seekTime){
         seek = true;
-        frameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
+//        frameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
         Log.d(LOG_TAG , "frameToPlay is : " + frameToPlay);
     }
 
@@ -293,17 +303,20 @@ public class AudioTrackManager implements AudioObserver {
                 break;
 
             case AudioStatePublisher.RESUME:
+                Log.d(LOG_TAG , "AudioTrackManager resume received");
                 long resumeTime = audioStatePublisher.getResumeTime();
                 resume(resumeTime);
                 break;
 
             case AudioStatePublisher.PAUSED:
+                Log.d(LOG_TAG , "AudioTrackManager pause received");
                 pause();
                 break;
 
             case AudioStatePublisher.SEEK:
 //                long seekTime = audioStatePublisher.getSeekTime();
 //                seek(seekTime);
+                seek = true;
                 break;
 
             case AudioStatePublisher.PLAYING:
@@ -320,26 +333,26 @@ public class AudioTrackManager implements AudioObserver {
 
     public void resume(long resumeTime){
         this.resumeTime = resumeTime;
-        // TODO : re
-        if(!seek){
-            Map<Integer, AudioFrame> frames = song.getPCMFrames();
-            synchronized (frames){
-                Log.d(LOG_TAG, frames.size() + " ");
-                for (Map.Entry<Integer, AudioFrame> entry : frames.entrySet()) {
 
-                    long diff = entry.getValue().getPlayTime() - resumeTime;
 
-                    if (Math.abs(diff) <= 22) {
-                        frameToPlay = entry.getKey();
-                        break;
-                    }
+        Map<Integer, AudioFrame> frames = song.getPCMFrames();
+        synchronized (frames){
+            Log.d(LOG_TAG, "Decoder has " + frames.size() + " frames." );
+            for (Map.Entry<Integer, AudioFrame> entry : frames.entrySet()) {
+
+                long diff = entry.getValue().getPlayTime() - resumeTime;
+                Log.d(LOG_TAG , "Diff is : " + diff);
+                if (Math.abs(diff) <= 22) {
+                    Log.d(LOG_TAG , "Setting frameToPlay to : " + entry.getKey());
+                    frameToPlay = entry.getKey();
+                    break;
                 }
             }
-        } else {
-            Log.d(LOG_TAG , "Difference between target frame play time and now is : " + (System.currentTimeMillis() - timeManager.getAACPlayTime(frameToPlay)));
-            //TODO: Delete this comment
-//            seek = false;
+
+            // This is if we are seeking, so that the next frame to be created will be queued.
+
         }
+
 
         Log.d(LOG_TAG , "Resuming, frameToPlay is : " + frameToPlay);
 

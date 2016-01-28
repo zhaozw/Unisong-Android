@@ -361,6 +361,7 @@ public class FileDecoder implements Decoder{
     @Override
     public void seek(long seekTime) {
         mStop = true;
+        Log.d(LOG_TAG , "Stopping Thread");
         while (mRunning){
             synchronized (this){
                 try{
@@ -370,6 +371,7 @@ public class FileDecoder implements Decoder{
                 }
             }
         }
+        Log.d(LOG_TAG , "Thread stopped, starting new thread.");
         mSeekTime = seekTime;
         mDecodeThread = getDecode();
         mDecodeThread.start();

@@ -1,4 +1,4 @@
-package io.unisong.android.network.song;
+package io.unisong.android.audio.song;
 
 import android.media.MediaExtractor;
 import android.media.MediaFormat;

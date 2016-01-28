@@ -14,7 +14,7 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.Decoder;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.ntp.TimeManager;
-import io.unisong.android.network.song.SongFormat;
+import io.unisong.android.audio.song.SongFormat;
 
 /**
  * A decoder class that decodes a single song.

@@ -1,4 +1,4 @@
-package io.unisong.android.network.song;
+package io.unisong.android.audio.song;
 
 import android.util.Log;
 
@@ -21,9 +21,9 @@ public class UnisongSong extends Song {
     private final static String LOG_TAG = UnisongSong.class.getSimpleName();
     public final static String TYPE_STRING = "UnisongSong";
 
-    private int mSessionID;
-    private SongFormat mFormat;
-    private SongDecoder mSongDecoder;
+    private int sessionID;
+    private SongFormat format;
+    private SongDecoder songDecoder;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -36,9 +36,9 @@ public class UnisongSong extends Song {
      */
     public UnisongSong(String name, String artist, long duration,int ID ,  String imageURL, SongFormat inputFormat, int sessionID) {
         super(name, artist,ID ,  imageURL);
-        mFormat = inputFormat;
-        mSessionID = sessionID;
-        Log.d(LOG_TAG, mFormat.toString());
+        format = inputFormat;
+        this.sessionID = sessionID;
+        Log.d(LOG_TAG, format.toString());
     }
 
     public UnisongSong(JSONObject object) throws JSONException{
@@ -46,12 +46,12 @@ public class UnisongSong extends Song {
         super(object.getString("name"), object.getString("artist"), object.getInt("songID"), null);//object.getString("imageURL"));
 
         if(object.has("format")) {
-            mFormat = new SongFormat(object.getJSONObject("format"));
-            Log.d(LOG_TAG, mFormat.toString());
+            format = new SongFormat(object.getJSONObject("format"));
+            Log.d(LOG_TAG, format.toString());
         }
 
         songID = object.getInt("songID");
-        mSessionID = object.getInt("sessionID");
+        sessionID = object.getInt("sessionID");
 
     }
 
@@ -65,57 +65,57 @@ public class UnisongSong extends Song {
 
     @Override
     public AudioFrame getFrame(int ID) {
-        return mSongDecoder.getFrame(ID);
+        return songDecoder.getFrame(ID);
     }
 
     @Override
     public synchronized AudioFrame getPCMFrame(int ID) {
-        return mSongDecoder.getFrame(ID);
+        return songDecoder.getFrame(ID);
     }
 
     @Override
     public boolean hasFrame(int ID) {
-        return mSongDecoder.hasInputFrame(ID);
+        return songDecoder.hasInputFrame(ID);
     }
 
     @Override
     public boolean hasPCMFrame(int ID) {
-        return mSongDecoder.hasFrame(ID);
+        return songDecoder.hasFrame(ID);
     }
 
     public String getImageURL(){
-        return NetworkUtilities.HTTP_URL + "/session/" + mSessionID + "/song/" + songID +"/picture";
+        return NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/song/" + songID +"/picture";
     }
     /**
      * Starts the decoding of the song.
      */
     @Override
     public void start() {
-        if(!mStarted){
-            mSongDecoder = new SongDecoder(getFormat());
-            mSongDecoder.decode(0);
-            mStarted = true;
+        if(!started){
+            songDecoder = new SongDecoder(getFormat());
+            songDecoder.decode(0);
+            started = true;
         }
     }
 
     @Override
     public void seek(long seekTime) {
-        mSongDecoder.seek(seekTime);
+        songDecoder.seek(seekTime);
     }
 
     @Override
     public Map<Integer, AudioFrame> getPCMFrames() {
-        return mSongDecoder.getFrames();
+        return songDecoder.getFrames();
     }
 
     @Override
     public SongFormat getFormat() {
-        return mFormat;
+        return format;
     }
 
     @Override
     public void addFrame(AudioFrame frame) {
-        mSongDecoder.addInputFrame(frame);
+        songDecoder.addInputFrame(frame);
     }
 
     public JSONObject toJSON(){
@@ -128,7 +128,7 @@ public class UnisongSong extends Song {
                 object.put("format", getFormat().toJSON());
             object.put("type" , TYPE_STRING);
             object.put("songID" , songID);
-            object.put("sessionID" , mSessionID);
+            object.put("sessionID" , sessionID);
 
         } catch (JSONException e){
             e.printStackTrace();
@@ -141,8 +141,8 @@ public class UnisongSong extends Song {
     @Override
     public void update(JSONObject songJSON) {
         try {
-            if (songJSON.has("format") && mFormat == null)
-                mFormat = new SongFormat(songJSON.getJSONObject("format"));
+            if (songJSON.has("format") && format == null)
+                format = new SongFormat(songJSON.getJSONObject("format"));
         } catch (JSONException e){
             e.printStackTrace();
         }

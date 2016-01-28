@@ -1,5 +1,5 @@
 
-package io.unisong.android.network.song;
+package io.unisong.android.audio.song;
 
 import android.media.MediaFormat;
 import android.util.Log;
@@ -35,7 +35,6 @@ public class LocalSong extends Song {
     private SongFormat format;
     private int sessionID;
     private long songStartTime;
-    private boolean started;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -99,8 +98,8 @@ public class LocalSong extends Song {
 
     @Override
     public String getImageURL() {
-        if(mImageURL != null)
-            return mImageURL;
+        if(imageURL != null)
+            return imageURL;
 
         return NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/songID/" + songID + "/picture";
     }
@@ -155,7 +154,8 @@ public class LocalSong extends Song {
     }
 
     public void seek(long seekTime){
-        decoder.seek(seekTime);
+        decoder = new FileDecoder(path);
+        decoder.startDecode(seekTime);
         encoder.seek(seekTime);
     }
 
@@ -226,6 +226,7 @@ public class LocalSong extends Song {
                 endSong();
                 break;
             case AudioStatePublisher.SEEK:
+                Log.d(LOG_TAG , "Seek receieved for song #" + songID + " , seeking encoder and decoder.");
                 seek(AudioStatePublisher.getInstance().getSeekTime());
                 break;
         }

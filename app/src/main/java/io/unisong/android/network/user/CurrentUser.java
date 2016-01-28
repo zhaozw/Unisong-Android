@@ -1,6 +1,7 @@
 package io.unisong.android.network.user;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.facebook.AccessToken;
@@ -30,72 +31,73 @@ import io.unisong.android.network.session.UnisongSession;
 public class CurrentUser {
 
     private final static String LOG_TAG = CurrentUser.class.getSimpleName();
-    private static User sCurrentUser;
-    private FriendsList mFriendsList;
-    private HttpClient mClient;
+    @NonNull
+    private static User currentUser;
+    private FriendsList friendsList;
+    private HttpClient client;
 
-    private static Context sContext;
+    private static Context context;
 
     // TODO : investigate subclassing User.
     public static User getInstance(){
-        return sCurrentUser;
+        return currentUser;
     }
 
     /**
      * Provides a Context from which to load user data. This will load the user data and instantiate
-     *
+     * the current user object
      * @param context
      * @param accountType
      */
     public CurrentUser(Context context, String accountType){
-        if(sCurrentUser != null)
+        if(currentUser != null)
             return;
 
         String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
         String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
-        sContext = context;
+        CurrentUser.context = context;
 
         if(accountType.equals("facebook")){
             Log.d(LOG_TAG , "Creating Facebook user through saved access token.");
            // If it's a facebook account load the access token.
-            sCurrentUser = new User(AccessToken.getCurrentAccessToken());
+            currentUser = new User(AccessToken.getCurrentAccessToken());
         } else {
             Log.d(LOG_TAG , "Creating Unisong user through saved username and pass.");
-            sCurrentUser = new User(username, password);
+            currentUser = new User(username, password);
         }
 
-        Log.d(LOG_TAG , "Current User : " + sCurrentUser.toString());
+        Log.d(LOG_TAG , "Current User : " + currentUser.toString());
 
-        if(sCurrentUser == null)
+        if(currentUser == null)
             Log.d(LOG_TAG , "Current user is null!");
 
-        mFriendsList = FriendsList.getInstance();
+        friendsList = FriendsList.getInstance();
 
-        if(mFriendsList == null)
-            mFriendsList = new FriendsList(context);
+        if(friendsList == null)
+            friendsList = new FriendsList(context);
     }
 
     public CurrentUser(Context context, User user){
-        if(sCurrentUser != null)
+        if(currentUser != null)
             return;
 
-        sCurrentUser = user;
-        sContext = context;
+        currentUser = user;
+        CurrentUser.context = context;
 
         // If this is a facebook user use the Reflections API to save the
         if(user.isFacebookUser()){
             FacebookAccessToken.saveFacebookAccessToken(context);
         }
 
-        mFriendsList = FriendsList.getInstance();
+        friendsList = FriendsList.getInstance();
 
-        if(mFriendsList == null)
-            mFriendsList = new FriendsList(context);
+        if(friendsList == null)
+            friendsList = new FriendsList(context);
     }
 
     public User getUser(){
-        return sCurrentUser;
+        return currentUser;
     }
 
     /**
@@ -105,8 +107,8 @@ public class CurrentUser {
         Log.d(LOG_TAG , "Logging Out");
         HttpClient client = HttpClient.getInstance();
 
-        UnisongSession session = sCurrentUser.getSession();
-        sCurrentUser = null;
+        UnisongSession session = currentUser.getSession();
+        currentUser = null;
 
         // delete the Unisong session if we have one
         if(session != null){
@@ -116,9 +118,9 @@ public class CurrentUser {
         UnisongSession.setCurrentSession(null);
 
         // Log out of facebook and get rid of access token.
-        if(PrefUtils.getFromPrefs(sContext , PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong").equals("facebook")){
+        if(PrefUtils.getFromPrefs(context, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong").equals("facebook")){
             LoginManager.getInstance().logOut();
-            FacebookAccessToken.deleteFacebookAccessToken(sContext);
+            FacebookAccessToken.deleteFacebookAccessToken(context);
         }
 
         // Send logout request
@@ -145,19 +147,19 @@ public class CurrentUser {
 
 
         // Delete stored preferences
-        PrefUtils.deleteFromPrefs(sContext, PrefUtils.PREFS_LOGIN_USERNAME_KEY);
-        PrefUtils.deleteFromPrefs(sContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY);
+        PrefUtils.deleteFromPrefs(context, PrefUtils.PREFS_LOGIN_USERNAME_KEY);
+        PrefUtils.deleteFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY);
 
-        PrefUtils.deleteFromPrefs(sContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY);
+        PrefUtils.deleteFromPrefs(context, PrefUtils.PREFS_ACCOUNT_TYPE_KEY);
 
         FriendsList list = FriendsList.getInstance();
 
         if(list != null)
             list.destroy();
 
-        Log.d(LOG_TAG , sContext.getCacheDir().getAbsolutePath().toString());
+        Log.d(LOG_TAG, context.getCacheDir().getAbsolutePath().toString());
         // Delete cached files
-        File dir = new File(sContext.getCacheDir().getAbsolutePath() + "/");
+        File dir = new File(context.getCacheDir().getAbsolutePath() + "/");
         if (dir.isDirectory())
         {
             String[] children = dir.list();
@@ -169,7 +171,7 @@ public class CurrentUser {
             }
         }
 
-        sContext = null;
+        context = null;
         System.gc();
     }
 
@@ -182,7 +184,7 @@ public class CurrentUser {
         session.leave();
 
         UnisongSession.setCurrentSession(null);
-        sCurrentUser.setSession(null);
+        currentUser.setSession(null);
     }
 
 }
