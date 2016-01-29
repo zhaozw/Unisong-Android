@@ -5,11 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.AudioTrackManager;
+import io.unisong.android.audio.audiotrack.AudioTrackManager;
 import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.network.user.Contacts;
 

@@ -361,20 +361,34 @@ public class MainSessionActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * The FAB click listener for the SessionMembers tab
+     */
     public void inviteFriendClick(View view){
         inviteFriend();
     }
 
+    /**
+     * The function that opens up a new InviteMemberActivity
+     */
     public void inviteFriend(){
         Intent intent = new Intent(getApplicationContext() , InviteMemberActivity.class);
         startActivity(intent);
     }
 
+    /**
+     * The FAB click for the SesionSongsActivity
+     * @param view
+     */
     public void addSong(View view){
         Intent intent = new Intent(getApplicationContext(), MusicSelectActivity.class);
         startActivity(intent);
     }
 
+    /**
+     * This is the onClick method for the play/pause button
+     * @param view
+     */
     public void playPause(View view){
         AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
@@ -391,6 +405,10 @@ public class MainSessionActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * The onClick listeners for the remove user button
+     * @param view
+     */
     public void kickUser(View view){
 
         try{
@@ -495,7 +513,6 @@ public class MainSessionActivity extends AppCompatActivity {
                     mActivity.runOnUiThread(() ->{
                         mActivity.kicked();
                     });
-
                     break;
 
             }

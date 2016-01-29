@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import io.unisong.android.audio.audiotrack.AudioTrackManager;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.ntp.TimeManager;
@@ -30,7 +31,7 @@ public class AudioStatePublisher {
 
     private static final String LOG_TAG = AudioStatePublisher.class.getSimpleName();
 
-    private static AudioStatePublisher sInstance;
+    private static AudioStatePublisher instance;
 
     public static final int IDLE = 0;
     public static final int PAUSED = 1;
@@ -40,67 +41,67 @@ public class AudioStatePublisher {
     public static final int END_SONG = 5;
     public static final int START_SONG = 6;
 
-    private Broadcaster mBroadcaster;
+    private Broadcaster broadcaster;
     private boolean mSocketIOConfigured;
     //The time that we are seeking to
-    private long mSeekTime;
+    private long seekTime;
 
     //The time that the song will be resumed at
-    private long mResumeTime;
-    private int mSongToEnd;
-    private int mState;
-    private Handler mHandler;
+    private long resumeTime;
+    private int songToEnd;
+    private int state;
+    private Handler handler;
 
     //The boolean used to tell if a value has been updated (for pause time)
-    private boolean mUpdated;
-    private List<AudioObserver> mObservers;
+    private boolean updated;
+    private List<AudioObserver> observers;
 
-    private AudioTrackManager mManager;
+    private AudioTrackManager manager;
 
     //Sets the state for Idle and instantiates the Observers arraylist
     public AudioStatePublisher(){
-        mHandler = new Handler();
-        mState = IDLE;
-        mObservers = new ArrayList<>();
+        handler = new Handler();
+        state = IDLE;
+        observers = new ArrayList<>();
         mSocketIOConfigured = false;
-        sInstance = this;
+        instance = this;
     }
 
     public static AudioStatePublisher getInstance(){
-        return sInstance;
+        return instance;
     }
 
     //Attaches a AudioObserver to this AudioStateSubject
     public void attach(AudioObserver observer){
-        mObservers.add(observer);
+        observers.add(observer);
     }
 
     public void detach(AudioObserver observer){
-        mObservers.remove(observer);
+        observers.remove(observer);
     }
 
     public void update(int state){
-        synchronized (mObservers) {
+        synchronized (observers) {
             //Set the state
             if (state == RESUME || state == SEEK) {
-                mState = PLAYING;
+                this.state = PLAYING;
             } else {
-                mState = state;
+                this.state = state;
             }
 
-            if (state == PAUSED && mResumeTime != 0) {
+            if (state == PAUSED && resumeTime != 0) {
                 // If I put this into the constructor it causes a loop of instantiation between
                 // AudioTrackManager and this class due to their dual singleton design pattern.
-                if (mManager == null) {
-                    mManager = AudioTrackManager.getInstance();
+                if (manager == null) {
+                    manager = AudioTrackManager.getInstance();
                 }
-                mResumeTime = mManager.getLastFrameTime();
+                resumeTime = manager.getLastFrameTime();
             }
 
             // set the songStartTime first
-            if (mBroadcaster != null) {
-                mBroadcaster.update(state);
-                mObservers.remove(mObservers.indexOf(mBroadcaster));
+            if (broadcaster != null) {
+                broadcaster.update(state);
+                observers.remove(observers.indexOf(broadcaster));
             }
 
             notifyObservers(state);
@@ -108,50 +109,50 @@ public class AudioStatePublisher {
     }
 
     public void notifyObservers(int state){
-        mUpdated = false;
-        for(AudioObserver observer : mObservers) {
+        updated = false;
+        for(AudioObserver observer : observers) {
             observer.update(state);
         }
 
-        if(mBroadcaster != null)
-            mObservers.add(mBroadcaster);
+        if(broadcaster != null)
+            observers.add(broadcaster);
     }
 
     public void setState(int state){
-        mState = state;
+        this.state = state;
     }
 
     public long getResumeTime(){
-        return mResumeTime;
+        return resumeTime;
     }
 
     public long getSeekTime(){
-        return mSeekTime;
+        return seekTime;
     }
 
-    public int getState(){return mState;}
+    public int getState(){return state;}
 
     /**
      * The Seek method. It updates the seek time and then executes an update()
      */
     public void seek(long time){
         // TODO : if we are playing, pause then resume
-        if(mState == PLAYING){
+        if(state == PLAYING){
             update(AudioStatePublisher.PAUSED);
         }
-        mSeekTime = time;
-        mResumeTime = time;
+        seekTime = time;
+        resumeTime = time;
         update(AudioStatePublisher.SEEK);
-        mHandler.postDelayed( () ->{
-            resume(mResumeTime);
-        } , 5);
+        handler.postDelayed(() -> {
+            resume(resumeTime);
+        }, 5);
     }
 
     /**
      * The Resume method, which updates the resume time and then executes an update()
      */
     public void resume(long resumeTime){
-        mResumeTime = resumeTime;
+        this.resumeTime = resumeTime;
         TimeManager timeManager = TimeManager.getInstance();
         long newStartTime = System.currentTimeMillis() - resumeTime + CONSTANTS.RESUME_DELAY;
         timeManager.setSongStartTime(newStartTime);
@@ -165,24 +166,24 @@ public class AudioStatePublisher {
     }
 
     public void startSong(){
-        mResumeTime = 0;
+        resumeTime = 0;
         update(AudioStatePublisher.START_SONG);
         update(AudioStatePublisher.PLAYING);
     }
 
     public void play(){
-        mResumeTime = 0;
+        resumeTime = 0;
         update(AudioStatePublisher.PLAYING);
     }
 
     public void endSong(int songID){
-        mResumeTime = 0;
-        mSongToEnd = songID;
+        resumeTime = 0;
+        songToEnd = songID;
         update(AudioStatePublisher.END_SONG);
     }
 
     public int getSongToEnd(){
-        return mSongToEnd;
+        return songToEnd;
     }
 
     /**
@@ -190,13 +191,13 @@ public class AudioStatePublisher {
      * AudioSubscribers
      */
     public void setBroadcaster(Broadcaster broadcaster){
-        mBroadcaster = broadcaster;
+        this.broadcaster = broadcaster;
     }
 
 
     public void destroy(){
-        mObservers = new ArrayList<>();
-        mManager = null;
-        mBroadcaster = null;
+        observers = new ArrayList<>();
+        manager = null;
+        broadcaster = null;
     }
 }
