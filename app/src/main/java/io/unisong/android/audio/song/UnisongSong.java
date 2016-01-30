@@ -5,8 +5,6 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Map;
-
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.client.SongDecoder;
@@ -23,7 +21,6 @@ public class UnisongSong extends Song {
 
     private int sessionID;
     private SongFormat format;
-    private SongDecoder songDecoder;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -65,22 +62,22 @@ public class UnisongSong extends Song {
 
     @Override
     public AudioFrame getFrame(int ID) {
-        return songDecoder.getFrame(ID);
+        return decoder.getFrame(ID);
     }
 
     @Override
     public synchronized AudioFrame getPCMFrame(int ID) {
-        return songDecoder.getFrame(ID);
+        return decoder.getFrame(ID);
     }
 
     @Override
-    public boolean hasFrame(int ID) {
-        return songDecoder.hasInputFrame(ID);
+    public boolean hasAACFrame(int ID) {
+        return decoder.hasInputFrame(ID);
     }
 
     @Override
     public boolean hasPCMFrame(int ID) {
-        return songDecoder.hasFrame(ID);
+        return decoder.hasOutputFrame(ID);
     }
 
     public String getImageURL(){
@@ -92,20 +89,15 @@ public class UnisongSong extends Song {
     @Override
     public void start() {
         if(!started){
-            songDecoder = new SongDecoder(getFormat());
-            songDecoder.decode(0);
+            decoder = new SongDecoder(getFormat());
+            decoder.start();
             started = true;
         }
     }
 
     @Override
     public void seek(long seekTime) {
-        songDecoder.seek(seekTime);
-    }
-
-    @Override
-    public Map<Integer, AudioFrame> getPCMFrames() {
-        return songDecoder.getFrames();
+        decoder.seek(seekTime);
     }
 
     @Override
@@ -115,7 +107,7 @@ public class UnisongSong extends Song {
 
     @Override
     public void addFrame(AudioFrame frame) {
-        songDecoder.addInputFrame(frame);
+        decoder.addInputFrame(frame);
     }
 
     public JSONObject toJSON(){

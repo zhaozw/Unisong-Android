@@ -19,11 +19,11 @@ public class SongFormat {
 
     private final static String LOG_TAG = SongFormat.class.getSimpleName();
 
-    private int mBitrate;
-    private String mMime;
-    private long mDuration;
-    private int mSampleRate;
-    private int mChannels;
+    private int bitrate;
+    private String mime;
+    private long duration;
+    private int sampleRate;
+    private int channels;
 
     /**
      * Creates a song format from a MediaFormat
@@ -33,16 +33,16 @@ public class SongFormat {
     public SongFormat(MediaFormat format){
         try{
             if(format.containsKey(MediaFormat.KEY_MIME))
-                mMime = format.getString(MediaFormat.KEY_MIME);
+                mime = format.getString(MediaFormat.KEY_MIME);
             if(format.containsKey(MediaFormat.KEY_SAMPLE_RATE))
-                mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+                sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
             if(format.containsKey(MediaFormat.KEY_CHANNEL_COUNT))
-                mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+                channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             // if duration is 0, we are probably playing a live stream
             if(format.containsKey(MediaFormat.KEY_DURATION))
-                mDuration = TimeUnit.MICROSECONDS.convert(format.getLong(MediaFormat.KEY_DURATION) , TimeUnit.MILLISECONDS);
+                duration = TimeUnit.MICROSECONDS.convert(format.getLong(MediaFormat.KEY_DURATION) , TimeUnit.MILLISECONDS);
             if(format.containsKey(MediaFormat.KEY_BIT_RATE))
-                mBitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+                bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e){
             e.printStackTrace();
             Log.d(LOG_TAG, "Creation of SongFormat failed.");
@@ -51,10 +51,10 @@ public class SongFormat {
 
     // TODO : see if this doesn't work?
     public SongFormat(String path){
-        mMime = "audio/mp4a-latm";
-        mChannels = 2;
-        mBitrate = 128000;
-        mSampleRate = 44100;
+        mime = "audio/mp4a-latm";
+        channels = 2;
+        bitrate = 128000;
+        sampleRate = 44100;
 
         MediaExtractor extractor = new MediaExtractor();
         // try to set the source, this might fail
@@ -71,7 +71,7 @@ public class SongFormat {
             MediaFormat mediaFormat = extractor.getTrackFormat(0);
 
             // if duration is 0, we are probably playing a live stream
-            mDuration = mediaFormat.getLong(MediaFormat.KEY_DURATION);
+            duration = mediaFormat.getLong(MediaFormat.KEY_DURATION);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
             e.printStackTrace();
@@ -88,19 +88,19 @@ public class SongFormat {
     public SongFormat(JSONObject object){
         try{
             if(object.has("birate"))
-                mBitrate = object.getInt("bitrate");
+                bitrate = object.getInt("bitrate");
 
             if(object.has("mime"))
-                mMime = object.getString("mime");
+                mime = object.getString("mime");
 
             if(object.has("duration"))
-                mDuration = object.getLong("duration");
+                duration = object.getLong("duration");
 
             if(object.has("sample_rate"))
-                mSampleRate = object.getInt("sample_rate");
+                sampleRate = object.getInt("sample_rate");
 
             if(object.has("channels"))
-                mChannels = object.getInt("channels");
+                channels = object.getInt("channels");
 
         } catch (JSONException e){
             e.printStackTrace();
@@ -114,11 +114,11 @@ public class SongFormat {
     public JSONObject toJSON(){
         JSONObject object = new JSONObject();
         try {
-            object.put("mime", mMime);
-            object.put("bitrate" , mBitrate);
-            object.put("sample_rate" , mSampleRate);
-            object.put("channels" , mChannels);
-            object.put("duration" , mDuration);
+            object.put("mime", mime);
+            object.put("bitrate" , bitrate);
+            object.put("sample_rate" , sampleRate);
+            object.put("channels" , channels);
+            object.put("duration" , duration);
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -131,22 +131,33 @@ public class SongFormat {
      * @return
      */
     public int getBitrate(){
-        return mBitrate;
+        return bitrate;
     }
 
     public String getMime(){
-        return mMime;
+        return mime;
     }
 
     public long getDuration(){
-        return mDuration;
+        return duration;
     }
 
     public int getSampleRate(){
-        return mSampleRate;
+        return sampleRate;
     }
 
     public int getChannels(){
-        return mChannels;
+        return channels;
+    }
+
+    public MediaFormat getMediaFormat(){
+        MediaFormat format = new MediaFormat();
+        format.setString(MediaFormat.KEY_MIME, mime);
+        //fixed version
+        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
+
+        return format;
     }
 }

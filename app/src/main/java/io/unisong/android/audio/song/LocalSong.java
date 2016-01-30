@@ -7,8 +7,6 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Map;
-
 import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
@@ -52,7 +50,7 @@ public class LocalSong extends Song {
         started = false;
         sessionID = songJSON.getInt("sessionID");
         Log.d(LOG_TAG, "LocalSong created from JSON, songID is : " + songID);
-        Log.d(LOG_TAG , "SongID :" + songJSON.getInt("songID"));
+        Log.d(LOG_TAG, "SongID :" + songJSON.getInt("songID"));
 
         if(songJSON.has("format")) {
             format = new SongFormat(songJSON.getJSONObject("format"));
@@ -139,7 +137,7 @@ public class LocalSong extends Song {
         }
     }
 
-    public boolean hasFrame(int ID){
+    public boolean hasAACFrame(int ID){
         if(encoder == null)
             return false;
 
@@ -150,18 +148,13 @@ public class LocalSong extends Song {
         if(decoder == null)
             return false;
 
-        return decoder.hasFrame(ID);
+        return decoder.hasOutputFrame(ID);
     }
 
     public void seek(long seekTime){
         decoder = new FileDecoder(path);
         decoder.startDecode(seekTime);
         encoder.seek(seekTime);
-    }
-
-    @Override
-    public Map<Integer, AudioFrame> getPCMFrames() {
-        return decoder.getFrames();
     }
 
     @Override

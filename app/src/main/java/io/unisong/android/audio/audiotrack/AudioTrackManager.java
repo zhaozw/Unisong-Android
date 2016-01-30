@@ -175,21 +175,6 @@ public class AudioTrackManager implements AudioObserver {
             boolean firstWait = true;
             while (!song.hasPCMFrame(frameToPlay)) {
                 try {
-                    if(firstWait) {
-                        Log.d(LOG_TAG, "Waiting for frame #" + frameToPlay);
-                        Log.d(LOG_TAG , "Song has :" + song.getPCMFrames().size() + " frames");
-
-                        int top = -1;
-                        for(Integer key : song.getPCMFrames().keySet()){
-                            if(key > top)
-                                top = key;
-                        }
-
-                        Log.d(LOG_TAG , "Highest frame #" + top);
-
-                        firstWait = false;
-                    }
-
                     synchronized (this) {
                         this.wait(1);
                     }
@@ -229,6 +214,8 @@ public class AudioTrackManager implements AudioObserver {
     private Thread getWriteThread(){
         return new Thread(new Runnable()  {
             public void run() {
+                // set this thread priority to high
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
                 writeToTrack();
             }
         });
@@ -337,24 +324,10 @@ public class AudioTrackManager implements AudioObserver {
     public void resume(long resumeTime){
         this.resumeTime = resumeTime;
 
+        frameToPlay = -1;
 
-        Map<Integer, AudioFrame> frames = song.getPCMFrames();
-        synchronized (frames){
-            Log.d(LOG_TAG, "Decoder has " + frames.size() + " frames." );
-            for (Map.Entry<Integer, AudioFrame> entry : frames.entrySet()) {
-
-                long diff = entry.getValue().getPlayTime() - resumeTime;
-                Log.d(LOG_TAG , "Diff is : " + diff);
-                if (Math.abs(diff) <= 22) {
-                    Log.d(LOG_TAG , "Setting frameToPlay to : " + entry.getKey());
-                    frameToPlay = entry.getKey();
-                    break;
-                }
-            }
-
-            // This is if we are seeking, so that the next frame to be created will be queued.
-
-        }
+        if(seek && frameToPlay == -1)
+            frameToPlay = 0;
 
 
         Log.d(LOG_TAG , "Resuming, frameToPlay is : " + frameToPlay);

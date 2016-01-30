@@ -94,7 +94,6 @@ public class CONSTANTS {
 
     public static final int SONG_START_DELAY = 2000 + PACKET_SEND_DELAY;
 
-    public static final int RESUME_DELAY = 500;
-
+    public static final int RESUME_DELAY = 250;
 
 }

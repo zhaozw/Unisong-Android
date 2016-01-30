@@ -8,136 +8,60 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.Decoder;
-import io.unisong.android.network.CONSTANTS;
 
 /**
+ * The implementation of Decoder that decodes a local file.
  * Created by ezturner on 5/20/2015.
  */
-public class FileDecoder implements Decoder{
+public class FileDecoder extends Decoder{
 
     private static final String LOG_TAG = FileDecoder.class.getSimpleName();
 
-    private Map<Integer , AudioFrame> mFrames;
-    private boolean mStop = false;
-
     //The file that is being read from.
-    private File mCurrentFile;
+    private File inputFile;
 
-    //The MediaExtractor that will handle the data extraction
-    private MediaExtractor mExtractor;
 
-    private Thread mDecodeThread;
-
-    private boolean mRunning;
-    private String mime = null;
-    private int sampleRate = 0, channels = 0, bitrate = 0;
-    private long presentationTimeUs = 0, duration = 0;
-
-    //The media codec object used to decode the files
-    private MediaCodec mCodec;
-
-    //The time adjust for the PCM frames.
-    private long mTimeAdjust = 0;
-
-    //The current ID of the audio frame
-    private Integer mCurrentFrameID;
-
-    // The number of frames that will be buffered.
-    private int mFrameBufferSize;
-
-    private MediaFormat mInputFormat;
-    private MediaFormat mOutputFormat;
-
+    private MediaExtractor extractor;
     private AACEncoder mEncoder;
 
     public FileDecoder(String path){
-        //Set the variables
-        mRunning = false;
-
-        // After hiatus: should I be instnatiating these here?
-        mCurrentFrameID = 0;
-        mSamples = 0l;
-
-        mFrameBufferSize  = 50;
-
+        super();
         //Create the file and start the Thread.
-        mCurrentFile = new File(path);
-    }
-
-    /**
-     * Starts the decoding at the beginning of the song.
-     */
-    public void startDecode(){
-        getDecode().start();
-    }
-
-    public void startDecode(long seekTime){
-        mSeekTime = seekTime;
-        mTimeAdjust = seekTime;
-        startDecode();
-    }
-
-    private Thread getDecode(){
-        return new Thread(new Runnable()  {
-            public void run() {
-                try {
-                    decode();
-                } catch (IOException e){
-                    e.printStackTrace();
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
+        inputFile = new File(path);
     }
 
     public void setEncoder(AACEncoder encoder){
         mEncoder = encoder;
     }
 
-    public void setFrameBufferSize(int size){
-        mFrameBufferSize = size;
-    }
-    private long mSize;
-    //A boolean telling us when the first Output format is changed, so that we can start the AAC Encoder
-    private boolean mFirstOutputChange = true;
-    private long mSeekTime;
-    private Long mPlayTime = 0l;
+    @Override
+    protected void configureCodec(){
 
-    private void decode() throws IOException {
-        mFrames = new HashMap<>();
-        long startTime = System.currentTimeMillis();
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-
-        long startSampleTime = -1;
-        mRunning = true;
-        // mExtractor gets information about the stream
-        mExtractor = new MediaExtractor();
+        // extractor gets information about the stream
+        extractor = new MediaExtractor();
         // try to set the source, this might fail
         try {
-            mExtractor.setDataSource(mCurrentFile.getPath());
+            extractor.setDataSource(inputFile.getPath());
         } catch (IOException e) {
             e.printStackTrace();
             //TODO : Handle this exception
             return;
         }
 
-        Log.d(LOG_TAG , mCurrentFile.getPath());
+        Log.d(LOG_TAG, inputFile.getPath());
         // Read track header
         try {
-            mInputFormat = mExtractor.getTrackFormat(0);
-            mime = mInputFormat.getString(MediaFormat.KEY_MIME);
-            sampleRate = mInputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            channels = mInputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            inputFormat = extractor.getTrackFormat(0);
+            mime = inputFormat.getString(MediaFormat.KEY_MIME);
+            sampleRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            channels = inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             // if duration is 0, we are probably playing a live stream
-            duration = mInputFormat.getLong(MediaFormat.KEY_DURATION);
-            if(mInputFormat.containsKey(MediaFormat.KEY_BIT_RATE))
-                bitrate = mInputFormat.getInteger(MediaFormat.KEY_BIT_RATE);
+            duration = inputFormat.getLong(MediaFormat.KEY_DURATION);
+            if(inputFormat.containsKey(MediaFormat.KEY_BIT_RATE))
+                bitrate = inputFormat.getInteger(MediaFormat.KEY_BIT_RATE);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Reading format parameters exception: " + e.getMessage());
             e.printStackTrace();
@@ -148,21 +72,34 @@ public class FileDecoder implements Decoder{
 
         // create the actual decoder, using the mime to select
         try {
-            mCodec = MediaCodec.createDecoderByType(mime);
+            codec = MediaCodec.createDecoderByType(mime);
         } catch(IOException e){
             e.printStackTrace();
         }
 
-        mCodec.configure(mInputFormat, null, null, 0);
-        mCodec.start();
-        ByteBuffer[] codecInputBuffers  = mCodec.getInputBuffers();
-        ByteBuffer[] codecOutputBuffers = mCodec.getOutputBuffers();
+        codec.configure(inputFormat, null, null, 0);
+    }
 
-        if(mSeekTime != 0) {
-            mExtractor.seekTo((mSeekTime - 50) * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-            Log.d(LOG_TAG, "mExtractor sample time is :" + mExtractor.getSampleTime() + " from SeekTime : " + mSeekTime);
+
+    protected void decode(){
+        long startTime = System.currentTimeMillis();
+
+        Long playTime = 0l;
+        isRunning = true;
+
+        codec.start();
+        ByteBuffer[] codecInputBuffers  = codec.getInputBuffers();
+        ByteBuffer[] codecOutputBuffers = codec.getOutputBuffers();
+
+        // selectTrack must be above seekTo
+        extractor.selectTrack(0);
+
+        // seek if we are seeking/starting late
+        if(seekTime != 0) {
+            extractor.seekTo((seekTime - 50) * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+            Log.d(LOG_TAG, "Sample Time should be : " + (seekTime - 50) * 1000);
+            Log.d(LOG_TAG, "extractor sample time is :" + extractor.getSampleTime() + " from SeekTime : " + seekTime);
         }
-        mExtractor.selectTrack(0);
 
         // start decoding
         final long kTimeOutUs = 1000;
@@ -173,35 +110,35 @@ public class FileDecoder implements Decoder{
         int noOutputCounter = 0;
         int noOutputCounterLimit = 25;
 
-        mStop = false;
+        stop = false;
 
-        while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !mStop) {
+        while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !stop) {
 
             noOutputCounter++;
             // read a buffer before feeding it to the decoder
             if (!sawInputEOS) {
-                int inputBufIndex = mCodec.dequeueInputBuffer(kTimeOutUs);
+                int inputBufIndex = codec.dequeueInputBuffer(kTimeOutUs);
                 if (inputBufIndex >= 0){
                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
-                    int sampleSize = mExtractor.readSampleData(dstBuf, 0);
+                    int sampleSize = extractor.readSampleData(dstBuf, 0);
                     if (sampleSize < 0){
                         Log.d(LOG_TAG, "saw input EOS. Stopping playback");
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
 
-                        mPlayTime = mExtractor.getSampleTime() / 1000;
-//                        if(mSeekTime == 100000) Log.d(LOG_TAG , "PlayTime is : " + mPlayTime);
+                        playTime = extractor.getSampleTime() / 1000;
+//                        if(seekTime == 100000) Log.d(LOG_TAG , "PlayTime is : " + playTime);
 
-                        presentationTimeUs = mExtractor.getSampleTime();
+                        presentationTimeUs = extractor.getSampleTime();
                         final int percent =  (duration == 0)? 0 : (int) (100 * presentationTimeUs / duration);
 //                        if (mEvents != null) handler.post(new Runnable() { @Override public void run() { mEvents.onPlayUpdate(percent, presentationTimeUs / 1000, duration / 1000);  } });
                     }
 
 
 
-                    mCodec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
-                    if (!sawInputEOS) mExtractor.advance();
+                    codec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                    if (!sawInputEOS) extractor.advance();
 
                 } else {
                     //TODO: Investigate and reenable
@@ -210,7 +147,7 @@ public class FileDecoder implements Decoder{
             } // !sawInputEOS
 
             // decode to PCM and push it to the AudioTrack player
-            int res = mCodec.dequeueOutputBuffer(info, kTimeOutUs);
+            int res = codec.dequeueOutputBuffer(info, kTimeOutUs);
 
             if (res >= 0) {
                 if (info.size > 0)  noOutputCounter = 0;
@@ -223,17 +160,12 @@ public class FileDecoder implements Decoder{
                 buf.clear();
                 if(chunk.length > 0){
 
-                    mSize += chunk.length;
-
-                    if(!mStop)  createPCMFrame(chunk);
-
-
-                    waitForFrameUse();
+                    if(!stop)  createPCMFrame(chunk);
 
                 }
 
                 try {
-                    mCodec.releaseOutputBuffer(outputBufIndex, false);
+                    codec.releaseOutputBuffer(outputBufIndex, false);
                 } catch(IllegalStateException e){
                     e.printStackTrace();
                 }
@@ -241,16 +173,16 @@ public class FileDecoder implements Decoder{
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0){
                     Log.d(LOG_TAG, "saw output EOS.");
                     sawOutputEOS = true;
-                    mStop = true;
+                    stop = true;
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED){
-                codecOutputBuffers = mCodec.getOutputBuffers();
+                codecOutputBuffers = codec.getOutputBuffers();
                 Log.d(LOG_TAG, "output buffers have changed.");
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                mOutputFormat = mCodec.getOutputFormat();
-                Log.d(LOG_TAG, "output format has changed to " + mOutputFormat);
+                outputFormat = codec.getOutputFormat();
+                Log.d(LOG_TAG, "output format has changed to " + outputFormat);
                 if(mEncoder != null)
-                    mEncoder.setInputFormat(mOutputFormat);
+                    mEncoder.setInputFormat(outputFormat);
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
@@ -262,129 +194,26 @@ public class FileDecoder implements Decoder{
         long finishTime = System.currentTimeMillis();
 
         Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
-        Log.d(LOG_TAG , "Size is : " + mSize);
+        Log.d(LOG_TAG , "Bytes processed : " + samples);
 
-        Log.d(LOG_TAG , "mStop : "  +mStop);
+        Log.d(LOG_TAG , "stop : "  + stop);
         Log.d(LOG_TAG , "No Output Index: " + noOutputCounter);
 
-        if(!mStop){
-            // TODO : this is an interim fix. It'd be great to have a 'smarter' fault tolerance system
-            Log.d(LOG_TAG, "We are stopping but mStop is false! Restarting at current time");
-            this.startDecode(mPlayTime);
-        }
+
 
         try {
             releaseCodec();
         } catch (IllegalStateException e){
             e.printStackTrace();
         }
-        mRunning = false;
+
+        restartOnFailure();
     }
 
-    public void waitForFrameUse(){
-        while(mFrames.size() > mFrameBufferSize){
-            if(mStop){
-                Log.d(LOG_TAG , "mStop is true, exiting loop.");
-                break;
-            }
-
-            synchronized (this){
-                try {
-                    this.wait(5);
-                } catch (InterruptedException e){
-
-                }
-            }
-        }
-    }
-
-    private void releaseCodec(){
-        if(mCodec != null) {
-            mCodec.stop();
-            mCodec.release();
-            mCodec = null;
-        }
-    }
 
     public void destroy(){
-        mStop = true;
-
-        while(mRunning){}
-
-        releaseCodec();
-        mExtractor = null;
-        mCurrentFile = null;
-
+        // TODO : implement
     }
 
-    @Override
-    public Map<Integer, AudioFrame> getFrames() {
-        return mFrames;
-    }
 
-    @Override
-    public void addInputFrame(AudioFrame frame) {
-        synchronized (mFrames){
-            mFrames.put(frame.getID() , frame);
-        }
-    }
-
-    public boolean isRunning(){
-        return mRunning;
-    }
-
-    private Long mSamples;
-
-    private void createPCMFrame(byte[] data ){
-        long playTime = (mSamples * 8000) / CONSTANTS.PCM_BITRATE + mTimeAdjust;
-
-        AudioFrame frame = new AudioFrame(data, mCurrentFrameID, playTime);
-
-        synchronized (mFrames) {
-            mFrames.put(frame.getID(), frame);
-        }
-
-        mSamples += data.length;
-        mCurrentFrameID++;
-    }
-
-    @Override
-    public AudioFrame getFrame(int ID){
-        AudioFrame frame;
-        synchronized (mFrames){
-            frame = mFrames.get(ID);
-            mFrames.remove(ID);
-        }
-        return frame;
-    }
-
-    @Override
-    public void seek(long seekTime) {
-        mStop = true;
-        Log.d(LOG_TAG , "Stopping Thread");
-        while (mRunning){
-            synchronized (this){
-                try{
-                    this.wait(1);
-                } catch (InterruptedException e){
-                    Log.d(LOG_TAG , "Thread interrupted while waiting in seek()");
-                }
-            }
-        }
-        Log.d(LOG_TAG , "Thread stopped, starting new thread.");
-        mSeekTime = seekTime;
-        mDecodeThread = getDecode();
-        mDecodeThread.start();
-    }
-
-    @Override
-    public boolean hasFrame(int ID) {
-        synchronized (mFrames) {
-            return mFrames.containsKey(ID);
-        }
-    }
-
-    public MediaFormat getFormat(){
-        return mInputFormat;
-    }
 }

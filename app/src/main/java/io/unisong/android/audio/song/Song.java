@@ -6,6 +6,7 @@ import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
+import io.unisong.android.audio.Decoder;
 
 /**
  * This is all of the network information on a certain song.
@@ -17,6 +18,7 @@ public abstract class Song implements AudioObserver {
     protected String artist;
     protected boolean started;
 
+    protected Decoder decoder;
     protected String imageURL;
 
     //The # of the song
@@ -70,7 +72,7 @@ public abstract class Song implements AudioObserver {
      */
     public abstract AudioFrame getPCMFrame(int ID);
 
-    public abstract boolean hasFrame(int ID);
+    public abstract boolean hasAACFrame(int ID);
 
     public abstract boolean hasPCMFrame(int ID);
 
@@ -78,7 +80,13 @@ public abstract class Song implements AudioObserver {
 
     public abstract void seek(long seekTime);
 
-    public abstract Map<Integer, AudioFrame> getPCMFrames();
+    public boolean hasPCMFrameAtTime(long time){
+        return decoder.hasFrameAtTime(time);
+    }
+
+    public int getFrameIDForTime(long time){
+        return decoder.getFrameIDAtTime(time);
+    }
 
     public abstract SongFormat getFormat();
 

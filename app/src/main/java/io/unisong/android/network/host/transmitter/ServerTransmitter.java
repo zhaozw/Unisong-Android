@@ -53,7 +53,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         mTransmitting = true;
 
         while(mTransmitting){
-            if(!currentSong.hasFrame(currentFrame) && !mStop){
+            if(!currentSong.hasAACFrame(currentFrame) && !mStop){
 
                 synchronized (this){
                     try{
@@ -71,7 +71,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
             // TODO : figure out why frame is null
             if(frame == null){
-                Log.d(LOG_TAG , "FRAME IS NULL WTF :"  + currentSong.hasFrame(currentFrame) );
+                Log.d(LOG_TAG , "FRAME IS NULL WTF :"  + currentSong.hasAACFrame(currentFrame) );
                 continue;
             }
 
@@ -134,7 +134,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
     private Runnable mBroadcastRunnable = () -> {
 
-        if(mSong.hasFrame(mFrameToUpload)){
+        if(mSong.hasAACFrame(mFrameToUpload)){
             AudioFrame frame = mSong.getFrame(mFrameToUpload);
 //            Log.d(LOG_TAG, "Frame is null? " + (frame == null));
             if(frame != null) {
