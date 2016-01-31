@@ -1,19 +1,20 @@
 package io.unisong.android.audio.song;
 
-import org.json.JSONObject;
+import android.util.Log;
 
-import java.util.Map;
+import org.json.JSONObject;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
-import io.unisong.android.audio.Decoder;
+import io.unisong.android.audio.decoder.Decoder;
 
 /**
  * This is all of the network information on a certain song.
  * Created by Ethan on 8/4/2015.
  */
 public abstract class Song implements AudioObserver {
-    
+
+    private static final String LOG_TAG = Song.class.getSimpleName();
     protected String name;
     protected String artist;
     protected boolean started;

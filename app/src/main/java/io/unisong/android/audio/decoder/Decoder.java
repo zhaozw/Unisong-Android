@@ -1,13 +1,13 @@
-package io.unisong.android.audio;
+package io.unisong.android.audio.decoder;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.CONSTANTS;
 
 /**
@@ -170,17 +170,38 @@ public abstract class Decoder {
      * @return frameID - the ID of the frame if we have it, -1 otherwise
      */
     // TODO : rename?
+    // TODO : delete all this debug code, it will significantly slow down this operation
+
     public int getFrameIDAtTime(long time){
+        int lowestID = Integer.MAX_VALUE;
+        long lowestDiff = 999999999999999999l;
+        long highestPlayTime = -1;
         synchronized (outputFrames){
             for (Map.Entry<Integer, AudioFrame> entry : outputFrames.entrySet()) {
-                long diff = entry.getValue().getPlayTime() - time;
+                long playTime = entry.getValue().getPlayTime();
+                long diff = playTime - time;
 
-                if (Math.abs(diff) <= 22)
+//                if(diff < lowestDiff)
+//                    lowestDiff = diff;
+
+//                if(playTime > highestPlayTime)
+//                    highestPlayTime = playTime;
+
+                if(lowestID > entry.getKey())
+                    lowestID = entry.getKey();
+
+//                Log.d(LOG_TAG , "for frame #" + entry.getKey() + " playTime is : " + playTime);
+                if (Math.abs(diff) <= 34)
                     return entry.getKey();
             }
         }
 
-        return -1;
+//        Log.d(LOG_TAG , "Frame not found at time " + time + "ms ! Lowest difference is : " + lowestDiff);
+//        Log.d(LOG_TAG , "Highest frame playTime is: " + highestPlayTime + "ms");
+        if(lowestID == Integer.MAX_VALUE)
+            return -1;
+
+        return lowestID;
     }
 
 

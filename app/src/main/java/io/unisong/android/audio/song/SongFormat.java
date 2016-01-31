@@ -138,6 +138,10 @@ public class SongFormat {
         return mime;
     }
 
+    /**
+     * Duration is in microseconds.
+     * @return duration - the duration of the songs
+     */
     public long getDuration(){
         return duration;
     }

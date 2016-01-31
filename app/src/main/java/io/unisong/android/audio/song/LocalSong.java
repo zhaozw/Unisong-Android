@@ -11,8 +11,8 @@ import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
-import io.unisong.android.audio.master.AACEncoder;
-import io.unisong.android.audio.master.FileDecoder;
+import io.unisong.android.audio.encoder.AACEncoder;
+import io.unisong.android.audio.decoder.FileDecoder;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.ntp.TimeManager;
@@ -28,7 +28,6 @@ public class LocalSong extends Song {
 
     public final static String TYPE_STRING = "LocalSong";
     private String path;
-    private FileDecoder decoder;
     private AACEncoder encoder;
     private SongFormat format;
     private int sessionID;
@@ -131,7 +130,7 @@ public class LocalSong extends Song {
             decoder = new FileDecoder(path);
 
             songStartTime = TimeManager.getInstance().getSongStartTime();
-            decoder.startDecode();
+            decoder.start();
             encoder.encode(0, super.getID(), path);
             started = true;
         }
@@ -153,7 +152,7 @@ public class LocalSong extends Song {
 
     public void seek(long seekTime){
         decoder = new FileDecoder(path);
-        decoder.startDecode(seekTime);
+        decoder.start(seekTime);
         encoder.seek(seekTime);
     }
 

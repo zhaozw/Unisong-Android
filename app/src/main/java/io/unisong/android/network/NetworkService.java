@@ -94,6 +94,9 @@ public class NetworkService extends Service {
             discoveryHandler.destroy();
             discoveryHandler = null;
         }
-        mTimeManager = null;
+        if(mTimeManager != null) {
+            mTimeManager.destroy();
+            mTimeManager = null;
+        }
     }
 }

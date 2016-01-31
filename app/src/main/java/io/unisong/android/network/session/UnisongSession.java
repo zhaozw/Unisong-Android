@@ -240,6 +240,8 @@ public class UnisongSession {
             // TODO : figure out how to know when to update the Master's audiosessionstate, and when to
             // update the server instead
             if (object.has("sessionState") && !isMaster()) {
+                // TODO : re-enable this when we're ready, then test and implement it seperately
+                /*
                 mSessionState = object.getString("sessionState");
                 AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
@@ -255,7 +257,7 @@ public class UnisongSession {
                     if (publisher.getState() != AudioStatePublisher.PLAYING) {
                         publisher.update(AudioStatePublisher.PLAYING);
                     }
-                }
+                }*/
             }
 
             if (object.has("songID")) {

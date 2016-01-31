@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.util.Log;
 
 import java.util.Date;
-import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
@@ -39,8 +38,10 @@ public class AudioTrackManager implements AudioObserver {
     //the last frame ID that has been played
     private int frameToPlay;
 
-    //boolean telling the Write thread to continue or not
-    private boolean isPlaying;
+    // whether we are playing, and whether the thread is waiting
+    private boolean isPlaying = false, threadWaiting = false, seek = false;
+    private boolean threadRunning = false;
+    private boolean startSongRunning = false;
 
     //The thread that the writing will go on
     private Thread writeThread;
@@ -57,23 +58,15 @@ public class AudioTrackManager implements AudioObserver {
     // The time we will be resuming at.
     private long resumeTime;
 
-    //The boolean telling us if we have received a seek command
-    private boolean seek = false;
-
     private long lastFrameTime;
 
     private AudioStatePublisher audioStatePublisher;
-
-    private long mTimeUntilSongStart;
 
     // The song we're currently playing.
     private Song song;
 
     //TODO: Make AudioTrack configuration dynamic with the details of the file
     public AudioTrackManager(){
-
-        threadRunning = false;
-        isPlaying = false;
 
         frameToPlay = 0;
 
@@ -93,29 +86,38 @@ public class AudioTrackManager implements AudioObserver {
         Log.d(LOG_TAG , "AudioTrackManager created and attached to AudioStatePublisher");
     }
 
-    private boolean mStartSongRunning = false;
 
     Runnable mStartSong = new Runnable() {
         @Override
         public void run() {
-            mStartSongRunning = true;
+            startSongRunning = true;
 
             Log.d(LOG_TAG , "mStartSong called");
                 if(isPlaying){
+                    Log.d(LOG_TAG , "Previous thread still running! Must wait!");
+                    while(isPlaying){
+                        try {
+                            synchronized (this) {
+                                this.wait(2);
+                            }
+                        } catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
                     //TODO: Switch the song
                 } else {
                     //TODO: uncomment these after it's safe
                     startPlaying();
                 }
 
-            mStartSongRunning = false;
+            startSongRunning = false;
         }
     };
 
-    private boolean threadRunning;
 
     private int runCount;
     private void writeToTrack(){
+        isPlaying = true;
         threadRunning = true;
         runCount = 0;
 
@@ -126,6 +128,7 @@ public class AudioTrackManager implements AudioObserver {
         try{
 
             if(waitTime > 0) {
+                threadWaiting = true;
                 synchronized (this) {
                     this.wait(waitTime);
                 }
@@ -133,7 +136,15 @@ public class AudioTrackManager implements AudioObserver {
                 Log.d(LOG_TAG , "Wait time was less than 0!");
             }
         } catch (InterruptedException e){
-            e.printStackTrace();
+            Log.d(LOG_TAG , "Our wait was interrupted! isPlaying : " + isPlaying);
+        }
+
+        threadWaiting = false;
+
+        // if we've stopped playing, then stop the thread
+        if(!isPlaying) {
+            threadRunning = false;
+            return;
         }
 
         if(!song.started()){
@@ -175,6 +186,7 @@ public class AudioTrackManager implements AudioObserver {
             boolean firstWait = true;
             while (!song.hasPCMFrame(frameToPlay)) {
                 try {
+                    threadWaiting = true;
                     synchronized (this) {
                         this.wait(1);
                     }
@@ -185,6 +197,7 @@ public class AudioTrackManager implements AudioObserver {
                     Log.d(LOG_TAG , "We have stopped playing!");
                     return;
                 }
+                threadWaiting = false;
             }
 
             AudioFrame frame = song.getPCMFrame(frameToPlay);
@@ -212,12 +225,10 @@ public class AudioTrackManager implements AudioObserver {
     }
 
     private Thread getWriteThread(){
-        return new Thread(new Runnable()  {
-            public void run() {
-                // set this thread priority to high
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-                writeToTrack();
-            }
+        return new Thread(() ->  {
+            // set this thread priority to high
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+            writeToTrack();
         });
     }
 
@@ -236,8 +247,7 @@ public class AudioTrackManager implements AudioObserver {
         Log.d(LOG_TAG, "Write Started, difference is: " + ((timeManager.getSongStartTime()) - System.currentTimeMillis()) + " timeManager.getOffset() is : " + timeManager.getOffset());
 
         // TODO : get info from song
-        createAudioTrack(44100 , 2);
-        isPlaying = true;
+        createAudioTrack(44100, 2);
         writeThread = getWriteThread();
         writeThread.start();
     }
@@ -277,8 +287,10 @@ public class AudioTrackManager implements AudioObserver {
         if(isPlaying) {
             Log.d(LOG_TAG, "Pausing AudioTrack");
             isPlaying = false;
-            while (threadRunning) {
-            }
+            if(threadRunning && threadWaiting)
+                synchronized (writeThread) {
+                    writeThread.interrupt();
+                }
         }
     }
 
@@ -324,10 +336,13 @@ public class AudioTrackManager implements AudioObserver {
     public void resume(long resumeTime){
         this.resumeTime = resumeTime;
 
-        frameToPlay = -1;
+        frameToPlay = song.getFrameIDForTime(resumeTime);
 
-        if(seek && frameToPlay == -1)
+        if(seek && frameToPlay == -1) {
             frameToPlay = 0;
+            seek = false;
+        }
+
 
 
         Log.d(LOG_TAG , "Resuming, frameToPlay is : " + frameToPlay);
@@ -341,8 +356,8 @@ public class AudioTrackManager implements AudioObserver {
         Log.d(LOG_TAG , "AudioTrackManager Destroy Called");
         isPlaying = false;
         writeThread = null;
-        if(mStartSongRunning){
-            while(mStartSongRunning){
+        if(startSongRunning){
+            while(startSongRunning){
 
             }
         }

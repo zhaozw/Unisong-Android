@@ -68,6 +68,7 @@ public class MainSessionActivity extends AppCompatActivity {
     private SlidingTabLayout mTabs;
     private SessionMessageHandler mHandler;
 
+    private TimeManager timeManager;
     private Button mPlayPauseButton;
     private IconicFontDrawable mPlayDrawable;
     private IconicFontDrawable mPauseDrawable;
@@ -94,6 +95,8 @@ public class MainSessionActivity extends AppCompatActivity {
             bar.setDisplayShowHomeEnabled(true);
             bar.setHomeButtonEnabled(true);
         }
+
+        timeManager = TimeManager.getInstance();
 
         mPager = (ViewPager) findViewById(R.id.session_pager);
         mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
@@ -144,6 +147,7 @@ public class MainSessionActivity extends AppCompatActivity {
 
         if(!mSession.isMaster())
             mPlayPauseButton.setVisibility(View.GONE);
+
     }
 
     /**
@@ -214,36 +218,12 @@ public class MainSessionActivity extends AppCompatActivity {
             if(mCurrentSong == null)
                 return;
 
-            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
             // set the progress
             int progress = mFooterSeekBar.getProgress();
-            long duration = mCurrentSong.getDuration() / 1000;
-            int newProgress = progress;
-            long timePlayed = -1;
+            int newProgress = timeManager.getProgress();
 
-            if(publisher.getState() == AudioStatePublisher.PLAYING){
-                timePlayed = System.currentTimeMillis() - TimeManager.getInstance().getSongStartTime();
-            } else if(publisher.getState() == AudioStatePublisher.PAUSED){
-                timePlayed = publisher.getResumeTime();
-            }
-
-//            Log.d(LOG_TAG , "Duration : " + duration);
-//            Log.d(LOG_TAG , "timePlayed: " + timePlayed);
-
-            if(timePlayed != -1) {
-                double percentage = (double) timePlayed /  (double)duration ;
-//                Log.d(LOG_TAG , "Percentage : " + percentage);
-                newProgress = (int) (percentage * 100);
-            } else {
-                newProgress = 100;
-            }
-
-//            Log.d(LOG_TAG , "progress : " + progress + " newProgress: " + newProgress);
-            if(progress != newProgress && newProgress >= 0 && newProgress <= 100) {
+            if(newProgress != progress)
                 mFooterSeekBar.setProgress(newProgress);
-            } else if(newProgress < 0 && progress != 0){
-                mFooterSeekBar.setProgress(0);
-            }
 
         } catch (NullPointerException e){
             e.printStackTrace();
@@ -397,7 +377,7 @@ public class MainSessionActivity extends AppCompatActivity {
             publisher.pause();
         } else if(publisher.getState() == AudioStatePublisher.PAUSED){
             mPlayPauseButton.setBackground(mPauseDrawable);
-            publisher.play();
+            publisher.resume(publisher.getPausedTime());
         } else if(publisher.getState() == AudioStatePublisher.IDLE && mSession.getCurrentSong() != null){
             mPlayPauseButton.setBackground(mPauseDrawable);
             publisher.startSong();

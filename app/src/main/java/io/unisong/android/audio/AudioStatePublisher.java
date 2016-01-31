@@ -48,6 +48,8 @@ public class AudioStatePublisher {
 
     //The time that the song will be resumed at
     private long resumeTime;
+
+    private long pausedTime;
     private int songToEnd;
     private int state;
     private Handler handler;
@@ -83,9 +85,9 @@ public class AudioStatePublisher {
     public void update(int state){
         synchronized (observers) {
             //Set the state
-            if (state == RESUME || state == SEEK) {
+            if (state == RESUME) {
                 this.state = PLAYING;
-            } else {
+            } else if(state != SEEK){
                 this.state = state;
             }
 
@@ -130,6 +132,10 @@ public class AudioStatePublisher {
         return seekTime;
     }
 
+    public long getPausedTime(){
+        return pausedTime;
+    }
+
     public int getState(){return state;}
 
     /**
@@ -137,15 +143,23 @@ public class AudioStatePublisher {
      */
     public void seek(long time){
         // TODO : if we are playing, pause then resume
-        if(state == PLAYING){
+        int previousState = state;
+        if(previousState == PLAYING) {
             update(AudioStatePublisher.PAUSED);
+            pausedTime = time;
         }
+
+        if(previousState == PAUSED){
+            pausedTime = time;
+        }
+
         seekTime = time;
         resumeTime = time;
         update(AudioStatePublisher.SEEK);
-        handler.postDelayed(() -> {
-            resume(resumeTime);
-        }, 5);
+        if(previousState == PLAYING)
+            handler.postDelayed(() -> {
+                resume(resumeTime);
+            }, 5);
     }
 
     /**
@@ -162,6 +176,7 @@ public class AudioStatePublisher {
 
     public void pause(){
         Log.d(LOG_TAG, "Pausing");
+        pausedTime = System.currentTimeMillis() - TimeManager.getInstance().getSongStartTime();
         update(AudioStatePublisher.PAUSED);
     }
 

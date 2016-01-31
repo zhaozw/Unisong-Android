@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.client.SongDecoder;
+import io.unisong.android.audio.decoder.SongDecoder;
 import io.unisong.android.network.NetworkUtilities;
 
 /**

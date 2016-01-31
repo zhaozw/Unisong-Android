@@ -1,4 +1,4 @@
-package io.unisong.android.audio.master;
+package io.unisong.android.audio.decoder;
 
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
@@ -9,8 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.Decoder;
+import io.unisong.android.audio.encoder.AACEncoder;
 
 /**
  * The implementation of Decoder that decodes a local file.

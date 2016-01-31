@@ -1,6 +1,11 @@
 package io.unisong.android.network.ntp;
 
+import android.util.Log;
+
 import io.unisong.android.audio.AudioObserver;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.song.Song;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * Created by Ethan on 5/8/2015.
@@ -22,12 +27,14 @@ public class TimeManager implements AudioObserver {
     // The time that the current song starts at, with the offset applied
     // To convert to this device's local time, subtract sntpClient.getOffset().
     private long songStartTime;
+    private AudioStatePublisher publisher;
 
     // songStartTime configured with nanoTime();
     private long mNanoSongStartTime;
 
     public TimeManager(){
         sntpClient = new SntpClient();
+        publisher = AudioStatePublisher.getInstance();
         // TODO : listen for clock change events
         seekTime = 0;
         instance = this;
@@ -54,8 +61,55 @@ public class TimeManager implements AudioObserver {
         return songStartTime;
     }
 
+    /**
+     * Calculates the progress for the SeekBar.
+     * @return
+     */
+    public int getProgress(){
+        int progress = 100;
+
+        if(publisher.getState() == AudioStatePublisher.IDLE)
+            return progress = 100;
+
+
+        Song song = UnisongSession.getCurrentSession().getCurrentSong();
+        if(song == null) {
+            Log.d(LOG_TAG , "CurrentSong is null!");
+            return 100;
+        }
+
+        long timePlayed = 0;
+
+        if(publisher.getState() == AudioStatePublisher.PLAYING){
+            timePlayed = System.currentTimeMillis() - getSongStartTime();
+        } else if(publisher.getState() == AudioStatePublisher.PAUSED){
+            timePlayed = publisher.getPausedTime();
+        }
+
+
+        double fraction = (double)(timePlayed) / (double) (song.getDuration() / 1000);
+        progress = (int) (fraction * 100);
+
+        if(progress < 0)
+            return 0;
+
+        if(progress > 100)
+            return 100;
+
+        return progress;
+    }
+
     @Override
     public void update(int state) {
         //TODO : update songStartTime on resume
+    }
+
+    public void destroy(){
+        publisher = null;
+        if(sntpClient != null) {
+            sntpClient.destroy();
+            sntpClient = null;
+        }
+
     }
 }

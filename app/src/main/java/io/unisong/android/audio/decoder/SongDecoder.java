@@ -1,7 +1,6 @@
-package io.unisong.android.audio.client;
+package io.unisong.android.audio.decoder;
 
 import android.media.MediaCodec;
-import android.media.MediaFormat;
 import android.util.Log;
 
 import java.io.IOException;
@@ -9,9 +8,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.Decoder;
-import io.unisong.android.network.CONSTANTS;
-import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.audio.song.SongFormat;
 
 /**

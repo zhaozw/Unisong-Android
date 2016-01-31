@@ -1,4 +1,4 @@
-package io.unisong.android.audio.master;
+package io.unisong.android.audio.encoder;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.decoder.FileDecoder;
 import io.unisong.android.audio.song.LocalSong;
 
 /**
@@ -30,6 +31,8 @@ public class AACEncoder{
     private boolean stop;
     private int songID;
 
+    private String filePath;
+
     String mime = null;
     int sampleRate = 0, channels = 0, bitrate = 0;
     long presentationTimeUs = 0, duration = 0;
@@ -38,7 +41,7 @@ public class AACEncoder{
 
     private boolean isRunning;
 
-    private LocalSong mSong;
+    private LocalSong song;
     private MediaFormat mInputFormat;
 
     //The output and input frames
@@ -88,6 +91,8 @@ public class AACEncoder{
     }
 
     public void encode(long startTime, int songID, String filePath){
+        // TODO : disable this comment after seek fixes
+        /*
         try {
             this.songID = songID;
             currentOutputID = (int) (startTime / (1024000.0 / 44100.0));
@@ -98,7 +103,7 @@ public class AACEncoder{
             encodeThread.start();
         } catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
     }
 
     private Thread getEncode(){
@@ -164,7 +169,7 @@ public class AACEncoder{
         format.setInteger(MediaFormat.KEY_BIT_RATE, 64000 * channels);
         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
 
-        //mSong.setFormat(format);
+        //song.setFormat(format);
 
         codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         codec.start();
@@ -422,14 +427,19 @@ public class AACEncoder{
 
 
     public void seek(long seekTime){
+        // TODO : uncomment this as well.
+        /*
         decoder.destroy();
         synchronized (inputFrames){
             inputFrames = new TreeMap<>();
         }
+        decoder = new FileDecoder(filePath);
+        decoder.setEncoder(this);
+        decoder.start(seekTime);*/
     }
 
     public void setSong(LocalSong song){
-        mSong = song;
+        this.song = song;
     }
 
     public void setInputFormat(MediaFormat format){
