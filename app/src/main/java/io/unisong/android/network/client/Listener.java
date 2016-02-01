@@ -151,22 +151,27 @@ public class Listener{
     }
 
     public void addFrame(AudioFrame frame){
+//        Log.d(LOG_TAG , "Add Frame received!");
         mSession.addFrame(frame);
     }
 
     public void seek(long seekTime){
+        Log.d(LOG_TAG , "Seek received!");
         mAudioStatePublisher.seek(seekTime);
     }
 
     public void pause(){
+        Log.d(LOG_TAG , "Pause received!");
         mAudioStatePublisher.pause();
     }
 
     public void play(){
+        Log.d(LOG_TAG , "Play received!");
         mAudioStatePublisher.play();
     }
 
     public void resume(long resumeTime,  long newSongStartTime){
+        Log.d(LOG_TAG , "Resume received!");
         mTimeManager.setSongStartTime(newSongStartTime);
         mAudioStatePublisher.resume(resumeTime);
     }
