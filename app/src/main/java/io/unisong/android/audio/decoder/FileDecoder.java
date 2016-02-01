@@ -96,14 +96,13 @@ public class FileDecoder extends Decoder{
         // seek if we are seeking/starting late
         if(seekTime != 0) {
             extractor.seekTo((seekTime - 50) * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-            Log.d(LOG_TAG, "Sample Time should be : " + (seekTime - 50) * 1000);
             Log.d(LOG_TAG, "extractor sample time is :" + extractor.getSampleTime() + " from SeekTime : " + seekTime);
         }
 
         // start decoding
         final long kTimeOutUs = 1000;
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-        Log.d(LOG_TAG , "Info size is : "  + info.size);
+//        Log.d(LOG_TAG , "Info size is : "  + info.size);
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
         int noOutputCounter = 0;

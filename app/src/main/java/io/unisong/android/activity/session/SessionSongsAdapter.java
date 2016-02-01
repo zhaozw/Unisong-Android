@@ -20,8 +20,8 @@ import java.util.List;
 
 import io.unisong.android.R;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.session.SongQueue;
 import io.unisong.android.audio.song.Song;
+import io.unisong.android.network.session.SongQueue;
 
 /**
  * This is the adpater class that handles adapting the SongQueue to the

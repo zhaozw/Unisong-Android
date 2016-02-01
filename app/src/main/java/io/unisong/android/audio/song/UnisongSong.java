@@ -61,7 +61,7 @@ public class UnisongSong extends Song {
     }
 
     @Override
-    public AudioFrame getFrame(int ID) {
+    public AudioFrame getAACFrame(int ID) {
         return decoder.getFrame(ID);
     }
 

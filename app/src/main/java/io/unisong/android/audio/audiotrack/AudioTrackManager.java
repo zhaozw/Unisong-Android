@@ -8,9 +8,9 @@ import android.util.Log;
 
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.audio.song.Song;
 
 /**
  * Created by Ethan on 2/12/2015.
@@ -87,10 +87,6 @@ public class AudioTrackManager implements AudioObserver {
         audioThread.start();
     }
 
-    public boolean isPlaying(){
-        return isPlaying;
-    }
-
     public AudioTrack createAudioTrack(int sampleRate , int channels){
         Log.d(LOG_TAG, "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
         int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
@@ -99,13 +95,6 @@ public class AudioTrackManager implements AudioObserver {
                 AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
 
     }
-
-    public void seek(long seekTime){
-        seek = true;
-//        frameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
-        Log.d(LOG_TAG , "frameToPlay is : " + frameToPlay);
-    }
-
 
     public void pause(){
         Log.d(LOG_TAG, "Pausing AudioTrack");
@@ -134,13 +123,8 @@ public class AudioTrackManager implements AudioObserver {
                 pause();
                 break;
 
-            case AudioStatePublisher.SEEK:
-//                long seekTime = audioStatePublisher.getSeekTime();
-//                seek(seekTime);
-                seek = true;
-                break;
-
             case AudioStatePublisher.PLAYING:
+                // TODO : replace with START_SONG
                 Log.d(LOG_TAG , "Playing Received");
                 UnisongSession session = UnisongSession.getCurrentSession();
                 try {

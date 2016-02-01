@@ -11,8 +11,8 @@ import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
-import io.unisong.android.audio.encoder.AACEncoder;
 import io.unisong.android.audio.decoder.FileDecoder;
+import io.unisong.android.audio.encoder.AACEncoder;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.ntp.TimeManager;
@@ -106,7 +106,7 @@ public class LocalSong extends Song {
      * @param ID
      * @return
      */
-    public AudioFrame getFrame(int ID) {
+    public AudioFrame getAACFrame(int ID) {
         return encoder.getFrame(ID);
     }
 
@@ -125,13 +125,12 @@ public class LocalSong extends Song {
      */
     public void start(){
         if(!started) {
-            encoder = new AACEncoder();
-            encoder.setSong(this);
+            encoder = new AACEncoder(this);
             decoder = new FileDecoder(path);
 
             songStartTime = TimeManager.getInstance().getSongStartTime();
             decoder.start();
-            encoder.encode(0, super.getID(), path);
+            encoder.encode(0, path);
             started = true;
         }
     }

@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.NetworkUtilities;
@@ -25,7 +26,6 @@ import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
 import io.unisong.android.network.session.UnisongSession;
-import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 
 /**

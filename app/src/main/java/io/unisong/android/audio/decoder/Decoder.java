@@ -174,8 +174,10 @@ public abstract class Decoder {
 
     public int getFrameIDAtTime(long time){
         int lowestID = Integer.MAX_VALUE;
-        long lowestDiff = 999999999999999999l;
-        long highestPlayTime = -1;
+//        long lowestDiff = 999999999999999999l;
+//        long highestPlayTime = -1;
+        if(outputFrames.size() == 0)
+            Log.d(LOG_TAG , "outputFrames is empty!");
         synchronized (outputFrames){
             for (Map.Entry<Integer, AudioFrame> entry : outputFrames.entrySet()) {
                 long playTime = entry.getValue().getPlayTime();
@@ -199,7 +201,7 @@ public abstract class Decoder {
 //        Log.d(LOG_TAG , "Frame not found at time " + time + "ms ! Lowest difference is : " + lowestDiff);
 //        Log.d(LOG_TAG , "Highest frame playTime is: " + highestPlayTime + "ms");
         if(lowestID == Integer.MAX_VALUE)
-            return -1;
+            return 0;
 
         return lowestID;
     }

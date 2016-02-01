@@ -1,7 +1,5 @@
 package io.unisong.android.audio.song;
 
-import android.util.Log;
-
 import org.json.JSONObject;
 
 import io.unisong.android.audio.AudioFrame;
@@ -64,7 +62,7 @@ public abstract class Song implements AudioObserver {
      * @param ID
      * @return
      */
-    public abstract AudioFrame getFrame(int ID);
+    public abstract AudioFrame getAACFrame(int ID);
 
     /**
      * Returns the raw PCM frame with a given ID

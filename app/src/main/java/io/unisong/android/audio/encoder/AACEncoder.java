@@ -1,19 +1,14 @@
 package io.unisong.android.audio.encoder;
 
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.decoder.FileDecoder;
-import io.unisong.android.audio.song.LocalSong;
+import io.unisong.android.audio.song.Song;
 
 /**
  * Takes in PCM data and encodes to AAC
@@ -22,60 +17,45 @@ import io.unisong.android.audio.song.LocalSong;
 public class AACEncoder{
     private static final String LOG_TAG = AACEncoder.class.getSimpleName();
 
-    //The current ID of the audio frame
-    private int currentOutputID;
+    // These are the default configurations of the AACData. DO NOT DEPEND ON THESE TO BE TRUE
+    public static final int CHANNELS = 2;
+    public static final int SAMPLE_RATE = 44100;
+    public static final int BITRATE = CHANNELS * 64000;
+    public static final String MIME = "audio/mp4a-latm";
 
     //The media codec object used to encode the files
     private MediaCodec codec;
 
-    private boolean stop;
-    private int songID;
+    private AACEncoderThread encodeThread;
 
-    private String filePath;
-
-    String mime = null;
-    int sampleRate = 0, channels = 0, bitrate = 0;
-    long presentationTimeUs = 0, duration = 0;
-
-    private Thread encodeThread;
-
-    private boolean isRunning;
-
-    private LocalSong song;
-    private MediaFormat mInputFormat;
+    private Song song;
 
     //The output and input frames
     private Map<Integer , AudioFrame> outputFrames;
-    private Map<Integer, AudioFrame> inputFrames;
 
 
+    private String filePath;
+    private MediaFormat inputFormat;
     private boolean seek = false;
     private int currentInputFrameID = 0;
 
     //The last frame, a signal that the input is ending
     private int lastFrame;
 
-    //The FileDecoder that turns our source file into
-    private FileDecoder decoder;
-
     //The highest frame # used.
     private int highestFrameUsed;
-    private int frameBufferSize, outputBitrate;
-    private boolean removeFrames;
+    private int frameBufferSize;
+    private boolean removeFrames = true;
 
-    public AACEncoder(){
+    public AACEncoder(Song song){
         frameBufferSize = 20;
-        stop = false;
         highestFrameUsed = 0;
+        this.song = song;
 
-        inputFrames = new TreeMap<>();
-        outputFrames = new TreeMap<>();
+        outputFrames = new HashMap<>();
 
         lastFrame = -1;
-
-        currentOutputID = 0;
         currentInputFrameID = 0;
-        isRunning = false;
     }
 
     public void setBufferSize(int size){
@@ -90,296 +70,18 @@ public class AACEncoder{
         removeFrames = remove;
     }
 
-    public void encode(long startTime, int songID, String filePath){
-        // TODO : disable this comment after seek fixes
-        /*
+    public void encode(long startTime, String filePath){
         try {
-            this.songID = songID;
-            currentOutputID = (int) (startTime / (1024000.0 / 44100.0));
-            decoder = new FileDecoder(filePath);
-            decoder.setEncoder(this);
-            decoder.start(startTime);
-            encodeThread = getEncode();
-            encodeThread.start();
+            this.filePath = filePath;
+            encodeThread = new AACEncoderThread(outputFrames, song.getID() , filePath);
+            encodeThread.startEncode(startTime);
         } catch (Exception e){
             e.printStackTrace();
-        }*/
-    }
-
-    private Thread getEncode(){
-        return new Thread(new Runnable()  {
-            public void run(){
-                try {
-                    encode();
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
-            }
-        });
+        }
     }
 
 
-    private int mDataIndex = 0;
 
-
-    private void encode() throws IOException {
-
-        // TODO : get rid of frames that have been played.
-        long startTime = System.currentTimeMillis();
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-
-        Log.d(LOG_TAG , "Creating codec : OMX.google.aac.encoder");
-        // create the actual decoder, using the mime to select
-        try{
-            //TODO: see if this works on all devices.
-            codec = MediaCodec.createByCodecName("OMX.google.aac.encoder");
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-        // check we have a valid codec instance
-        if (codec == null){
-            Log.d(LOG_TAG , "codec is null ):");
-            return;
-        }
-
-        outputBitrate = 1441200;
-
-        // If mInputFormat is null, then lets wait until it is no longer null
-        while (mInputFormat == null){
-            try {
-                synchronized (this){
-                    this.wait(2);
-                }
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }
-        channels = 2;
-        sampleRate = 44100;
-        mime = "audio/mp4a-latm";
-        bitrate = channels * 64000;
-
-        Log.d(LOG_TAG, "InputFormat is : " + mInputFormat.toString());
-
-        MediaFormat format = new MediaFormat();
-        format.setString(MediaFormat.KEY_MIME, mime);
-        format.setInteger(MediaFormat.KEY_AAC_PROFILE,
-                MediaCodecInfo.CodecProfileLevel.AACObjectLC); //fixed version
-        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, 64000 * channels);
-        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
-
-        //song.setFormat(format);
-
-        codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        codec.start();
-        ByteBuffer[] codecInputBuffers  = codec.getInputBuffers();
-        ByteBuffer[] codecOutputBuffers = codec.getOutputBuffers();
-
-        // start decoding
-        final long kTimeOutUs = 1000;
-        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-        Log.d(LOG_TAG , "Info size is : "  + info.size);
-        //TODO: set sawInputEOS when we see the input EOS
-        boolean sawInputEOS = false;
-        boolean sawOutputEOS = false;
-        int noOutputCounter = 0;
-        int noOutputCounterLimit = 10;
-
-        stop = false;
-
-
-        int largestSize = 0;
-
-
-        //TODO: deal with no data/end of stream
-        while(!stop){
-
-
-            while(!inputFrames.containsKey(currentInputFrameID)){
-
-                if(stop || currentInputFrameID == lastFrame){
-                    break;
-                }
-                try{
-                    synchronized (this){
-                        this.wait(10);
-                    }
-                } catch (InterruptedException e){
-                    Log.d(LOG_TAG , "We have more frames to encode!");
-                }
-
-                if(stop){
-                    break;
-                }
-
-                if(decoder.hasOutputFrame(currentInputFrameID)){
-                    inputFrames.put(currentInputFrameID, decoder.getFrame(currentInputFrameID));
-                }
-
-
-            }
-
-
-            while(highestFrameUsed + frameBufferSize <= currentOutputID){
-                try{
-                    synchronized (this){
-                        this.wait(10);
-                    }
-                } catch (InterruptedException e){
-
-                }
-
-            }
-
-
-            AudioFrame frame;
-            synchronized (inputFrames){
-                frame = inputFrames.get(currentInputFrameID);
-            }
-
-//            Log.d(LOG_TAG , frame.toString());
-            long playTime = -1;
-            long length = -1;
-
-            noOutputCounter++;
-            // read a buffer before feeding it to the decoder
-            if (currentInputFrameID != lastFrame){
-                int inputBufIndex = codec.dequeueInputBuffer(kTimeOutUs);
-                if (inputBufIndex >= 0){
-                    ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
-                    dstBuf.clear();
-
-//                    Log.d(LOG_TAG , "DstBuf capacity: " + dstBuf.capacity() );
-//                    Log.d(LOG_TAG , "DstBuf limit: " + dstBuf.limit());
-//                    Log.d(LOG_TAG , "DstBuf Position: " + dstBuf.position());
-                    int sampleSize = setData(frame , dstBuf);
-//                    Log.d(LOG_TAG, "The Sample size is : " + sampleSize);
-
-
-                    codec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
-
-                }
-            } else {
-                stop = true;
-            }
-
-
-            // encode to AAC and then put in outputFrames
-            int outputBufIndex = codec.dequeueOutputBuffer(info, kTimeOutUs);
-
-
-            if (outputBufIndex >= 0){
-                if (info.size > 0)  noOutputCounter = 0;
-
-                ByteBuffer buf = codecOutputBuffers[outputBufIndex];
-
-//                Log.d(LOG_TAG , "Output Buffer limit is : " + buf.limit());
-                final byte[] chunk = new byte[info.size];
-                buf.get(chunk);
-                buf.clear();
-                if(chunk.length > 0){
-                    createFrame(chunk);
-                }
-
-                try {
-                    codec.releaseOutputBuffer(outputBufIndex, false);
-                } catch(IllegalStateException e){
-                    e.printStackTrace();
-                }
-                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0){
-                    Log.d(LOG_TAG, "saw output EOS.");
-                    sawOutputEOS = true;
-                }
-            } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED){
-                codecOutputBuffers = codec.getOutputBuffers();
-                Log.d(LOG_TAG, "output buffers have changed.");
-            } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                //TODO: inform AudioBroadcaster of this format.
-                MediaFormat outFormat = codec.getOutputFormat();
-                Log.d(LOG_TAG, "output format has changed to " + outFormat);
-            } else {
-                //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
-            }
-
-
-        }
-
-        if(!seek){
-            lastFrame = currentOutputID;
-        } else {
-            seek = false;
-        }
-
-
-        // TODO : notify clients of last frame?
-        // TODO : implement fault tolerance
-        isRunning = false;
-
-        Log.d(LOG_TAG, "stopping...");
-
-        releaseCodec();
-        decoder.destroy();
-
-        // clear source and the other globals
-        //sourcePath = null;
-        duration = 0;
-        mime = null;
-        sampleRate = 0; channels = 0; bitrate = 0;
-        presentationTimeUs = 0; duration = 0;
-
-        stop = true;
-        long finishTime = System.currentTimeMillis();
-
-        Log.d(LOG_TAG , "Total time taken : " + (finishTime - startTime) / 1000 + " seconds");
-
-    }
-
-
-    //Figures out how much data to put in the ByteBuffer dstBuf
-    //TODO: Make this more efficient by getting rid of the byte array assignments and check if it makes a difference
-    private int setData(AudioFrame frame , ByteBuffer dstBuf){
-        byte[] data = frame.getData();
-        int sampleSize = data.length;
-//        Log.d(LOG_TAG , "Data size is: " + sampleSize + " mOldDataIndex: " + mDataIndex  + " , and currentFrame is " + currentInputFrameID);
-
-        int spaceLeft = dstBuf.capacity() - dstBuf.position();
-
-
-        //If we've got enough space for the whole rest of the frame, then use the rest of the frame
-        if(spaceLeft > (sampleSize - mDataIndex) ){
-            if(mDataIndex != 0) {
-                data = Arrays.copyOfRange(data, mDataIndex, sampleSize);
-                mDataIndex = 0;
-            }
-
-            inputFrames.remove(frame.getID());
-//            Log.d(LOG_TAG , "1: Data is : " + data.length);
-            currentInputFrameID++;
-
-        } else {
-            //If not, then let's put what we can
-            int endIndex = spaceLeft + mDataIndex;
-
-            int startIndex = mDataIndex;
-            //If the space left in the ByteBuffer is greater than the space left in the frame, then just put what's left
-            if(endIndex >= data.length){
-                endIndex = data.length;
-                currentInputFrameID++;
-                inputFrames.remove(frame.getID());
-                mDataIndex = 0;
-            } else {
-                mDataIndex = endIndex;
-            }
-
-            data = Arrays.copyOfRange(data, startIndex , endIndex);
-//            Log.d(LOG_TAG , "2: Data is : " + data.length);
-        }
-
-        dstBuf.put(data);
-
-        return data.length;
-    }
 
     private void releaseCodec(){
         if(codec != null) {
@@ -391,59 +93,26 @@ public class AACEncoder{
 
     //The code to stop the decoding
     public void stopDecode(){
-        stop = true;
     }
 
     private int mCount = 0;
-    //Creates a frame out of PCM data and sends it to the AudioBroadcaster class.
-    private void createFrame(byte[] data){
-        AudioFrame frame = new AudioFrame(data, currentOutputID, songID);
-        currentOutputID++;
 
-        if(mCount == 100){
-            mCount = 0;
-            Log.d(LOG_TAG , "Frame #" + currentOutputID + " created");
-        }
-
-        if(frame == null){
-            Log.d(LOG_TAG , "AudioFrame is Null. It certainly should not be.");
-        } else {
-            synchronized (outputFrames) {
-                outputFrames.put(frame.getID(), frame);
-            }
-        }
-
-    }
 
     public void stop(){
-        stop = true;
-        seek = true;
-        long begin = System.currentTimeMillis();
-
-        while (isRunning) {}
-
-        Log.d(LOG_TAG, "Waiting for encode thread to finish , took " + (System.currentTimeMillis() - begin) + "ms");
+        if(encodeThread != null)
+            encodeThread.stopEncoding();
     }
 
 
     public void seek(long seekTime){
         // TODO : uncomment this as well.
-        /*
-        decoder.destroy();
-        synchronized (inputFrames){
-            inputFrames = new TreeMap<>();
-        }
-        decoder = new FileDecoder(filePath);
-        decoder.setEncoder(this);
-        decoder.start(seekTime);*/
-    }
-
-    public void setSong(LocalSong song){
-        this.song = song;
+        encodeThread.stopEncoding();
+        encodeThread = new AACEncoderThread(outputFrames , song.getID(), filePath);
+        encodeThread.startEncode(seekTime);
     }
 
     public void setInputFormat(MediaFormat format){
-        mInputFormat = format;
+        inputFormat = format;
     }
 
     public Map<Integer , AudioFrame> getFrames(){

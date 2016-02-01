@@ -16,10 +16,10 @@ import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
-import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.audio.song.LocalSong;
 import io.unisong.android.audio.song.Song;
 import io.unisong.android.audio.song.UnisongSong;
+import io.unisong.android.network.SocketIOClient;
 
 /**
  * Created by Ethan on 9/12/2015.

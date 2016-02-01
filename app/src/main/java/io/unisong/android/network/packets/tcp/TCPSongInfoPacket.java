@@ -7,8 +7,8 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.OutputStream;
 
-import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.audio.song.Song;
+import io.unisong.android.network.CONSTANTS;
 
 /**
  * A class for sending all of the relevant information on a UISong,

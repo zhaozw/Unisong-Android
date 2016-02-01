@@ -13,10 +13,11 @@ import java.util.concurrent.TimeUnit;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.SocketIOClient;
-import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.audio.song.Song;
 import io.unisong.android.audio.song.SongFormat;
+import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * The class to handle transmissions to the backend
@@ -26,20 +27,22 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
     private final static String LOG_TAG = ServerTransmitter.class.getSimpleName();
 
-    private SocketIOClient mClient;
-    private boolean mTransmitting;
-    private AudioStatePublisher mAudioStatePublisher;
-    private TimeManager mTimeManager;
-    private int mFrameToUpload;
-    private ScheduledFuture<?> mScheduledFuture;
-    private ScheduledExecutorService mWorker;
+    private SocketIOClient client;
+    private boolean transmitting;
+    private AudioStatePublisher publisher;
+    private TimeManager timeManager;
+    private int frameToUpload;
+    private ScheduledFuture<?> scheduledFuture;
+    private ScheduledExecutorService worker;
+    private UnisongSession session;
 
-    public ServerTransmitter(){
-        mTimeManager = TimeManager.getInstance();
-        mAudioStatePublisher = AudioStatePublisher.getInstance();
-        mAudioStatePublisher.attach(this);
-        mClient = SocketIOClient.getInstance();
-        mWorker = Executors.newSingleThreadScheduledExecutor();
+    public ServerTransmitter(UnisongSession session){
+        timeManager = TimeManager.getInstance();
+        publisher = AudioStatePublisher.getInstance();
+        publisher.attach(this);
+        client = SocketIOClient.getInstance();
+        worker = Executors.newSingleThreadScheduledExecutor();
+        this.session = session;
     }
 
 
@@ -50,9 +53,9 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         int currentFrame = 0;
 
         Song currentSong = mSong;
-        mTransmitting = true;
+        transmitting = true;
 
-        while(mTransmitting){
+        while(transmitting){
             if(!currentSong.hasAACFrame(currentFrame) && !mStop){
 
                 synchronized (this){
@@ -67,7 +70,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 break;
             }
 
-            AudioFrame frame = currentSong.getFrame(currentFrame);
+            AudioFrame frame = currentSong.getAACFrame(currentFrame);
 
             // TODO : figure out why frame is null
             if(frame == null){
@@ -81,7 +84,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         }
 
 
-        mTransmitting = false;
+        transmitting = false;
     }
 
     private void uploadFrame(AudioFrame frame){
@@ -96,7 +99,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             return;
         }
 
-        mClient.emit("upload data", obj);
+        client.emit("upload data", obj);
     }
 
     @Override
@@ -105,7 +108,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         JSONObject startSongJSON = new JSONObject();
 
         try {
-            startSongJSON.put("songStartTime", mTimeManager.getSongStartTime() + mTimeManager.getOffset());
+            startSongJSON.put("songStartTime", timeManager.getSongStartTime() + timeManager.getOffset());
             startSongJSON.put("songID", song.getID());
             SongFormat format = song.getFormat();
 
@@ -118,36 +121,36 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             Log.d(LOG_TAG, "NullPointerException in startSong()! Was the SongFormat null?");
         }
 
-        mClient.emit("start song" , startSongJSON);
+        client.emit("start song", startSongJSON);
 
-        mFrameToUpload = 0;
+        frameToUpload = 0;
         mSong = song;
         Log.d(LOG_TAG , "Start song");
 
-        if(mScheduledFuture != null)
-            mScheduledFuture.cancel(false);
+        if(scheduledFuture != null)
+            scheduledFuture.cancel(false);
 
-        mScheduledFuture = mWorker.scheduleAtFixedRate(mBroadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
+        scheduledFuture = worker.scheduleAtFixedRate(mBroadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
     }
 
     private int mUploadCount = 0;
 
     private Runnable mBroadcastRunnable = () -> {
 
-        if(mSong.hasAACFrame(mFrameToUpload)){
-            AudioFrame frame = mSong.getFrame(mFrameToUpload);
+        if(mSong.hasAACFrame(frameToUpload)){
+            AudioFrame frame = mSong.getAACFrame(frameToUpload);
 //            Log.d(LOG_TAG, "Frame is null? " + (frame == null));
             if(frame != null) {
-//                Log.d(LOG_TAG, "Frame #" + mFrameToUpload + " uploaded");
+//                Log.d(LOG_TAG, "Frame #" + frameToUpload + " uploaded");
                 uploadFrame(frame);
 
                 if(mUploadCount >= 100){
-                    Log.d(LOG_TAG , "Frame #" + mFrameToUpload + " uploaded");
+                    Log.d(LOG_TAG , "Frame #" + frameToUpload + " uploaded");
                 }
-                mFrameToUpload++;
+                frameToUpload++;
             }
         } else {
-//            Log.d(LOG_TAG , "Looking for frame #" + mFrameToUpload + " while size is : " + mSong.getPCMFrames().size());
+//            Log.d(LOG_TAG , "Looking for frame #" + frameToUpload + " while size is : " + mSong.getPCMFrames().size());
         }
 
 
@@ -157,26 +160,30 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     public void update(int state) {
         switch (state){
             case AudioStatePublisher.PAUSED:
-                mClient.emit("pause", "pause");
+                client.emit("pause", "pause");
                 break;
             case AudioStatePublisher.RESUME:
                 try {
                     JSONObject object = new JSONObject();
-                    object.put("resumeTime", mAudioStatePublisher.getResumeTime());
+                    object.put("resumeTime", publisher.getResumeTime());
                     object.put("songStartTime", TimeManager.getInstance().getSongStartTime() + TimeManager.getInstance().getOffset());
-                    mClient.emit("resume", object);
+                    client.emit("resume", object);
                 } catch (JSONException e){
                     e.printStackTrace();
                 }
                 break;
             case AudioStatePublisher.SEEK:
-                mClient.emit("seek" , mAudioStatePublisher.getSeekTime());
+                client.emit("seek", publisher.getSeekTime());
+                frameToUpload = (int) (publisher.getSeekTime() / ((1024.0 * 1000.0) / 44100.0));
                 break;
             case AudioStatePublisher.PLAYING:
-                mClient.emit("playing" , "playing");
+                client.emit("playing", "playing");
                 break;
             case AudioStatePublisher.END_SONG:
-                mClient.emit("end song" , mAudioStatePublisher.getSongToEnd());
+                client.emit("end song", publisher.getSongToEnd());
+                break;
+            case AudioStatePublisher.START_SONG:
+                startSong(session.getCurrentSong());
                 break;
         }
     }

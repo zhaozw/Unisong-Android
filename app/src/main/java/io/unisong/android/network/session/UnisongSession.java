@@ -20,6 +20,7 @@ import io.unisong.android.activity.session.MainSessionActivity;
 import io.unisong.android.activity.session.SessionSongsAdapter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.Client;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
@@ -29,7 +30,6 @@ import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
 import io.unisong.android.network.host.transmitter.Transmitter;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
@@ -201,7 +201,7 @@ public class UnisongSession {
                     // If we are the master and are getting updates, start u
                     if (Broadcaster.getInstance() == null) {
                         Broadcaster broadcaster = new Broadcaster(this);
-                        broadcaster.addTransmitter(new ServerTransmitter());
+                        broadcaster.addTransmitter(new ServerTransmitter(this));
                     } else {
                         Broadcaster broadcaster = Broadcaster.getInstance();
                         List<Transmitter> transmitters = broadcaster.getTransmitters();
@@ -214,7 +214,7 @@ public class UnisongSession {
                         }
 
                         if (!hasServer)
-                            broadcaster.addTransmitter(new ServerTransmitter());
+                            broadcaster.addTransmitter(new ServerTransmitter(this));
                     }
 
                 } else {
