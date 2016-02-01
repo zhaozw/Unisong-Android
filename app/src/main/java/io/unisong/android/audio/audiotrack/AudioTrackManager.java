@@ -6,9 +6,6 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.util.Log;
 
-import java.util.Date;
-
-import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.ntp.TimeManager;
@@ -32,22 +29,15 @@ public class AudioTrackManager implements AudioObserver {
     //TODO: change this to AudioTrackManager.class.getSimpleName()
     private String LOG_TAG = "AudioTrackManager";
 
-    //The AudioTrack used for playback
-    private AudioTrack audioTrack;
 
     //the last frame ID that has been played
     private int frameToPlay;
 
     // whether we are playing, and whether the thread is waiting
-    private boolean isPlaying = false, threadWaiting = false, seek = false;
-    private boolean threadRunning = false;
-    private boolean startSongRunning = false;
+    private boolean isPlaying = false, seek = false;
 
     //The thread that the writing will go on
-    private Thread writeThread;
-
-    //The current last frame
-    private int lastFrameID;
+    private AudioTrackThread audioThread;
 
     //The handler for scheduling resyncs and the song start
     private Handler handler;
@@ -55,8 +45,6 @@ public class AudioTrackManager implements AudioObserver {
     //The class that handles all of the time calculations
     private TimeManager timeManager;
 
-    // The time we will be resuming at.
-    private long resumeTime;
 
     private long lastFrameTime;
 
@@ -72,7 +60,6 @@ public class AudioTrackManager implements AudioObserver {
 
         timeManager = TimeManager.getInstance();
 
-        lastFrameID = -1;
         lastFrameTime = 0;
 
         //Get the AudioStatePublisher and then add ourselves to it
@@ -83,215 +70,47 @@ public class AudioTrackManager implements AudioObserver {
         handler = new Handler();
         instance = this;
 
-        Log.d(LOG_TAG , "AudioTrackManager created and attached to AudioStatePublisher");
-    }
-
-
-    Runnable mStartSong = new Runnable() {
-        @Override
-        public void run() {
-            startSongRunning = true;
-
-            Log.d(LOG_TAG , "mStartSong called");
-                if(isPlaying){
-                    Log.d(LOG_TAG , "Previous thread still running! Must wait!");
-                    while(isPlaying){
-                        try {
-                            synchronized (this) {
-                                this.wait(2);
-                            }
-                        } catch (InterruptedException e){
-                            e.printStackTrace();
-                        }
-                    }
-                    //TODO: Switch the song
-                } else {
-                    //TODO: uncomment these after it's safe
-                    startPlaying();
-                }
-
-            startSongRunning = false;
-        }
-    };
-
-
-    private int runCount;
-    private void writeToTrack(){
-        isPlaying = true;
-        threadRunning = true;
-        runCount = 0;
-
-        int count = 0;
-
-        long waitTime = timeManager.getSongStartTime() + resumeTime - System.currentTimeMillis() ;
-        Log.d(LOG_TAG, "Waiting for " + waitTime + "ms, and resume time is :" + resumeTime);
-        try{
-
-            if(waitTime > 0) {
-                threadWaiting = true;
-                synchronized (this) {
-                    this.wait(waitTime);
-                }
-            } else {
-                Log.d(LOG_TAG , "Wait time was less than 0!");
-            }
-        } catch (InterruptedException e){
-            Log.d(LOG_TAG , "Our wait was interrupted! isPlaying : " + isPlaying);
-        }
-
-        threadWaiting = false;
-
-        // if we've stopped playing, then stop the thread
-        if(!isPlaying) {
-            threadRunning = false;
-            return;
-        }
-
-        if(!song.started()){
-            Log.d(LOG_TAG , "Song has not been started! Starting now.");
-            song.start();
-        }
-
-        audioTrack.play();
-        if(resumeTime == 0) {
-            Log.d(LOG_TAG, "Starting Write, " + (timeManager.getSongStartTime() - System.currentTimeMillis()) + "ms until song start time.");
-        } else {
-            Log.d(LOG_TAG , "Starting Write, " + (timeManager.getSongStartTime() + resumeTime - System.currentTimeMillis())  + "ms until song start time." );
-        }
-        while(isPlaying()) {
-
-            if (frameToPlay == lastFrameID) {
-                isPlaying = false;
-                return;
-            }
-
-            /*
-            if(!mFrames.containsKey(frameToPlay)){
-
-                String set = "";
-                for (Integer name: mFrames.keySet()) {
-
-                    set += name.toString() + " , ";
-
-                }
-                Log.d(LOG_TAG , set.substring(0 , set.length() -1));
-                Log.d(LOG_TAG , "mFrames size is :" + mFrames.size());
-
-            }*/
-
-            if(!song.hasPCMFrame(frameToPlay)){
-                Log.d(LOG_TAG , "Song does not have frame #" + frameToPlay);
-            }
-
-            boolean firstWait = true;
-            while (!song.hasPCMFrame(frameToPlay)) {
-                try {
-                    threadWaiting = true;
-                    synchronized (this) {
-                        this.wait(1);
-                    }
-                } catch (InterruptedException e) {
-
-                }
-                if (!isPlaying()) {
-                    Log.d(LOG_TAG , "We have stopped playing!");
-                    return;
-                }
-                threadWaiting = false;
-            }
-
-            AudioFrame frame = song.getPCMFrame(frameToPlay);
-
-            count++;
-            if(count >= 50){
-                count = 0;
-                long UTCplayTime = timeManager.getSongStartTime() + frame.getPlayTime();
-                Log.d(LOG_TAG , "Time difference : " + (System.currentTimeMillis() - UTCplayTime) + " and playTime : " +  frame.getPlayTime());
-                synchronizePlayTime(System.currentTimeMillis() - UTCplayTime);
-            }
-
-            lastFrameTime = frame.getPlayTime();
-            frameToPlay++;
-
-            byte[] data = frame.getData();
-
-
-            audioTrack.write(data, 0, data.length);
-        }
-
-
-        Log.d(LOG_TAG , "Write Thread done, last frame #" + frameToPlay);
-        threadRunning = false;
-    }
-
-    private Thread getWriteThread(){
-        return new Thread(() ->  {
-            // set this thread priority to high
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-            writeToTrack();
-        });
+        Log.d(LOG_TAG, "AudioTrackManager created and attached to AudioStatePublisher");
     }
 
     public void startSong(Song song){
-
-        resumeTime = 0;
-        this.song = song;
-
-        double millisTillSongStart =  timeManager.getSongStartTime() - System.currentTimeMillis();
-        Log.d(LOG_TAG, "TimeStartTime : " + new Date(timeManager.getSongStartTime()).toString());
-        Log.d(LOG_TAG, "Milliseconds until song start: " + millisTillSongStart + " and timeManager.getOffset() is :" + timeManager.getOffset());
-        handler.post(mStartSong);
-    }
-
-    private void startPlaying() {
         Log.d(LOG_TAG, "Write Started, difference is: " + ((timeManager.getSongStartTime()) - System.currentTimeMillis()) + " timeManager.getOffset() is : " + timeManager.getOffset());
 
+        this.song = song;
+
+        if(audioThread != null && audioThread.isRunning())
+            audioThread.stopPlaying();
+
+        Log.d(LOG_TAG , "song is : " + song.getName());
         // TODO : get info from song
-        createAudioTrack(44100, 2);
-        writeThread = getWriteThread();
-        writeThread.start();
+        audioThread = new AudioTrackThread(createAudioTrack(44100, 2) , song, 0);
+        audioThread.start();
     }
 
     public boolean isPlaying(){
         return isPlaying;
     }
 
-    public void createAudioTrack(int sampleRate , int channels){
-        if (audioTrack == null) {
-            Log.d(LOG_TAG, "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
-            int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
+    public AudioTrack createAudioTrack(int sampleRate , int channels){
+        Log.d(LOG_TAG, "Creating Audio Track sampleRate : " + sampleRate + " and channels " + channels);
+        int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channels, AudioFormat.ENCODING_PCM_16BIT);
 
-            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
-                    AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
-        }
+        return new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_IN_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+
     }
 
-    public void release(){
-        if(audioTrack != null){
-            audioTrack.flush();
-            audioTrack.release();
-            audioTrack = null;
-        }
-    }
     public void seek(long seekTime){
         seek = true;
 //        frameToPlay = (int)(seekTime / (1024000.0 / 44100.0));
         Log.d(LOG_TAG , "frameToPlay is : " + frameToPlay);
     }
 
-    public void setLastFrameID(int lastFrame){
-        lastFrameID = lastFrame;
-    }
 
     public void pause(){
-        if(isPlaying) {
-            Log.d(LOG_TAG, "Pausing AudioTrack");
-            isPlaying = false;
-            if(threadRunning && threadWaiting)
-                synchronized (writeThread) {
-                    writeThread.interrupt();
-                }
-        }
+        Log.d(LOG_TAG, "Pausing AudioTrack");
+        if(audioThread != null)
+            audioThread.stopPlaying();
     }
 
     // The function that receives updates from the AudioStatePublisher
@@ -334,42 +153,32 @@ public class AudioTrackManager implements AudioObserver {
     }
 
     public void resume(long resumeTime){
-        this.resumeTime = resumeTime;
-
-        frameToPlay = song.getFrameIDForTime(resumeTime);
 
         if(seek && frameToPlay == -1) {
             frameToPlay = 0;
             seek = false;
         }
 
-
+        if(audioThread!= null && audioThread.isRunning())
+            audioThread.stopPlaying();
 
         Log.d(LOG_TAG , "Resuming, frameToPlay is : " + frameToPlay);
 
         isPlaying = true;
-        writeThread = getWriteThread();
-        writeThread.start();
+        audioThread = new AudioTrackThread(createAudioTrack(44100, 2), song, resumeTime);
+        audioThread.start();
     }
 
     public void destroy(){
         Log.d(LOG_TAG , "AudioTrackManager Destroy Called");
         isPlaying = false;
-        writeThread = null;
-        if(startSongRunning){
-            while(startSongRunning){
+        if(audioThread != null)
+            audioThread.stopPlaying();
 
-            }
-        }
+        audioThread = null;
         timeManager = null;
-        handler.removeCallbacks(mStartSong);
-        audioTrack = null;
         song = null;
 
-    }
-
-    public void newSong(){
-        isPlaying = false;
     }
 
     public long getLastFrameTime(){
