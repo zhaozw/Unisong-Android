@@ -181,10 +181,11 @@ public class ServerReceiver implements Receiver{
         public void call(Object... args) {
             // the first arg should be a long with the seek time
             try {
-                Long seekTime = (Long) args[0];
-                if (seekTime != null) {
-                    mListener.seek(seekTime);
-                }
+//                Long seekTime = (Long) args[0];
+                // seekTime would be a long but socket.io casts it to an int
+                int seekTime = (Integer) args[0];
+                mListener.seek(seekTime);
+
             }catch(Exception e){
                 e.printStackTrace();
             };

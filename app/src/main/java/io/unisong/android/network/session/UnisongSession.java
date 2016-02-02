@@ -81,6 +81,7 @@ public class UnisongSession {
     private List<Client> mClients;
     private HttpClient mClient;
     private SessionSongsAdapter mAdapter;
+    private long lastUpdate;
 
     /**
      * This constructor creates a UnisongSession where the current user is the
@@ -472,7 +473,10 @@ public class UnisongSession {
      * Updates the session with information from the server.
      */
     public void getUpdate(){
-        mSocketIOClient.emit("get session" , getSessionID());
+        if(System.currentTimeMillis() - lastUpdate >= 100) {
+            lastUpdate = System.currentTimeMillis();
+            mSocketIOClient.emit("get session", getSessionID());
+        }
     }
 
     public void sendUpdate(){

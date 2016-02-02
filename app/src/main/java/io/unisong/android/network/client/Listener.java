@@ -108,7 +108,7 @@ public class Listener{
     public void startSong(long startTime , int songID){
 
         //TODO : calculate the current frame to play?
-        //mSongDecoder = new SongDecoder(channels);
+        //mSongDecoder = new UnisongDecoder(channels);
 
         mTimeManager.setSongStartTime(startTime - TimeManager.getInstance().getOffset());
 

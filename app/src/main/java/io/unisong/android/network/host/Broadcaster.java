@@ -18,34 +18,28 @@ import io.unisong.android.network.session.UnisongSession;
 /**
  * Created by Ethan on 2/8/2015.
  */
-public class Broadcaster implements AudioObserver {
+public class Broadcaster implements AudioObserver{
 
     public static final String LOG_TAG = Broadcaster.class.getSimpleName();
 
-    private static Broadcaster sInstance;
+    private static Broadcaster instance;
 
     public static Broadcaster getInstance(){
-        return sInstance;
+        return instance;
     }
-
-    //True if the listeners are running, false otherwise
-    private boolean mStreamRunning;
-
-    //The class that handles song start times and offsets.
-    private TimeManager mTimeManager;
-
     //The Transmitters that transmit the audio data to their relevant destinations
-    private List<Transmitter> mTransmitters;
+    private List<Transmitter> transmitters;
+    private TimeManager timeManager;
 
     private AudioStatePublisher mAudioStatePublisher;
 
     private UnisongSession mUnisongSession;
 
 
-    private Handler mHandler;
-    private AudioTrackManager mAudioTrackManager;
+    private Handler handler;
+    private AudioTrackManager audioTrackManager;
 
-    private Song mCurrentSong;
+    private Song currentSong;
 
     //Makes an Broadcaster object
     public Broadcaster(UnisongSession session){
@@ -54,40 +48,38 @@ public class Broadcaster implements AudioObserver {
         mAudioStatePublisher.attach(this);
         mAudioStatePublisher.setBroadcaster(this);
 
-        mTimeManager = TimeManager.getInstance();
+        timeManager = TimeManager.getInstance();
         mUnisongSession = session;
 
-        mAudioTrackManager = AudioTrackManager.getInstance();
+        audioTrackManager = AudioTrackManager.getInstance();
 
         //TODO: check to see if we're on wifi. If not, then don't start LANTransmitter
-        mTransmitters = new ArrayList<>();
+        transmitters = new ArrayList<>();
         // TODO : uncomment after server tests
         //mLANTransmitter = new LANTransmitter(false , mUnisongSession);
-        //mTransmitters.add(mLANTransmitter);
+        //transmitters.add(mLANTransmitter);
 
         Log.d(LOG_TAG , "Broadcaster Created!");
-        mHandler = new Handler();
-        sInstance = this;
+        handler = new Handler();
+        instance = this;
     }
 
     //Starts streaming the song, starts the reliability listeners, and starts the control listener
-    private void startSongStream(Song song){
+    public void startSong(Song song){
 
         Log.d(LOG_TAG , "Starting Song stream");
 
         try {
 
-            mTimeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY);
+            currentSong = song;
 
-            mCurrentSong = song;
-
-            mStreamRunning = true;
+            timeManager.setSongStartTime(System.currentTimeMillis() + CONSTANTS.SONG_START_DELAY);
 
         } catch (Exception e){
             e.printStackTrace();
         }
 
-        Log.d(LOG_TAG , "Starting broadcaster succeeded.");
+        Log.d(LOG_TAG, "Starting broadcaster succeeded.");
     }
 
     Runnable mNotifyAudioPublisher = new Runnable() {
@@ -98,40 +90,36 @@ public class Broadcaster implements AudioObserver {
     };
 
     public void addTransmitter(Transmitter transmitter){
-        mTransmitters.add(transmitter);
+        transmitters.add(transmitter);
     }
 
     public List<Transmitter> getTransmitters(){
-        return mTransmitters;
-    }
-
-    //TODO: fix this up when rearchitecturing is done
-    // lol rearchitecturing is never done.
-    public void destroy(){
-        for(Transmitter transmitter : mTransmitters){
-            transmitter.destroy();
-        }
-
-        mAudioTrackManager = null;
-        mTimeManager = null;
-
-
-        sInstance = null;
-        mCurrentSong = null;
-        mHandler = null;
-
+        return transmitters;
     }
 
     @Override
     public void update(int state){
         switch (state){
             case AudioStatePublisher.START_SONG:
-//                startSong(mUnisongSession.getCurrentSong());
+                startSong(currentSong);
                 break;
         }
     }
 
-    public void startSong(Song song){
-        startSongStream(song);
+    //TODO: fix this up when rearchitecturing is done
+    // lol rearchitecturing is never done.
+    public void destroy(){
+        for(Transmitter transmitter : transmitters){
+            transmitter.destroy();
+        }
+
+        audioTrackManager = null;
+        timeManager = null;
+
+
+        instance = null;
+        currentSong = null;
+        handler = null;
+
     }
 }

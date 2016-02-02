@@ -75,6 +75,7 @@ public class TimeManager implements AudioObserver {
         Song song = UnisongSession.getCurrentSession().getCurrentSong();
         if(song == null) {
             Log.d(LOG_TAG , "CurrentSong is null!");
+            UnisongSession.getCurrentSession().getUpdate();
             return 100;
         }
 

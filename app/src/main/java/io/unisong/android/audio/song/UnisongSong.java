@@ -5,9 +5,12 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.decoder.SongDecoder;
+import io.unisong.android.audio.decoder.UnisongDecoder;
 import io.unisong.android.network.NetworkUtilities;
 
 /**
@@ -89,7 +92,7 @@ public class UnisongSong extends Song {
     @Override
     public void start() {
         if(!started){
-            decoder = new SongDecoder(getFormat());
+            decoder = new UnisongDecoder(getFormat());
             decoder.start();
             started = true;
         }
@@ -97,7 +100,10 @@ public class UnisongSong extends Song {
 
     @Override
     public void seek(long seekTime) {
-        decoder.seek(seekTime);
+        Map<Integer, AudioFrame> inputFrames = ((UnisongDecoder)decoder).getInputFrames();
+        decoder = new UnisongDecoder(getFormat());
+        ((UnisongDecoder)decoder).setInputFrames(inputFrames);
+        decoder.start(seekTime);
     }
 
     @Override

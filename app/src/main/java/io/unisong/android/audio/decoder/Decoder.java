@@ -11,7 +11,7 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.CONSTANTS;
 
 /**
- * This is the abstract Decoder class which FileDecoder and SongDecoder inherit from.
+ * This is the abstract Decoder class which FileDecoder and UnisongDecoder inherit from.
  * It contains common code/variable declarations
  * Created by Ethan on 8/4/2015.
  */
@@ -84,6 +84,7 @@ public abstract class Decoder {
     public void seek(long seekTime) {
         stop = true;
         Log.d(LOG_TAG , "Stopping Thread");
+        long waitTime = System.currentTimeMillis();
         while (isRunning){
             synchronized (this){
                 try{
@@ -93,6 +94,9 @@ public abstract class Decoder {
                 }
             }
         }
+        outputFrames = new HashMap<>();
+        outputFrameID = 0;
+        Log.d(LOG_TAG , "Seek wait took : " + (System.currentTimeMillis() - waitTime) + "ms");
         Log.d(LOG_TAG , "Thread stopped, starting new thread.");
         this.seekTime = seekTime;
         decodeThread = getDecodeThread();

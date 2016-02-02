@@ -6,6 +6,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.song.SongFormat;
@@ -14,9 +16,9 @@ import io.unisong.android.audio.song.SongFormat;
  * A decoder class that decodes a single song.
  * Created by ezturner on 5/6/2015.
  */
-public class SongDecoder extends Decoder {
+public class UnisongDecoder extends Decoder {
 
-    private final String LOG_TAG = SongDecoder.class.getSimpleName();
+    private final String LOG_TAG = UnisongDecoder.class.getSimpleName();
 
     private boolean isRunning = false;
 
@@ -33,11 +35,12 @@ public class SongDecoder extends Decoder {
 
 
 
-    public SongDecoder(SongFormat format){
+    public UnisongDecoder(SongFormat format){
         super();
         songFormat = format;
         inputFormat = songFormat.getMediaFormat();
         frameBufferSize = 50;
+        outputFrameID = 0;
         mime = format.getMime();
         bitrate = format.getBitrate();
         sampleRate = format.getSampleRate();
@@ -45,9 +48,10 @@ public class SongDecoder extends Decoder {
     }
 
 
+    @Override
     public void start(long startTime){
-        Log.d(LOG_TAG , "SongDecoder decode started at time: " + startTime);
-        double frameDuration = 1000 * (1024 / songFormat.getSampleRate());
+        Log.d(LOG_TAG , "UnisongDecoder decode started at time: " + startTime);
+        double frameDuration = 1000.0 * 1024.0 / songFormat.getSampleRate();
         inputFrameID = (int) (startTime / frameDuration);
         outputFrameID = 0;
         decodeThread = getDecodeThread();
@@ -178,6 +182,7 @@ public class SongDecoder extends Decoder {
         restartOnFailure();
     }
 
+
     //Figures out how much data to put in the ByteBuffer dstBuf
     //TODO: Make this more efficient by getting rid of the byte array assignments and check if it makes a difference
     private int setData(AudioFrame frame , ByteBuffer dstBuf){
@@ -223,12 +228,39 @@ public class SongDecoder extends Decoder {
         decodeThread = null;
     }
 
+    @Override
+    public void seek(long seekTime){
+
+        stop = true;
+        Log.d(LOG_TAG , "Stopping Thread");
+        while (isRunning){
+            synchronized (this){
+                try{
+                    this.wait(1);
+                } catch (InterruptedException e){
+                    Log.d(LOG_TAG , "Thread interrupted while waiting in seek()");
+                }
+            }
+        }
+        Log.d(LOG_TAG , "Thread stopped, starting new thread.");
+        this.seekTime = seekTime;
+        double frameDuration = 1000 * (1024 / songFormat.getSampleRate());
+        inputFrameID = (int) (seekTime / frameDuration);
+        decodeThread = getDecodeThread();
+        decodeThread.start();
+    }
     private int mDebugCount = 0;
 
 
     private void waitForFrame(int size){
+        boolean firstWait = true;
         //TODO: Rewrite this to feed blank AAC frames instead of creating an empty PCM one
         while(!inputFrames.containsKey(inputFrameID)){
+
+            if(firstWait) {
+                Log.d(LOG_TAG, "Waiting for frame #" + inputFrameID);
+                firstWait = false;
+            }
 
             if(stop){
                 break;
@@ -244,6 +276,14 @@ public class SongDecoder extends Decoder {
             }
 
         }
+    }
+
+    public Map<Integer, AudioFrame> getInputFrames(){
+        return inputFrames;
+    }
+
+    public void setInputFrames(Map<Integer, AudioFrame> inputFrames){
+        this.inputFrames = inputFrames;
     }
 
 }
