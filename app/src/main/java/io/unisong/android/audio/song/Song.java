@@ -13,12 +13,10 @@ import io.unisong.android.audio.decoder.Decoder;
 public abstract class Song implements AudioObserver {
 
     private static final String LOG_TAG = Song.class.getSimpleName();
-    protected String name;
-    protected String artist;
+    protected String name, artist , imageURL;
     protected boolean started;
 
     protected Decoder decoder;
-    protected String imageURL;
 
     //The # of the song
     protected int songID;

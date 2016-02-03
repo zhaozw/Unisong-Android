@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.session.UnisongSession;
 
@@ -181,6 +182,12 @@ public class CurrentUser {
                 new File(dir, children[i]).delete();
             }
         }
+
+        SocketIOClient socketIO = SocketIOClient.getInstance();
+
+        socketIO.destroy();
+
+        socketIO = new SocketIOClient(context);
 
         context = null;
         System.gc();

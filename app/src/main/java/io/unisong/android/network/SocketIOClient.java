@@ -36,7 +36,7 @@ public class SocketIOClient {
 
     private Handler mInviteHandler;
     private HttpClient mHttpClient;
-    private Socket mSocket;
+    private Socket socket;
     private ServerReceiver mReceiver;
     private Context mContext;
 
@@ -49,7 +49,7 @@ public class SocketIOClient {
         opts.forceNew = true;
 
         mInviteHandler = new Handler();
-        mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
+        socket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
         sInstance = this;
     }
@@ -59,32 +59,34 @@ public class SocketIOClient {
     }
 
     public void connect(){
-        Log.d(LOG_TAG, "Connecting to server with socket.io");
-        mSocket.connect();
-        mSocket.on(Socket.EVENT_CONNECT , mConnectListener);
-        mSocket.on(Socket.EVENT_RECONNECT, mReconnectListener);
-        mSocket.on(Socket.EVENT_DISCONNECT , mDisconnectListener);
-        // TODO : see if there's a better place to put this
-        mSocket.on("invite user", mInviteListener);
-        mSocket.on("join session result" , mJoinResultListener);
-        mSocket.on("authentication result" , mAuthenticationResult);
+        if(!socket.connected()) {
+            Log.d(LOG_TAG, "Connecting to server with socket.io");
+            socket.connect();
+            socket.on(Socket.EVENT_CONNECT, mConnectListener);
+            socket.on(Socket.EVENT_RECONNECT, mReconnectListener);
+            socket.on(Socket.EVENT_DISCONNECT, mDisconnectListener);
+            // TODO : see if there's a better place to put this
+            socket.on("invite user", mInviteListener);
+            socket.on("join session result", mJoinResultListener);
+            socket.on("authentication result", mAuthenticationResult);
+        }
     }
 
     public boolean isConnected(){
-        return mSocket.connected();
+        return socket.connected();
     }
 
     public void on(String eventName, Emitter.Listener listener){
-        mSocket.on(eventName , listener);
+        socket.on(eventName, listener);
     }
 
     public void off(String eventName, Emitter.Listener listener){
-        mSocket.off(eventName, listener);
+        socket.off(eventName, listener);
     }
 
     public void joinSession(int sessionID){
-        if(mSocket.connected())
-            mSocket.emit("join session", sessionID);
+        if(socket.connected())
+            socket.emit("join session", sessionID);
     }
 
     private Runnable mLoginRunnable = () -> login();
@@ -116,7 +118,7 @@ public class SocketIOClient {
                 Log.d(LOG_TAG , "User Password : " + user.getPassword());
                 object.put("password", user.getPassword());
             }
-            mSocket.emit("authenticate", object);
+            socket.emit("authenticate", object);
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -200,13 +202,13 @@ public class SocketIOClient {
     };
 
     public void emit(String eventName, Object data){
-        if(mSocket.connected())
-            mSocket.emit(eventName , data);
+        if(socket.connected())
+            socket.emit(eventName , data);
     }
 
     public void emit(String eventName, Object[] args){
-        if(mSocket.connected())
-            mSocket.emit(eventName, args);
+        if(socket.connected())
+            socket.emit(eventName, args);
     }
 
     private Thread getConnectionThread(){
@@ -228,6 +230,7 @@ public class SocketIOClient {
 
     // Destroys the object removes all references
     public void destroy(){
+        socket.disconnect();
         mContext = null;
         sInstance = null;
     }

@@ -95,36 +95,6 @@ public class UnisongActivity extends AppCompatActivity {
         long currentTime = System.currentTimeMillis();
         boolean restartedServices = false;
 
-        while(friendsList == null){
-            // TODO : check for NetworkService, if does not exist then create.
-            Log.d(LOG_TAG , "Loading FriendsList, has been: " + (System.currentTimeMillis() - currentTime) + "ms");
-            // TODO : investigate?
-            if(System.currentTimeMillis() - currentTime > 1000){
-
-                if(!restartedServices) {
-                    new AudioStatePublisher();
-                    networkIntent = new Intent(getApplicationContext(), MediaService.class);
-                    startService(networkIntent);
-                    mediaIntent = new Intent(getApplicationContext(), NetworkService.class);
-                    startService(mediaIntent);
-                    CurrentUser.loadFromPrefs(getApplicationContext());
-                    currentTime = System.currentTimeMillis();
-                    restartedServices = true;
-                } else {
-                    break;
-                }
-            }
-            try{
-                synchronized (this){
-                    this.wait(50);
-                }
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-
-            friendsList = FriendsList.getInstance();
-        }
-
         // specify an adapter (see also next example)
         adapter = new FriendsAdapter(friendsList.getFriends());
         recyclerView.setAdapter(adapter);

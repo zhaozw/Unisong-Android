@@ -216,9 +216,9 @@ public class LocalSong extends Song {
      */
     private void uploadPicture(){
 
-        if(getImageURL() == null)
+        if(imageURL == null || imageURL.equals(""))
             return;
-        
+
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(getImageURL(), options);
@@ -227,7 +227,7 @@ public class LocalSong extends Song {
         options.inSampleSize = calculateInSampleSize(options,120, 120);
 
         options.inJustDecodeBounds = false;
-        uploadSongPicture(BitmapFactory.decodeFile(getImageURL(), options));
+        uploadSongPicture(BitmapFactory.decodeFile(imageURL, options));
 
     }
 
@@ -254,7 +254,7 @@ public class LocalSong extends Song {
         return inSampleSize;
     }
 
-    private void uploadSongPicture(Bitmap bitmap){
+    private void uploadSongPicture(Bitmap bitmap) throws NullPointerException{
         // TODO : don't use bitmaps?
         Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
 
