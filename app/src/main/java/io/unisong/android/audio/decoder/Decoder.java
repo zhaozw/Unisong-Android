@@ -36,7 +36,7 @@ public abstract class Decoder {
     protected long presentationTimeUs = 0, duration = 0, timeAdjust, seekTime, playTime;
     // playTime is the variable in which the current frame's time is stored so we can restart on failure.
 
-    protected boolean isRunning, stop;
+    protected boolean isRunning, stop = false, isDone = false;
 
     public Decoder(){
         // TODO : reorganize this class into sensical groupings of methods
@@ -80,29 +80,6 @@ public abstract class Decoder {
     }
 
     protected abstract void configureCodec();
-
-    public void seek(long seekTime) {
-        stop = true;
-        Log.d(LOG_TAG , "Stopping Thread");
-        long waitTime = System.currentTimeMillis();
-        while (isRunning){
-            synchronized (this){
-                try{
-                    this.wait(1);
-                } catch (InterruptedException e){
-                    Log.d(LOG_TAG , "Thread interrupted while waiting in seek()");
-                }
-            }
-        }
-        outputFrames = new HashMap<>();
-        outputFrameID = 0;
-        Log.d(LOG_TAG , "Seek wait took : " + (System.currentTimeMillis() - waitTime) + "ms");
-        Log.d(LOG_TAG , "Thread stopped, starting new thread.");
-        this.seekTime = seekTime;
-        decodeThread = getDecodeThread();
-        decodeThread.start();
-    }
-
 
     /**
      *
@@ -259,6 +236,14 @@ public abstract class Decoder {
             Log.d(LOG_TAG, "We are stopping but stop is false! Restarting at current time");
             start(playTime);
         }
+    }
+
+    /**
+     * Returns true if the decoder has reached the end of the stream
+     * @return isDone - boolean indicating whether the decoder is done.
+     */
+    public boolean isDone(){
+        return isDone;
     }
 
 }

@@ -14,6 +14,7 @@ import java.util.TimerTask;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.activity.session.SessionSongsAdapter;
+import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.song.LocalSong;
@@ -22,9 +23,11 @@ import io.unisong.android.audio.song.UnisongSong;
 import io.unisong.android.network.SocketIOClient;
 
 /**
+ * This class manages the queue of songs to be played. It supports both operations
+ * from the UI and backend, and is capable of updating both.
  * Created by Ethan on 9/12/2015.
  */
-public class SongQueue {
+public class SongQueue implements AudioObserver {
 
     private static final String LOG_TAG = SongQueue.class.getSimpleName();
 
@@ -47,6 +50,7 @@ public class SongQueue {
         songQueue = new ArrayList<>();
         parentSession = session;
         publisher = AudioStatePublisher.getInstance();
+        publisher.attach(this);
         timer = new Timer();
     }
 
@@ -100,13 +104,19 @@ public class SongQueue {
 
     /**
      * Removes the song at the given position and updates the dataset.
-     * @param fromUI - whether this action if from the UI - this variable tells us whether to update
+     * @param updateServer - whether this action if from the UI - this variable tells us whether to update
      *               the UI or the server
      * @param position - the position to remove from
      */
-    public void remove(int position, boolean fromUI){
+    public void remove(int position, boolean updateServer){
         if(position == -1)
             return;
+
+        if(position == 0){
+            publisher.detach(songQueue.get(0));
+            if(songQueue.size() > 1)
+                publisher.attach(songQueue.get(1));
+        }
 
         Song songToRemove = songQueue.get(position);
 
@@ -115,8 +125,10 @@ public class SongQueue {
 
             sendRemove(position);
 
-            if(parentSession.isMaster() && fromUI)
+            if(parentSession.isMaster() && updateServer)
                 parentSession.deleteSong(songToRemove.getID());
+
+            songToRemove.destroy();
         }
 
     }
@@ -337,4 +349,12 @@ public class SongQueue {
         }
     }
 
+    @Override
+    public void update(int state) {
+        switch (state){
+            case AudioStatePublisher.END_SONG:
+                remove(0 , true);
+                break;
+        }
+    }
 }

@@ -91,7 +91,6 @@ public class UnisongDecoder extends Decoder {
         int noOutputCounter = 0;
         int noOutputCounterLimit = 10;
 
-        stop = false;
         isRunning = true;
 
         boolean firstOutputChange = true;
@@ -226,30 +225,8 @@ public class UnisongDecoder extends Decoder {
         stop = true;
         while(isRunning){}
         decodeThread = null;
+        outputFrames = null;
     }
-
-    @Override
-    public void seek(long seekTime){
-
-        stop = true;
-        Log.d(LOG_TAG , "Stopping Thread");
-        while (isRunning){
-            synchronized (this){
-                try{
-                    this.wait(1);
-                } catch (InterruptedException e){
-                    Log.d(LOG_TAG , "Thread interrupted while waiting in seek()");
-                }
-            }
-        }
-        Log.d(LOG_TAG , "Thread stopped, starting new thread.");
-        this.seekTime = seekTime;
-        double frameDuration = 1000 * (1024 / songFormat.getSampleRate());
-        inputFrameID = (int) (seekTime / frameDuration);
-        decodeThread = getDecodeThread();
-        decodeThread.start();
-    }
-    private int mDebugCount = 0;
 
 
     private void waitForFrame(int size){

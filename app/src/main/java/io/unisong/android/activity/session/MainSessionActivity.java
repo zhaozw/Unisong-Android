@@ -60,93 +60,99 @@ public class MainSessionActivity extends AppCompatActivity {
     public final static String POSITION = "position";
 
 
-    private UnisongSession mSession;
-    private Song mCurrentSong;
-    private boolean mPlaying = false, mFooterOpen;
-    private Toolbar mToolbar;
-    private ViewPager mPager;
-    private SlidingTabLayout mTabs;
-    private SessionMessageHandler mHandler;
+    private UnisongSession session;
+    private Song currentSong;
+    private boolean mPlaying = false, footerOpen, seekThumbShowing = true;
+    private Toolbar toolbar;
+    private ViewPager pager;
+    private SlidingTabLayout tabs;
+    private SessionMessageHandler handler;
 
+    private AudioStatePublisher publisher = AudioStatePublisher.getInstance();
     private TimeManager timeManager;
-    private Button mPlayPauseButton;
-    private IconicFontDrawable mPlayDrawable;
-    private IconicFontDrawable mPauseDrawable;
-    private ScheduledThreadPoolExecutor mExecutor;
+    private Button playPauseButton;
+    private IconicFontDrawable playDrawable;
+    private IconicFontDrawable pauseDrawable;
+    private ScheduledThreadPoolExecutor executor;
 
-    private RelativeLayout mFooter;
-    private TextView mFooterSongName;
-    private TextView mFooterSongArtist;
-    private SeekBar mFooterSeekBar;
-    private ImageView mFooterSongImage;
+    private RelativeLayout footer;
+    private TextView footerSongName;
+    private TextView footerSongArtist;
+    private SeekBar footerSeekBar;
+    private ImageView footerSongImage;
 
     @Override
-    public void onCreate(Bundle savedInstanceState){
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_session_main);
 
-        mToolbar = (Toolbar) findViewById(R.id.session_bar);
+        toolbar = (Toolbar) findViewById(R.id.session_bar);
 
-        Log.d(LOG_TAG , "Creating MainSessionActivity");
+        Log.d(LOG_TAG, "Creating MainSessionActivity");
         // Configure the action bar.
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         ActionBar bar = getSupportActionBar();
-        if(bar != null) {
+        if (bar != null) {
             bar.setDisplayShowHomeEnabled(true);
             bar.setHomeButtonEnabled(true);
         }
 
         timeManager = TimeManager.getInstance();
 
-        mPager = (ViewPager) findViewById(R.id.session_pager);
-        mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        pager = (ViewPager) findViewById(R.id.session_pager);
+        pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
 
-        mTabs = (SlidingTabLayout) findViewById(R.id.session_tabs);
-        mTabs.setDistributeEvenly(true);
-        mTabs.setViewPager(mPager);
-        mTabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.white));
-        mTabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
+        tabs = (SlidingTabLayout) findViewById(R.id.session_tabs);
+        tabs.setDistributeEvenly(true);
+        tabs.setViewPager(pager);
+        tabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.white));
+        tabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
 
-        mPlayPauseButton = (Button) findViewById(R.id.play_pause_button);
+        playPauseButton = (Button) findViewById(R.id.play_pause_button);
 
-        mPauseDrawable = new IconicFontDrawable(this.getApplicationContext());
-        mPauseDrawable.setIcon("gmd-pause");
-        mPauseDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
+        pauseDrawable = new IconicFontDrawable(this.getApplicationContext());
+        pauseDrawable.setIcon("gmd-pause");
+        pauseDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
 
-        mPlayDrawable = new IconicFontDrawable(this.getApplicationContext());
-        mPlayDrawable.setIcon("gmd-play-arrow");
-        mPlayDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
-        mPlayPauseButton.setBackground(mPlayDrawable);
+        playDrawable = new IconicFontDrawable(this.getApplicationContext());
+        playDrawable.setIcon("gmd-play-arrow");
+        playDrawable.setIconColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
+        playPauseButton.setBackground(playDrawable);
 
-        mSession = UnisongSession.getCurrentSession();
+        session = UnisongSession.getCurrentSession();
 
-        mHandler = new SessionMessageHandler(this);
-        mSession.setSessionActivityHandler(mHandler);
+        handler = new SessionMessageHandler(this);
+        session.setSessionActivityHandler(handler);
 
         // Close the footer
-        mFooterOpen = false;
+        footerOpen = false;
 
-        mFooter = (RelativeLayout) findViewById(R.id.music_footer);
-        mFooter.setVisibility(View.GONE);
+        footer = (RelativeLayout) findViewById(R.id.music_footer);
+        footer.setVisibility(View.GONE);
 
 
-        mFooterSongArtist = (TextView) mFooter.findViewById(R.id.playing_song_artist);
-        mFooterSongName = (TextView) mFooter.findViewById(R.id.playing_song_name);
-        mFooterSeekBar = (SeekBar) mFooter.findViewById(R.id.current_song_progress_bar);
-        if(mSession != null && mSession.isMaster())
-            mFooterSeekBar.setOnSeekBarChangeListener(mOnSeekChangeListener);
-        mFooterSongImage = (ImageView) mFooter.findViewById(R.id.playing_song_image);
+        footerSongArtist = (TextView) footer.findViewById(R.id.playing_song_artist);
+        footerSongName = (TextView) footer.findViewById(R.id.playing_song_name);
+        footerSeekBar = (SeekBar) footer.findViewById(R.id.current_song_progress_bar);
+        footerSeekBar.setEnabled(false);
+        if (session != null && session.isMaster())
+            footerSeekBar.setOnSeekBarChangeListener(mOnSeekChangeListener);
+        footerSongImage = (ImageView) footer.findViewById(R.id.playing_song_image);
 
         // TODO : call a method on this activity when current song changes
         // TODO : call a method on this activity when we start playing.
-        mExecutor = new ScheduledThreadPoolExecutor(5);
-        mExecutor.scheduleAtFixedRate(this::updateFooter, 0, 100, TimeUnit.MILLISECONDS);
+        executor = new ScheduledThreadPoolExecutor(5);
+        executor.scheduleAtFixedRate(this::updateFooter, 0, 100, TimeUnit.MILLISECONDS);
+        if (session.isMaster() && publisher.getState() == AudioStatePublisher.PLAYING){
+            footerSeekBar.setEnabled(true);
+        } else if(!session.isMaster()){
+            playPauseButton.setVisibility(View.GONE);
+        }
 
-        if(mSession.isMaster())
-            mFooterSeekBar.setEnabled(true);
-
-        if(!mSession.isMaster())
-            mPlayPauseButton.setVisibility(View.GONE);
+        if(!session.isMaster() || publisher.getState() != AudioStatePublisher.PLAYING){
+            footerSeekBar.getThumb().mutate().setAlpha(0);
+            seekThumbShowing = false;
+        }
 
     }
 
@@ -160,17 +166,21 @@ public class MainSessionActivity extends AppCompatActivity {
 
             int visibility = -1;
 
-            if (!selected && mFooterOpen) visibility = View.GONE;
+            if (!selected && footerOpen) visibility = View.GONE;
 
-            if (selected && !mFooterOpen) visibility = View.VISIBLE;
+            if (selected && !footerOpen) visibility = View.VISIBLE;
 
             if (visibility == View.GONE) {
                 runOnUiThread(() -> {
-                    mFooter.setVisibility(View.GONE);
+                    footer.setVisibility(View.GONE);
+                    footerOpen = false;
+                    if(publisher.getState() == AudioStatePublisher.IDLE)
+                        playPauseButton.setBackground(playDrawable);
                 });
             } else if(visibility == View.VISIBLE){
                 runOnUiThread(() -> {
-                    mFooter.setVisibility(View.VISIBLE);
+                    footer.setVisibility(View.VISIBLE);
+                    footerOpen = true;
                 });
             }
 
@@ -179,9 +189,32 @@ public class MainSessionActivity extends AppCompatActivity {
 
             boolean updateFooterInfo = false;
 
-            if ((mCurrentSong == null && mSession.getCurrentSong() != null) ||
-                    (mCurrentSong != null && mCurrentSong != mSession.getCurrentSong())) {
-                mCurrentSong = mSession.getCurrentSong();
+
+            if (!seekThumbShowing && session.isMaster() && publisher.getState() == AudioStatePublisher.PLAYING) {
+                runOnUiThread(() -> {
+                    footerSeekBar.getThumb().mutate().setAlpha(255);
+                    if(!footerSeekBar.isEnabled()) {
+                        footerSeekBar.setEnabled(true);
+                    }
+                });
+                seekThumbShowing = true;
+            } else if(seekThumbShowing && session.isMaster() && publisher.getState() != AudioStatePublisher.PLAYING){
+                runOnUiThread(() -> {
+                    footerSeekBar.getThumb().mutate().setAlpha(0);
+                    if(footerSeekBar.isEnabled()) {
+                        if(publisher.getState() != AudioStatePublisher.PAUSED)
+                            footerSeekBar.setEnabled(false);
+                    }
+                });
+                seekThumbShowing = false;
+            }
+
+            if(session.getCurrentSong() == null){
+                Log.d(LOG_TAG , "Current song is null.");
+            }
+            if ((currentSong == null && session.getCurrentSong() != null) ||
+                    (currentSong != null && session.getCurrentSong() != null &&  currentSong != session.getCurrentSong())) {
+                currentSong = session.getCurrentSong();
                 updateFooterInfo = true;
             }
 
@@ -189,41 +222,41 @@ public class MainSessionActivity extends AppCompatActivity {
             // If we need to, update the footer info
             if (updateFooterInfo) {
 
-                String url = mCurrentSong.getImageURL();
+                String url = currentSong.getImageURL();
 
                 if(url == null){
                     runOnUiThread(() -> {
-                        mFooterSongImage.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), R.drawable.default_artwork));
+                        footerSongImage.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), R.drawable.default_artwork));
                     });
                 } else {
 
                     if (url.contains("http://")) {
                         runOnUiThread(() ->{
-                            Picasso.with(getBaseContext()).load(mCurrentSong.getImageURL()).into(mFooterSongImage);
+                            Picasso.with(getBaseContext()).load(currentSong.getImageURL()).into(footerSongImage);
                         });
                         // TODO : method call should happen from main thread?
                     } else {
                         runOnUiThread(() -> {
-                            Picasso.with(getBaseContext()).load(new File(mCurrentSong.getImageURL())).into(mFooterSongImage);
+                            Picasso.with(getBaseContext()).load(new File(currentSong.getImageURL())).into(footerSongImage);
                         });
                     }
                 }
 
                 runOnUiThread(() -> {
-                    mFooterSongArtist.setText(mCurrentSong.getArtist());
-                    mFooterSongName.setText(mCurrentSong.getName());
+                    footerSongArtist.setText(currentSong.getArtist());
+                    footerSongName.setText(currentSong.getName());
                 });
             }
 
-            if(mCurrentSong == null)
+            if(currentSong == null)
                 return;
 
             // set the progress
-            int progress = mFooterSeekBar.getProgress();
+            int progress = footerSeekBar.getProgress();
             int newProgress = timeManager.getProgress();
 
             if(newProgress != progress)
-                mFooterSeekBar.setProgress(newProgress);
+                footerSeekBar.setProgress(newProgress);
 
         } catch (NullPointerException e){
             e.printStackTrace();
@@ -254,13 +287,12 @@ public class MainSessionActivity extends AppCompatActivity {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
-            if(mCurrentSong == null || publisher.getState() == AudioStatePublisher.IDLE)
+            if(currentSong == null || publisher.getState() == AudioStatePublisher.IDLE)
                 return;
 
-            long seekTime = (long)((mCurrentSong.getDuration() / 1000) * (seekBar.getProgress() / 100.0));
-            Log.d(LOG_TAG, "Progress is : " + mFooterSeekBar.getProgress() + " and we are seeking to : " + seekTime);
-            if(mSession.isMaster())
+            long seekTime = (long)((currentSong.getDuration() / 1000) * (seekBar.getProgress() / 100.0));
+            Log.d(LOG_TAG, "Progress is : " + footerSeekBar.getProgress() + " and we are seeking to : " + seekTime);
+            if(session.isMaster())
                 publisher.seek(seekTime);
         }
     };
@@ -269,7 +301,7 @@ public class MainSessionActivity extends AppCompatActivity {
      * @return - true if a song is selected, false if not
      */
     private boolean isASongSelected(){
-        return mSession != null && mSession.getCurrentSong() != null;
+        return session != null && session.getCurrentSong() != null;
     }
 
     @Override
@@ -373,13 +405,13 @@ public class MainSessionActivity extends AppCompatActivity {
         AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
         if(publisher.getState() == AudioStatePublisher.PLAYING){
-            mPlayPauseButton.setBackground(mPlayDrawable);
+            playPauseButton.setBackground(playDrawable);
             publisher.pause();
         } else if(publisher.getState() == AudioStatePublisher.PAUSED){
-            mPlayPauseButton.setBackground(mPauseDrawable);
+            playPauseButton.setBackground(pauseDrawable);
             publisher.resume(publisher.getPausedTime());
-        } else if(publisher.getState() == AudioStatePublisher.IDLE && mSession.getCurrentSong() != null){
-            mPlayPauseButton.setBackground(mPauseDrawable);
+        } else if(publisher.getState() == AudioStatePublisher.IDLE && session.getCurrentSong() != null){
+            playPauseButton.setBackground(pauseDrawable);
             publisher.startSong();
         }
 
@@ -473,7 +505,7 @@ public class MainSessionActivity extends AppCompatActivity {
     @Override
     public void onDestroy(){
         super.onDestroy();
-        mSession.setSessionActivityHandler(null);
+        session.setSessionActivityHandler(null);
     }
 
     public static class SessionMessageHandler extends Handler{

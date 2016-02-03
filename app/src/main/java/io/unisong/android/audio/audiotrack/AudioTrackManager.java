@@ -136,6 +136,9 @@ public class AudioTrackManager implements AudioObserver {
                     e.printStackTrace();
                 }
                 break;
+            case AudioStatePublisher.END_SONG:
+                audioThread.stopPlaying();
+                break;
 
         }
     }

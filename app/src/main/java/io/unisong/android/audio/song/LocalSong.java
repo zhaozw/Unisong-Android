@@ -135,14 +135,16 @@ public class LocalSong extends Song {
      * Begins the PCM decoding and AAC encoding.
      */
     public void start(){
-        if(!started) {
+        if (!started) {
+            started = true;
             encoder = new AACEncoder(this);
             decoder = new FileDecoder(path);
+
+            ((FileDecoder) decoder).registerSong(this);
 
             songStartTime = TimeManager.getInstance().getSongStartTime();
             decoder.start();
             encoder.encode(0, path);
-            started = true;
         }
     }
 
@@ -162,6 +164,7 @@ public class LocalSong extends Song {
 
     public void seek(long seekTime){
         decoder = new FileDecoder(path);
+        ((FileDecoder)decoder).registerSong(this);
         decoder.start(seekTime);
         encoder.seek(seekTime);
     }
@@ -203,6 +206,14 @@ public class LocalSong extends Song {
     @Override
     public void update(JSONObject songJSON) {
 
+    }
+
+    @Override
+    public void destroy() {
+        decoder.destroy();
+        encoder.destroy();
+        decoder = null;
+        encoder = null;
     }
 
     // TODO : see if we need to do anything special for this.

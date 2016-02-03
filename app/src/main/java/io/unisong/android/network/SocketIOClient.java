@@ -28,30 +28,31 @@ import io.unisong.android.network.user.User;
  */
 public class SocketIOClient {
 
-    private static SocketIOClient sInstance;
+    private static SocketIOClient instance;
     public static SocketIOClient getInstance(){
-        return sInstance;
+        return instance;
     }
     private final String LOG_TAG = SocketIOClient.class.getSimpleName();
 
-    private Handler mInviteHandler;
-    private HttpClient mHttpClient;
+    private Handler inviteHandler;
+    private HttpClient httpClient;
     private Socket socket;
     private ServerReceiver mReceiver;
     private Context mContext;
+    private boolean connected;
 
     public SocketIOClient(Context context){
         mContext = context;
         Log.d(LOG_TAG, "Starting SocketIO Client");
-        mHttpClient = HttpClient.getInstance();
+        httpClient = HttpClient.getInstance();
 
         IO.Options opts = new IO.Options();
         opts.forceNew = true;
 
-        mInviteHandler = new Handler();
+        inviteHandler = new Handler();
         socket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
-        sInstance = this;
+        instance = this;
     }
 
     public void setServerReceiver(ServerReceiver receiver){
@@ -59,7 +60,7 @@ public class SocketIOClient {
     }
 
     public void connect(){
-        if(!socket.connected()) {
+        if(!connected) {
             Log.d(LOG_TAG, "Connecting to server with socket.io");
             socket.connect();
             socket.on(Socket.EVENT_CONNECT, mConnectListener);
@@ -67,8 +68,9 @@ public class SocketIOClient {
             socket.on(Socket.EVENT_DISCONNECT, mDisconnectListener);
             // TODO : see if there's a better place to put this
             socket.on("invite user", mInviteListener);
-            socket.on("join session result", mJoinResultListener);
-            socket.on("authentication result", mAuthenticationResult);
+            socket.on("join session result", joinResultListener);
+            socket.on("authentication result", authenticationResult);
+            connected = true;
         }
     }
 
@@ -100,7 +102,7 @@ public class SocketIOClient {
         User user = CurrentUser.getInstance();
 
         if(user == null || user.getUsername() == null) {
-            mInviteHandler.postDelayed(mLoginRunnable, 2000l);
+            inviteHandler.postDelayed(mLoginRunnable, 2000l);
             return;
         }
 
@@ -133,10 +135,10 @@ public class SocketIOClient {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG, "Connection event.");
-            mInviteHandler.postDelayed(new Runnable() {
+            inviteHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mInviteHandler.removeCallbacks(mLoginRunnable);
+                    inviteHandler.removeCallbacks(mLoginRunnable);
                     login();
 
                     UnisongSession currentSession = UnisongSession.getCurrentSession();
@@ -192,8 +194,8 @@ public class SocketIOClient {
                 message.what = UnisongActivity.INVITE;
                 message.obj = object;
 
-                if(mInviteHandler != null)
-                    mInviteHandler.sendMessage(message);
+                if(inviteHandler != null)
+                    inviteHandler.sendMessage(message);
 
             } catch (Exception e){
                 e.printStackTrace();
@@ -223,7 +225,7 @@ public class SocketIOClient {
     }
     private void checkForLogin(){
         // wait while we're not logged in
-        while(!mHttpClient.isLoggedIn()){
+        while(!httpClient.isLoggedIn()){
 
         }
     }
@@ -232,23 +234,25 @@ public class SocketIOClient {
     public void destroy(){
         socket.disconnect();
         mContext = null;
-        sInstance = null;
+        instance = null;
     }
 
-    private Emitter.Listener mJoinResultListener = new Emitter.Listener() {
+    private Emitter.Listener joinResultListener = (Object[] args) -> {
+        try{
+            JSONObject object = (JSONObject) args[0];
 
-        @Override
-        public void call(Object... args) {
-            Log.d(LOG_TAG , "Join Result Received!");
+            Log.d(LOG_TAG , "Join Result Received: " + object.toString());
+        } catch (ClassCastException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Casting failed in JoinResultListener");
         }
-
     };
 
     public void registerInviteHandler(UnisongActivity.IncomingHandler handler){
-        mInviteHandler = handler;
+        inviteHandler = handler;
     }
 
-    private Emitter.Listener mAuthenticationResult = new Emitter.Listener() {
+    private Emitter.Listener authenticationResult = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             int code = -1;

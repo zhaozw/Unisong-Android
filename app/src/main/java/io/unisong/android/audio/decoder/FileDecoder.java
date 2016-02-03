@@ -8,8 +8,10 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 
 import io.unisong.android.audio.encoder.AACEncoder;
+import io.unisong.android.audio.song.Song;
 
 /**
  * The implementation of Decoder that decodes a local file.
@@ -23,6 +25,7 @@ public class FileDecoder extends Decoder{
     private File inputFile;
 
 
+    private Song song;
     private MediaExtractor extractor;
     private AACEncoder mEncoder;
 
@@ -30,6 +33,10 @@ public class FileDecoder extends Decoder{
         super();
         //Create the file and start the Thread.
         inputFile = new File(path);
+    }
+
+    public void registerSong(Song song){
+        this.song = song;
     }
 
     public void setEncoder(AACEncoder encoder){
@@ -108,8 +115,6 @@ public class FileDecoder extends Decoder{
         int noOutputCounter = 0;
         int noOutputCounterLimit = 25;
 
-        stop = false;
-
         while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !stop) {
 
             noOutputCounter++;
@@ -184,6 +189,8 @@ public class FileDecoder extends Decoder{
             } else {
                 //Log.d(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
+
+            waitForFrameUse();
         }
 
 
@@ -205,12 +212,32 @@ public class FileDecoder extends Decoder{
             e.printStackTrace();
         }
 
+        if(sawOutputEOS){
+            notifyDone();
+            return;
+        }
         restartOnFailure();
     }
 
-
     public void destroy(){
-        // TODO : implement
+
+        stop = true;
+
+        while(isRunning){
+
+        }
+        outputFrames = new HashMap<>();
+        inputFrames = new HashMap<>();
+
+        codec = null;
+        extractor = null;
+        song = null;
+    }
+
+    private void notifyDone(){
+        if(song != null) {
+            song.notifyDone();
+        }
     }
 
 

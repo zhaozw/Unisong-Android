@@ -95,6 +95,20 @@ public class UnisongActivity extends AppCompatActivity {
         long currentTime = System.currentTimeMillis();
         boolean restartedServices = false;
 
+        // TODO : ensure friendSList
+        while(friendsList == null){
+
+            try{
+                synchronized (this){
+                    this.wait(1);
+                }
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            friendsList = FriendsList.getInstance();
+        }
+
+
         // specify an adapter (see also next example)
         adapter = new FriendsAdapter(friendsList.getFriends());
         recyclerView.setAdapter(adapter);

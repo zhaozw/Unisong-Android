@@ -172,6 +172,8 @@ public class AACEncoderThread extends Thread {
             }
 
 
+
+
             AudioFrame frame = inputFrames.get(currentInputID);
 
 
@@ -251,6 +253,7 @@ public class AACEncoderThread extends Thread {
      */
     //TODO: Make this more efficient by getting rid of the byte array assignments and check if it makes a difference
     private int setData(AudioFrame frame , ByteBuffer dstBuf){
+
         byte[] data = frame.getData();
         int sampleSize = data.length;
 //        Log.d(LOG_TAG , "Data size is: " + sampleSize + " mOldDataIndex: " + dataIndex  + " , and currentFrame is " + currentInputID);

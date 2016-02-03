@@ -11,6 +11,7 @@ import io.unisong.android.audio.audiotrack.AudioTrackManager;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * An Implementation of the Observer/Subject design pattern, this is the publisher
@@ -87,6 +88,8 @@ public class AudioStatePublisher {
             //Set the state
             if (state == RESUME || state == START_SONG) {
                 this.state = PLAYING;
+            } else if(state == END_SONG) {
+                this.state = IDLE;
             } else if(state != SEEK){
                 this.state = state;
             }
@@ -106,18 +109,13 @@ public class AudioStatePublisher {
                 observers.remove(observers.indexOf(broadcaster));
             }
 
-            notifyObservers(state);
-        }
-    }
+            for (int i = 0; i < observers.size(); i++) {
+                observers.get(i).update(state);
+            }
 
-    public void notifyObservers(int state){
-        updated = false;
-        for(AudioObserver observer : observers) {
-            observer.update(state);
+            if (broadcaster != null)
+                observers.add(broadcaster);
         }
-
-        if(broadcaster != null)
-            observers.add(broadcaster);
     }
 
     public void setState(int state){
@@ -191,10 +189,18 @@ public class AudioStatePublisher {
         update(AudioStatePublisher.PLAYING);
     }
 
+    /**
+     * Ends the song, notifying all AudioObservers of this event
+     * Then, if we have a song queued to be played, play it.
+     * @param songID
+     */
     public void endSong(int songID){
         resumeTime = 0;
         songToEnd = songID;
+        Log.d(LOG_TAG, "Song Ending!");
         update(AudioStatePublisher.END_SONG);
+        if(UnisongSession.getCurrentSession().getCurrentSong() != null)
+            update(AudioStatePublisher.START_SONG);
     }
 
     public int getSongToEnd(){

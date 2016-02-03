@@ -4,6 +4,7 @@ import org.json.JSONObject;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
+import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.decoder.Decoder;
 
 /**
@@ -17,6 +18,7 @@ public abstract class Song implements AudioObserver {
     protected boolean started;
 
     protected Decoder decoder;
+    protected AudioStatePublisher publisher;
 
     //The # of the song
     protected int songID;
@@ -32,6 +34,7 @@ public abstract class Song implements AudioObserver {
         this.name = name;
         this.artist = artist;
         this.imageURL = imageURL;
+        publisher = AudioStatePublisher.getInstance();
         songID = ID;
         started = false;
     }
@@ -40,6 +43,7 @@ public abstract class Song implements AudioObserver {
         this.name = name;
         this.artist = artist;
         this.imageURL = imageURL;
+        publisher = AudioStatePublisher.getInstance();
         started = false;
     }
 
@@ -98,4 +102,10 @@ public abstract class Song implements AudioObserver {
     public boolean started(){
         return started;
     }
+
+    public  void notifyDone(){
+        publisher.endSong(songID);
+    }
+
+    public abstract void destroy();
 }
