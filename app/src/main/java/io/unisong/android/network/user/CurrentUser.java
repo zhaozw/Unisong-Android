@@ -2,6 +2,7 @@ package io.unisong.android.network.user;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.facebook.AccessToken;
@@ -31,7 +32,7 @@ import io.unisong.android.network.session.UnisongSession;
 public class CurrentUser {
 
     private final static String LOG_TAG = CurrentUser.class.getSimpleName();
-    @NonNull
+    @Nullable
     private static User currentUser;
     private FriendsList friendsList;
     private HttpClient client;
@@ -96,6 +97,15 @@ public class CurrentUser {
             friendsList = new FriendsList(context);
     }
 
+    /**
+     * Loads the Current user solely from the preferences.
+     * @param context - A context with which to access preferences.
+     */
+    public static void loadFromPrefs(Context context){
+        String accountType = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "");
+        new CurrentUser(context, accountType);
+    }
+
     public User getUser(){
         return currentUser;
     }
@@ -112,6 +122,7 @@ public class CurrentUser {
 
         // delete the Unisong session if we have one
         if(session != null){
+            session.leave();
             session.destroy();
         }
 

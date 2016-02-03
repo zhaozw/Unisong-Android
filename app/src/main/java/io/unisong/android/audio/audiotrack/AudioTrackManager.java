@@ -126,6 +126,9 @@ public class AudioTrackManager implements AudioObserver {
             case AudioStatePublisher.PLAYING:
                 // TODO : replace with START_SONG
                 Log.d(LOG_TAG , "Playing Received");
+                break;
+            case AudioStatePublisher.START_SONG:
+                Log.d(LOG_TAG , "Starting song for AudioTrack");
                 UnisongSession session = UnisongSession.getCurrentSession();
                 try {
                     startSong(session.getCurrentSong());
@@ -133,6 +136,7 @@ public class AudioTrackManager implements AudioObserver {
                     e.printStackTrace();
                 }
                 break;
+
         }
     }
 

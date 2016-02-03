@@ -85,7 +85,7 @@ public class AudioStatePublisher {
     public void update(int state){
         synchronized (observers) {
             //Set the state
-            if (state == RESUME) {
+            if (state == RESUME || state == START_SONG) {
                 this.state = PLAYING;
             } else if(state != SEEK){
                 this.state = state;
@@ -183,7 +183,7 @@ public class AudioStatePublisher {
     public void startSong(){
         resumeTime = 0;
         update(AudioStatePublisher.START_SONG);
-        update(AudioStatePublisher.PLAYING);
+//        update(AudioStatePublisher.PLAYING);
     }
 
     public void play(){

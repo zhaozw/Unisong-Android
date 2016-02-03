@@ -520,6 +520,7 @@ public class UnisongSession {
      * @param user
      */
     public void kick(User user){
+        mMembers.remove(user);
         mSocketIOClient.emit("kick", user.getUUID().toString());
     }
 

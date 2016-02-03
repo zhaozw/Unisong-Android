@@ -36,6 +36,7 @@ import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -106,6 +107,7 @@ public class UnisongActivity extends AppCompatActivity {
                     startService(networkIntent);
                     mediaIntent = new Intent(getApplicationContext(), NetworkService.class);
                     startService(mediaIntent);
+                    CurrentUser.loadFromPrefs(getApplicationContext());
                     currentTime = System.currentTimeMillis();
                     restartedServices = true;
                 } else {
@@ -158,6 +160,9 @@ public class UnisongActivity extends AppCompatActivity {
         handler = new IncomingHandler(this);
         SocketIOClient client = SocketIOClient.getInstance();
 
+        if(!client.isConnected())
+            client.connect();
+
         client.registerInviteHandler(handler);
 
         userProfileImageView = (CircleImageView) findViewById(R.id.user_image);
@@ -200,6 +205,10 @@ public class UnisongActivity extends AppCompatActivity {
 
         addFriendButton.setBackground(iconicFontDrawable);
 
+        SocketIOClient socketIO = SocketIOClient.getInstance();
+
+        if(!socketIO.isConnected())
+            socketIO.connect();
 
     }
 

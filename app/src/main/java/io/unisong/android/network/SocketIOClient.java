@@ -52,7 +52,6 @@ public class SocketIOClient {
         mSocket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
         sInstance = this;
-        connect();
     }
 
     public void setServerReceiver(ServerReceiver receiver){

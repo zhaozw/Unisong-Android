@@ -1,11 +1,21 @@
 
 package io.unisong.android.audio.song;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaFormat;
+import android.util.Base64;
 import android.util.Log;
+
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import io.unisong.android.activity.session.musicselect.UISong;
 import io.unisong.android.audio.AudioFrame;
@@ -15,6 +25,7 @@ import io.unisong.android.audio.decoder.FileDecoder;
 import io.unisong.android.audio.encoder.AACEncoder;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 
@@ -204,6 +215,94 @@ public class LocalSong extends Song {
      * can see it
      */
     private void uploadPicture(){
+
+        if(getImageURL() == null)
+            return;
+        
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(getImageURL(), options);
+        int smallest = 120;
+
+        options.inSampleSize = calculateInSampleSize(options,120, 120);
+
+        options.inJustDecodeBounds = false;
+        uploadSongPicture(BitmapFactory.decodeFile(getImageURL(), options));
+
+    }
+
+    private int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
+    private void uploadSongPicture(Bitmap bitmap){
+        // TODO : don't use bitmaps?
+        Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        try {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            return;
+        }
+
+        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        Log.d(LOG_TAG , "Byte array size: " + byteArray.length + " bytes.");
+        String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        Log.d(LOG_TAG , "Encoded getBytes() size : " + encoded.getBytes().length + " bytes.");
+
+        uploadPicture(encoded);
+    }
+
+
+    private void uploadPicture(String encoded){
+        JSONObject object = new JSONObject();
+        try {
+            object.put("data", encoded);
+        } catch (JSONException e){
+            e.printStackTrace();
+            return;
+        }
+
+        Callback uploadCallback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                e.printStackTrace();
+                // TODO : implement?
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                // TODO : implement?
+            }
+        };
+
+        try {
+            HttpClient.getInstance().post(NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/song/" + songID + "/picture", object, uploadCallback);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
 
     }
 

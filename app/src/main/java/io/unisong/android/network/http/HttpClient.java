@@ -41,47 +41,47 @@ public class HttpClient {
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final String LOG_TAG = HttpClient.class.getSimpleName();
 
-    private AccessToken mFBAccessToken;
-    private boolean mIsLoggedIn;
-    private static HttpClient sInstance;
+    private AccessToken fBAccessToken;
+    private boolean isLoggedIn;
+    private static HttpClient instance;
 
-    private CookieManager mManager;
+    private CookieManager manager;
 
-    private OkHttpClient mClient;
-    private boolean mLoginDone;
-    private Context mContext;
-    private Handler mHandler;
+    private OkHttpClient client;
+    private boolean loginDone;
+    private Context context;
+    private Handler handler;
 
     public HttpClient(Context context){
-        mClient = new OkHttpClient();
+        client = new OkHttpClient();
         // TODO : reenable session persistence.
-        mManager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
-        //mManager = new CookieManager();
-        //mManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
-        mClient.setCookieHandler(mManager);
-        mIsLoggedIn = false;
-        mLoginDone = false;
-        sInstance = this;
-        mContext = context;
-        mHandler = new Handler();
-        mHandler.postDelayed(mCheckCookieRunnable, 70 * 1000);
+        manager = new CookieManager(new PersistentCookieStore(context) , CookiePolicy.ACCEPT_ALL);
+        //manager = new CookieManager();
+        //manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        client.setCookieHandler(manager);
+        isLoggedIn = false;
+        loginDone = false;
+        instance = this;
+        this.context = context;
+        handler = new Handler();
+        handler.postDelayed(mCheckCookieRunnable, 70 * 1000);
     }
 
     public void login(String username, String password){
-        mLoginDone = false;
+        loginDone = false;
         getLoginThread(username , password).start();
     }
 
     public OkHttpClient getClient(){
-        return mClient;
+        return client;
     }
 
     public boolean isLoginDone(){
-        return mLoginDone;
+        return loginDone;
     }
 
     public boolean isLoggedIn(){
-        return mIsLoggedIn;
+        return isLoggedIn;
     }
 
     private Thread getLoginThread(final String username, final String password){
@@ -106,22 +106,22 @@ public class HttpClient {
                 } catch (IOException e){
                     e.printStackTrace();
                     Log.d(LOG_TAG, "Request Failed");
-                    mIsLoggedIn = false;
-                    mLoginDone = true;
+                    isLoggedIn = false;
+                    loginDone = true;
                     return;
                 }
 
                 if(response.code() == 200) {
                     Log.d(LOG_TAG, "Login Success");
-                    PrefUtils.saveToPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
-                    CurrentUser user = new CurrentUser(mContext , new User(username, password));
-                    mIsLoggedIn = true;
+                    PrefUtils.saveToPrefs(context, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+                    CurrentUser user = new CurrentUser(context, new User(username, password));
+                    isLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Login Failure");
-                    mIsLoggedIn = false;
+                    isLoggedIn = false;
                 }
 
-                mLoginDone = true;
+                loginDone = true;
 
             }
         });
@@ -133,7 +133,7 @@ public class HttpClient {
                 .url(url)
                 .post(body)
                 .build();
-        mClient.newCall(request).enqueue(callback);
+        client.newCall(request).enqueue(callback);
     }
 
     public void get(String url , Callback callback) throws IOException {
@@ -141,7 +141,7 @@ public class HttpClient {
                 .url(url)
                 .get()
         .build();
-        mClient.newCall(request).enqueue(callback);
+        client.newCall(request).enqueue(callback);
     }
 
     public void put(String url, JSONObject json, Callback callback) throws IOException {
@@ -150,7 +150,7 @@ public class HttpClient {
                 .url( url)
                 .put(body)
                 .build();
-        mClient.newCall(request).enqueue(callback);
+        client.newCall(request).enqueue(callback);
     }
 
     public void delete(String url, Callback callback) throws IOException {
@@ -158,7 +158,7 @@ public class HttpClient {
                 .url(url)
                 .delete()
                 .build();
-        mClient.newCall(request).enqueue(callback);
+        client.newCall(request).enqueue(callback);
     }
 
     public Response syncPost(String url, JSONObject json) throws IOException {
@@ -167,7 +167,7 @@ public class HttpClient {
                 .url(url)
                 .post(body)
                 .build();
-        Response response = mClient.newCall(request).execute();
+        Response response = client.newCall(request).execute();
         return response;
     }
 
@@ -176,7 +176,7 @@ public class HttpClient {
                 .url(url)
                 .get()
                 .build();
-        Response response = mClient.newCall(request).execute();
+        Response response = client.newCall(request).execute();
         return response;
     }
 
@@ -186,7 +186,7 @@ public class HttpClient {
                 .url( url)
                 .put(body)
                 .build();
-        Response response = mClient.newCall(request).execute();
+        Response response = client.newCall(request).execute();
         return response;
     }
 
@@ -195,61 +195,61 @@ public class HttpClient {
                 .url(url)
                 .delete()
                 .build();
-        Response response = mClient.newCall(request).execute();
+        Response response = client.newCall(request).execute();
         return response;
     }
 
     public CookieManager getCookieManager(){
-        return mManager;
+        return manager;
     }
 
     public static HttpClient getInstance(){
-        return sInstance;
+        return instance;
     }
 
     public void checkIfLoggedIn(){
-        String accountType = PrefUtils.getFromPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "");
+        String accountType = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "");
 
         if(accountType.equals("facebook")){
-            FacebookAccessToken.loadFacebookAccessToken(mContext);
+            FacebookAccessToken.loadFacebookAccessToken(context);
 
             AccessToken token = AccessToken.getCurrentAccessToken();
             if(token != null){
-                mFBAccessToken = token;
+                fBAccessToken = token;
             } else {
-                mLoginDone = true;
+                loginDone = true;
                 return;
             }
         }
 
 
-        List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
+        List<HttpCookie> cookies = manager.getCookieStore().getCookies();
 
         for(HttpCookie cookie : cookies){
             if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){
                 Log.d(LOG_TAG , "Cookie found, we are logged in , account type is : " + accountType);
-                mIsLoggedIn = true;
-                mLoginDone = true;
+                isLoggedIn = true;
+                loginDone = true;
 
-                CurrentUser user = new CurrentUser(mContext, accountType);
+                CurrentUser user = new CurrentUser(context, accountType);
 
                 return;
             }
         }
 
         if(accountType.equals("facebook")){
-            loginFacebook(mFBAccessToken);
+            loginFacebook(fBAccessToken);
         }
 
-        String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
-        String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+        String username = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+        String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
         if(!username.equals("") && !password.equals("")){
             login(username , password);
             return;
         }
 
-        mLoginDone = true;
+        loginDone = true;
 
     }
 
@@ -270,7 +270,7 @@ public class HttpClient {
 
     public void loginFacebook(AccessToken token){
         //AccessToken tokenld = new AccessToken();
-        mFBAccessToken = token;
+        fBAccessToken = token;
         getFBLoginThread().start();
     }
 
@@ -281,7 +281,7 @@ public class HttpClient {
                 Looper.prepare();
                 JSONObject loginObject = new JSONObject();
                 try {
-                    loginObject.put("access_token", mFBAccessToken.getToken());
+                    loginObject.put("access_token", fBAccessToken.getToken());
                     if(mEmail != null && mPhoneNumber != null && mUsername != null){
                         loginObject.put("email" , mEmail);
                         loginObject.put("phone_number" , mPhoneNumber);
@@ -290,7 +290,7 @@ public class HttpClient {
                     }
                 } catch (JSONException e){
                     e.printStackTrace();
-                    mLoginDone = true;
+                    loginDone = true;
                     return;
                 }
 
@@ -300,22 +300,22 @@ public class HttpClient {
                 } catch (IOException e){
                     // TODO : handle
                     e.printStackTrace();
-                    mLoginDone = true;
+                    loginDone = true;
                     return;
                 }
 
 
                 if(response.code() == 200) {
                     Log.d(LOG_TAG , "Facebook Login Success");
-                    PrefUtils.saveToPrefs(mContext, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
-                    CurrentUser user = new CurrentUser(mContext , new User(mFBAccessToken));
-                    mIsLoggedIn = true;
+                    PrefUtils.saveToPrefs(context, PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
+                    CurrentUser user = new CurrentUser(context, new User(fBAccessToken));
+                    isLoggedIn = true;
                 } else {
                     Log.d(LOG_TAG , "Facebook Login Failure");
-                    mIsLoggedIn = false;
+                    isLoggedIn = false;
                 }
 
-                mLoginDone = true;
+                loginDone = true;
 
             }
         });
@@ -326,7 +326,7 @@ public class HttpClient {
         @Override
         public void run() {
 
-            List<HttpCookie> cookies = mManager.getCookieStore().getCookies();
+            List<HttpCookie> cookies = manager.getCookieStore().getCookies();
 
             for(HttpCookie cookie : cookies){
                 if(cookie.getName().equals("connect.sid") ){
@@ -335,7 +335,7 @@ public class HttpClient {
                     if(cookie.hasExpired()){
                         // TODO : renew cookie
                     } else if(cookie.getMaxAge() < (24 * 60 * 1000)){
-                        mHandler.postDelayed(mReplaceCookieRunnable , 10 * 1000);
+                        handler.postDelayed(mReplaceCookieRunnable, 10 * 1000);
                     }
 
                     return;
@@ -350,14 +350,14 @@ public class HttpClient {
             try{
                 JSONObject credentials = new JSONObject();
 
-                String username = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_USERNAME_KEY, "");
-                String password = PrefUtils.getFromPrefs(mContext , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+                String username = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_USERNAME_KEY, "");
+                String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
                 credentials.put("username" , username);
                 credentials.put("password" , password);
                 syncPost(NetworkUtilities.HTTP_URL + "/login", credentials);
             } catch (IOException e){
-                mHandler.postDelayed(mReplaceCookieRunnable , 100 * 1000);
+                handler.postDelayed(mReplaceCookieRunnable, 100 * 1000);
                 e.printStackTrace();
             } catch (JSONException e){
                 e.printStackTrace();

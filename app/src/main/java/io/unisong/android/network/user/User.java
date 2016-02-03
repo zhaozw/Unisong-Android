@@ -1,7 +1,6 @@
 package io.unisong.android.network.user;
 
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Looper;
 import android.util.Base64;
@@ -33,16 +32,11 @@ public class User implements Serializable {
 
     private transient final static String LOG_TAG = User.class.getSimpleName();
 
-    private boolean mIsFacebookUser;
-    private String mFacebookID;
-    private transient HttpClient mClient;
-    private String mUsername;
-    private String mPhoneNumber;
-    private UUID mUUID;
-    private String mName;
-    private Context mContext;
-    private String mPassword;
-    private UnisongSession mSession;
+    private boolean isFacebookUser;
+    private transient HttpClient client;
+    private String facebookID, username, phoneNumber, name, password;
+    private UUID uuid;
+    private UnisongSession session;
 
     // The boolean tag to tell us if we failed to get the profile picture
     private boolean mRetrieveProfilePictureFailed;
@@ -57,7 +51,7 @@ public class User implements Serializable {
      */
     private User(){
         UserUtils.addUser(this);
-        mClient = HttpClient.getInstance();
+        client = HttpClient.getInstance();
         mHasProfilePicture = false;
         mRetrieveProfilePictureFailed = false;
     }
@@ -65,8 +59,8 @@ public class User implements Serializable {
 
     public User(String username, String password){
         this();
-        mUsername = username;
-        mPassword = password;
+        this.username = username;
+        this.password = password;
         getUserInfoThread().start();
 
         // TODO : load rest of info from server and save.
@@ -74,7 +68,7 @@ public class User implements Serializable {
 
     public User(UUID uuid){
         this();
-        mUUID = uuid;
+        this.uuid = uuid;
         getUserInfoThread().start();
     }
 
@@ -87,8 +81,8 @@ public class User implements Serializable {
      */
     public User(AccessToken accessToken){
         this();
-        mFacebookID = accessToken.getUserId();
-        mIsFacebookUser = true;
+        facebookID = accessToken.getUserId();
+        isFacebookUser = true;
         Log.d(LOG_TAG, "Initializing facebook user.");
         getUserInfoThread().start();
     }
@@ -100,7 +94,6 @@ public class User implements Serializable {
                 Looper.prepare();
                 getUserInfo();
                 checkSessionStatus();
-                //loadProfilePicture();
             }
         });
     }
@@ -108,7 +101,7 @@ public class User implements Serializable {
     public void checkSessionStatus(){
         try {
 
-            while(mUUID == null){
+            while(uuid == null){
                 synchronized (this){
                     try {
                         this.wait(10);
@@ -117,7 +110,7 @@ public class User implements Serializable {
                     }
                 }
             }
-            Response response = mClient.syncGet(NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/session/");
+            Response response = client.syncGet(NetworkUtilities.HTTP_URL + "/user/" + uuid.toString() + "/session/");
 
             Log.d(LOG_TAG , "response");
 
@@ -125,14 +118,14 @@ public class User implements Serializable {
                 int id = Integer.parseInt(response.body().string());
 
                 Log.d(LOG_TAG , "Session created");
-                mSession = SessionUtils.getSessionByID(id);
+                session = SessionUtils.getSessionByID(id);
 
                 User currentUser = CurrentUser.getInstance();
                 if(currentUser != null && this.equals(currentUser)){
-                    UnisongSession.setCurrentSession(mSession);
+                    UnisongSession.setCurrentSession(session);
                 }
             } else if(response.code() == 404){
-                mSession = null;
+                session = null;
             }
 
         } catch (IOException e){
@@ -144,65 +137,65 @@ public class User implements Serializable {
     }
 
     public void setPassword(String password){
-        mPassword = password;
+        this.password = password;
     }
 
     public String getPassword(){
-        return mPassword;
+        return password;
     }
 
     public String getUsername(){
-        return mUsername;
+        return username;
     }
 
     public UUID getUUID(){
-        return mUUID;
+        return uuid;
     }
 
     public String getName(){
-        return mName;
+        return name;
     }
 
     public String getPhoneNumber(){
-        return mPhoneNumber;
+        return phoneNumber;
     }
 
     public void setSession(UnisongSession session){
-        mSession = session;
+        this.session = session;
     }
 
     public UnisongSession getSession() {
-        return mSession;
+        return session;
     }
 
 
     public boolean equals(User user){
-        if(user.getUsername() != null && mUsername != null)
-            if(user.getUsername().equals(mUsername))
+        if(user.getUsername() != null && username != null)
+            if(user.getUsername().equals(username))
                 return true;
 
-        if(user.getUUID() != null && mUUID != null)
-            if(user.getUUID().equals(mUUID))
+        if(user.getUUID() != null && uuid != null)
+            if(user.getUUID().equals(uuid))
                 return true;
 
-        if(user.getFacebookID() != null && mFacebookID != null)
-            if(user.getFacebookID().equals(mFacebookID))
+        if(user.getFacebookID() != null && facebookID != null)
+            if(user.getFacebookID().equals(facebookID))
                 return true;
 
         return false;
     }
 
     public String getProfileURL(){
-        if(mIsFacebookUser){
-            return "http://graph.facebook.com/" + mFacebookID + "/picture?type=large";
+        if(isFacebookUser){
+            return "http://graph.facebook.com/" + facebookID + "/picture?type=large";
         } else {
-            return NetworkUtilities.HTTP_URL + "/user/" + mUUID.toString() + "/profile/picture/";
+            return NetworkUtilities.HTTP_URL + "/user/" + uuid.toString() + "/profile/picture/";
         }
     }
 
 
     public boolean isFacebookUser(){
-        if(mFacebookID != null ){
+        if(facebookID != null ){
             return true;
         } else {
             return false;
@@ -229,12 +222,12 @@ public class User implements Serializable {
         };
 
         try {
-            if (mUsername != null && !mUsername.equals("")) {
-                mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + mUsername ,profileCallback);
-            } else if (mUUID != null) {
-                mClient.get(NetworkUtilities.HTTP_URL + "/user/" + mUUID , profileCallback);
-            } else if (mFacebookID != null) {
-                mClient.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + mFacebookID , profileCallback);
+            if (username != null && !username.equals("")) {
+                client.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + username, profileCallback);
+            } else if (uuid != null) {
+                client.get(NetworkUtilities.HTTP_URL + "/user/" + uuid, profileCallback);
+            } else if (facebookID != null) {
+                client.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + facebookID, profileCallback);
             } else {
                 return;
             }
@@ -250,20 +243,20 @@ public class User implements Serializable {
             String body = response.body().string();
             Log.d(LOG_TAG , body);
             object = new JSONObject(body);
-            mUUID = UUID.fromString(object.getString("userID"));
-            mUsername = object.getString("username");
-            mPhoneNumber = object.getString("phone_number");
-            mName = object.getString("name");
+            uuid = UUID.fromString(object.getString("userID"));
+            username = object.getString("username");
+            phoneNumber = object.getString("phone_number");
+            name = object.getString("name");
             if(object.has("facebookID")) {
                 long facebookID = object.getLong("facebookID");
                 if(facebookID != 0){
-                    mIsFacebookUser = true;
-                    mFacebookID =  facebookID + "";
+                    isFacebookUser = true;
+                    this.facebookID =  facebookID + "";
                 } else {
-                    mIsFacebookUser = false;
+                    isFacebookUser = false;
                 }
             } else {
-                mIsFacebookUser = false;
+                isFacebookUser = false;
             }
         } catch (IOException e){
             e.printStackTrace();
@@ -297,11 +290,6 @@ public class User implements Serializable {
         uploadPicture(encoded);
     }
 
-    public JSONObject toJSONObject() throws JSONException {
-        JSONObject user = new JSONObject();
-        return user;
-    }
-
 
     private void uploadPicture(String encoded){
         JSONObject object = new JSONObject();
@@ -325,7 +313,7 @@ public class User implements Serializable {
         };
 
         try {
-            mClient.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object, uploadCallback);
+            client.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object, uploadCallback);
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -346,7 +334,7 @@ public class User implements Serializable {
     }
 
     public String getFacebookID(){
-        return mFacebookID;
+        return facebookID;
     }
 
     public void update(){
@@ -354,6 +342,6 @@ public class User implements Serializable {
     }
 
     public String toString(){
-        return "User : { username: " + mUsername + "}";
+        return "User : { username: " + username + "}";
     }
 }
