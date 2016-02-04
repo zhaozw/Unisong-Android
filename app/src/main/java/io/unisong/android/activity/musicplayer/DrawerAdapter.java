@@ -21,19 +21,19 @@ public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerVie
 
     private static final String LOG_TAG = DrawerAdapter.class.getSimpleName();
 
-    private LayoutInflater mInflater;
-    private List<DrawerInformation> mData;
-    private Context mContext;
+    private LayoutInflater inflater;
+    private List<DrawerInformation> data;
+    private Context context;
 
     public DrawerAdapter(Context context, List<DrawerInformation> data){
-        mContext = context;
-        mInflater = LayoutInflater.from(context);
-        mData = data;
+        this.context = context;
+        inflater = LayoutInflater.from(context);
+        this.data = data;
     }
 
     @Override
     public DrawerViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        View view = mInflater.inflate(R.layout.drawer_row , viewGroup , false);
+        View view = inflater.inflate(R.layout.drawer_row , viewGroup , false);
 
         DrawerViewHolder holder = new DrawerViewHolder(view);
 
@@ -49,20 +49,20 @@ public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerVie
     public void onBindViewHolder(DrawerViewHolder viewHolder, int i) {
 
         //Get the values from DrawerInformation
-        String text = mData.get(i).getText();
-        String icon = mData.get(i).getIcon();
+        String text = data.get(i).getText();
+        String icon = data.get(i).getIcon();
 
         //Set the text and icon
         viewHolder.mText.setText(text);
         viewHolder.mImage.setTag(i);
 
 
-        IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(mContext);
+        IconicFontDrawable iconicFontDrawable = new IconicFontDrawable(context);
         iconicFontDrawable.setIcon(icon);
-        iconicFontDrawable.setIconColor(mContext.getResources().getColor(R.color.colorAccent));
+        iconicFontDrawable.setIconColor(context.getResources().getColor(R.color.colorAccent));
 
-        final float scale = mContext.getResources().getDisplayMetrics().density;
-        int pixels = (int) (mContext.getResources().getDimension(R.dimen.drawer_icon_size) * scale + 0.5f);
+        final float scale = context.getResources().getDisplayMetrics().density;
+        int pixels = (int) (context.getResources().getDimension(R.dimen.drawer_icon_size) * scale + 0.5f);
 
         //TODO: find a way to adjust this if necessary
         //OR...set the width and height to the icon and use it as bounded drawables
@@ -74,7 +74,7 @@ public class DrawerAdapter extends RecyclerView.Adapter <DrawerAdapter.DrawerVie
 
     @Override
     public int getItemCount() {
-        return mData.size();
+        return data.size();
     }
 
     class DrawerViewHolder extends RecyclerView.ViewHolder{

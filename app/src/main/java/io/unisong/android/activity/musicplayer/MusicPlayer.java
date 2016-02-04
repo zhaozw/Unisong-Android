@@ -33,19 +33,19 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
 
     public final static String POSITION = "position";
 
-    private Toolbar mToolbar;
+    private Toolbar toolbar;
 
-    private ViewPager mPager;
-    private SlidingTabLayout mTabs;
+    private ViewPager pager;
+    private SlidingTabLayout tabs;
 
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music_select);
 
-        mToolbar = (Toolbar) findViewById(R.id.music_bar);
+        toolbar = (Toolbar) findViewById(R.id.music_bar);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -53,16 +53,16 @@ public class MusicPlayer extends ActionBarActivity implements NavigationDrawerFr
         NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragment_navigation_drawer);
 
-        drawerFragment.setUp((DrawerLayout)findViewById(R.id.drawer_layout) , mToolbar , R.id.fragment_navigation_drawer);
+        drawerFragment.setUp((DrawerLayout)findViewById(R.id.drawer_layout) , toolbar, R.id.fragment_navigation_drawer);
 
 
-        mPager = (ViewPager) findViewById(R.id.player_pager);
-        mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        pager = (ViewPager) findViewById(R.id.player_pager);
+        pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
 
-        mTabs = (SlidingTabLayout) findViewById(R.id.player_tabs);
-        mTabs.setViewPager(mPager);
-        mTabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.colorAccent));
-        mTabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
+        tabs = (SlidingTabLayout) findViewById(R.id.player_tabs);
+        tabs.setViewPager(pager);
+        tabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.colorAccent));
+        tabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
 
     }
 

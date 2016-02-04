@@ -1,4 +1,4 @@
-package io.unisong.android.activity;
+package io.unisong.android.activity.register;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +12,7 @@ import com.facebook.AccessToken;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
+import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.FacebookAccessToken;
 
@@ -25,25 +26,25 @@ import io.unisong.android.network.user.FacebookAccessToken;
 public class FBPhoneNumberInputActivity extends ActionBarActivity{
 
     private static final String LOG_TAG = FBPhoneNumberInputActivity.class.getSimpleName();
-    private EditText mPhoneNumber;
-    private EditText mUsername;
+    private EditText phoneNumber;
+    private EditText username;
 
-    private HttpClient mClient;
-    private String mEmail;
+    private HttpClient client;
+    private String email;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_phone_number_input_fb);
 
-        mPhoneNumber = (EditText) findViewById(R.id.facebook_phone_number_input);
-        mUsername = (EditText) findViewById(R.id.facebook_username_input);
+        phoneNumber = (EditText) findViewById(R.id.facebook_phone_number_input);
+        username = (EditText) findViewById(R.id.facebook_username_input);
 
-        mPhoneNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
+        phoneNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 
-        mEmail = new String(getIntent().getCharArrayExtra("email"));
+        email = new String(getIntent().getCharArrayExtra("email"));
 
-        mClient = HttpClient.getInstance();
+        client = HttpClient.getInstance();
     }
 
     public void onRegister(View view){
@@ -63,8 +64,8 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
     private void register(){
         // TODO : add error handling?
         // TODO : input validation and checking against server.
-        String username = mUsername.getText().toString();
-        String phonenumber = mPhoneNumber.getText().toString();
+        String username = this.username.getText().toString();
+        String phonenumber = phoneNumber.getText().toString();
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
 
@@ -73,7 +74,7 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         phonenumber = phonenumber.replace("-" , "");
         phonenumber = phonenumber.replace(" " , "");
 
-        mClient.loginFacebook(AccessToken.getCurrentAccessToken() , mEmail , username, phonenumber);
+        client.loginFacebook(AccessToken.getCurrentAccessToken(), email, username, phonenumber);
         FacebookAccessToken.saveFacebookAccessToken(getApplicationContext());
 
         Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);

@@ -12,16 +12,16 @@ import io.unisong.android.R;
 public class MusicPlaying extends ActionBarActivity {
 
 
-    private Toolbar mToolbar;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music_playing);
 
-        mToolbar = (Toolbar) findViewById(R.id.music_bar);
+        toolbar = (Toolbar) findViewById(R.id.music_bar);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

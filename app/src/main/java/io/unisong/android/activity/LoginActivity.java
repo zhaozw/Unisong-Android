@@ -3,6 +3,7 @@ package io.unisong.android.activity;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -19,6 +20,8 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.iangclifton.android.floatlabel.FloatLabel;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
@@ -30,9 +33,13 @@ import java.util.List;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
+import io.unisong.android.activity.register.FBPhoneNumberInputActivity;
+import io.unisong.android.activity.register.RegisterActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FacebookAccessToken;
+import io.unisong.android.network.user.User;
 
 /**
  * Created by ezturner on 7/14/2015.
@@ -45,12 +52,13 @@ public class LoginActivity extends ActionBarActivity {
 
     private HttpClient client;
 
-    private FloatLabel username;
-    private FloatLabel password;
-
-    private Thread loginThread;
+    private String username, password;
+    private FloatLabel usernameLabel;
+    private FloatLabel passwordLabel;
     private boolean loginInProgress;
 
+    @Nullable
+    private LoginResult facebookLoginResult;
     private LoginButton loginButton;
     private CallbackManager callbackManager;
 
@@ -62,8 +70,8 @@ public class LoginActivity extends ActionBarActivity {
 
 
         Log.d(LOG_TAG, "LoginActivity onCreate called");
-        username = (FloatLabel) findViewById(R.id.loginUsername);
-        password = (FloatLabel) findViewById(R.id.login_password);
+        usernameLabel = (FloatLabel) findViewById(R.id.loginUsername);
+        passwordLabel = (FloatLabel) findViewById(R.id.login_password);
 
         toolbar = (Toolbar) findViewById(R.id.login_bar);
 
@@ -88,7 +96,8 @@ public class LoginActivity extends ActionBarActivity {
 
                 PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
                 FacebookAccessToken.saveFacebookAccessToken(getApplicationContext());
-                loginFB(loginResult);
+                facebookLoginResult = loginResult;
+                loginFB();
 
                 // App code
             }
@@ -115,79 +124,72 @@ public class LoginActivity extends ActionBarActivity {
 
     }
 
-    public void loginFB(LoginResult loginResult){
-        getLoginFBThread(loginResult).start();
-
+    /**
+     * First checks that the selected Facebook User has an Unisong account
+     * If so, then we will log them in. If not, then we will proceed to the Registration flow.
+     */
+    public void loginFB(){
+        client.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + facebookLoginResult.getAccessToken().getUserId(), checkFacebookUser);
     }
 
-    private Thread getLoginFBThread(final LoginResult loginResult){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
+    private Callback checkFacebookUser = new Callback() {
+        @Override
+        public void onFailure(Request request, IOException e) {
+            Log.d(LOG_TAG , "CheckFacebookUser failed!");
+            e.printStackTrace();
 
-                Response httpResponse;
+        }
 
-                try {
-                    httpResponse = client.syncGet(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + loginResult.getAccessToken().getUserId());
-                } catch (IOException e){
-                    e.printStackTrace();
-                    return;
-                }
+        @Override
+        public void onResponse(Response response) throws IOException {
+            if(response.toString().contains("code=404")){
+                // If no user exists with that FB ID then we will proceed to the PhoneNumberInputFBActivity
 
-                // TODO : try to see if the response says "User not found." instead of just a 404 code.
-                if(httpResponse.toString().contains("code=404")){
-                    // If no user exists with that FB ID then we will proceed to the PhoneNumberInputFBActivity
+                GraphRequest.GraphJSONObjectCallback graphCallback = new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(
+                            JSONObject object,
+                            GraphResponse response) {
+                        // Application code
 
-                    GraphRequest.GraphJSONObjectCallback callback = new GraphRequest.GraphJSONObjectCallback() {
-                        @Override
-                        public void onCompleted(
-                                JSONObject object,
-                                GraphResponse response) {
-                            // Application code
+                        Log.d(LOG_TAG , "GraphRequest is done, email has been received.");
 
-                            Log.d(LOG_TAG , "GraphRequest is done, email has been received.");
+                        Intent intent = new Intent(getApplicationContext(), FBPhoneNumberInputActivity.class );
 
-                            Intent intent = new Intent(getApplicationContext(), FBPhoneNumberInputActivity.class );
+                        try {
+                            intent.putExtra("email", response.getJSONObject().getString("email").toCharArray());
+                            startActivity(intent);
 
-                            try {
-                                intent.putExtra("email", response.getJSONObject().getString("email").toCharArray());
-                                startActivity(intent);
-
-                            } catch (JSONException e){
-                                e.printStackTrace();
-                            }
-
-
+                        } catch (JSONException e){
+                            e.printStackTrace();
                         }
 
 
-                    };
-
-                    GraphRequest request = GraphRequest.newMeRequest(
-                            AccessToken.getCurrentAccessToken(),callback);
-
-                    Log.d(LOG_TAG, "Response contained 404, sending GraphRequest for email.");
-                    Bundle parameters = new Bundle();
-                    parameters.putString("fields", "email");
-                    request.setParameters(parameters);
-                    //request.executeAsync();
-
-                    // TODO : investigate why executeAsync wasn't working.
-                    request.executeAndWait();
+                    }
 
 
+                };
 
-                } else if(httpResponse.toString().contains("code=200")){
-                    //If a user exists with that FB ID then we can proceed straight to FriendsActivity
+                GraphRequest request = GraphRequest.newMeRequest(
+                        AccessToken.getCurrentAccessToken(),graphCallback);
 
-                    client.loginFacebook(loginResult.getAccessToken());
+                Log.d(LOG_TAG, "Response contained 404, sending GraphRequest for email.");
+                Bundle parameters = new Bundle();
+                parameters.putString("fields", "email");
+                request.setParameters(parameters);
+                request.executeAsync();
 
-                    startActivity(UnisongActivity.class);
+            } else if(response.toString().contains("code=200")){
+                //If a user exists with that FB ID then we can proceed straight to FriendsActivity
 
-                }
+                client.loginFacebook(facebookLoginResult.getAccessToken());
+
+                startActivity(UnisongActivity.class);
+
             }
-        });
-    }
+        }
+    };
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -196,57 +198,66 @@ public class LoginActivity extends ActionBarActivity {
     }
 
     public void login(View view){
-        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong");
+        PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
         if(!loginInProgress){
             loginInProgress = true;
-            loginThread = getLoginThread();
-            loginThread.start();
+            loginRequest();
+            //            loginThread = getLoginThread();
+//            loginThread.start();
         }
 
-    }
-
-    private Thread getLoginThread(){
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-                loginRequest();
-            }
-        });
     }
 
     private void loginRequest(){
         HttpClient client = HttpClient.getInstance();
 
-        String username = this.username.getEditText().getText().toString();
-        String password = this.password.getEditText().getText().toString();
+        username = this.usernameLabel.getEditText().getText().toString();
+        password = this.passwordLabel.getEditText().getText().toString();
 
-        this.client.login(username, password);
-        while (!this.client.isLoginDone()) {
-            try {
-                synchronized (this) {
-                    this.wait(20);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        Log.d(LOG_TAG, "Login Request Done.");
 
-        //TODO: make code for various exceptions
-        if(this.client.isLoggedIn()){
-            loginSuccess(username , password);
-        } else {
-            loginFailure();
+        JSONObject object = new JSONObject();
+
+        try {
+            object.put("username", username);
+            object.put("password", password);
+        } catch (JSONException e){
+            e.printStackTrace();
         }
 
-        Log.d(LOG_TAG, "# cookies: " + this.client.getCookieManager().getCookieStore().getCookies().size());
+        Log.d(LOG_TAG, "Sending Login Request");
+        client.post(NetworkUtilities.HTTP_URL + "/login", object, facebookLoginCallback);
 
-
-        loginInProgress = false;
         //TODO: save credentials with AccountManager
     }
 
-    private void loginSuccess(String username , String password){
+    private Callback facebookLoginCallback = new Callback() {
+        @Override
+        public void onFailure(Request request, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Response response) throws IOException {
+            if(response.code() == 200) {
+                Log.d(LOG_TAG, "Login Success");
+                PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+                CurrentUser user = new CurrentUser(getApplicationContext(), new User(username, password));
+                client.loginSuccess();
+                loginSuccess();
+            } else {
+                Log.d(LOG_TAG , "Login Failure");
+                client.loginFailure();
+                loginFailure();
+            }
+
+            Log.d(LOG_TAG, "# cookies: " + client.getCookieManager().getCookieStore().getCookies().size());
+
+
+            loginInProgress = false;
+        }
+    };
+
+    private void loginSuccess(){
         AccountManager manager = AccountManager.get(this);
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , password);
@@ -260,13 +271,10 @@ public class LoginActivity extends ActionBarActivity {
     }
 
     private void loginFailure(){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Todo : tell the user if they got the password or username wrong.
-                Toast toast = Toast.makeText(getApplicationContext(), "Login Failed!", Toast.LENGTH_LONG);
-                toast.show();
-            }
+        runOnUiThread(() -> {
+            // Todo : tell the user if they got the password or username wrong.
+            Toast toast = Toast.makeText(getApplicationContext(), "Login Failed!", Toast.LENGTH_LONG);
+            toast.show();
         });
     }
 
@@ -280,11 +288,11 @@ public class LoginActivity extends ActionBarActivity {
         String password = PrefUtils.getFromPrefs(this, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
         if(!username.equals("")){
-            this.username.setText(username);
+            this.usernameLabel.setText(username);
         }
 
         if(!password.equals("")){
-            this.password.setText(password);
+            this.passwordLabel.setText(password);
         }
     }
 

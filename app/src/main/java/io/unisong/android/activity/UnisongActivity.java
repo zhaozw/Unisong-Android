@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
@@ -36,17 +37,20 @@ import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
-import io.unisong.android.MediaService;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
+import io.unisong.android.activity.friends.AddFriendActivity;
+import io.unisong.android.activity.friends.AddFriendByUsernameActivity;
+import io.unisong.android.activity.friends.AddFriendsFromContactsActivity;
+import io.unisong.android.activity.friends.AddFriendsFromFacebookActivity;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.session.MainSessionActivity;
-import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.session.SessionUtils;
 import io.unisong.android.network.session.UnisongSession;
@@ -238,7 +242,7 @@ public class UnisongActivity extends AppCompatActivity {
         buttonClick.setDuration(1000);
         v.startAnimation(buttonClick);
         // TODO : have a MaterialDialog pop up for confirmation
-        new Thread(mLogoutRunnable).start();
+        new Thread(logoutRunnable).start();
     }
 
     public void displayInvite(int sessionID, String inviteMessage){
@@ -292,9 +296,7 @@ public class UnisongActivity extends AppCompatActivity {
     }
 
     public void addFriendClick(View v){
-        Log.d(LOG_TAG , "Add friend click");
-        Intent intent = new Intent(getApplicationContext() , AddFriendActivity.class);
-        startActivity(intent);
+        addFriendDialog();
     }
 
     private Thread getUploadThread(final Bitmap bitmap){
@@ -327,22 +329,23 @@ public class UnisongActivity extends AppCompatActivity {
             startActivity(intent);
             return true;
         } else if(id == R.id.action_log_out){
-            new Thread(mLogoutRunnable).start();
+            new Thread(logoutRunnable).start();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private Runnable mLogoutRunnable = new Runnable() {
+    private Runnable logoutRunnable = new Runnable() {
         @Override
         public void run() {
+            Looper.prepare();
             CurrentUser.logOut();
-            runOnUiThread(mBackToLoginActivityRunnable);
+            runOnUiThread(backToLoginActivityRunnable);
         }
     };
 
-    private Runnable mBackToLoginActivityRunnable = new Runnable() {
+    private Runnable backToLoginActivityRunnable = new Runnable() {
         @Override
         public void run() {
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
@@ -458,7 +461,7 @@ public class UnisongActivity extends AppCompatActivity {
             Log.d(LOG_TAG , view.getTag().toString());
             User user = UserUtils.getUser(uuid);
             user.update();
-            mTempUserCheck = user;
+            tempUserCheck = user;
             handler.removeCallbacks(mCheckUserSession);
             handler.postDelayed(mCheckUserSession, 200);
 
@@ -493,12 +496,12 @@ public class UnisongActivity extends AppCompatActivity {
         }
     }
 
-    private User mTempUserCheck;
+    private User tempUserCheck;
     private Runnable mCheckUserSession = () ->{
-        if(mTempUserCheck != null){
-            if(mTempUserCheck.getSession() != null){
+        if(tempUserCheck != null){
+            if(tempUserCheck.getSession() != null){
                 Log.d(LOG_TAG , "Selected user has a session! Joining");
-                UnisongSession session = mTempUserCheck.getSession();
+                UnisongSession session = tempUserCheck.getSession();
 
                 User currentUser = CurrentUser.getInstance();
                 currentUser.setSession(session);
@@ -517,7 +520,7 @@ public class UnisongActivity extends AppCompatActivity {
             }
         }
 
-        mTempUserCheck = null;
+        tempUserCheck = null;
     };
 
 
@@ -553,5 +556,49 @@ public class UnisongActivity extends AppCompatActivity {
 
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+    }
+
+    public void addFriendDialog(){
+        String[] options = getResources().getStringArray(R.array.add_friend_options);
+
+        if(CurrentUser.getInstance().isFacebookUser()) {
+            List<String> optionsArray = new ArrayList<String>(Arrays.asList(options));
+            optionsArray.add("From Facebook");
+            options = optionsArray.toArray(options);
+        }
+
+        new MaterialDialog.Builder(this)
+                .title(R.string.add_friend_label)
+                .items(options)
+                .theme(Theme.LIGHT)
+                .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice() {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        switch(which){
+                            case 0:
+                                Intent intent = new Intent(getApplicationContext(), AddFriendByUsernameActivity.class);
+                                startActivity(intent);
+                                break;
+
+                            case 1:
+                                intent = new Intent(getApplicationContext(), AddFriendsFromContactsActivity.class);
+                                startActivity(intent);
+                                break;
+
+                            case 2:
+                                intent = new Intent(getApplicationContext(), AddFriendsFromFacebookActivity.class);
+                                startActivity(intent);
+                                break;
+                        }
+                        // ??
+                        return true;
+                    }
+                })
+                .positiveText(R.string.choose)
+                .show();
     }
 }

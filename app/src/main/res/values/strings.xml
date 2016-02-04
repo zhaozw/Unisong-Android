@@ -59,6 +59,11 @@
         <item>GENRES</item>
     </string-array>
 
+    <string-array name="add_friend_options">
+        <item>By Username</item>
+        <item>From Contacts</item>
+    </string-array>
+
     <string-array name="unisong_session_tab_names">
         <item>MEMBERS</item>
         <item>SONGS</item>
@@ -78,4 +83,13 @@
     <string name="kick">Kick</string>
     <string name="kicked_message">You have been kicked out of the session</string>
     <string name="sorry">Sorry</string>
+
+    <string name="add_friend_contacts">Add Friend From Contacts</string>
+    <string name="add_friend_facebook">Add Friend From Label</string>
+    <string name="add_friend_by_username">Add Friend By Username</string>
+
+    <string name="choose">Choose</string>
+    <string name="verification_code">Verification Code</string>
+    <string name="verification_code_text">Please enter the verification code sent to your phone number.</string>
+    <string name="empty"/>
 </resources>

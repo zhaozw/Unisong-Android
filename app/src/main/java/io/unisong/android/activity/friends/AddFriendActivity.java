@@ -1,4 +1,4 @@
-package io.unisong.android.activity;
+package io.unisong.android.activity.friends;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,7 +25,6 @@ public class AddFriendActivity extends AppCompatActivity{
         setContentView(R.layout.activity_add_friend);
 
 
-
         mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
 
         setSupportActionBar(mToolbar);
@@ -35,7 +34,7 @@ public class AddFriendActivity extends AppCompatActivity{
     }
 
     public void addFromContacts(View view){
-        Intent intent = new Intent(getApplicationContext(), AddFriendFromContactsActivity.class);
+        Intent intent = new Intent(getApplicationContext(), AddFriendsFromContactsActivity.class);
         startActivity(intent);
     }
 
@@ -45,6 +44,7 @@ public class AddFriendActivity extends AppCompatActivity{
     }
 
 
+    /**
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu items for use in the action bar
@@ -71,5 +71,5 @@ public class AddFriendActivity extends AppCompatActivity{
         }
 
         return super.onOptionsItemSelected(item);
-    }
+    }**/
 }

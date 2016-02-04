@@ -65,18 +65,18 @@ public class SntpClient
     private Thread mThread;
 
     //The socket.
-    private DatagramSocket mSocket;
+    private DatagramSocket socket;
 
-    private boolean mDestroyed;
+    private boolean stop;
 
     //The class that handles all of the time management stuff
 
     public SntpClient(){
-        mDestroyed = false;
+        stop = false;
         mTimeOffset = 0;
         try {
             // Send request
-            mSocket = new DatagramSocket();
+            socket = new DatagramSocket();
         } catch(SocketException e){
             e.printStackTrace();
         }
@@ -95,7 +95,7 @@ public class SntpClient
         int total = 0;
         int count = 0;
 
-        while(!mDestroyed){
+        while(!stop){
             count++;
             total++;
 
@@ -236,16 +236,16 @@ public class SntpClient
         NtpMessage.encodeTimestamp(packet.getData(), 40,
                 (System.currentTimeMillis() / 1000.0) + 2208988800.0);
 
-        mSocket.send(packet);
+        socket.send(packet);
 
 
         // Get response
         //Log.d(LOG_TAG , "NTP request sent to : " + sServerAddress +" , waiting for response...");
         packet = new DatagramPacket(buf, buf.length);
         // TODO : vary timeout with connection type, and prefer wifi/34/4g etc
-        mSocket.setSoTimeout(750);
+        socket.setSoTimeout(750);
         try {
-            mSocket.receive(packet);
+            socket.receive(packet);
         } catch (SocketTimeoutException e){
             try{
                 synchronized (this){
@@ -257,6 +257,8 @@ public class SntpClient
 
 //            Log.d(LOG_TAG , e.toString());
             // resend
+            if(stop)
+                return;
             getOneOffset();
             return;
         }
@@ -281,7 +283,6 @@ public class SntpClient
         // Display response
 
         /*
-
         Log.d(LOG_TAG , "NTP server: " + sServerAddress);
         //Log.d(LOG_TAG , msg.toString());
 
@@ -300,9 +301,9 @@ public class SntpClient
 
 
     public void destroy(){
-        mDestroyed = true;
-        mSocket.close();
-        mSocket = null;
+        stop = true;
+        socket.close();
+        socket = null;
     }
 
 

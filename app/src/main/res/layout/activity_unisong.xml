@@ -96,6 +96,7 @@ android:layout_width="match_parent" android:layout_height="wrap_content">
         android:layout_below="@id/user_profile"
         android:layout_height="48dp"
         android:layout_width="48dp"
+        android:onClick="addFriendClick"
         />
 
     <android.support.v7.widget.RecyclerView

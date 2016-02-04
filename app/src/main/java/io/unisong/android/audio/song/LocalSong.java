@@ -309,11 +309,7 @@ public class LocalSong extends Song {
             }
         };
 
-        try {
-            HttpClient.getInstance().post(NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/song/" + songID + "/picture", object, uploadCallback);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        HttpClient.getInstance().post(NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/song/" + songID + "/picture", object, uploadCallback);
 
     }
 

@@ -127,7 +127,25 @@ public class HttpClient {
         });
     }
 
-    public void post(String url, JSONObject json, Callback callback) throws IOException {
+    /**
+     * Indicates that the login failed
+     * TODO: replace this method
+     */
+    public void loginFailure(){
+       isLoggedIn = false;
+       loginDone = true;
+    }
+
+    /**
+     * Indicates that the login succeeded
+     * TODO : replace this method
+     */
+    public void loginSuccess(){
+        isLoggedIn = true;
+        loginDone = true;
+    }
+
+    public void post(String url, JSONObject json, Callback callback) {
         RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
                 .url(url)
@@ -136,7 +154,7 @@ public class HttpClient {
         client.newCall(request).enqueue(callback);
     }
 
-    public void get(String url , Callback callback) throws IOException {
+    public void get(String url , Callback callback) {
         Request request = new Request.Builder()
                 .url(url)
                 .get()
@@ -144,7 +162,7 @@ public class HttpClient {
         client.newCall(request).enqueue(callback);
     }
 
-    public void put(String url, JSONObject json, Callback callback) throws IOException {
+    public void put(String url, JSONObject json, Callback callback) {
         RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
                 .url( url)
@@ -153,7 +171,7 @@ public class HttpClient {
         client.newCall(request).enqueue(callback);
     }
 
-    public void delete(String url, Callback callback) throws IOException {
+    public void delete(String url, Callback callback) {
         Request request = new Request.Builder()
                 .url(url)
                 .delete()
@@ -224,6 +242,7 @@ public class HttpClient {
 
 
         List<HttpCookie> cookies = manager.getCookieStore().getCookies();
+        Log.d(LOG_TAG , "Number of cookies : " + cookies.size());
 
         for(HttpCookie cookie : cookies){
             if(cookie.getName().equals("connect.sid") && !cookie.hasExpired()){

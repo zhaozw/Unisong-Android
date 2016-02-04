@@ -221,18 +221,13 @@ public class User implements Serializable {
             }
         };
 
-        try {
-            if (username != null && !username.equals("")) {
-                client.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + username, profileCallback);
-            } else if (uuid != null) {
-                client.get(NetworkUtilities.HTTP_URL + "/user/" + uuid, profileCallback);
-            } else if (facebookID != null) {
-                client.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + facebookID, profileCallback);
-            } else {
-                return;
-            }
-        } catch (IOException e){
-            e.printStackTrace();
+        if (username != null && !username.equals("")) {
+            client.get(NetworkUtilities.HTTP_URL + "/user/get-by-username/" + username, profileCallback);
+        } else if (uuid != null) {
+            client.get(NetworkUtilities.HTTP_URL + "/user/" + uuid, profileCallback);
+        } else if (facebookID != null) {
+            client.get(NetworkUtilities.HTTP_URL + "/user/get-by-facebookID/" + facebookID, profileCallback);
+        } else {
             return;
         }
     }
@@ -312,11 +307,7 @@ public class User implements Serializable {
             }
         };
 
-        try {
-            client.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object, uploadCallback);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        client.post(NetworkUtilities.HTTP_URL + "/user/profile/picture", object, uploadCallback);
 
     }
 

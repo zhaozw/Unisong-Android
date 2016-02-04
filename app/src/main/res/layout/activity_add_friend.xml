@@ -7,11 +7,12 @@
         android:id="@+id/music_bar"
         layout="@layout/music_bar">
     </include>
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:padding="12dp">
 
-    <Button
+    <Button style="@style/Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add By Username"
@@ -22,7 +23,19 @@
         android:background="@color/primaryColor"
         android:onClick="addByUsername" />
 
-    <Button
+    <Button style="@style/Button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add From Contacts"
+        android:id="@+id/add_friend_contact"
+        android:textColor="@color/white"
+        android:background="@color/primaryColor"
+        android:layout_below="@+id/usernameButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="42dp"
+        android:onClick="addFromContacts" />
+
+    <Button style="@style/Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add From Contacts"

@@ -5,27 +5,27 @@ package io.unisong.android.activity.musicplayer;
  */
 public class DrawerInformation {
 
-    private String mIcon;
-    private String mText;
+    private String icon;
+    private String text;
 
     public DrawerInformation(String icon, String text){
-        mIcon = icon;
-        mText = text;
+        this.icon = icon;
+        this.text = text;
     }
 
     public String getIcon(){
-        return mIcon;
+        return icon;
     }
 
     public String getText(){
-        return mText;
+        return text;
     }
 
     public void setIcon(String icon){
-        mIcon = icon;
+        this.icon = icon;
     }
 
     public void setText(String text){
-        mText = text;
+        this.text = text;
     }
 }

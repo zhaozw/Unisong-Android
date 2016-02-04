@@ -87,6 +87,7 @@ public class MainSessionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_session_main);
 
         toolbar = (Toolbar) findViewById(R.id.session_bar);
+        setSupportActionBar(toolbar);
 
         Log.d(LOG_TAG, "Creating MainSessionActivity");
         // Configure the action bar.

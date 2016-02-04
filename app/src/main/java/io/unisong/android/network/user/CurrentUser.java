@@ -21,6 +21,7 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.http.PersistentCookieStore;
 import io.unisong.android.network.session.UnisongSession;
 
 /**
@@ -157,6 +158,8 @@ public class CurrentUser {
             }
         }
 
+        Log.d(LOG_TAG , "Number of cookies after logout " + manager.getCookieStore().getCookies().size());
+
 
         // Delete stored preferences
         PrefUtils.deleteFromPrefs(context, PrefUtils.PREFS_LOGIN_USERNAME_KEY);
@@ -187,7 +190,7 @@ public class CurrentUser {
 
         socketIO.destroy();
 
-        socketIO = new SocketIOClient(context);
+        new SocketIOClient(context);
 
         context = null;
         System.gc();
