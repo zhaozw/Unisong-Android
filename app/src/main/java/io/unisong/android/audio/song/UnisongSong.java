@@ -148,6 +148,12 @@ public class UnisongSong extends Song {
     }
 
     @Override
+    public void destroy() {
+        decoder.destroy();
+        decoder = null;
+    }
+
+    @Override
     public void update(int state){
         switch (state){
             case AudioStatePublisher.START_SONG:
