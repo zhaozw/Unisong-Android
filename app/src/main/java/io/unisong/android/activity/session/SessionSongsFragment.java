@@ -31,11 +31,11 @@ public class SessionSongsFragment extends Fragment {
 
     private final static String LOG_TAG = SessionSongsFragment.class.getSimpleName();
 
-    private UnisongSession mSession;
-    private UltimateRecyclerView mUltimateRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private FloatingActionButton mFAB;
-    private SessionSongsAdapter mAdapter;
+    private UnisongSession session;
+    private UltimateRecyclerView ultimateRecyclerView;
+    private RecyclerView.LayoutManager layoutManager;
+    private FloatingActionButton FAB;
+    private SessionSongsAdapter adapter;
 
 
     private ItemTouchHelper mItemTouchHelper;
@@ -47,17 +47,17 @@ public class SessionSongsFragment extends Fragment {
         View view =inflater.inflate(R.layout.fragment_session_songs, container, false);
 
         try {
-            mSession = UnisongSession.getCurrentSession();
-            mUltimateRecyclerView = (UltimateRecyclerView) view.findViewById(R.id.session_songs_recyclerview);
+            session = UnisongSession.getCurrentSession();
+            ultimateRecyclerView = (UltimateRecyclerView) view.findViewById(R.id.session_songs_recyclerview);
 
-            if (mSession == null)
+            if (session == null)
                 Log.d(LOG_TAG, "Session is null!");
 
             // use a linear mLayout manager
-            mLayoutManager = new LinearLayoutManager(getContext());
+            layoutManager = new LinearLayoutManager(getContext());
 
             List<Song> songs = new ArrayList<>();
-            SongQueue queue = mSession.getSongQueue();
+            SongQueue queue = session.getSongQueue();
 
             if (queue == null)
                 Log.d(LOG_TAG, "queue is null!");
@@ -66,25 +66,25 @@ public class SessionSongsFragment extends Fragment {
                 songs.add(song);
             }
 
-            mFAB = (FloatingActionButton)  view.findViewById(R.id.unisong_fab);
+            FAB = (FloatingActionButton)  view.findViewById(R.id.unisong_fab);
 
 
-            if(!mSession.isMaster())
-                mFAB.setVisibility(View.GONE);
+            if(!session.isMaster())
+                FAB.setVisibility(View.GONE);
 
-            mAdapter = new SessionSongsAdapter(songs, mSession.getSongQueue());
+            adapter = new SessionSongsAdapter(songs, session.getSongQueue());
 
-            mUltimateRecyclerView.setHasFixedSize(false);
+            ultimateRecyclerView.setHasFixedSize(false);
 
             //mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat.getDrawable(getContext(), R.drawable.list_divider_h), true));
 
-            mUltimateRecyclerView.setLayoutManager(mLayoutManager);
-            mUltimateRecyclerView.setAdapter(mAdapter);
+            ultimateRecyclerView.setLayoutManager(layoutManager);
+            ultimateRecyclerView.setAdapter(adapter);
 
-            ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mAdapter);
+            ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(adapter);
             mItemTouchHelper = new ItemTouchHelper(callback);
-            mItemTouchHelper.attachToRecyclerView(mUltimateRecyclerView.mRecyclerView);
-            mAdapter.setOnDragStartListener(new SessionSongsAdapter.OnStartDragListener() {
+            mItemTouchHelper.attachToRecyclerView(ultimateRecyclerView.mRecyclerView);
+            adapter.setOnDragStartListener(new SessionSongsAdapter.OnStartDragListener() {
                 @Override
                 public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
                     mItemTouchHelper.startDrag(viewHolder);

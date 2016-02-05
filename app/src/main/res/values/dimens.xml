@@ -41,4 +41,7 @@
 
     <dimen name="music_footer_height">68dp</dimen>
 
+    <dimen name="row_height">72dp</dimen>
+    <dimen name="single_line_row_height">48dp</dimen>
+
 </resources>

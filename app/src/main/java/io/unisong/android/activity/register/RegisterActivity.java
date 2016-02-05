@@ -44,9 +44,6 @@ public class RegisterActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
-    private Thread registerThread;
-    private boolean registerInProgress;
-
     private String formattedPhoneNumber;
     private FloatLabel username, password, passwordVerify, phoneNumber;
 
@@ -67,7 +64,6 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     public void register(View view){
-
 
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
 
@@ -208,9 +204,6 @@ public class RegisterActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-
-//        Log.d(LOG_TAG , client.getCookies());
-        registerInProgress = false;
     }
 
     private void registerSuccess(String username , String password){

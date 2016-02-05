@@ -19,7 +19,7 @@ import io.unisong.android.audio.MusicDataManager;
 public class CollectionSelectActivity extends AppCompatActivity {
 
     private final static String LOG_TAG = CollectionSelectActivity.class.getSimpleName();
-    private Toolbar mToolbar;
+    private Toolbar toolbar;
     private MusicDataManager mDataManager;
     private RecyclerView mMusicDataRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -33,9 +33,9 @@ public class CollectionSelectActivity extends AppCompatActivity {
         // TODO : get album ID from intent
         String tag = intent.getStringExtra("tag");
 
-        mToolbar = (Toolbar) findViewById(R.id.music_bar);
+        toolbar = (Toolbar) findViewById(R.id.music_bar);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 

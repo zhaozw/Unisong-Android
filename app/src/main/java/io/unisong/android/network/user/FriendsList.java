@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONArray;
@@ -292,8 +293,21 @@ public class FriendsList implements Serializable{
     }
 
     // TODO : implement
-    public void addFriend(User user){
+    public void addFriend(User user, Callback callback){
 
+        try{
+            JSONObject object = new JSONObject();
+            object.put("friendID" , user.getUUID().toString());
+            HttpClient.getInstance().post(NetworkUtilities.HTTP_URL + "/user/friends", object, callback);
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void addFriend(User user){
+        synchronized (mFriends){
+            mFriends.add(user);
+        }
     }
 
     /**

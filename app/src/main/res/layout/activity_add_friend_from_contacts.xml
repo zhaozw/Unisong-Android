@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <include
+        android:id="@+id/add_friend_bar"
+        layout="@layout/login_bar">
+    </include>
+
+    <TextView
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:id="@+id/add_friend_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/add_friend_bar"
+        android:text="@string/add_friend_label"
+        android:textSize="16sp"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_below="@id/add_friend_label"
+        android:id="@+id/contacts_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</RelativeLayout>

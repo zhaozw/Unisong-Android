@@ -10,7 +10,7 @@ import android.util.Log;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.audiotrack.AudioTrackManager;
-import io.unisong.android.activity.friends.contacts.Contacts;
+import io.unisong.android.activity.friends.contacts.ContactsLoader;
 
 /**
  * Created by Ethan on 1/25/2015.
@@ -21,7 +21,7 @@ public class MediaService extends Service{
 
     private IBinder mBinder = new MediaServiceBinder();
 
-    private Contacts mContacts;
+    private ContactsLoader mContactsLoader;
 
     private BroadcastReceiver mMessageReceiver;
     private MusicDataManager mMusicDataManager;

@@ -4,6 +4,12 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.ContactsContract;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,21 +18,24 @@ import java.util.List;
  * The list of contacts. Contains methods for returning a contact based on phone number
  * Created by Ethan on 8/9/2015.
  */
-public class Contacts {
+public class ContactsLoader {
 
-    public static Contacts getInstance(){
+    private static final String LOG_TAG = ContactsLoader.class.getSimpleName();
+    private static ContactsLoader instance;
+
+    public static ContactsLoader getInstance(){
         return instance;
     }
-
-    private static Contacts instance;
 
     private Context context;
     private List<Contact> contacts;
 
-    public Contacts(Context context) {
+    public ContactsLoader(Context context) {
         this.context = context;
         contacts = new ArrayList<>();
 
+
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         ContentResolver cr = context.getContentResolver();
         Cursor cursor = cr.query(ContactsContract.Contacts.CONTENT_URI, null,
                 null, null, null);
@@ -45,6 +54,7 @@ public class Contacts {
                 name = cursor
                         .getString(cursor
                                 .getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                String phone = "";
 
                 if (name != null && !name.equals("")) {
                     if (checkEmail(name)) {
@@ -65,25 +75,41 @@ public class Contacts {
                                     null);
 
                     while (pCur.moveToNext()) {
-                        String phonetype = pCur
-                                .getString(pCur
+                        int phonetype = pCur
+                                .getInt(pCur
                                         .getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
-                        String MainNumber = pCur
-                                .getString(pCur
-                                        .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        if(phonetype == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
 
-                        phonenumbers.add(MainNumber);
+                            String MainNumber = pCur
+                                    .getString(pCur
+                                            .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            if(MainNumber != null && !MainNumber.equals(""))
+                                phone = MainNumber;
+                        }
                     }
                     pCur.close();
 
                 }
 
-                if(phonenumbers.size() > 0) {
-                    Contact contact = new Contact(name, phonenumbers);
+                if(!phone.equals("")) {
+
+                    try{
+                        Phonenumber.PhoneNumber phoneNumber = phoneUtil.parse(phone, "US");
+                        phone = phoneUtil.format(phoneNumber , PhoneNumberUtil.PhoneNumberFormat.E164);
+                    } catch (NumberParseException e){
+                        // currently only support US numbers?
+                        e.printStackTrace();
+                        Log.d(LOG_TAG, "Parsing Phone number failed!");
+                        break;
+                    }
+
+                    Contact contact = new Contact(name, phone);
                     contacts.add(contact);
                 }
             }
         }
+
+        cursor.close();
 
         instance = this;
     }
@@ -95,18 +121,7 @@ public class Contacts {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
-    /**
-     * A method that returns the selected contact if there is a match by phone number
-     * it returns null otherwise
-     * @param phonenumber the phone number to compare to contacts.
-     * @return
-     */
-    public Contact getContactByPhone(String phonenumber){
-        for(Contact contact : contacts){
-            if(contact.matchesPhoneNumber(phonenumber)){
-                return contact;
-            }
-        }
-        return null;
+    public List<Contact> getContacts(){
+        return contacts;
     }
 }

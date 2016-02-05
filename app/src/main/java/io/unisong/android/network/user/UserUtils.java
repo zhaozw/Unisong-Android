@@ -11,15 +11,16 @@ import java.util.UUID;
 public class UserUtils {
 
     private final static String LOG_TAG = UserUtils.class.getSimpleName();
-    private static List<User> sUsers = new ArrayList<>();
+    private static List<User> users = new ArrayList<>();
 
     public static void addUser(User user){
-        sUsers.add(user);
+        if(!users.contains(user))
+            users.add(user);
     }
 
     public static User getUser(UUID uuid){
-        synchronized (sUsers) {
-            for (User user : sUsers) {
+        synchronized (users) {
+            for (User user : users) {
                 if (user.getUUID() != null && user.getUUID().equals(uuid)) {
                     return user;
                 }
@@ -27,8 +28,8 @@ public class UserUtils {
         }
 
         User user = new User(uuid);
-        synchronized (sUsers) {
-            sUsers.add(user);
+        synchronized (users) {
+            users.add(user);
         }
 
         return user;

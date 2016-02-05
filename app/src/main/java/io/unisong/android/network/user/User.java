@@ -56,6 +56,9 @@ public class User implements Serializable {
         mRetrieveProfilePictureFailed = false;
     }
 
+    public User(JSONObject userObject){
+
+    }
 
     public User(String username, String password){
         this();

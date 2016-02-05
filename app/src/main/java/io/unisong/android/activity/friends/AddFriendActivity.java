@@ -16,16 +16,16 @@ import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 public class AddFriendActivity extends AppCompatActivity{
 
 
-    private Toolbar mToolbar;
+    private Toolbar toolbar;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_friend);
 
 
-        mToolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
+        toolbar = (Toolbar) findViewById(io.unisong.android.R.id.music_bar);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         getSupportActionBar().setHomeButtonEnabled(true);

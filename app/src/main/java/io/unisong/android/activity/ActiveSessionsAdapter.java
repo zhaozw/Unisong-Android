@@ -20,11 +20,11 @@ import io.unisong.android.network.user.User;
  */
 public class ActiveSessionsAdapter extends RecyclerView.Adapter<ActiveSessionsAdapter.ViewHolder>  {
 
-    private List<User> mDataset;
+    private List<User> dataset;
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public ActiveSessionsAdapter(List<User> myDataset) {
-        mDataset = myDataset;
+        dataset = myDataset;
     }
 
     @Override
@@ -38,26 +38,26 @@ public class ActiveSessionsAdapter extends RecyclerView.Adapter<ActiveSessionsAd
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         // TODO : figure out how to indicate active sessions.
-        User user = mDataset.get(position);
+        User user = dataset.get(position);
         Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
-        holder.nameView.setText(mDataset.get(position).getName());
-        holder.usernameView.setText("@" + mDataset.get(position).getUsername());
+        holder.nameView.setText(dataset.get(position).getName());
+        holder.usernameView.setText("@" + dataset.get(position).getUsername());
     }
 
     @Override
     public int getItemCount() {
-        return mDataset.size();
+        return dataset.size();
     }
 
 
     public void add(int position, User user) {
-        mDataset.add(position, user);
+        dataset.add(position, user);
         notifyItemInserted(position);
     }
 
     public void remove(User user) {
-        int position = mDataset.indexOf(user);
-        mDataset.remove(position);
+        int position = dataset.indexOf(user);
+        dataset.remove(position);
         notifyItemRemoved(position);
     }
 

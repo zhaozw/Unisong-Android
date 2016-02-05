@@ -32,11 +32,11 @@ public class InviteMemberActivity extends AppCompatActivity{
     private static final String LOG_TAG = InviteMemberActivity.class.getSimpleName();
 
 
-    private RecyclerView mRecyclerView;
-    private LinearLayoutManager mLayoutManager;
-    private FriendsAdapter mAdapter;
-    private Toolbar mToolbar;
-    private FriendsList mFriendsList;
+    private RecyclerView recyclerView;
+    private LinearLayoutManager layoutManager;
+    private FriendsAdapter adapter;
+    private Toolbar toolbar;
+    private FriendsList friendsList;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,32 +44,32 @@ public class InviteMemberActivity extends AppCompatActivity{
         setContentView(R.layout.activity_invite_member);
 
 
-        mToolbar = (Toolbar) findViewById(R.id.session_bar);
+        toolbar = (Toolbar) findViewById(R.id.session_bar);
 
         // Configure the action bar.
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         ActionBar bar = getSupportActionBar();
         if(bar != null) {
             bar.setDisplayShowHomeEnabled(true);
             bar.setHomeButtonEnabled(true);
         }
 
-        mFriendsList = FriendsList.getInstance();
+        friendsList = FriendsList.getInstance();
 
-        if(mFriendsList != null){
+        if(friendsList != null){
 
-            mRecyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
+            recyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
 
             // use this setting to improve performance if you know that changes
             // in content do not change the mLayout size of the RecyclerView
-            mRecyclerView.setHasFixedSize(true);
+            recyclerView.setHasFixedSize(true);
 
-            // use a linear mLayoutManager
-            mLayoutManager = new LinearLayoutManager(this);
-            mRecyclerView.setLayoutManager(mLayoutManager);
+            // use a linear layoutManager
+            layoutManager = new LinearLayoutManager(this);
+            recyclerView.setLayoutManager(layoutManager);
 
-            mAdapter = new FriendsAdapter(mFriendsList.getFriends());
-            mRecyclerView.setAdapter(mAdapter);
+            adapter = new FriendsAdapter(friendsList.getFriends());
+            recyclerView.setAdapter(adapter);
         } else {
             Log.d(LOG_TAG, "FriendsList was null! It should not be!");
             onBackPressed();
