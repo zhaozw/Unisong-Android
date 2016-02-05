@@ -1,7 +1,6 @@
 package io.unisong.android.activity.friends.contacts;
 
 import android.support.annotation.Nullable;
-import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 import com.squareup.okhttp.Callback;
@@ -12,13 +11,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.User;
-import io.unisong.android.network.user.UserUtils;
 
 /**
  * This class is loaded by the ContactsLoader class, and contains information about a contact

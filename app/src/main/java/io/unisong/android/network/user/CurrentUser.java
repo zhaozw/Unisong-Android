@@ -1,7 +1,6 @@
 package io.unisong.android.network.user;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -21,7 +20,6 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.http.PersistentCookieStore;
 import io.unisong.android.network.session.UnisongSession;
 
 /**

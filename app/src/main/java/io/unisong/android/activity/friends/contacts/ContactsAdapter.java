@@ -1,6 +1,5 @@
 package io.unisong.android.activity.friends.contacts;
 
-import android.graphics.Canvas;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;

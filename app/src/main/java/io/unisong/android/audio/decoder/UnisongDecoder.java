@@ -6,7 +6,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;

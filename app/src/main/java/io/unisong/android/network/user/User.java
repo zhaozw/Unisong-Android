@@ -39,10 +39,10 @@ public class User implements Serializable {
     private UnisongSession session;
 
     // The boolean tag to tell us if we failed to get the profile picture
-    private boolean mRetrieveProfilePictureFailed;
+    private boolean retrieveProfilePictureFailed;
 
     // The boolean that tells us if we're done retrieving the profile picture
-    private boolean mHasProfilePicture;
+    private boolean hasProfilePicture;
 
     // The access token for facebook users.
 
@@ -52,12 +52,16 @@ public class User implements Serializable {
     private User(){
         UserUtils.addUser(this);
         client = HttpClient.getInstance();
-        mHasProfilePicture = false;
-        mRetrieveProfilePictureFailed = false;
+        hasProfilePicture = false;
+        retrieveProfilePictureFailed = false;
     }
 
     public User(JSONObject userObject){
-
+        try{
+            parseJSON(userObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     public User(String username, String password){
@@ -241,21 +245,8 @@ public class User implements Serializable {
             String body = response.body().string();
             Log.d(LOG_TAG , body);
             object = new JSONObject(body);
-            uuid = UUID.fromString(object.getString("userID"));
-            username = object.getString("username");
-            phoneNumber = object.getString("phone_number");
-            name = object.getString("name");
-            if(object.has("facebookID")) {
-                long facebookID = object.getLong("facebookID");
-                if(facebookID != 0){
-                    isFacebookUser = true;
-                    this.facebookID =  facebookID + "";
-                } else {
-                    isFacebookUser = false;
-                }
-            } else {
-                isFacebookUser = false;
-            }
+            parseJSON(object);
+
         } catch (IOException e){
             e.printStackTrace();
             // TODO : retry
@@ -267,6 +258,23 @@ public class User implements Serializable {
         }
     }
 
+    private void parseJSON(JSONObject object) throws JSONException{
+        uuid = UUID.fromString(object.getString("userID"));
+        username = object.getString("username");
+        phoneNumber = object.getString("phone_number");
+        name = object.getString("name");
+        if(object.has("facebookID")) {
+            long facebookID = object.getLong("facebookID");
+            if(facebookID != 0){
+                isFacebookUser = true;
+                this.facebookID =  facebookID + "";
+            } else {
+                isFacebookUser = false;
+            }
+        } else {
+            isFacebookUser = false;
+        }
+    }
     public void uploadProfilePicture(Bitmap bitmap){
         // TODO : don't use bitmaps?
         Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
@@ -315,7 +323,7 @@ public class User implements Serializable {
     }
 
     public boolean hasProfilePicture(){
-        return mHasProfilePicture;
+        return hasProfilePicture;
     }
 
     // TODO : make async
@@ -324,7 +332,7 @@ public class User implements Serializable {
     }
 
     public boolean profileRetrievalFailed(){
-        return mRetrieveProfilePictureFailed;
+        return retrieveProfilePictureFailed;
     }
 
     public String getFacebookID(){
