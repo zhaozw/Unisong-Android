@@ -74,7 +74,7 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         phonenumber = phonenumber.replace("-" , "");
         phonenumber = phonenumber.replace(" " , "");
 
-        client.loginFacebook(AccessToken.getCurrentAccessToken(), email, username, phonenumber);
+        client.loginFacebook(AccessToken.getCurrentAccessToken(), username, phonenumber);
         FacebookAccessToken.saveFacebookAccessToken(getApplicationContext());
 
         Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);

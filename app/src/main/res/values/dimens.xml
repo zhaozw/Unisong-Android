@@ -12,6 +12,7 @@
 
     <dimen name="text_size_row_primary">16sp</dimen>
     <dimen name="text_size_row_secondary">14sp</dimen>
+    <dimen name="text_size_row_sole">24</dimen>
 
     <dimen name="friend_row_padding">6dp</dimen>
 
@@ -39,4 +40,5 @@
     <dimen name="session_song_margin_right">48dp</dimen>
 
     <dimen name="music_footer_height">68dp</dimen>
+
 </resources>

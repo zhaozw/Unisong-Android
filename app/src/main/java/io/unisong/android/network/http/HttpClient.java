@@ -275,15 +275,13 @@ public class HttpClient {
     // Fields used for facebook login/register
     // TODO : refractor and reorganize
 
-    private String mEmail;
-    private String mUsername;
-    private String mPhoneNumber;
+    private String username;
+    private String phoneNumber;
 
-    public void loginFacebook(AccessToken token, String email, String username, String phonnenumber){
+    public void loginFacebook(AccessToken token, String username, String phonnenumber){
         //AccessToken tokenld = new AccessToken();
-        mEmail = email;
-        mPhoneNumber = phonnenumber;
-        mUsername = username;
+        phoneNumber = phonnenumber;
+        this.username = username;
         loginFacebook(token);
     }
 
@@ -301,10 +299,9 @@ public class HttpClient {
                 JSONObject loginObject = new JSONObject();
                 try {
                     loginObject.put("access_token", fBAccessToken.getToken());
-                    if(mEmail != null && mPhoneNumber != null && mUsername != null){
-                        loginObject.put("email" , mEmail);
-                        loginObject.put("phone_number" , mPhoneNumber);
-                        loginObject.put("username" , mUsername);
+                    if( phoneNumber != null && username != null){
+                        loginObject.put("phone_number" , phoneNumber);
+                        loginObject.put("username" , username);
                         // TODO : get rid of this and have a phone number verification step.
                     }
                 } catch (JSONException e){
