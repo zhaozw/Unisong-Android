@@ -1,4 +1,4 @@
-package io.unisong.android.activity.friends;
+package io.unisong.android.activity.friends.facebook;
 
 import android.support.v7.app.AppCompatActivity;
 

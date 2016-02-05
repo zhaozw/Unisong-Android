@@ -1,4 +1,4 @@
-package io.unisong.android.network.user;
+package io.unisong.android.activity.friends.contacts;
 
 import android.telephony.PhoneNumberUtils;
 

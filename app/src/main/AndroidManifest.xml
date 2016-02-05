@@ -92,7 +92,7 @@
             android:label="@string/add_friend_label"
             />
 
-        <activity android:name=".activity.friends.AddFriendByUsernameActivity"
+        <activity android:name=".activity.friends.username.AddFriendByUsernameActivity"
             android:label="@string/add_friend_by_username"
             />
 
@@ -102,11 +102,11 @@
         <activity android:name=".activity.session.musicselect.CollectionSelectActivity"
             android:label="@string/app_name"
             />
-        <activity android:name=".activity.friends.AddFriendsFromContactsActivity"
+        <activity android:name=".activity.friends.contacts.AddFriendsFromContactsActivity"
             android:label="@string/add_friend_contacts"
             />
 
-        <activity android:name=".activity.friends.AddFriendsFromFacebookActivity"
+        <activity android:name=".activity.friends.facebook.AddFriendsFromFacebookActivity"
             android:label="@string/add_friend_facebook"
             />
 

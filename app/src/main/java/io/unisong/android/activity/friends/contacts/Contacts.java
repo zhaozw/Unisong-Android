@@ -1,4 +1,4 @@
-package io.unisong.android.network.user;
+package io.unisong.android.activity.friends.contacts;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -15,17 +15,17 @@ import java.util.List;
 public class Contacts {
 
     public static Contacts getInstance(){
-        return sInstance;
+        return instance;
     }
 
-    private static Contacts sInstance;
+    private static Contacts instance;
 
-    private Context mContext;
-    private List<Contact> mContacts;
+    private Context context;
+    private List<Contact> contacts;
 
     public Contacts(Context context) {
-        mContext = context;
-        mContacts = new ArrayList<>();
+        this.context = context;
+        contacts = new ArrayList<>();
 
         ContentResolver cr = context.getContentResolver();
         Cursor cursor = cr.query(ContactsContract.Contacts.CONTENT_URI, null,
@@ -80,12 +80,12 @@ public class Contacts {
 
                 if(phonenumbers.size() > 0) {
                     Contact contact = new Contact(name, phonenumbers);
-                    mContacts.add(contact);
+                    contacts.add(contact);
                 }
             }
         }
 
-        sInstance = this;
+        instance = this;
     }
 
     private boolean checkEmail(String email){
@@ -102,7 +102,7 @@ public class Contacts {
      * @return
      */
     public Contact getContactByPhone(String phonenumber){
-        for(Contact contact : mContacts){
+        for(Contact contact : contacts){
             if(contact.matchesPhoneNumber(phonenumber)){
                 return contact;
             }

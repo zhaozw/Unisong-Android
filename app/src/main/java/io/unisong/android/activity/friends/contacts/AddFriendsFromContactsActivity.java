@@ -1,5 +1,6 @@
-package io.unisong.android.activity.friends;
+package io.unisong.android.activity.friends.contacts;
 
+import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
@@ -9,7 +10,8 @@ import android.view.View;
 public class AddFriendsFromContactsActivity extends AppCompatActivity {
 
     @Override
-    public void onCreate(){
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
 
     }
 

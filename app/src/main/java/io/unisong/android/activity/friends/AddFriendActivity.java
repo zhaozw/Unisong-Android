@@ -4,13 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import io.unisong.android.R;
+import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivity;
+import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 
 /**
  * Created by Ethan on 9/22/2015.

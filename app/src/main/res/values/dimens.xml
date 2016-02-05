@@ -12,7 +12,7 @@
 
     <dimen name="text_size_row_primary">16sp</dimen>
     <dimen name="text_size_row_secondary">14sp</dimen>
-    <dimen name="text_size_row_sole">24</dimen>
+    <dimen name="text_size_row_sole">24sp</dimen>
 
     <dimen name="friend_row_padding">6dp</dimen>
 

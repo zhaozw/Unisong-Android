@@ -1,4 +1,4 @@
-package io.unisong.android.activity.friends;
+package io.unisong.android.activity.friends.username;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.iangclifton.android.floatlabel.FloatLabel;
