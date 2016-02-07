@@ -276,7 +276,6 @@ public class User implements Serializable {
         }
     }
     public void uploadProfilePicture(Bitmap bitmap){
-        // TODO : don't use bitmaps?
         Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

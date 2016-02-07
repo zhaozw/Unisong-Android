@@ -2,6 +2,7 @@ package io.unisong.android.activity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -37,6 +38,7 @@ import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -268,11 +270,33 @@ public class UnisongActivity extends AppCompatActivity {
         {
             Uri chosenImageUri = data.getData();
 
-            Log.d(LOG_TAG , chosenImageUri.toString());
+            Log.d(LOG_TAG, chosenImageUri.toString());
 
-            Bitmap bitmap = null;
             try {
-                bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), chosenImageUri);
+
+                // from : http://stackoverflow.com/questions/3879992/get-bitmap-from-an-uri-android
+                InputStream input = this.getContentResolver().openInputStream(chosenImageUri);
+
+                BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                onlyBoundsOptions.inJustDecodeBounds = true;
+                onlyBoundsOptions.inDither=true;//optional
+                onlyBoundsOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;//optional
+                BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                input.close();
+
+                int originalSize = (onlyBoundsOptions.outHeight > onlyBoundsOptions.outWidth) ? onlyBoundsOptions.outHeight : onlyBoundsOptions.outWidth;
+
+                double ratio = (originalSize > 200) ? (originalSize / 200) : 1.0;
+
+                BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+                bitmapOptions.inSampleSize = getPowerOfTwoForSampleRatio(ratio);
+                bitmapOptions.inDither=true;//optional
+                bitmapOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;//optional
+                input = this.getContentResolver().openInputStream(chosenImageUri);
+                Bitmap bitmap = BitmapFactory.decodeStream(input, null, bitmapOptions);
+                input.close();
+
+
                 Matrix matrix = new Matrix();
 
                 // TODO : see if we are rotating this correctly.
@@ -282,17 +306,25 @@ public class UnisongActivity extends AppCompatActivity {
                         bitmap.getHeight(), matrix, true);
 
                 userProfileImageView.setImageBitmap(bitmap);
+                getUploadThread(bitmap).start();
             } catch (FileNotFoundException e){
                 e.printStackTrace();
-                return;
             } catch (IOException e){
                 e.printStackTrace();
-                return;
+                Log.d(LOG_TAG , "Failed to load image due to IOException! Profile loading failed");
+            } catch(OutOfMemoryError e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "OutOfMemoryError for profile picture!");
             }
 
 
-            getUploadThread(bitmap).start();
         }
+    }
+
+    private static int getPowerOfTwoForSampleRatio(double ratio){
+        int k = Integer.highestOneBit((int)Math.floor(ratio));
+        if(k==0) return 1;
+        else return k;
     }
 
     public void addFriendClick(View v){

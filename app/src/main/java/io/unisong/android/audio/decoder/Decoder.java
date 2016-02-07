@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.network.CONSTANTS;
@@ -41,7 +42,7 @@ public abstract class Decoder {
     public Decoder(){
         // TODO : reorganize this class into sensical groupings of methods
         outputFrames = new HashMap<>();
-        inputFrames = new HashMap<>();
+        inputFrames = new TreeMap<>();
     }
 
 
