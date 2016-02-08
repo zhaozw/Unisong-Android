@@ -64,7 +64,7 @@ public class HttpClient {
         instance = this;
         this.context = context;
         handler = new Handler();
-        handler.postDelayed(mCheckCookieRunnable, 70 * 1000);
+        handler.postDelayed(checkCookieRunnable, 70 * 1000);
     }
 
     public void login(String username, String password){
@@ -338,7 +338,7 @@ public class HttpClient {
 
     }
 
-    private Runnable mCheckCookieRunnable = new Runnable() {
+    private Runnable checkCookieRunnable = new Runnable() {
         @Override
         public void run() {
 
@@ -351,7 +351,7 @@ public class HttpClient {
                     if(cookie.hasExpired()){
                         // TODO : renew cookie
                     } else if(cookie.getMaxAge() < (24 * 60 * 1000)){
-                        handler.postDelayed(mReplaceCookieRunnable, 10 * 1000);
+                        handler.postDelayed(replaceCookieRunnable, 10 * 1000);
                     }
 
                     return;
@@ -360,7 +360,7 @@ public class HttpClient {
         }
     };
 
-    private Runnable mReplaceCookieRunnable = new Runnable() {
+    private Runnable replaceCookieRunnable = new Runnable() {
         @Override
         public void run() {
             try{
@@ -373,7 +373,7 @@ public class HttpClient {
                 credentials.put("password" , password);
                 syncPost(NetworkUtilities.HTTP_URL + "/login", credentials);
             } catch (IOException e){
-                handler.postDelayed(mReplaceCookieRunnable, 100 * 1000);
+                handler.postDelayed(replaceCookieRunnable, 100 * 1000);
                 e.printStackTrace();
             } catch (JSONException e){
                 e.printStackTrace();

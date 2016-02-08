@@ -54,7 +54,7 @@ public class RegisterActivity extends AppCompatActivity {
         username = (FloatLabel) findViewById(R.id.registerUsername);
         password = (FloatLabel) findViewById(R.id.registerPassword);
         passwordVerify = (FloatLabel) findViewById(R.id.registerPasswordVerify);
-        phoneNumber = (FloatLabel) findViewById(R.id.registerPhoneNumber);
+        phoneNumber = (FloatLabel) findViewById(R.id.register_phone_number);
 
         toolbar = (Toolbar) findViewById(R.id.login_bar);
 
@@ -114,16 +114,8 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void onResponse(Response response) throws IOException {
                 if(response.code() == 200){
-                    runOnUiThread(() -> {
-                        Toast toast = Toast.makeText(getBaseContext(), "Success!", Toast.LENGTH_LONG);
-                        toast.show();
-                    });
-                    /**
-                    if(!registerInProgress){
-                        registerInProgress = true;
-                        registerThread = getRegisterThread();
-                        registerThread.start();
-                    }*/
+                    getRegisterThread().start();
+
                 }
             }
         };
@@ -183,26 +175,26 @@ public class RegisterActivity extends AppCompatActivity {
 
         String result = "Error!";
 
-        Response response;
-        try {
-            response = client.syncPost(URL, json);
-        } catch (IOException e){
-            e.printStackTrace();
-            Log.d(LOG_TAG, "Request Failed");
-            return;
-        }
+        Callback callback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                runOnUiThread( () -> {
+                    Toast toast = Toast.makeText(getBaseContext() , "Registration failed due to error!" , Toast.LENGTH_LONG );
+                    toast.show();
+                });
 
-        Log.d(LOG_TAG , "Login Request Done.");
-        Log.d(LOG_TAG , response.toString());
-        try {
-            String body = response.body().string();
-            Log.d(LOG_TAG, body);
-            if(body.contains("code=200")){
-                registerSuccess(username , password);
             }
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if(response.code() == 200){
+                    registerSuccess(username , password);
+                }
+            }
+        };
+
+
+        client.post(URL, json, callback);
 
     }
 

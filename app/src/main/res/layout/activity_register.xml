@@ -49,7 +49,7 @@
         android:layout="@layout/custom_float_label"/>
 
     <com.iangclifton.android.floatlabel.FloatLabel
-        android:id="@+id/registerPhoneNumber"
+        android:id="@+id/register_phone_number"
         android:textColorHint="@color/secondaryText"
         android:layout_below="@+id/registerPasswordVerify"
         android:layout_width="match_parent"

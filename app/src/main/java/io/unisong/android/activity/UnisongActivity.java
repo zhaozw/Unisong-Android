@@ -52,6 +52,7 @@ import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivity;
 import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivity;
 import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
+import io.unisong.android.activity.register.FBPhoneNumberInputActivity;
 import io.unisong.android.activity.session.MainSessionActivity;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.session.SessionUtils;
@@ -357,8 +358,7 @@ public class UnisongActivity extends AppCompatActivity {
             Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
             return true;
         } else if(id == R.id.action_add_friend){
-            Intent intent = new Intent(getApplicationContext() , AddFriendActivity.class);
-            startActivity(intent);
+            addFriendDialog();
             return true;
         } else if(id == R.id.action_log_out){
             new Thread(logoutRunnable).start();

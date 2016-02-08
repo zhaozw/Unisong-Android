@@ -3,16 +3,28 @@ package io.unisong.android.activity.register;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
+import com.iangclifton.android.floatlabel.FloatLabel;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import java.io.IOException;
 
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.UnisongActivity;
+import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.FacebookAccessToken;
 
@@ -26,28 +38,61 @@ import io.unisong.android.network.user.FacebookAccessToken;
 public class FBPhoneNumberInputActivity extends ActionBarActivity{
 
     private static final String LOG_TAG = FBPhoneNumberInputActivity.class.getSimpleName();
-    private EditText phoneNumber;
-    private EditText username;
+    private FloatLabel phoneNumber;
+    private FloatLabel username;
+    private String formattedPhoneNumber;
 
     private HttpClient client;
-    private String email;
+    private Toolbar toolbar;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_phone_number_input_fb);
 
-        phoneNumber = (EditText) findViewById(R.id.facebook_phone_number_input);
-        username = (EditText) findViewById(R.id.facebook_username_input);
+        toolbar = (Toolbar) findViewById(R.id.session_bar);
+        setSupportActionBar(toolbar);
 
-        phoneNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
+        phoneNumber = (FloatLabel) findViewById(R.id.register_phone_number);
+        username =    (FloatLabel) findViewById(R.id.register_username);
 
-        email = new String(getIntent().getCharArrayExtra("email"));
+        phoneNumber.getEditText().addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 
         client = HttpClient.getInstance();
     }
 
     public void onRegister(View view){
+
+
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+
+        String phone = phoneNumber.getEditText().getText().toString();
+
+        try{
+            Phonenumber.PhoneNumber phoneNumber = phoneUtil.parse(phone, "US");
+            formattedPhoneNumber = phoneUtil.format(phoneNumber , PhoneNumberUtil.PhoneNumberFormat.E164);
+        } catch (NumberParseException e){
+            Toast invalidNumberToast = Toast.makeText(getBaseContext() , "Phone Number Invalid! US numbers only!" , Toast.LENGTH_LONG);
+            invalidNumberToast.show();
+            // currently only support US numbers?
+            e.printStackTrace();
+            Log.d(LOG_TAG , "Parsing Phone number failed!");
+            return;
+        }
+
+        HttpClient client = HttpClient.getInstance();
+        client.get(NetworkUtilities.HTTP_URL + "/user/get-phone-confirmation-code/" + formattedPhoneNumber, new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+
+            }
+        });
+
         Log.d(LOG_TAG, "onRegister called, starting register thread.");
         getRegisterThread().start();
     }
@@ -64,8 +109,8 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
     private void register(){
         // TODO : add error handling?
         // TODO : input validation and checking against server.
-        String username = this.username.getText().toString();
-        String phonenumber = phoneNumber.getText().toString();
+        String username =  this.username.getEditText().getText().toString();
+        String phonenumber = formattedPhoneNumber;
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
 

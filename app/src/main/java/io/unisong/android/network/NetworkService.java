@@ -9,6 +9,7 @@ import android.util.Log;
 import com.facebook.FacebookSdk;
 
 import io.unisong.android.network.client.Listener;
+import io.unisong.android.network.connection.ConnectionStatePublisher;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.ntp.TimeManager;
@@ -26,18 +27,20 @@ public class NetworkService extends Service {
     private Listener listener;
     private Broadcaster broadcaster;
     private DiscoveryHandler discoveryHandler;
+    private ConnectionStatePublisher connectionStatePublisher;
     private HttpClient client;
-    private SocketIOClient mSocketIO;
+    private SocketIOClient socketIO;
 
 //    private UtpServer mUtpServer = new UtpServer();
 //    private UtpClient mUtpClient = new UtpClient();
 
-    private TimeManager mTimeManager;
+    private TimeManager timeManager;
 
     @Override
     public void onCreate(){
         FacebookSdk.sdkInitialize(getApplicationContext());
 
+        connectionStatePublisher = new ConnectionStatePublisher();
 
         Log.d(LOG_TAG, "Creating NetworkService");
 
@@ -49,9 +52,9 @@ public class NetworkService extends Service {
 
         // TODO : only keep us connected when A: the user is using the app
         // TODO : and B: a user is logged in
-        mSocketIO = new SocketIOClient(getApplicationContext());
+        socketIO = new SocketIOClient(getApplicationContext());
 
-        mTimeManager = new TimeManager();
+        timeManager = new TimeManager();
 
         ConnectionUtils utils = new ConnectionUtils();
         ConnectionUtils.setInstance(utils);
@@ -94,9 +97,14 @@ public class NetworkService extends Service {
             discoveryHandler.destroy();
             discoveryHandler = null;
         }
-        if(mTimeManager != null) {
-            mTimeManager.destroy();
-            mTimeManager = null;
+        if(timeManager != null) {
+            timeManager.destroy();
+            timeManager = null;
+        }
+
+        if(connectionStatePublisher != null){
+            connectionStatePublisher.destroy();
+            connectionStatePublisher = null;
         }
     }
 }

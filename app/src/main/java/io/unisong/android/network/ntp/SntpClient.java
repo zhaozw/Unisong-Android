@@ -46,23 +46,23 @@ public class SntpClient
 
     private final String LOG_TAG = SntpClient.class.getSimpleName();
 
-    private static SntpClient sInstance;
+    private static SntpClient instance;
 
     public static SntpClient getInstance(){
-        return sInstance;
+        return instance;
     }
 
     //The current server IP
-    private final static String sServerAddress = "pool.ntp.org";
+    private final static String serverAddress = "pool.ntp.org";
 
     //The list of offsets to ensure that none of them are crazy innacurate
-    private List<NtpEntry> mResults;
+    private List<NtpEntry> results;
 
     //The offset, for everyone to see.
-    private  double mTimeOffset;
+    private  double timeOffset;
 
     //The thread that all of the packets are sent/received on
-    private Thread mThread;
+    private Thread thread;
 
     //The socket.
     private DatagramSocket socket;
@@ -73,7 +73,7 @@ public class SntpClient
 
     public SntpClient(){
         stop = false;
-        mTimeOffset = 0;
+        timeOffset = 0;
         try {
             // Send request
             socket = new DatagramSocket();
@@ -81,12 +81,12 @@ public class SntpClient
             e.printStackTrace();
         }
 
-        mResults = new ArrayList<>();
+        results = new ArrayList<>();
         Log.d(LOG_TAG , "SntpClient created");
-        mThread = getClientThread();
-        mThread.start();
+        thread = getClientThread();
+        thread.start();
 
-        sInstance = this;
+        instance = this;
     }
 
     //Sends 4 different NTP packets and then calculates the average response time, removing outliers.
@@ -135,13 +135,13 @@ public class SntpClient
         // note : i think making a method here would be counterproductive
         // because using reflection would take longer than it would save
         DescriptiveStatistics stats = new DescriptiveStatistics();
-        List<NtpEntry> entries = new ArrayList<>(mResults);
+        List<NtpEntry> entries = new ArrayList<>(results);
 
-        for(int i = 0; i < mResults.size(); i++){
-            stats.addValue(mResults.get(i).getOffset());
+        for(int i = 0; i < results.size(); i++){
+            stats.addValue(results.get(i).getOffset());
         }
 
-        Log.d(LOG_TAG , "Unfiltered, size is : " + mResults.size());
+        Log.d(LOG_TAG, "Unfiltered, size is : " + results.size());
         Log.d(LOG_TAG, "Mean is: " + stats.getMean());
         Log.d(LOG_TAG , "Standard Deviation is : " + stats.getStandardDeviation());
         Log.d(LOG_TAG, "Median is : " + stats.getPercentile(50));
@@ -191,12 +191,12 @@ public class SntpClient
         Log.d(LOG_TAG , "Standard Deviation is : " + stats.getStandardDeviation());
         Log.d(LOG_TAG, "Median is : " + stats.getPercentile(50));
 
-        mTimeOffset = stats.getPercentile(50);
+        timeOffset = stats.getPercentile(50);
 
     }
 
     public long getOffset(){
-        return (long)mTimeOffset;
+        return (long) timeOffset;
     }
 
     private Thread getClientThread(){
@@ -224,7 +224,7 @@ public class SntpClient
     private void getOneOffset() throws IOException{
         // Send request
 
-        InetAddress address = Address.getByName(sServerAddress);
+        InetAddress address = Address.getByName(serverAddress);
         //Log.d(LOG_TAG , "address is " + address.toString());
         byte[] buf = new NtpMessage().toByteArray();
 
@@ -240,7 +240,7 @@ public class SntpClient
 
 
         // Get response
-        //Log.d(LOG_TAG , "NTP request sent to : " + sServerAddress +" , waiting for response...");
+        //Log.d(LOG_TAG , "NTP request sent to : " + serverAddress +" , waiting for response...");
         packet = new DatagramPacket(buf, buf.length);
         // TODO : vary timeout with connection type, and prefer wifi/34/4g etc
         socket.setSoTimeout(750);
@@ -283,7 +283,7 @@ public class SntpClient
         // Display response
 
         /*
-        Log.d(LOG_TAG , "NTP server: " + sServerAddress);
+        Log.d(LOG_TAG , "NTP server: " + serverAddress);
         //Log.d(LOG_TAG , msg.toString());
 
         Log.d(LOG_TAG , "Dest. timestamp:     " +
@@ -296,7 +296,7 @@ public class SntpClient
                 new DecimalFormat("0.00").format(localClockOffset * 1000) + " ms");
         */
         NtpEntry entry = new NtpEntry(localClockOffset * 1000 , roundTripDelay * 1000);
-        mResults.add(entry);
+        results.add(entry);
     }
 
 

@@ -1,48 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/phone_number"
-        android:id="@+id/facebook_phone_number_label"
-        android:layout_gravity="center_horizontal"
-        android:textColor="@color/primaryText" />
+    <include
+        android:id="@+id/session_bar"
+        layout="@layout/login_bar">
+    </include>
 
-    <EditText
+    <com.iangclifton.android.floatlabel.FloatLabel
+        android:id="@+id/register_phone_number"
+        android:textColorHint="@color/secondaryText"
+        android:layout_below="@+id/session_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ems="10"
         android:inputType="phone"
-        android:ems="10"
-        android:id="@+id/facebook_phone_number_input"
-        android:textColor="@color/secondaryText"
-        android:layout_gravity="center_horizontal" />
+        android:hint="@string/phone_number"
+        android:layout_marginLeft="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_vertical_margin"
+        android:layout="@layout/custom_float_label"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/username"
-        android:id="@+id/textView"
-        android:layout_gravity="center_horizontal"
-        android:textColor="@color/primaryText" />
-
-    <EditText
+    <com.iangclifton.android.floatlabel.FloatLabel
+        android:layout_below="@id/register_phone_number"
+        android:textColorHint="@color/secondaryText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:id="@+id/facebook_username_input"
-        android:textColor="@color/secondaryText"
-        android:layout_gravity="center_horizontal" />
+        android:id="@+id/register_username"
+        android:hint="@string/username"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_vertical_margin"
+        android:layout_marginLeft="@dimen/activity_vertical_margin"
+        android:layout="@layout/custom_float_label"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Register"
+    <android.support.v7.widget.CardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/facebook_final_register_button"
         android:layout_gravity="center_horizontal"
-        android:onClick="onRegister" />
-</LinearLayout>
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onRegister"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        card_view:cardBackgroundColor="@color/primaryColor"
+        card_view:cardCornerRadius="2dp"
+        android:layout_margin="6dp"
+        card_view:cardElevation="6dp">
+
+        <TextView android:id="@+id/text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="8.5dp"
+            android:paddingBottom="8.5dp"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:textColor="@color/white"
+            android:fontFamily="sans-serif-medium"
+            android:text="@string/register" />
+
+    </android.support.v7.widget.CardView>
+
+
+</RelativeLayout>
