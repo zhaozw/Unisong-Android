@@ -62,8 +62,8 @@ public class FriendsListActivity  extends ActionBarActivity implements Navigatio
         NavigationDrawerFragment drawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(io.unisong.android.R.id.fragment_navigation_drawer);
 
-        drawerFragment.setUp((DrawerLayout)findViewById(io.unisong.android.R.id.drawer_layout) , toolbar, io.unisong.android.R.id.fragment_navigation_drawer);
-
+        drawerFragment.setUp((DrawerLayout)findViewById(io.unisong.android.R.id.drawer_layout) ,
+                toolbar, io.unisong.android.R.id.fragment_navigation_drawer);
     }
 
     @Override

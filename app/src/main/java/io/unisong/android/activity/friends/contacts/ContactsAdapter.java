@@ -17,7 +17,7 @@ import java.util.List;
 import io.unisong.android.R;
 
 /**
- * This adapter adapts the Contacts to a RecylcerList. No mutability, so it's pretty simple.
+ * This adapter adapts the Contacts to a RecyclerList.
  * Created by Ethan on 2/4/2016.
  */
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> {
@@ -44,15 +44,60 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
         }
     }
 
+    /**
+     * Adds a contact to the list at the end
+     * @param contact the contact to add
+     */
+    public void add(Contact contact){
+        add(dataset.size(), contact);
+    }
+
+    /**
+     * Adds a contact at the specified position, then notifies the display
+     * @param position the position to add the contact at
+     * @param contact  the contact to be added
+     */
     public void add(int position, Contact contact) {
-        dataset.add(position, contact);
+        synchronized (dataset) {
+            dataset.add(position, contact);
+        }
         notifyItemInserted(position);
     }
 
+    /**
+     * Removes a contact from the dataset and then notifies the display
+     * @param contact the contact to be removed
+     */
     public void remove(Contact contact) {
-        int position = dataset.indexOf(contact);
-        dataset.remove(position);
+        int position;
+        synchronized (dataset) {
+            position = dataset.indexOf(contact);
+        }
+        remove(position);
+    }
+
+    /**
+     * Removes the contact at the specified position
+     * @param position - the position from which to remove an element
+     */
+    public void remove(int position){
+        synchronized (dataset){
+            dataset.remove(position);
+        }
         notifyItemRemoved(position);
+    }
+
+    /**
+     * Moves an item from fromPosition to toPosition
+     * @param fromPosition the position to move from
+     * @param toPosition   the position to move to
+     */
+    public void moveItem(int fromPosition, int toPosition) {
+        synchronized (dataset) {
+            Contact model = dataset.remove(fromPosition);
+            dataset.add(toPosition, model);
+        }
+        notifyItemMoved(fromPosition, toPosition);
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
@@ -101,5 +146,40 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
     public int getItemCount() {
         return dataset.size();
     }
+
+    public void animateTo(List<Contact> data) {
+        applyAndAnimateRemovals(data);
+        applyAndAnimateAdditions(data);
+        applyAndAnimateMovedItems(data);
+    }
+
+    private void applyAndAnimateRemovals(List<Contact> newDataset) {
+        for (int i = dataset.size() - 1; i >= 0; i--) {
+            final Contact model = dataset.get(i);
+            if (!newDataset.contains(model)) {
+                remove(i);
+            }
+        }
+    }
+
+    private void applyAndAnimateAdditions(List<Contact> newDataset) {
+        for (int i = 0, count = newDataset.size(); i < count; i++) {
+            final Contact model = newDataset.get(i);
+            if (!dataset.contains(model)) {
+                add(i, model);
+            }
+        }
+    }
+
+    private void applyAndAnimateMovedItems(List<Contact> newDataset) {
+        for (int toPosition = newDataset.size() - 1; toPosition >= 0; toPosition--) {
+            final Contact model = newDataset.get(toPosition);
+            final int fromPosition = dataset.indexOf(model);
+            if (fromPosition >= 0 && fromPosition != toPosition) {
+                moveItem(fromPosition, toPosition);
+            }
+        }
+    }
+
 
 }

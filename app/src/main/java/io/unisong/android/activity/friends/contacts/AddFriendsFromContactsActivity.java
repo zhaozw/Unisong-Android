@@ -5,13 +5,13 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.squareup.okhttp.Callback;
@@ -19,6 +19,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.unisong.android.R;
@@ -31,10 +32,11 @@ import io.unisong.android.network.user.UserUtils;
  * Are on  Unisong, and invite any that are not.
  * Created by Ethan on 2/4/2016.
  */
-public class AddFriendsFromContactsActivity extends AppCompatActivity implements android.widget.SearchView.OnQueryTextListener {
+public class AddFriendsFromContactsActivity extends AppCompatActivity implements android.support.v7.widget.SearchView.OnQueryTextListener {
 
     private static final String LOG_TAG = AddFriendsFromContactsActivity.class.getSimpleName();
     private RecyclerView contactsView;
+    private ContactsAdapter contactsAdapter;
     private ContactsLoader contactsLoader;
     private Toolbar toolbar;
 
@@ -51,18 +53,18 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
 
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        ContactsLoader contactsLoader = new ContactsLoader(getBaseContext());
+        contactsLoader = new ContactsLoader(getBaseContext());
 
-        List<Contact> contacts = contactsLoader.getContacts();
+        List<Contact> contacts = new ArrayList<>(contactsLoader.getContacts());
 
         Log.d(LOG_TAG, "Size of contacts is : " + contacts.size());
 
-        ContactsAdapter adapter = new ContactsAdapter(contacts);
+        contactsAdapter = new ContactsAdapter(contacts);
 
         contactsView = (RecyclerView) findViewById(R.id.contacts_recyclerview);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getBaseContext());
         contactsView.setLayoutManager(layoutManager);
-        contactsView.setAdapter(adapter);
+        contactsView.setAdapter(contactsAdapter);
         contactsView.setHasFixedSize(true);
     }
 
@@ -73,8 +75,8 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_search, menu);
 
-        final MenuItem item = menu.findItem(R.id.action_search);
-        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
+        MenuItem item = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
         searchView.setOnQueryTextListener(this);
 
         return super.onCreateOptionsMenu(menu);
@@ -123,13 +125,41 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
 
     @Override
     public boolean onQueryTextChange(String query) {
-        // Here is where we are going to implement our filter logic
-        // TODO : keep going with stackoverflow.com/questions/30398247/how-to-filter-a-recyclerview-with-a-searchview
-        return false;
+        List<Contact> newList = new ArrayList<>(contactsLoader.getContacts());
+        final List<Contact> filteredModelList = filter(newList, query);
+        contactsAdapter.animateTo(filteredModelList);
+        contactsView.scrollToPosition(0);
+        return true;
+    }
+
+    private List<Contact> filter(List<Contact> models, String query) {
+        query = query.toLowerCase();
+
+        final List<Contact> filteredModelList = new ArrayList<>();
+        for (Contact model : models) {
+            final String text = model.getName().toLowerCase();
+            if (text.contains(query)) {
+                filteredModelList.add(model);
+            }
+        }
+        return filteredModelList;
     }
 
     @Override
     public boolean onQueryTextSubmit(String query) {
         return false;
+    }
+
+    class ContactSearchListener implements SearchView.OnQueryTextListener {
+
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            return false;
+        }
+
+        @Override
+        public boolean onQueryTextChange(String newText) {
+            return false;
+        }
     }
 }
