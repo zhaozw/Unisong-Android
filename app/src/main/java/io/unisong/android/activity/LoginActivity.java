@@ -225,12 +225,12 @@ public class LoginActivity extends ActionBarActivity {
         }
 
         Log.d(LOG_TAG, "Sending Login Request");
-        client.post(NetworkUtilities.HTTP_URL + "/login", object, facebookLoginCallback);
+        client.post(NetworkUtilities.HTTP_URL + "/login", object, userPassLoginCallback);
 
         //TODO: save credentials with AccountManager
     }
 
-    private Callback facebookLoginCallback = new Callback() {
+    private Callback userPassLoginCallback = new Callback() {
         @Override
         public void onFailure(Request request, IOException e) {
 

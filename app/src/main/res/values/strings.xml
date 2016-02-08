@@ -92,4 +92,11 @@
     <string name="verification_code">Verification Code</string>
     <string name="verification_code_text">Please enter the verification code sent to your phone number.</string>
     <string name="empty"/>
+
+
+    <string name="rest_api_version">1.0.0</string>
+
+    <string name="need_update">Unisong requires an update!</string>
+
+    <string name="log_out_message">Would you like to log out?</string>
 </resources>

@@ -1,5 +1,6 @@
 package io.unisong.android.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,7 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 import com.squareup.picasso.Picasso;
@@ -47,14 +48,14 @@ import java.util.UUID;
 import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
-import io.unisong.android.activity.friends.AddFriendActivity;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivity;
 import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivity;
 import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
-import io.unisong.android.activity.register.FBPhoneNumberInputActivity;
 import io.unisong.android.activity.session.MainSessionActivity;
 import io.unisong.android.network.SocketIOClient;
+import io.unisong.android.network.connection.ConnectionObserver;
+import io.unisong.android.network.connection.ConnectionStatePublisher;
 import io.unisong.android.network.session.SessionUtils;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
@@ -67,7 +68,7 @@ import io.unisong.android.network.user.UserUtils;
  * The main activity for the application, has friends list, adding friends, and creating sessions
  * Created by Ethan on 9/21/2015.
  */
-public class UnisongActivity extends AppCompatActivity {
+public class UnisongActivity extends AppCompatActivity implements ConnectionObserver{
 
     public static final int INVITE = 241293;
     private final static String LOG_TAG = UnisongActivity.class.getSimpleName();
@@ -124,15 +125,10 @@ public class UnisongActivity extends AppCompatActivity {
 
         User currentUser = CurrentUser.getInstance();
 
-        User user = CurrentUser.getInstance();
-        // TODO : add a handler/something that runs on the UI thread to load names
-        if(user != null) {
-            TextView name = (TextView) findViewById(R.id.current_user_name);
-            name.setText(user.getName());
+        ConnectionStatePublisher publisher = ConnectionStatePublisher.getInstance();
+        publisher.attach(this);
 
-            TextView username = (TextView) findViewById(R.id.current_user_username);
-            username.setText("@" + user.getUsername());
-        }
+        new LoadCurrentUserProfile().execute();
 
         UnisongSession session = UnisongSession.getCurrentSession();
 
@@ -146,7 +142,6 @@ public class UnisongActivity extends AppCompatActivity {
         }
 
 
-        new LoadCurrentUserProfile().execute();
 
         handler = new IncomingHandler(this);
         SocketIOClient client = SocketIOClient.getInstance();
@@ -244,12 +239,25 @@ public class UnisongActivity extends AppCompatActivity {
     public void logout(View v){
         buttonClick.setDuration(1000);
         v.startAnimation(buttonClick);
-        // TODO : have a MaterialDialog pop up for confirmation
-        new Thread(logoutRunnable).start();
+        logout();
+    }
+
+    private void logout(){
+        new MaterialDialog.Builder(this)
+                .content(R.string.log_out_message)
+                .positiveText(R.string.action_log_out)
+                .negativeText(R.string.cancel)
+                .theme(Theme.LIGHT)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        new Thread(logoutRunnable).start();
+                    }
+                })
+                .show();
     }
 
     public void displayInvite(int sessionID, String inviteMessage){
-        // TODO : see if we need to run this on the UI Thread
         new MaterialDialog.Builder(this)
                 .content(inviteMessage)
                 .positiveText(R.string.join)
@@ -361,7 +369,7 @@ public class UnisongActivity extends AppCompatActivity {
             addFriendDialog();
             return true;
         } else if(id == R.id.action_log_out){
-            new Thread(logoutRunnable).start();
+            logout();
             return true;
         }
 
@@ -398,7 +406,7 @@ public class UnisongActivity extends AppCompatActivity {
 
                 synchronized (this){
                     try {
-                        this.wait(10);
+                        this.wait(1000);
                     } catch (InterruptedException e){
                         e.printStackTrace();
                     }
@@ -494,8 +502,8 @@ public class UnisongActivity extends AppCompatActivity {
             User user = UserUtils.getUser(uuid);
             user.update();
             tempUserCheck = user;
-            handler.removeCallbacks(mCheckUserSession);
-            handler.postDelayed(mCheckUserSession, 200);
+            handler.removeCallbacks(checkUserSession);
+            handler.postDelayed(checkUserSession, 200);
 
             // TODO : add dialog/popup for confirmation?
 
@@ -529,7 +537,7 @@ public class UnisongActivity extends AppCompatActivity {
     }
 
     private User tempUserCheck;
-    private Runnable mCheckUserSession = () ->{
+    private Runnable checkUserSession = () ->{
         if(tempUserCheck != null){
             if(tempUserCheck.getSession() != null){
                 Log.d(LOG_TAG , "Selected user has a session! Joining");
@@ -632,5 +640,34 @@ public class UnisongActivity extends AppCompatActivity {
                 })
                 .positiveText(R.string.choose)
                 .show();
+    }
+
+    private void finishActivity(){
+        runOnUiThread(this::finishAffinity);
+    }
+
+    @Override
+    public void updateConnectionState(int state){
+        switch (state){
+            case ConnectionStatePublisher.WRONG_API:
+                new MaterialDialog.Builder(this)
+                        .content(R.string.need_update)
+                        .positiveText(R.string.sorry)
+                        .theme(Theme.LIGHT)
+                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(MaterialDialog dialog, DialogAction action) {
+                                finishActivity();
+                            }
+                        })
+                        .dismissListener((DialogInterface dialog) -> {
+                            finishActivity();
+                        })
+                        .show();
+
+
+
+                break;
+        }
     }
 }

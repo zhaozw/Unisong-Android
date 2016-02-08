@@ -76,7 +76,7 @@ public class UnisongSession {
     private String mMaster , mSessionState;
 
     private MainSessionActivity.SessionMessageHandler mSessionHandler;
-    private SocketIOClient mSocketIOClient;
+    private SocketIOClient socketIOClient;
     private SessionMembers mMembers;
     private List<Client> mClients;
     private HttpClient mClient;
@@ -90,7 +90,7 @@ public class UnisongSession {
     public UnisongSession(){
 
         mClient = HttpClient.getInstance();
-        mSocketIOClient = SocketIOClient.getInstance();
+        socketIOClient = SocketIOClient.getInstance();
 
         mSongQueue = new SongQueue(this);
         mMembers = new SessionMembers(this);
@@ -120,7 +120,7 @@ public class UnisongSession {
         }*/
         Log.d(LOG_TAG , "Creating session based on ID : " + ID);
         mClient = HttpClient.getInstance();
-        mSocketIOClient = SocketIOClient.getInstance();
+        socketIOClient = SocketIOClient.getInstance();
 
         mSongQueue = new SongQueue(this);
         mMembers = new SessionMembers(this);
@@ -289,12 +289,12 @@ public class UnisongSession {
 
         // NOTE : be sure to keep this up to doate with disconnectSocketIO()
         mSocketIOConfigured = true;
-        mSocketIOClient.on("user joined" , mUserJoined);
-        mSocketIOClient.on("update session", mUpdateSessionListener);
-        mSocketIOClient.on("user left" , mUserLeft);
-        mSocketIOClient.on("end session" , mEndSession);
-        mSocketIOClient.on("kick" , mKickListener);
-        mSocketIOClient.on("kick result" , mKickResultListener);
+        socketIOClient.on("user joined", mUserJoined);
+        socketIOClient.on("update session", mUpdateSessionListener);
+        socketIOClient.on("user left", mUserLeft);
+        socketIOClient.on("end session", mEndSession);
+        socketIOClient.on("kick", mKickListener);
+        socketIOClient.on("kick result", mKickResultListener);
         Log.d(LOG_TAG, "Configured Socket.IO");
     }
 
@@ -306,12 +306,12 @@ public class UnisongSession {
             return;
 
         mSocketIOConfigured = false;
-        mSocketIOClient.off("user joined" , mUserJoined);
-        mSocketIOClient.off("update session", mUpdateSessionListener);
-        mSocketIOClient.off("user left" , mUserLeft);
-        mSocketIOClient.off("end session" , mEndSession);
-        mSocketIOClient.off("kick" , mKickListener);
-        mSocketIOClient.off("kick result" , mKickResultListener);
+        socketIOClient.off("user joined", mUserJoined);
+        socketIOClient.off("update session", mUpdateSessionListener);
+        socketIOClient.off("user left", mUserLeft);
+        socketIOClient.off("end session", mEndSession);
+        socketIOClient.off("kick", mKickListener);
+        socketIOClient.off("kick result", mKickResultListener);
         Log.d(LOG_TAG , "Socket.IO disconnected for session #" + mSessionID);
     }
 
@@ -336,7 +336,7 @@ public class UnisongSession {
                     mSessionID = object.getInt("sessionID");
                     Log.d(LOG_TAG , "Session ID : " + mSessionID);
 
-                    mSocketIOClient.joinSession(mSessionID);
+                    socketIOClient.joinSession(mSessionID);
                     mMembers.add(CurrentUser.getInstance());
                 }
             } catch (IOException e){
@@ -351,7 +351,7 @@ public class UnisongSession {
                 User user = CurrentUser.getInstance();
                 credentials.put("username" , user.getUsername());
                 credentials.put("password" , user.getPassword());
-                mSocketIOClient.emit("authenticate" , credentials);
+                socketIOClient.emit("authenticate", credentials);
             } catch (JSONException e){
                 e.printStackTrace();
             }
@@ -391,12 +391,12 @@ public class UnisongSession {
     }
 
     public void disconnect(){
-        mSocketIOClient.emit("leave" , getSessionID());
+        socketIOClient.emit("leave", getSessionID());
     }
 
     public void destroy(){
         if(mIsMaster)
-            mSocketIOClient.emit("end session" , getSessionID());
+            socketIOClient.emit("end session" , getSessionID());
 
         disconnect();
 
@@ -437,7 +437,7 @@ public class UnisongSession {
 
         // If we are the master, then notify the server. If not, then we are simply responding.
         if(isMaster())
-            mSocketIOClient.emit("add song" , song.toJSON());
+            socketIOClient.emit("add song" , song.toJSON());
     }
 
     /**
@@ -453,7 +453,7 @@ public class UnisongSession {
         args[1] = mSessionID;
 
         if(isMaster())
-            mSocketIOClient.emit("delete song" , args);
+            socketIOClient.emit("delete song" , args);
     }
 
     private Emitter.Listener mUpdateSessionListener = new Emitter.Listener() {
@@ -475,7 +475,7 @@ public class UnisongSession {
     public void getUpdate(){
         if(System.currentTimeMillis() - lastUpdate >= 100) {
             lastUpdate = System.currentTimeMillis();
-            mSocketIOClient.emit("get session", getSessionID());
+            socketIOClient.emit("get session", getSessionID());
         }
     }
 
@@ -483,9 +483,9 @@ public class UnisongSession {
         Object[] array = new Object[2];
         array[0] = mSessionID;
         array[1] = this.toJSON();
-        mSocketIOClient.emit("update session" , array);
+        socketIOClient.emit("update session", array);
 
-        mSocketIOClient.emit("update songs" , mSongQueue.getSongsJSON());
+        socketIOClient.emit("update songs", mSongQueue.getSongsJSON());
     }
 
     public boolean isMaster(){
@@ -521,7 +521,7 @@ public class UnisongSession {
      */
     public void kick(User user){
         mMembers.remove(user);
-        mSocketIOClient.emit("kick", user.getUUID().toString());
+        socketIOClient.emit("kick", user.getUUID().toString());
     }
 
     /**

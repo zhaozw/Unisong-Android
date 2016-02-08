@@ -14,7 +14,7 @@ import com.facebook.AccessToken;
 import com.facebook.appevents.AppEventsLogger;
 
 import io.unisong.android.MediaService;
-import io.unisong.android.MyApplication;
+import io.unisong.android.Unisong;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.NetworkService;
@@ -171,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        MyApplication.activityResumed();
 
         // Logs 'install' and 'app activate' App Events.
         AppEventsLogger.activateApp(this);
@@ -180,7 +179,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        MyApplication.activityPaused();
 
         // Logs 'app deactivate' App Event.
         AppEventsLogger.deactivateApp(this);

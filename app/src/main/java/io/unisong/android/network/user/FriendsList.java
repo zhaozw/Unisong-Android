@@ -2,6 +2,7 @@ package io.unisong.android.network.user;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.squareup.okhttp.Callback;
@@ -36,30 +37,30 @@ public class FriendsList implements Serializable{
     private final static String FILE_NAME = "FriendsList";
     private final static String LOG_TAG = FriendsList.class.getSimpleName();
 
-    private static FriendsList sInstance;
+    private static FriendsList instance;
 
     public static FriendsList getInstance(){
-        return sInstance;
+        return instance;
     }
 
-    private HttpClient mClient;
-    private List<User> mFriends;
-    private List<User> mIncomingRequests;
-    private List<User> mOutgoingRequests;
+    private HttpClient client;
+    private List<User> friends;
+    private List<User> incomingRequests;
+    private List<User> outgoingRequests;
 
     // Users not currently in an Unisong session.
-    private List<User> mIdleUsers;
+    private List<User> idleUsers;
 
     // Users currently in an active Unisong session.
-    private List<User> mActiveUsers;
+    private List<User> activeUsers;
 
-    private Context mContext;
+    private Context context;
 
-    private Thread mFriendsThread;
+    private Thread friendsThread;
 
     // This tells us whether the data has been updated and needs to be written to disk
-    private boolean mUpdated;
-    private Handler mHandler;
+    private boolean updated;
+    private Handler handler;
 
     /**
      * Instantiates the FriendsList, and loads the relevant data from disk if available
@@ -67,21 +68,26 @@ public class FriendsList implements Serializable{
      * Also checks to see if the data on disk is up to date.
      */
     public FriendsList(Context context){
-        sInstance = this;
-        mUpdated = false;
-        mContext = context;
+        instance = this;
+        updated = false;
+        this.context = context;
 
         // TODO : handle not being logged in and having no data on disk.
         // TODO : implement storage with file system not Prefs.
 
         // these will be overwritten if read from the disk
-        mFriends = new ArrayList<>();
-        mIncomingRequests = new ArrayList<>();
-        mOutgoingRequests = new ArrayList<>();
+        friends = new ArrayList<>();
+        incomingRequests = new ArrayList<>();
+        outgoingRequests = new ArrayList<>();
 
-        mHandler = new Handler();
+        try {
+            handler = new Handler();
+        } catch (RuntimeException e){
+            Looper.prepare();
+            handler = new Handler();
+        }
 
-        mClient = HttpClient.getInstance();
+        client = HttpClient.getInstance();
         // TODO : get friends from server.
         // TODO : store and only update.
         // TODO : reenable after testing FB integration.
@@ -93,15 +99,15 @@ public class FriendsList implements Serializable{
 
     private void loadFriends(){
 
-        mFriendsThread = getFriendsThread();
-        mFriendsThread.start();
+        friendsThread = getFriendsThread();
+        friendsThread.start();
     }
 
 
     private void waitForLogin(){
         // Wait until we're logged in and have a CurrentUser to get info from.
         // TODO : can the httpclient be null here? Are there situations in which we should handle this?
-        while(!mClient.isLoginDone() && !mClient.isLoggedIn()){
+        while(!client.isLoginDone() && !client.isLoggedIn()){
             // TODO : see if we're waiting forever
             synchronized (this){
                 try{
@@ -114,16 +120,6 @@ public class FriendsList implements Serializable{
     }
 
 
-
-    public boolean isAFriend(User user){
-        for(User friend : mFriends){
-            if(friend.equals(user)){
-                return true;
-            }
-        }
-        return false;
-    }
-
     private Thread getFriendsThread(){
         return new Thread(new Runnable() {
             @Override
@@ -133,7 +129,7 @@ public class FriendsList implements Serializable{
 
                 loadFriendsFromServer();
 
-                mHandler.post(mCheckFriendStatusRunnable);
+                handler.post(checkFriendStatusRunnable);
 
             }
         });
@@ -187,8 +183,11 @@ public class FriendsList implements Serializable{
             body = new JSONObject(bodyString);
 
             JSONArray friendsArray = body.getJSONArray("friends");
+            Log.d(LOG_TAG , "friends : " + friendsArray.toString());
             JSONArray inReqArray = body.getJSONArray("incomingRequests");
+            Log.d(LOG_TAG , "Incoming Requests : " + incomingRequests.toString());
             JSONArray outReqAr = body.getJSONArray("outgoingRequests");
+            Log.d(LOG_TAG, "Outgoing Requests : " + outReqAr.toString());
 
             // Load friends
             for(int i = 0; i < friendsArray.length(); i++){
@@ -197,8 +196,8 @@ public class FriendsList implements Serializable{
                 User userToAdd = new User(UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
-                // Make sure the user we're loading isn't already in mFriends
-                for(User user : mFriends){
+                // Make sure the user we're loading isn't already in friends
+                for(User user : friends){
                     if(user.equals(userToAdd)){
                         isEqual = true;
                         break;
@@ -207,10 +206,10 @@ public class FriendsList implements Serializable{
 
                 // remove any duplicates and then add
                 if(!isEqual) {
-                    mUpdated = true;
-                    removeDuplicateUsers(userToAdd , mIncomingRequests);
-                    removeDuplicateUsers(userToAdd , mOutgoingRequests);
-                    mFriends.add(userToAdd);
+                    updated = true;
+                    removeDuplicateUsers(userToAdd , incomingRequests);
+                    removeDuplicateUsers(userToAdd , outgoingRequests);
+                    friends.add(userToAdd);
                 }
             }
 
@@ -220,7 +219,7 @@ public class FriendsList implements Serializable{
                 User userToAdd = new User(UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
-                for(User user : mIncomingRequests){
+                for(User user : incomingRequests){
                     if(user.equals(userToAdd)){
                         isEqual = true;
                         break;
@@ -229,10 +228,10 @@ public class FriendsList implements Serializable{
 
                 // remove any duplicates and then add
                 if(!isEqual) {
-                    mUpdated = true;
-                    removeDuplicateUsers(userToAdd , mOutgoingRequests);
-                    removeDuplicateUsers(userToAdd , mFriends);
-                    mIncomingRequests.add(userToAdd);
+                    updated = true;
+                    removeDuplicateUsers(userToAdd , outgoingRequests);
+                    removeDuplicateUsers(userToAdd , friends);
+                    incomingRequests.add(userToAdd);
                 }
             }
 
@@ -243,7 +242,7 @@ public class FriendsList implements Serializable{
                 boolean isEqual = false;
 
                 // make sure we dont' already have this user.
-                for(User user : mOutgoingRequests){
+                for(User user : outgoingRequests){
                     if(user.equals(userToAdd)){
                         break;
                     }
@@ -251,14 +250,14 @@ public class FriendsList implements Serializable{
 
                 // remove any duplicates and then add
                 if(!isEqual) {
-                    mUpdated = true;
-                    removeDuplicateUsers(userToAdd , mIncomingRequests);
-                    removeDuplicateUsers(userToAdd , mFriends);
-                    mOutgoingRequests.add(userToAdd);
+                    updated = true;
+                    removeDuplicateUsers(userToAdd , incomingRequests);
+                    removeDuplicateUsers(userToAdd , friends);
+                    outgoingRequests.add(userToAdd);
                 }
             }
 
-            if(mUpdated){
+            if(updated){
                 // TODO : enable caching.
                 //writeToDisk();
             }
@@ -284,7 +283,7 @@ public class FriendsList implements Serializable{
         for(int i = 0; i < userList.size(); i++){
             // If there are, remove them.
             if(user.equals(userList.get(i))){
-                mUpdated = true;
+                updated = true;
                 userList.remove(i);
                 break;
             }
@@ -305,8 +304,8 @@ public class FriendsList implements Serializable{
     }
 
     public void addFriend(User user){
-        synchronized (mFriends){
-            mFriends.add(user);
+        synchronized (friends){
+            friends.add(user);
         }
     }
 
@@ -330,7 +329,7 @@ public class FriendsList implements Serializable{
 
             try{
                 ObjectInputStream inputStream = new ObjectInputStream(is);
-                sInstance = ((FriendsList) inputStream.readObject());
+                instance = ((FriendsList) inputStream.readObject());
             } catch (Exception e){
                 // TODO : see if we need to handle IOException and ClassNotFound exception differently
                 e.printStackTrace();
@@ -373,26 +372,26 @@ public class FriendsList implements Serializable{
     // writes the object using an output stream
     private void writeObject(ObjectOutputStream out) throws IOException{
         // Tell us how many
-        outputList(mFriends, out);
-        outputList(mIncomingRequests, out);
-        outputList(mOutgoingRequests, out);
+        outputList(friends, out);
+        outputList(incomingRequests, out);
+        outputList(outgoingRequests, out);
 
     }
 
     private void outputList(List<User> userList, ObjectOutputStream out) throws IOException{
-        out.writeInt(mFriends.size());
+        out.writeInt(friends.size());
 
-        for(int i = 0; i < mFriends.size(); i++) {
-            out.writeObject(mFriends.get(i));
+        for(int i = 0; i < friends.size(); i++) {
+            out.writeObject(friends.get(i));
         }
     }
 
     // reads an object using an output stream
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException{
 
-        mFriends = inputList(in);
-        mIncomingRequests = inputList(in);
-        mOutgoingRequests = inputList(in);
+        friends = inputList(in);
+        incomingRequests = inputList(in);
+        outgoingRequests = inputList(in);
 
     }
 
@@ -408,23 +407,36 @@ public class FriendsList implements Serializable{
         return userList;
     }
 
+    /**
+     * Returns the underlying list of friends
+     * @return friends - the underlying friends list
+     */
     public List<User> getFriends(){
-        return mFriends;
+        return friends;
+    }
+
+    /**
+     * This function returns a boolean indicating whether a user is a friend or not
+     * @param user the user to check against the friends list
+     * @return isFriend true if the user is a friend, false otherwise
+     */
+    public boolean isFriend(User user){
+        return friends.contains(user);
     }
 
     public List<User> getIncomingRequests(){
-        return mIncomingRequests;
+        return incomingRequests;
     }
 
     public List<User> getOutgoingRequests(){
-        return mOutgoingRequests;
+        return outgoingRequests;
     }
 
-    private Runnable mCheckFriendStatusRunnable = new Runnable() {
+    private Runnable checkFriendStatusRunnable = new Runnable() {
         @Override
         public void run() {
             checkFriendStatus();
-//            mHandler.postDelayed()
+//            handler.postDelayed()
         }
     };
 
@@ -437,14 +449,14 @@ public class FriendsList implements Serializable{
     }
 
     public void destroy(){
-        sInstance = null;
+        instance = null;
 
-        mFriends = null;
+        friends = null;
 
-        mActiveUsers = null;
-        mClient = null;
-        mIdleUsers = null;
-        mIncomingRequests = null;
-        mOutgoingRequests = null;
+        activeUsers = null;
+        client = null;
+        idleUsers = null;
+        incomingRequests = null;
+        outgoingRequests = null;
     }
 }

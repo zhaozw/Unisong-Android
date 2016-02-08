@@ -16,6 +16,7 @@ import java.util.UUID;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.user.User;
+import io.unisong.android.network.user.UserUtils;
 
 /**
  * This class is loaded by the ContactsLoader class, and contains information about a contact
@@ -28,11 +29,10 @@ public class Contact {
     private static final String LOG_TAG = Contact.class.getSimpleName();
     private String name, phoneNumber;
     private boolean userExists = false;
-
-    // The UUID of the user matching the information in this contact, if it exists
-    // null otherwise
+    // The user matching the information in this contact, if it exists, null otherwise
     @Nullable
-    private UUID userUUID;
+    private User user;
+
 
     public Contact(String name, String phoneNumber){
         this.name = name;
@@ -67,11 +67,18 @@ public class Contact {
                     Log.d(LOG_TAG , "User exists!");
                     String body = response.body().toString();
                     JSONObject userJSON = new JSONObject(body);
-                    User user = new User(userJSON);
+                    try{
 
-                    userExists = true;
-                    if(user.getUUID() != null )
-                        userUUID = user.getUUID();
+                        String phoneNumber = userJSON.getString("phonenumber");
+
+                        user = UserUtils.getUserByPhone(phoneNumber);
+
+                        if(user == null)
+                            user = new User(userJSON);
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                        Log.d(LOG_TAG , "JSONException thrown in Contact loading user!");
+                    }
 
                 } catch (JSONException e){
                     e.printStackTrace();
@@ -83,10 +90,18 @@ public class Contact {
 
     @Nullable
     public UUID getUserUUID(){
-        return userUUID;
+        if(user != null)
+            return user.getUUID();
+
+        return null;
+    }
+
+    @Nullable
+    public User getUser(){
+        return user;
     }
 
     public boolean userExists(){
-        return userExists;
+        return user != null;
     }
 }

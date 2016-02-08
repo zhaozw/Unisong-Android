@@ -20,10 +20,12 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import io.unisong.android.R;
 import io.unisong.android.network.user.FriendsList;
+import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
 
 /**
@@ -55,7 +57,7 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
 
         contactsLoader = new ContactsLoader(getBaseContext());
 
-        List<Contact> contacts = new ArrayList<>(contactsLoader.getContacts());
+        List<Contact> contacts = getNonFriendContacts();
 
         Log.d(LOG_TAG, "Size of contacts is : " + contacts.size());
 
@@ -125,8 +127,7 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
 
     @Override
     public boolean onQueryTextChange(String query) {
-        List<Contact> newList = new ArrayList<>(contactsLoader.getContacts());
-        final List<Contact> filteredModelList = filter(newList, query);
+        final List<Contact> filteredModelList = filter(getNonFriendContacts(), query);
         contactsAdapter.animateTo(filteredModelList);
         contactsView.scrollToPosition(0);
         return true;
@@ -150,16 +151,29 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
         return false;
     }
 
-    class ContactSearchListener implements SearchView.OnQueryTextListener {
+    /**
+     * Returns a list of contacts that are not already friends of the current user
+     * @return newList the list of Contacts not already friends of the user
+     */
+    private List<Contact> getNonFriendContacts(){
+        FriendsList list = FriendsList.getInstance();
+        List<Contact> newList = new ArrayList<>(contactsLoader.getContacts());
+        Iterator<Contact> iterator = newList.iterator();
 
-        @Override
-        public boolean onQueryTextSubmit(String query) {
-            return false;
+        while(iterator.hasNext()){
+            Contact contact = iterator.next();
+
+            // If there is no user, proceed to the next element
+            if(!contact.userExists())
+                break;
+
+            // If there is, load it and check it against the friends list
+            User user = contact.getUser();
+
+            if(list.isFriend(user))
+                iterator.remove();
         }
 
-        @Override
-        public boolean onQueryTextChange(String newText) {
-            return false;
-        }
+        return newList;
     }
 }

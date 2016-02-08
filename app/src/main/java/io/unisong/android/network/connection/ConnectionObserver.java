@@ -9,5 +9,5 @@ package io.unisong.android.network.connection;
  */
 public interface ConnectionObserver {
 
-    void update(int state);
+    void updateConnectionState(int state);
 }

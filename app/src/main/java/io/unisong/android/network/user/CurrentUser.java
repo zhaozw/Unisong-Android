@@ -70,9 +70,6 @@ public class CurrentUser {
 
         Log.d(LOG_TAG , "Current User : " + currentUser.toString());
 
-        if(currentUser == null)
-            Log.d(LOG_TAG , "Current user is null!");
-
         friendsList = FriendsList.getInstance();
 
         if(friendsList == null)
@@ -82,6 +79,8 @@ public class CurrentUser {
     public CurrentUser(Context context, User user){
         if(currentUser != null)
             return;
+
+        Log.d(LOG_TAG , "Creating CurrentUser from user object");
 
         currentUser = user;
         CurrentUser.context = context;

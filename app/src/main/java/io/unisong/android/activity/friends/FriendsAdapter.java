@@ -143,35 +143,23 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
         @Override
         protected void onPostExecute(Void nullObj) {
-            try {
-                Picasso.with(holder.profileView.getContext())
-                        .load(user.getProfileURL())
-                        .into((ImageView) holder.profileView.findViewById(R.id.friend_image));
+            Picasso.with(holder.profileView.getContext())
+                    .load(user.getProfileURL())
+                    .into((ImageView) holder.profileView.findViewById(R.id.friend_image));
 
-                Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
-                TextView name = (TextView) holder.profileView.findViewById(R.id.current_user_name);
-                Log.d(LOG_TAG, "user: " + user.toString());
+            Log.d(LOG_TAG, "Current User done loading profile picture, assigning to ImageView");
 
-                String usersName = user.getName();
+            Log.d(LOG_TAG, "user: " + user.toString());
 
-                Log.d(LOG_TAG, usersName);
+            String usersName = user.getName();
 
-                // TODO : handle null exception with a runnable.
-
-                if(name != null) {
-                    name.setText(usersName);
-                } else {
-                    Log.d(LOG_TAG , "Name is null! Loading TextView failed!");
-                }
+            holder.nameView.setText(usersName);
 
 
-                TextView username = (TextView) holder.profileView.findViewById(R.id.current_user_username);
+            TextView username = (TextView) holder.profileView.findViewById(R.id.current_user_username);
 
-                if(username != null)
-                    username.setText("@" + user.getUsername());
-            } catch (NullPointerException e){
-                e.printStackTrace();
-            }
+            if(username != null)
+                username.setText("@" + user.getUsername());
         }
     }
 

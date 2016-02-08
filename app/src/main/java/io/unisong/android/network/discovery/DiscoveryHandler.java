@@ -1,10 +1,13 @@
-package io.unisong.android.network;
+package io.unisong.android.network.discovery;
 
 import android.os.Handler;
 import android.util.Log;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+
+import io.unisong.android.network.CONSTANTS;
+import io.unisong.android.network.ConnectionUtils;
 
 /**
  * This class handles the discover of local Unisong devices. It will send broadcast requests over the LAN

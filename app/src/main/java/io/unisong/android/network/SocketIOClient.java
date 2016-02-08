@@ -224,6 +224,9 @@ public class SocketIOClient {
         });
     }
     private void checkForLogin(){
+        while(httpClient == null){
+            httpClient = HttpClient.getInstance();
+        }
         // wait while we're not logged in
         while(!httpClient.isLoggedIn()){
 

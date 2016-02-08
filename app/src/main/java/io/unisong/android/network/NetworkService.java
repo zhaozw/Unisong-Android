@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.facebook.FacebookSdk;
 
+import io.unisong.android.network.discovery.DiscoveryHandler;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.connection.ConnectionStatePublisher;
 import io.unisong.android.network.host.Broadcaster;
@@ -22,7 +23,7 @@ import io.unisong.android.network.ntp.TimeManager;
 public class NetworkService extends Service {
 
     private final static String LOG_TAG = NetworkService.class.getSimpleName();
-    private IBinder mBinder = new NetworkServiceBinder();
+    private IBinder binder = new NetworkServiceBinder();
 
     private Listener listener;
     private Broadcaster broadcaster;
@@ -40,7 +41,11 @@ public class NetworkService extends Service {
     public void onCreate(){
         FacebookSdk.sdkInitialize(getApplicationContext());
 
-        connectionStatePublisher = new ConnectionStatePublisher();
+        connectionStatePublisher = new ConnectionStatePublisher(getApplicationContext());
+
+        // TODO : only keep us connected when A: the user is using the app
+        // TODO : and B: a user is logged in
+        socketIO = new SocketIOClient(getApplicationContext());
 
         Log.d(LOG_TAG, "Creating NetworkService");
 
@@ -50,9 +55,8 @@ public class NetworkService extends Service {
             client.checkIfLoggedIn();
         }
 
-        // TODO : only keep us connected when A: the user is using the app
-        // TODO : and B: a user is logged in
-        socketIO = new SocketIOClient(getApplicationContext());
+        connectionStatePublisher.setHttpClient(client);
+
 
         timeManager = new TimeManager();
 
@@ -65,7 +69,7 @@ public class NetworkService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return binder;
     }
 
     public class NetworkServiceBinder extends Binder {

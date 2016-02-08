@@ -1,5 +1,7 @@
 package io.unisong.android.network.user;
 
+import android.support.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +39,22 @@ public class UserUtils {
 
     public static User getUser(String uuid){
         return getUser(UUID.fromString(uuid));
+    }
+
+    /**
+     * This method returns the User matching the phone number provided
+     * @param formattedPhoneNumber - an E164 formatted phone number that the user used to register
+     * @return user the user matching the phone number, nullable
+     */
+    @Nullable
+    public static User getUserByPhone(String formattedPhoneNumber){
+        for(User user : users){
+            if(user.getPhoneNumber().equals(formattedPhoneNumber)){
+                return user;
+            }
+        }
+
+        return null;
     }
 
 }

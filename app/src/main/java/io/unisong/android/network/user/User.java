@@ -68,6 +68,7 @@ public class User implements Serializable {
         this();
         this.username = username;
         this.password = password;
+        Log.d(LOG_TAG , "Creating User from username/pass");
         getUserInfoThread().start();
 
         // TODO : load rest of info from server and save.
@@ -118,8 +119,6 @@ public class User implements Serializable {
                 }
             }
             Response response = client.syncGet(NetworkUtilities.HTTP_URL + "/user/" + uuid.toString() + "/session/");
-
-            Log.d(LOG_TAG , "response");
 
             if(response.code() == 200){
                 int id = Integer.parseInt(response.body().string());
@@ -275,6 +274,7 @@ public class User implements Serializable {
             isFacebookUser = false;
         }
     }
+
     public void uploadProfilePicture(Bitmap bitmap){
         Log.d(LOG_TAG, "Bitmap size: " + bitmap.getByteCount() + " bytes.");
 
@@ -340,9 +340,5 @@ public class User implements Serializable {
 
     public void update(){
         getSessionStatusThread().start();
-    }
-
-    public String toString(){
-        return "User : { username: " + username + "}";
     }
 }
