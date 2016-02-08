@@ -250,7 +250,17 @@ public class HttpClient {
                 isLoggedIn = true;
                 loginDone = true;
 
-                CurrentUser user = new CurrentUser(context, accountType);
+
+                String username = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+                String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+
+
+                if(username.equals("") || password.equals("")) {
+                    isLoggedIn = false;
+                } else {
+                    new CurrentUser(context, accountType);
+                }
+
 
                 return;
             }
@@ -266,6 +276,8 @@ public class HttpClient {
         if(!username.equals("") && !password.equals("")){
             login(username , password);
             return;
+        } else {
+
         }
 
         loginDone = true;
