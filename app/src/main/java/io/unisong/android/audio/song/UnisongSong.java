@@ -99,6 +99,9 @@ public class UnisongSong extends Song {
 
     @Override
     public void seek(long seekTime) {
+        if(decoder != null)
+            decoder.destroy();
+
         Map<Integer, AudioFrame> inputFrames = ((UnisongDecoder)decoder).getInputFrames();
         decoder = new UnisongDecoder(getFormat());
         ((UnisongDecoder)decoder).setInputFrames(inputFrames);
@@ -149,7 +152,8 @@ public class UnisongSong extends Song {
 
     @Override
     public void destroy() {
-        decoder.destroy();
+        if(decoder != null)
+            decoder.destroy();
         decoder = null;
     }
 

@@ -566,10 +566,10 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
     public static class IncomingHandler extends Handler{
 
-        private UnisongActivity mActivity;
+        private UnisongActivity activity;
         public IncomingHandler(UnisongActivity activity){
             super();
-            mActivity = activity;
+            this.activity = activity;
         }
 
 
@@ -583,7 +583,7 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
                         JSONObject object = (JSONObject) message.obj;
                         int sessionID = object.getInt("sessionID");
                         String inviteMessage = object.getString("message");
-                        mActivity.displayInvite(sessionID , inviteMessage);
+                        activity.displayInvite(sessionID, inviteMessage);
 
                     } catch(ClassCastException e){
                         e.printStackTrace();
@@ -643,7 +643,7 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     }
 
     private void finishActivity(){
-        runOnUiThread(this::finishAffinity);
+        finishAffinity();
     }
 
     @Override
@@ -664,9 +664,6 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
                             finishActivity();
                         })
                         .show();
-
-
-
                 break;
         }
     }

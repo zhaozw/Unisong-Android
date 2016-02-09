@@ -14,7 +14,6 @@ import com.facebook.AccessToken;
 import com.facebook.appevents.AppEventsLogger;
 
 import io.unisong.android.MediaService;
-import io.unisong.android.Unisong;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.network.NetworkService;
@@ -29,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Intent networkIntent;
     private Intent mediaIntent;
-    private HttpClient mClient;
+    private HttpClient client;
 
     //The Intent
     private Intent mIntent;
@@ -100,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkIfLoggedIn() {
 
-        while(mClient == null){
+        while(client == null){
             synchronized (this){
                 try{
                     this.wait(2);
@@ -108,11 +107,11 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            mClient = HttpClient.getInstance();
+            client = HttpClient.getInstance();
         }
 
 
-        while(!mClient.isLoginDone()){
+        while(!client.isLoginDone()){
             synchronized (this){
                 try{
                     this.wait(20);
@@ -125,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(LOG_TAG , "Login status retrieved.");
 
         // Check our current cookie-based login status
-        if (mClient.isLoggedIn()) {
+        if (client.isLoggedIn()) {
             // We are logged in, proceed to FriendsListActivity for now, and the new default for later.
             Log.d(LOG_TAG , "We are logged in! Starting UnisongActivity");
             startNewActivity(UnisongActivity.class);
@@ -135,7 +134,8 @@ public class MainActivity extends AppCompatActivity {
             // TODO : investigate facebook token expirations. They might autorenew.
             Log.d(LOG_TAG, "Our HTTP cookie has expired, but our facebook access token is still good.");
 
-            mClient.loginFacebook(AccessToken.getCurrentAccessToken() );
+            client.loginFacebook(AccessToken.getCurrentAccessToken());
+            startNewActivity(UnisongActivity.class);
 
         } else {
             Log.d(LOG_TAG, "We're not logged in and never were, starting LoginActivity");

@@ -114,6 +114,16 @@ public class SntpClient
                 continue;
             }
 
+
+            /*
+            try{
+                synchronized (this){
+                    this.wait(1000);
+                }
+            } catch (InterruptedException iE){
+//                    interruptedException.printStackTrace();
+            }*/
+
             if(total == 10){
                 calculateOffset();
             }

@@ -75,6 +75,7 @@ public class Contact {
 
                         if(user == null)
                             user = new User(userJSON);
+
                     } catch (JSONException e){
                         e.printStackTrace();
                         Log.d(LOG_TAG , "JSONException thrown in Contact loading user!");

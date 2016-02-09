@@ -210,9 +210,13 @@ public class LocalSong extends Song {
 
     @Override
     public void destroy() {
-        decoder.destroy();
-        encoder.destroy();
+
+        if(decoder != null)
+            decoder.destroy();
         decoder = null;
+
+        if(encoder != null)
+            encoder.destroy();
         encoder = null;
     }
 

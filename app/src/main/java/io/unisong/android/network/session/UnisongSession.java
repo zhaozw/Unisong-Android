@@ -46,18 +46,18 @@ public class UnisongSession {
 
     private final static String LOG_TAG = UnisongSession.class.getSimpleName();
 
-    private static UnisongActivity sActivityToNotify;
-    private static UnisongSession sCurrentSession;
+    private static UnisongActivity activityToNotify;
+    private static UnisongSession currentSession;
 
     public static UnisongSession getCurrentSession(){
-        return sCurrentSession;
+        return currentSession;
     }
 
     public static void setCurrentSession(UnisongSession session) {
-        sCurrentSession = session;
-        if(sActivityToNotify != null && session != null){
-            sActivityToNotify.sessionLoaded();
-            sActivityToNotify = null;
+        currentSession = session;
+        if(activityToNotify != null && session != null){
+            activityToNotify.sessionLoaded();
+            activityToNotify = null;
         }
         if(session != null){
             session.configureSocketIO();
@@ -65,22 +65,22 @@ public class UnisongSession {
     }
 
     public static void notifyWhenLoaded(UnisongActivity activty){
-        sActivityToNotify = activty;
+        activityToNotify = activty;
     }
 
-    private int mNewSongID, mSessionID;
+    private int newSongID, sessionID;
 
-    private boolean mIsMaster, mSocketIOConfigured;
+    private boolean isMaster, socketIOConfigured;
 
-    private SongQueue mSongQueue;
-    private String mMaster , mSessionState;
+    private SongQueue songQueue;
+    private String master, sessionState;
 
-    private MainSessionActivity.SessionMessageHandler mSessionHandler;
+    private MainSessionActivity.SessionMessageHandler sessionHandler;
     private SocketIOClient socketIOClient;
-    private SessionMembers mMembers;
-    private List<Client> mClients;
-    private HttpClient mClient;
-    private SessionSongsAdapter mAdapter;
+    private SessionMembers members;
+    private List<Client> clients;
+    private HttpClient client;
+    private SessionSongsAdapter adapter;
     private long lastUpdate;
 
     /**
@@ -89,29 +89,31 @@ public class UnisongSession {
      */
     public UnisongSession(){
 
-        mClient = HttpClient.getInstance();
+        client = HttpClient.getInstance();
         socketIOClient = SocketIOClient.getInstance();
 
-        mSongQueue = new SongQueue(this);
-        mMembers = new SessionMembers(this);
-        mIsMaster = true;
+        songQueue = new SongQueue(this);
+        members = new SessionMembers(this);
+        isMaster = true;
 
-        mMaster = CurrentUser.getInstance().getUUID().toString();
+        master = CurrentUser.getInstance().getUUID().toString();
 
         create();
-        mNewSongID = 0;
+        newSongID = 0;
 
-        mSocketIOConfigured = false;
+        socketIOConfigured = false;
         Broadcaster broadcaster = new Broadcaster(this);
+        broadcaster.addTransmitter(new ServerTransmitter(this));
+
     }
 
     /**
      * Creates a UnisongSession with only an ID and then populates all of the fields from the server.
      */
     public UnisongSession(int ID){
-        mSessionID = ID;
+        sessionID = ID;
 
-        mNewSongID = 0;
+        newSongID = 0;
         /*
         try{
             throw new Exception();
@@ -119,13 +121,13 @@ public class UnisongSession {
             e.printStackTrace();
         }*/
         Log.d(LOG_TAG , "Creating session based on ID : " + ID);
-        mClient = HttpClient.getInstance();
+        client = HttpClient.getInstance();
         socketIOClient = SocketIOClient.getInstance();
 
-        mSongQueue = new SongQueue(this);
-        mMembers = new SessionMembers(this);
+        songQueue = new SongQueue(this);
+        members = new SessionMembers(this);
 
-        mSocketIOConfigured = false;
+        socketIOConfigured = false;
         getInfoFromServer();
 
     }
@@ -152,8 +154,8 @@ public class UnisongSession {
      */
     private void downloadInfo(){
         try {
-            Log.d(LOG_TAG , "Sending GET about session.");
-            Response response = mClient.syncGet(NetworkUtilities.HTTP_URL + "/session/" + mSessionID);
+            Log.d(LOG_TAG, "Sending GET about session.");
+            Response response = client.syncGet(NetworkUtilities.HTTP_URL + "/session/" + sessionID);
 
             Log.d(LOG_TAG , "Code : " + response.code() );
             if(response.code() == 200){
@@ -175,7 +177,7 @@ public class UnisongSession {
 
         try {
             if (object.has("master")) {
-                mMaster = object.getString("master");
+                master = object.getString("master");
                 User user = CurrentUser.getInstance();
                 // If the user is null, then let's just wait for it
                 // TODO : ensure that this doesn't break any vital components
@@ -196,8 +198,8 @@ public class UnisongSession {
                 if (user.getUUID() == null)
                     return;
 
-                if (user.getUUID().compareTo(UUID.fromString(mMaster)) == 0) {
-                    mIsMaster = true;
+                if (user.getUUID().compareTo(UUID.fromString(master)) == 0) {
+                    isMaster = true;
 
                     // If we are the master and are getting updates, start u
                     if (Broadcaster.getInstance() == null) {
@@ -228,13 +230,13 @@ public class UnisongSession {
 
             if (object.has("users")) {
                 JSONArray array = object.getJSONArray("users");
-                mMembers.update(array);
+                members.update(array);
             }
 
             if (object.has("songs") && object.has("queue")) {
                 JSONArray songArray = object.getJSONArray("songs");
                 JSONArray queueArray = object.getJSONArray("queue");
-                mSongQueue.update(songArray, queueArray);
+                songQueue.update(songArray, queueArray);
             }
 
             // TODO : ensure that this works in sync with Listener.
@@ -242,27 +244,27 @@ public class UnisongSession {
             // update the server instead
             if (object.has("sessionState") && !isMaster()) {
                 // TODO : re-enable this when we're ready, then test and implement it seperately
-                /*
-                mSessionState = object.getString("sessionState");
+
+                sessionState = object.getString("sessionState");
                 AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
-                if (mSessionState.equals("idle")) {
-                    if (publisher.getState() != AudioStatePublisher.IDLE) {
+                if (sessionState.equals("idle")) {
+                    if (publisher.getState() != AudioStatePublisher.IDLE)
                         publisher.update(AudioStatePublisher.IDLE);
-                    }
-                } else if (mSessionState.equals("paused")) {
-                    if (publisher.getState() != AudioStatePublisher.PAUSED) {
+
+                } else if (sessionState.equals("paused")) {
+                    if (publisher.getState() != AudioStatePublisher.PAUSED)
                         publisher.update(AudioStatePublisher.PAUSED);
-                    }
-                } else if (mSessionState.equals("playing")) {
-                    if (publisher.getState() != AudioStatePublisher.PLAYING) {
+
+                } else if (sessionState.equals("playing")) {
+                    if (publisher.getState() != AudioStatePublisher.PLAYING)
                         publisher.update(AudioStatePublisher.PLAYING);
-                    }
-                }*/
+
+                }
             }
 
             if (object.has("songID")) {
-                mNewSongID = object.getInt("songID");
+                newSongID = object.getInt("songID");
             }
 
             Log.d(LOG_TAG, "Parsing complete");
@@ -284,11 +286,11 @@ public class UnisongSession {
      * the session information
      */
     public void configureSocketIO(){
-        if(mSocketIOConfigured)
+        if(socketIOConfigured)
             return;
 
         // NOTE : be sure to keep this up to doate with disconnectSocketIO()
-        mSocketIOConfigured = true;
+        socketIOConfigured = true;
         socketIOClient.on("user joined", mUserJoined);
         socketIOClient.on("update session", mUpdateSessionListener);
         socketIOClient.on("user left", mUserLeft);
@@ -302,22 +304,22 @@ public class UnisongSession {
      * Removes all listeners for this session from socketIOClient
      */
     public void disconnectSocketIO(){
-        if(!mSocketIOConfigured)
+        if(!socketIOConfigured)
             return;
 
-        mSocketIOConfigured = false;
+        socketIOConfigured = false;
         socketIOClient.off("user joined", mUserJoined);
         socketIOClient.off("update session", mUpdateSessionListener);
         socketIOClient.off("user left", mUserLeft);
         socketIOClient.off("end session", mEndSession);
         socketIOClient.off("kick", mKickListener);
         socketIOClient.off("kick result", mKickResultListener);
-        Log.d(LOG_TAG , "Socket.IO disconnected for session #" + mSessionID);
+        Log.d(LOG_TAG , "Socket.IO disconnected for session #" + sessionID);
     }
 
     public int incrementNewSongID(){
-        int oldSongID = mNewSongID;
-        mNewSongID++;
+        int oldSongID = newSongID;
+        newSongID++;
         return oldSongID;
     }
 
@@ -327,17 +329,17 @@ public class UnisongSession {
             Response response;
             Log.d(LOG_TAG , "Creating Unisong session.");
             try {
-                response = mClient.syncPost(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
+                response = client.syncPost(NetworkUtilities.HTTP_URL + "/session/", new JSONObject());
 
                 if(response.code() == 200){
                     String body = response.body().string();
                     JSONObject object = new JSONObject(body);
                     Log.d(LOG_TAG , object.toString());
-                    mSessionID = object.getInt("sessionID");
-                    Log.d(LOG_TAG , "Session ID : " + mSessionID);
+                    sessionID = object.getInt("sessionID");
+                    Log.d(LOG_TAG , "Session ID : " + sessionID);
 
-                    socketIOClient.joinSession(mSessionID);
-                    mMembers.add(CurrentUser.getInstance());
+                    socketIOClient.joinSession(sessionID);
+                    members.add(CurrentUser.getInstance());
                 }
             } catch (IOException e){
                 e.printStackTrace();
@@ -361,28 +363,28 @@ public class UnisongSession {
     }
 
     public void addClient(Client client){
-        for (Client comp : mClients){
+        for (Client comp : clients){
             if(comp.equals(client)) return;
         }
 
-        mClients.add(client);
+        clients.add(client);
     }
 
     public int getCurrentSongID(){
-        return mSongQueue.getCurrentSong().getID();
+        return songQueue.getCurrentSong().getID();
     }
 
     public Song getCurrentSong(){
-        if(mSongQueue != null)
-            return mSongQueue.getCurrentSong();
+        if(songQueue != null)
+            return songQueue.getCurrentSong();
 
         return null;
     }
 
     public void startSong(int songID){
-        if(mIsMaster){
+        if(isMaster){
             Log.d(LOG_TAG , "Sending start song.");
-            Broadcaster.getInstance().startSong(mSongQueue.getSong(songID));
+            Broadcaster.getInstance().startSong(songQueue.getSong(songID));
         }
     }
 
@@ -395,17 +397,17 @@ public class UnisongSession {
     }
 
     public void destroy(){
-        if(mIsMaster)
+        if(isMaster)
             socketIOClient.emit("end session" , getSessionID());
 
         disconnect();
 
-        mSongQueue = null;
-        mClients = null;
+        songQueue = null;
+        clients = null;
     }
 
     public void addFrame(AudioFrame frame){
-        Song song = mSongQueue.getSong(frame.getSongID());
+        Song song = songQueue.getSong(frame.getSongID());
         // TODO : store frames without a song in case we miss a create song
         if(song != null)
             song.addFrame(frame);
@@ -413,20 +415,20 @@ public class UnisongSession {
     }
 
     public SessionMembers getMembers(){
-        return mMembers;
+        return members;
     }
 
-    public SongQueue getSongQueue(){return mSongQueue;}
+    public SongQueue getSongQueue(){return songQueue;}
 
     public int getSessionID(){
-        return mSessionID;
+        return sessionID;
     }
 
     public void addSong(Song song){
-        mSongQueue.addSong(song);
+        songQueue.addSong(song);
 
 
-        if(mSongQueue.size() == 1 && mIsMaster){
+        if(songQueue.size() == 1 && isMaster){
             Log.d(LOG_TAG, "The first song has been added, automatically playing");
 
             // TODO : investigate if the first song should auto-play
@@ -446,11 +448,11 @@ public class UnisongSession {
      * @param ID - the ID of the  given song
      */
     public void deleteSong(int ID){
-        mSongQueue.deleteSong(ID);
+        songQueue.deleteSong(ID);
 
         Object[] args = new Object[2];
         args[0] = ID;
-        args[1] = mSessionID;
+        args[1] = sessionID;
 
         if(isMaster())
             socketIOClient.emit("delete song" , args);
@@ -481,15 +483,15 @@ public class UnisongSession {
 
     public void sendUpdate(){
         Object[] array = new Object[2];
-        array[0] = mSessionID;
+        array[0] = sessionID;
         array[1] = this.toJSON();
         socketIOClient.emit("update session", array);
 
-        socketIOClient.emit("update songs", mSongQueue.getSongsJSON());
+        socketIOClient.emit("update songs", songQueue.getSongsJSON());
     }
 
     public boolean isMaster(){
-        return mIsMaster;
+        return isMaster;
     }
 
     public void leave(){
@@ -511,6 +513,9 @@ public class UnisongSession {
 
         disconnectSocketIO();
         setCurrentSession(null);
+
+        if(AudioStatePublisher.getInstance().getState() == AudioStatePublisher.PLAYING)
+            AudioStatePublisher.getInstance().pause();
     }
 
     /**
@@ -520,7 +525,7 @@ public class UnisongSession {
      * @param user
      */
     public void kick(User user){
-        mMembers.remove(user);
+        members.remove(user);
         socketIOClient.emit("kick", user.getUUID().toString());
     }
 
@@ -545,7 +550,7 @@ public class UnisongSession {
                 User user = UserUtils.getUser(uuid);
 
                 Log.d(LOG_TAG , user.toString() + " to be kicked");
-                mMembers.remove(user);
+                members.remove(user);
 
             } else if(response.getInt("code") == 400){
                 Log.d(LOG_TAG , "Bad request on kick! Response : " + response.getString("response"));
@@ -580,18 +585,18 @@ public class UnisongSession {
 
             Log.d(LOG_TAG , "Kick received for user : " + user);
 
-            if(mMembers.contains(user)){
-                mMembers.remove(user);
+            if(members.contains(user)){
+                members.remove(user);
             }
 
             if(user.equals(CurrentUser.getInstance())){
                 leave();
                 // TODO : remove us from the session and move us back to the main screen
                 // to do this we'll need a broadcast receiver in the invite friends activity and MainSessionActivty
-                if(mSessionHandler != null) {
+                if(sessionHandler != null) {
                     Message message = new Message();
                     message.what = MainSessionActivity.KICKED;
-                    mSessionHandler.sendMessage(message);
+                    sessionHandler.sendMessage(message);
                 }
                 Log.d(LOG_TAG, "We are being kicked!");
             }
@@ -610,19 +615,19 @@ public class UnisongSession {
         try {
             JSONArray users = new JSONArray();
 
-            for (User user : mMembers.getList()) {
+            for (User user : members.getList()) {
                 users.put(user.getUUID().toString());
             }
 
 
             object.put("users", users);
 
-            object.put("queue" , mSongQueue.getJSONQueue());
-            object.put("songs" , mSongQueue.getSongsJSON());
+            object.put("queue", songQueue.getJSONQueue());
+            object.put("songs", songQueue.getSongsJSON());
 
-            object.put("master" , mMaster);
+            object.put("master" , master);
 
-            if(sCurrentSession == this){
+            if(currentSession == this){
 
                 AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
@@ -634,7 +639,7 @@ public class UnisongSession {
                     object.put("sessionState" , "playing");
                 }
             } else {
-                object.put("sessionState" , mSessionState);
+                object.put("sessionState" , sessionState);
             }
 
         } catch (JSONException e){
@@ -655,7 +660,7 @@ public class UnisongSession {
 
                 User user = UserUtils.getUser(java.util.UUID.fromString(UUID));
 
-                mMembers.add(user);
+                members.add(user);
                 Log.d(LOG_TAG, "User " + user.toString() + "  joined session!");
             } catch (ClassCastException e){
                 e.printStackTrace();
@@ -674,7 +679,7 @@ public class UnisongSession {
 
                 User user = UserUtils.getUser(java.util.UUID.fromString(UUID));
 
-                mMembers.remove(user);
+                members.remove(user);
             } catch (ClassCastException e){
                 e.printStackTrace();
                 Log.d(LOG_TAG , "Format error in 'user joined'");
@@ -690,7 +695,7 @@ public class UnisongSession {
             try{
                 int sessionID = (Integer) args[0];
 
-                if(mSessionID == sessionID && !isMaster())
+                if(UnisongSession.this.sessionID == sessionID && !isMaster())
                     endSession();
 
             } catch (ClassCastException e){
@@ -702,11 +707,11 @@ public class UnisongSession {
 
 
     public void updateSong(JSONObject object){
-        mSongQueue.updateSong(object);
+        songQueue.updateSong(object);
     }
 
     public void setSessionActivityHandler(MainSessionActivity.SessionMessageHandler handler){
-        mSessionHandler = handler;
+        sessionHandler = handler;
     }
 
 }

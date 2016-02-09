@@ -136,9 +136,6 @@ public class RegisterActivity extends AppCompatActivity {
                     }
                 }).show();
 
-
-
-
     }
 
     private Thread getRegisterThread(){
@@ -182,7 +179,6 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast toast = Toast.makeText(getBaseContext() , "Registration failed due to error!" , Toast.LENGTH_LONG );
                     toast.show();
                 });
-
             }
 
             @Override

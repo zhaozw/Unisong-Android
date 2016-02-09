@@ -59,6 +59,7 @@ public class SessionMembers {
     }
 
     public void update(JSONArray array){
+        Log.d(LOG_TAG , "Updating SessionMembers from JSONArray, current size is : " + members.size());
         try {
             for (int i = 0; i < array.length(); i++) {
                 User user = UserUtils.getUser(array.getString(i));
@@ -75,6 +76,7 @@ public class SessionMembers {
             if(members.indexOf(CurrentUser.getInstance()) == -1)
                 members.add(CurrentUser.getInstance());
         }
+        Log.d(LOG_TAG , "Updating finished, current size is : " + members.size());
 
     }
 

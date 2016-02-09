@@ -44,4 +44,5 @@ gen-external-apklibs
 
 # .iml files
 /app/app.iml
-/Unisong-Android.iml
+Unisong-Android.iml
+app/app.iml

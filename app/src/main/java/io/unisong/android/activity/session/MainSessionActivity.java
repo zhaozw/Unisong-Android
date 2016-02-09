@@ -1,5 +1,6 @@
 package io.unisong.android.activity.session;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 import com.squareup.picasso.Picasso;
@@ -41,6 +43,8 @@ import io.unisong.android.activity.session.invite.InviteMemberActivity;
 import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.song.Song;
+import io.unisong.android.network.connection.ConnectionObserver;
+import io.unisong.android.network.connection.ConnectionStatePublisher;
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 import io.unisong.android.network.user.CurrentUser;
@@ -51,7 +55,7 @@ import io.unisong.android.network.user.UserUtils;
  * The main activity for an UnisongSession. Has the fragments for SessionMembers and
  * Created by Ethan on 9/26/2015.
  */
-public class MainSessionActivity extends AppCompatActivity {
+public class MainSessionActivity extends AppCompatActivity implements ConnectionObserver {
 
     // The message code for when we have been kicked out of a session
     public static final int KICKED = 23929;
@@ -198,11 +202,11 @@ public class MainSessionActivity extends AppCompatActivity {
                     }
                 });
                 seekThumbShowing = true;
-            } else if(seekThumbShowing && session.isMaster() && publisher.getState() != AudioStatePublisher.PLAYING){
+            } else if(seekThumbShowing && session.isMaster() && publisher.getState() != AudioStatePublisher.PLAYING
+                    && publisher.getState() != AudioStatePublisher.PAUSED){
                 runOnUiThread(() -> {
                     footerSeekBar.getThumb().mutate().setAlpha(0);
-                    if(footerSeekBar.isEnabled()) {
-                        if(publisher.getState() != AudioStatePublisher.PAUSED)
+                    if(footerSeekBar.isEnabled() && publisher.getState() != AudioStatePublisher.PAUSED) {
                             footerSeekBar.setEnabled(false);
                     }
                 });
@@ -330,6 +334,34 @@ public class MainSessionActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+
+    private void finishActivity(){
+        finishAffinity();
+    }
+
+    @Override
+    public void updateConnectionState(int state) {
+        switch (state){
+            case ConnectionStatePublisher.WRONG_API:
+
+                new MaterialDialog.Builder(this)
+                        .content(R.string.need_update)
+                        .positiveText(R.string.sorry)
+                        .theme(Theme.LIGHT)
+                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(MaterialDialog dialog, DialogAction action) {
+                                finishActivity();
+                            }
+                        })
+                        .dismissListener((DialogInterface dialog) -> {
+                            finishActivity();
+                        })
+                        .show();
+                break;
+        }
     }
 
 
@@ -506,6 +538,7 @@ public class MainSessionActivity extends AppCompatActivity {
     public void onDestroy(){
         super.onDestroy();
         session.setSessionActivityHandler(null);
+        executor.remove(this::updateFooter);
     }
 
     public static class SessionMessageHandler extends Handler{
