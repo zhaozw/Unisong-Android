@@ -105,9 +105,14 @@ public class UnisongSong extends Song {
      */
     @Override
     public void start() {
+        start(0);
+    }
+
+    @Override
+    public void start(long startTime) {
         if(!started){
             decoder = new UnisongDecoder(getFormat());
-            decoder.start();
+            decoder.start(startTime);
             started = true;
         }
     }
@@ -173,18 +178,6 @@ public class UnisongSong extends Song {
         if(decoder != null)
             decoder.destroy();
         decoder = null;
-    }
-
-    @Override
-    public void update(int state){
-        switch (state){
-            case AudioStatePublisher.START_SONG:
-                start();
-                break;
-            case AudioStatePublisher.SEEK:
-                seek(AudioStatePublisher.getInstance().getSeekTime());
-                break;
-        }
     }
 
 }

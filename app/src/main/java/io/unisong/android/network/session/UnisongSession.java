@@ -57,11 +57,16 @@ public class UnisongSession {
 
     public static void setCurrentSession(UnisongSession session) {
         currentSession = session;
+
+        // Attach the song Queue and other components to the AudioStatePublisher
+
+
         if(activityToNotify != null && session != null){
             activityToNotify.sessionLoaded();
             activityToNotify = null;
         }
         if(session != null){
+            AudioStatePublisher.getInstance().attach(session.getSongQueue());
             session.configureSocketIO();
         }
     }

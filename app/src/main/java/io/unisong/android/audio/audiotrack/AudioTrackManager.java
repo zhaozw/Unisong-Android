@@ -141,8 +141,8 @@ public class AudioTrackManager implements AudioObserver {
                 break;
             case AudioStatePublisher.END_SONG:
                 audioThread.stopPlaying();
+                isPlaying = false;
                 break;
-
         }
     }
 

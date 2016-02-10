@@ -214,7 +214,7 @@ public class FileDecoder extends Decoder{
 
         if(sawOutputEOS){
             // TODO : set this to 0 instead of 5
-            while(outputFrames.size() >= 5){
+            while(outputFrames.size() > 0){
                 try {
                     synchronized (this) {
                         this.wait(5);

@@ -50,8 +50,6 @@ public class SongQueue implements AudioObserver {
         songQueue = new ArrayList<>();
         parentSession = session;
         publisher = AudioStatePublisher.getInstance();
-        if(session == UnisongSession.getCurrentSession())
-            publisher.attach(this);
         timer = new Timer();
     }
 
@@ -63,23 +61,21 @@ public class SongQueue implements AudioObserver {
     public void addSong(Song song){
         if(songQueue.indexOf(song) == -1)
             addSong(songQueue.size(), song);
-
-        if(songQueue.size() == 1)
-            publisher.attach(songQueue.get(0));
     }
 
     // Adds a song and notifies the adapter
     public void addSong(int position, Song song){
 
-        if(position == 0 && songQueue.size() > 0){
-            publisher.detach(songQueue.get(0));
-            publisher.attach(song);
-        }
-
         songQueue.add(position, song);
 
         sendAdd(position, song);
 
+    }
+
+
+
+    public List<Song> getQueue(){
+        return songQueue;
     }
 
     public void deleteSong(int songID){
@@ -90,17 +86,9 @@ public class SongQueue implements AudioObserver {
             }
         }
 
-        if(songToRemove != null) {
+        if(songToRemove != null)
             remove(songQueue.indexOf(songToRemove), false);
-        }
-    }
 
-    public void deleteSong(Song song){
-        deleteSong(song.getID());
-    }
-
-    public List<Song> getQueue(){
-        return songQueue;
     }
 
     /**
@@ -351,6 +339,12 @@ public class SongQueue implements AudioObserver {
             case AudioStatePublisher.END_SONG:
                 remove(0 , true);
                 break;
+            case AudioStatePublisher.START_SONG:
+                getCurrentSong().start();
+                break;
+            case AudioStatePublisher.SEEK:
+                getCurrentSong().seek(publisher.getSeekTime());
         }
     }
+
 }

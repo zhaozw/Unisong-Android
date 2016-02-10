@@ -134,6 +134,10 @@ public class LocalSong extends Song {
      * Begins the PCM decoding and AAC encoding.
      */
     public void start(){
+        start(0);
+    }
+
+    public void start(long startTime){
         if (!started) {
             started = true;
             encoder = new AACEncoder(this);
@@ -142,8 +146,8 @@ public class LocalSong extends Song {
             ((FileDecoder) decoder).registerSong(this);
 
             songStartTime = TimeManager.getInstance().getSongStartTime();
-            decoder.start();
-            encoder.encode(0, path);
+            decoder.start(startTime);
+            encoder.encode(startTime, path);
         }
     }
 
@@ -213,8 +217,10 @@ public class LocalSong extends Song {
     @Override
     public void destroy() {
 
-        if(decoder != null)
-            decoder.destroy();
+        synchronized (decoder) {
+            if (decoder != null)
+                decoder.destroy();
+        }
         decoder = null;
 
         if(encoder != null)
@@ -315,22 +321,6 @@ public class LocalSong extends Song {
 
         HttpClient.getInstance().post(NetworkUtilities.HTTP_URL + "/session/" + sessionID + "/song/" + songID + "/picture", object, uploadCallback);
 
-    }
-
-    @Override
-    public void update(int state){
-        switch(state) {
-            case AudioStatePublisher.START_SONG:
-                start();
-                break;
-            case AudioStatePublisher.END_SONG:
-                destroy();
-                break;
-            case AudioStatePublisher.SEEK:
-                Log.d(LOG_TAG , "Seek receieved for song #" + songID + " , seeking encoder and decoder.");
-                seek(AudioStatePublisher.getInstance().getSeekTime());
-                break;
-        }
     }
 
 }

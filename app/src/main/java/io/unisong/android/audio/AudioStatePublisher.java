@@ -91,14 +91,11 @@ public class AudioStatePublisher {
     public void update(int state){
         try {
             synchronized (observers) {
-                Song song = null;
-
                 //Set the state
                 if (state == RESUME || state == START_SONG) {
                     this.state = PLAYING;
                 } else if (state == END_SONG) {
                     this.state = IDLE;
-                    song = UnisongSession.getCurrentSession().getCurrentSong();
                 } else if (state != SEEK) {
                     this.state = state;
                 }
@@ -115,7 +112,8 @@ public class AudioStatePublisher {
                 // set the songStartTime first
                 if (broadcaster != null) {
                     broadcaster.update(state);
-                    observers.remove(observers.indexOf(broadcaster));
+                    if(observers.contains(broadcaster))
+                        observers.remove(observers.indexOf(broadcaster));
                 }
 
                 for (int i = 0; i < observers.size(); i++) {
@@ -124,17 +122,10 @@ public class AudioStatePublisher {
 
                 if (broadcaster != null)
                     observers.add(broadcaster);
-
-                if (song != null) {
-                    if (observers.contains(song)) {
-                        observers.remove(song);
-                        Song currentSong = UnisongSession.getCurrentSession().getCurrentSong();
-                        if (currentSong != null)
-                            observers.add(song);
-                    }
-                }
             }
         } catch (Exception e){
+
+            // TODO : delete this once we're done.
             e.printStackTrace();
         }
     }

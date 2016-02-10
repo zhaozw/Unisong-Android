@@ -11,7 +11,7 @@ import io.unisong.android.audio.decoder.Decoder;
  * This is all of the network information on a certain song.
  * Created by Ethan on 8/4/2015.
  */
-public abstract class Song implements AudioObserver {
+public abstract class Song {
 
     private static final String LOG_TAG = Song.class.getSimpleName();
     protected String name, artist , imageURL;
@@ -78,6 +78,8 @@ public abstract class Song implements AudioObserver {
     public abstract boolean hasPCMFrame(int ID);
 
     public abstract void start();
+
+    public abstract void start(long startTime);
 
     public abstract void seek(long seekTime);
 
