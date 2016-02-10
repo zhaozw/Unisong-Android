@@ -101,6 +101,8 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
             bar.setHomeButtonEnabled(true);
         }
 
+        ConnectionStatePublisher connectionStatePublisher = ConnectionStatePublisher.getInstance();
+        connectionStatePublisher.attach(this);
         timeManager = TimeManager.getInstance();
 
         pager = (ViewPager) findViewById(R.id.session_pager);
@@ -140,7 +142,7 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
         footerSeekBar = (SeekBar) footer.findViewById(R.id.current_song_progress_bar);
         footerSeekBar.setEnabled(false);
         if (session != null && session.isMaster())
-            footerSeekBar.setOnSeekBarChangeListener(mOnSeekChangeListener);
+            footerSeekBar.setOnSeekBarChangeListener(onSeekChangeListener);
         footerSongImage = (ImageView) footer.findViewById(R.id.playing_song_image);
 
         // TODO : call a method on this activity when current song changes
@@ -275,7 +277,7 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
 
     }
 
-    private SeekBar.OnSeekBarChangeListener mOnSeekChangeListener = new SeekBar.OnSeekBarChangeListener() {
+    private SeekBar.OnSeekBarChangeListener onSeekChangeListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             if(fromUser)
@@ -366,21 +368,21 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
 
 
     class MyPagerAdapter extends FragmentPagerAdapter {
-        SessionMembersFragment mFriendsFragment;
-        SessionSongsFragment mSongsFragment;
+        SessionMembersFragment friendsFragment;
+        SessionSongsFragment songsFragment;
 
-        String[] mTabNames;
+        String[] tabNames;
         public MyPagerAdapter(FragmentManager fragmentManager){
             super(fragmentManager);
-            mTabNames = getResources().getStringArray(R.array.unisong_session_tab_names);
-            mFriendsFragment = new SessionMembersFragment();
-            mSongsFragment = new SessionSongsFragment();
+            tabNames = getResources().getStringArray(R.array.unisong_session_tab_names);
+            friendsFragment = new SessionMembersFragment();
+            songsFragment = new SessionSongsFragment();
         }
 
         @Override
         public CharSequence getPageTitle(int position){
-            if(position >=0 && position < mTabNames.length) {
-                return mTabNames[position];
+            if(position >=0 && position < tabNames.length) {
+                return tabNames[position];
             } else {
                 return "404_TITLE";
             }
@@ -401,7 +403,7 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
 
         @Override
         public int getCount() {
-            return mTabNames.length;
+            return tabNames.length;
         }
     }
 
@@ -538,15 +540,26 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
     public void onDestroy(){
         super.onDestroy();
         session.setSessionActivityHandler(null);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
         executor.remove(this::updateFooter);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        executor.scheduleAtFixedRate(this::updateFooter, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     public static class SessionMessageHandler extends Handler{
 
-        private MainSessionActivity mActivity;
+        private MainSessionActivity activity;
         public SessionMessageHandler(MainSessionActivity activity){
             super();
-            mActivity = activity;
+            this.activity = activity;
         }
 
 
@@ -555,9 +568,7 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
 
             switch (message.what){
                 case KICKED:
-                    mActivity.runOnUiThread(() ->{
-                        mActivity.kicked();
-                    });
+                    activity.runOnUiThread(activity::kicked);
                     break;
 
             }

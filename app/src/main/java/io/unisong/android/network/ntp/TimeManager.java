@@ -2,6 +2,7 @@ package io.unisong.android.network.ntp;
 
 import android.util.Log;
 
+import io.unisong.android.Unisong;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.song.Song;
@@ -71,8 +72,11 @@ public class TimeManager implements AudioObserver {
         if(publisher.getState() == AudioStatePublisher.IDLE)
             return progress = 100;
 
+        UnisongSession session = UnisongSession.getCurrentSession();
+        if(session == null)
+            return 0;
 
-        Song song = UnisongSession.getCurrentSession().getCurrentSong();
+        Song song = session.getCurrentSong();
         if(song == null) {
             Log.d(LOG_TAG , "CurrentSong is null!");
             UnisongSession.getCurrentSession().getUpdate();
@@ -98,6 +102,15 @@ public class TimeManager implements AudioObserver {
             return 100;
 
         return progress;
+    }
+
+    /**
+     * Returns the current song play time - essentially resumeTime, but while
+     * in progress
+     * @return songTime - the time the song is currently playing at.
+     */
+    public long getSongTime(){
+        return System.currentTimeMillis() - songStartTime;
     }
 
     @Override

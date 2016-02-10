@@ -11,6 +11,8 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.decoder.UnisongDecoder;
 import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.client.Listener;
+import io.unisong.android.network.ntp.TimeManager;
 
 /**
  * This class handles songs that are broadcasted over the Unisong network.
@@ -21,7 +23,6 @@ public class UnisongSong extends Song {
     private final static String LOG_TAG = UnisongSong.class.getSimpleName();
     public final static String TYPE_STRING = "UnisongSong";
 
-    private int sessionID;
     private SongFormat format;
 
     /**
@@ -52,6 +53,17 @@ public class UnisongSong extends Song {
         songID = object.getInt("songID");
         sessionID = object.getInt("sessionID");
 
+        if(object.has("songStartTime")) {
+            TimeManager timeManager = TimeManager.getInstance();
+            timeManager.setSongStartTime(object.getLong("songStartTime"));
+
+            int currentFrame = (int) (timeManager.getSongTime() / (1024000.0 / 44100.0));
+
+            // TODO : replace the default 500 frames.
+            Listener listener = Listener.getInstance();
+            listener.requestData(this , currentFrame , currentFrame + 500);
+        }
+
     }
 
     public long getDuration(){
@@ -68,7 +80,7 @@ public class UnisongSong extends Song {
     }
 
     @Override
-    public synchronized AudioFrame getPCMFrame(int ID) {
+    public AudioFrame getPCMFrame(int ID) {
         return decoder.getFrame(ID);
     }
 
@@ -79,7 +91,10 @@ public class UnisongSong extends Song {
 
     @Override
     public boolean hasPCMFrame(int ID) {
-        return decoder.hasOutputFrame(ID);
+        if(decoder != null)
+            return decoder.hasOutputFrame(ID);
+
+        return false;
     }
 
     public String getImageURL(){
@@ -115,6 +130,9 @@ public class UnisongSong extends Song {
 
     @Override
     public void addFrame(AudioFrame frame) {
+        if(decoder == null)
+            decoder = new UnisongDecoder(getFormat());
+
         decoder.addInputFrame(frame);
     }
 

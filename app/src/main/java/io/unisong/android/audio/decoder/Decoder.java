@@ -71,7 +71,9 @@ public abstract class Decoder {
     }
 
     public boolean hasOutputFrame(int ID){
-        return outputFrames.containsKey(ID);
+        synchronized (outputFrames) {
+            return outputFrames.containsKey(ID);
+        }
     }
 
     public void addInputFrame(AudioFrame frame) {

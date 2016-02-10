@@ -21,7 +21,7 @@ public abstract class Song implements AudioObserver {
     protected AudioStatePublisher publisher;
 
     //The # of the song
-    protected int songID;
+    protected int songID, sessionID;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path
@@ -87,6 +87,10 @@ public abstract class Song implements AudioObserver {
 
     public int getFrameIDForTime(long time){
         return decoder.getFrameIDAtTime(time);
+    }
+
+    public int getSessionID(){
+        return sessionID;
     }
 
     public abstract SongFormat getFormat();

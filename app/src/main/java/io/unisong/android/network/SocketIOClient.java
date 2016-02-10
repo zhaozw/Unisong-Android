@@ -65,9 +65,9 @@ public class SocketIOClient {
             socket.connect();
             socket.on(Socket.EVENT_CONNECT, mConnectListener);
             socket.on(Socket.EVENT_RECONNECT, mReconnectListener);
-            socket.on(Socket.EVENT_DISCONNECT, mDisconnectListener);
+            socket.on(Socket.EVENT_DISCONNECT, disconnectListener);
             // TODO : see if there's a better place to put this
-            socket.on("invite user", mInviteListener);
+            socket.on("invite user", inviteListener);
             socket.on("join session result", joinResultListener);
             socket.on("authentication result", authenticationResult);
             connected = true;
@@ -91,7 +91,7 @@ public class SocketIOClient {
             socket.emit("join session", sessionID);
     }
 
-    private Runnable mLoginRunnable = () -> login();
+    private Runnable loginRunnable = () -> login();
 
     /**
      * This method will authenticate the user over the socket if the socket is connected.
@@ -102,7 +102,7 @@ public class SocketIOClient {
         User user = CurrentUser.getInstance();
 
         if(user == null || user.getUsername() == null) {
-            inviteHandler.postDelayed(mLoginRunnable, 2000l);
+            inviteHandler.postDelayed(loginRunnable, 2000l);
             return;
         }
 
@@ -138,7 +138,7 @@ public class SocketIOClient {
             inviteHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    inviteHandler.removeCallbacks(mLoginRunnable);
+                    inviteHandler.removeCallbacks(loginRunnable);
                     login();
 
                     UnisongSession currentSession = UnisongSession.getCurrentSession();
@@ -167,7 +167,7 @@ public class SocketIOClient {
      * The listener for when the socket gets disconnected.
      *
      */
-    private Emitter.Listener mDisconnectListener = new Emitter.Listener() {
+    private Emitter.Listener disconnectListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
@@ -179,7 +179,7 @@ public class SocketIOClient {
 
     };
 
-    private Emitter.Listener mInviteListener = new Emitter.Listener() {
+    private Emitter.Listener inviteListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG , "invite user received");

@@ -46,17 +46,17 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     }
 
 
-    private boolean mStop = false;
-    private Song mSong;
+    private boolean stop = false;
+    private Song song;
 
     private void broadcast(){
         int currentFrame = 0;
 
-        Song currentSong = mSong;
+        Song currentSong = song;
         transmitting = true;
 
         while(transmitting){
-            if(!currentSong.hasAACFrame(currentFrame) && !mStop){
+            if(!currentSong.hasAACFrame(currentFrame) && !stop){
 
                 synchronized (this){
                     try{
@@ -66,7 +66,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                     }
                 }
 
-            } else if(mStop){
+            } else if(stop){
                 break;
             }
 
@@ -124,33 +124,33 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         client.emit("start song", startSongJSON);
 
         frameToUpload = 0;
-        mSong = song;
+        this.song = song;
         Log.d(LOG_TAG , "Start song");
 
         if(scheduledFuture != null)
             scheduledFuture.cancel(false);
 
-        scheduledFuture = worker.scheduleAtFixedRate(mBroadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
+        scheduledFuture = worker.scheduleAtFixedRate(broadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
     }
 
-    private int mUploadCount = 0;
+    private int uploadCount = 0;
 
-    private Runnable mBroadcastRunnable = () -> {
+    private Runnable broadcastRunnable = () -> {
 
-        if(mSong.hasAACFrame(frameToUpload)){
-            AudioFrame frame = mSong.getAACFrame(frameToUpload);
+        if(song.hasAACFrame(frameToUpload)){
+            AudioFrame frame = song.getAACFrame(frameToUpload);
 //            Log.d(LOG_TAG, "Frame is null? " + (frame == null));
             if(frame != null) {
 //                Log.d(LOG_TAG, "Frame #" + frameToUpload + " uploaded");
                 uploadFrame(frame);
 
-                if(mUploadCount >= 100){
+                if(uploadCount >= 100){
                     Log.d(LOG_TAG , "Frame #" + frameToUpload + " uploaded");
                 }
                 frameToUpload++;
             }
         } else {
-//            Log.d(LOG_TAG , "Looking for frame #" + frameToUpload + " while size is : " + mSong.getPCMFrames().size());
+//            Log.d(LOG_TAG , "Looking for frame #" + frameToUpload + " while size is : " + song.getPCMFrames().size());
         }
 
 
@@ -177,9 +177,11 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 frameToUpload = (int) (publisher.getSeekTime() / ((1024.0 * 1000.0) / 44100.0));
                 break;
             case AudioStatePublisher.PLAYING:
-                client.emit("playing", "playing");
+//                client.emit("playing", "playing");
+                // TODO : do we need this^^ ?
                 break;
             case AudioStatePublisher.END_SONG:
+                Log.d(LOG_TAG , "Emitting end song");
                 client.emit("end song", publisher.getSongToEnd());
                 break;
             case AudioStatePublisher.START_SONG:

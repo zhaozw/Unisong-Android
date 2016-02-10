@@ -126,6 +126,9 @@ public class AudioTrackManager implements AudioObserver {
             case AudioStatePublisher.PLAYING:
                 // TODO : replace with START_SONG
                 Log.d(LOG_TAG , "Playing Received");
+                if(!isPlaying){
+                    resume(timeManager.getSongTime() + 500);
+                }
                 break;
             case AudioStatePublisher.START_SONG:
                 Log.d(LOG_TAG , "Starting song for AudioTrack");
@@ -154,6 +157,9 @@ public class AudioTrackManager implements AudioObserver {
             audioThread.stopPlaying();
 
         Log.d(LOG_TAG , "Resuming, frameToPlay is : " + frameToPlay);
+
+        if(song == null)
+            song = UnisongSession.getCurrentSession().getCurrentSong();
 
         isPlaying = true;
         audioThread = new AudioTrackThread(createAudioTrack(44100, 2), song, resumeTime);

@@ -50,7 +50,8 @@ public class SongQueue implements AudioObserver {
         songQueue = new ArrayList<>();
         parentSession = session;
         publisher = AudioStatePublisher.getInstance();
-        publisher.attach(this);
+        if(session == UnisongSession.getCurrentSession())
+            publisher.attach(this);
         timer = new Timer();
     }
 
@@ -112,11 +113,6 @@ public class SongQueue implements AudioObserver {
         if(position == -1)
             return;
 
-        if(position == 0){
-            publisher.detach(songQueue.get(0));
-            if(songQueue.size() > 1)
-                publisher.attach(songQueue.get(1));
-        }
 
         Song songToRemove = songQueue.get(position);
 

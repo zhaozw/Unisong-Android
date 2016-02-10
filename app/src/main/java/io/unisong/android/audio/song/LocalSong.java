@@ -41,7 +41,6 @@ public class LocalSong extends Song {
     private String path;
     private AACEncoder encoder;
     private SongFormat format;
-    private int sessionID;
     private long songStartTime;
 
     /**
@@ -166,6 +165,9 @@ public class LocalSong extends Song {
         decoder = new FileDecoder(path);
         ((FileDecoder)decoder).registerSong(this);
         decoder.start(seekTime);
+
+        if(encoder == null)
+            encoder = new AACEncoder(this);
         encoder.seek(seekTime);
     }
 
@@ -220,9 +222,7 @@ public class LocalSong extends Song {
         encoder = null;
     }
 
-    // TODO : see if we need to do anything special for this.
     public void endSong(){
-
     }
 
     /**
@@ -324,7 +324,7 @@ public class LocalSong extends Song {
                 start();
                 break;
             case AudioStatePublisher.END_SONG:
-                endSong();
+                destroy();
                 break;
             case AudioStatePublisher.SEEK:
                 Log.d(LOG_TAG , "Seek receieved for song #" + songID + " , seeking encoder and decoder.");

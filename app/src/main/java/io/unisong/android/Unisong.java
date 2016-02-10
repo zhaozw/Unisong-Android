@@ -2,10 +2,11 @@ package io.unisong.android;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.multidex.MultiDex;
 
-import com.squareup.leakcanary.LeakCanary;
-import com.squareup.leakcanary.RefWatcher;
+import com.crashlytics.android.Crashlytics;
 
+import io.fabric.sdk.android.Fabric;
 import io.unisong.android.network.user.User;
 
 /**
@@ -14,13 +15,6 @@ import io.unisong.android.network.user.User;
 public class Unisong extends Application {
 
     private static Unisong instance;
-
-    public static RefWatcher getRefWatcher(Context context) {
-        Unisong application = (Unisong) context.getApplicationContext();
-        return application.refWatcher;
-    }
-
-    private RefWatcher refWatcher;
 
     public static void setInstance(Unisong application){
         instance = application;
@@ -33,7 +27,13 @@ public class Unisong extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        Fabric.with(this, new Crashlytics());
 //        refWatcher = LeakCanary.install(this);
+    }
+
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
     }
 
 

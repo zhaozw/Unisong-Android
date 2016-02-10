@@ -7,6 +7,7 @@ import org.json.JSONObject;
 
 import io.socket.emitter.Emitter;
 import io.unisong.android.audio.AudioFrame;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.audio.song.UnisongSong;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.client.Listener;
@@ -20,34 +21,61 @@ public class ServerReceiver implements Receiver{
 
     private final static String LOG_TAG = ServerReceiver.class.getSimpleName();
 
-    private SocketIOClient mClient;
-    private Listener mListener;
+    private SocketIOClient client;
+    private Listener listener;
+    private boolean isConfigured = false;
 
     public ServerReceiver(Listener listener){
         // Configure Socekt.IO client
 
         configureSocketIO();
 
-        mListener = listener;
+        this.listener = listener;
     }
 
     private void configureSocketIO(){
-        mClient = SocketIOClient.getInstance();
+        if(isConfigured)
+            return;
+
+        isConfigured = true;
+        client = SocketIOClient.getInstance();
 
         // TODO : check for nullpointerexception possibility here
-        mClient.setServerReceiver(this);
+        client.setServerReceiver(this);
 
-        mClient.on("data", mDataListener);
-        mClient.on("start song", mSongStartListener);
-        mClient.on("pause", mPauseListener);
-        mClient.on("add song", mAddSongListener);
-        mClient.on("delete song" , mDeleteSongListener);
-        mClient.on("end song", mEndSongListener);
-        mClient.on("end session", mEndSessionListener);
-        mClient.on("seek" , mSeekListener);
-        mClient.on("resume" , mResumeListener);
-        mClient.on("play" , mPlayListener);
-        mClient.on("update song" , mUpdateSongListener);
+        client.on("data", dataListener);
+        client.on("start song", songStartListener);
+        client.on("pause", pauseListener);
+        client.on("add song", addSongListener);
+        client.on("delete song", deleteSongListener);
+        client.on("end song", endSongListener);
+        client.on("end session", endSessionListener);
+        client.on("seek", seekListener);
+        client.on("resume", resumeListener);
+        client.on("play", mPlayListener);
+        client.on("update song", updateSongListener);
+    }
+
+    public void disconnectSocketIO(){
+        if(!isConfigured)
+            return;
+
+        isConfigured = false;
+
+        // TODO : check for nullpointerexception possibility here
+        client.setServerReceiver(null);
+
+        client.off("data", dataListener);
+        client.off("start song", songStartListener);
+        client.off("pause", pauseListener);
+        client.off("add song", addSongListener);
+        client.off("delete song", deleteSongListener);
+        client.off("end song", endSongListener);
+        client.off("end session", endSessionListener);
+        client.off("seek", seekListener);
+        client.off("resume", resumeListener);
+        client.off("play", mPlayListener);
+        client.off("update song", updateSongListener);
     }
 
     /**
@@ -57,35 +85,35 @@ public class ServerReceiver implements Receiver{
 
         @Override
         public void call(Object... args) {
-            mListener.play();
+            listener.play();
         }
     };
 
 
-    private boolean mFirstDataReceived = false;
-    private long mFirstDataReceivedTime;
-    private int mDataReceived = 0;
-    private int mCount = 0;
+    private boolean firstDataReceived = false;
+    private long firstDataReceivedTime;
+    private int dataReceived = 0;
+    private int count = 0;
 
     /**
      * The listener for when we get data.
      *
      */
-    private Emitter.Listener mDataListener = new Emitter.Listener() {
+    private Emitter.Listener dataListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
-            mDataReceived++;
-            mCount ++;
-            if(!mFirstDataReceived){
-                mFirstDataReceived = true;
-                mFirstDataReceivedTime = System.currentTimeMillis();
-            } else if(mCount >= 100){
-                long timeSince = System.currentTimeMillis() - mFirstDataReceivedTime;
-                double avgTime = timeSince / mDataReceived;
-                mCount = 0;
+            dataReceived++;
+            count++;
+            if(!firstDataReceived){
+                firstDataReceived = true;
+                firstDataReceivedTime = System.currentTimeMillis();
+            } else if(count >= 100){
+                long timeSince = System.currentTimeMillis() - firstDataReceivedTime;
+                double avgTime = timeSince / dataReceived;
+                count = 0;
 
-                Log.d(LOG_TAG, "Average time per frame: " + avgTime + "ms, at " + mDataReceived + " frames received.");
+                Log.d(LOG_TAG, "Average time per frame: " + avgTime + "ms, at " + dataReceived + " frames received.");
             }
 
             JSONObject object = (JSONObject) args[0];
@@ -102,21 +130,21 @@ public class ServerReceiver implements Receiver{
             }
 
 
-            mListener.addFrame(frame);
+            listener.addFrame(frame);
         }
 
     };
 
-    private Emitter.Listener mPauseListener = new Emitter.Listener() {
+    private Emitter.Listener pauseListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG , "Pause received from server.");
-            mListener.pause();
+            listener.pause();
         }
     };
 
-    private Emitter.Listener mSongStartListener = new Emitter.Listener() {
+    private Emitter.Listener songStartListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
@@ -133,7 +161,7 @@ public class ServerReceiver implements Receiver{
                     e.printStackTrace();
                     return;
                 }
-                mListener.startSong(songStartTime, songID);
+                listener.startSong(songStartTime, songID);
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -145,12 +173,12 @@ public class ServerReceiver implements Receiver{
      * The listener for when we get data.
      *
      */
-    private Emitter.Listener mEndSongListener = new Emitter.Listener() {
+    private Emitter.Listener endSongListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
             int songID = (Integer) args[0];
-            mListener.endSong(songID);
+            listener.endSong(songID);
         }
     };
 
@@ -158,7 +186,7 @@ public class ServerReceiver implements Receiver{
      * The listener for when we get data.
      *
      */
-    private Emitter.Listener mEndSessionListener = new Emitter.Listener() {
+    private Emitter.Listener endSessionListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
@@ -175,7 +203,7 @@ public class ServerReceiver implements Receiver{
      * The listener for when we get data.
      *
      */
-    private Emitter.Listener mSeekListener = new Emitter.Listener() {
+    private Emitter.Listener seekListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
@@ -184,7 +212,7 @@ public class ServerReceiver implements Receiver{
 //                Long seekTime = (Long) args[0];
                 // seekTime would be a long but socket.io casts it to an int
                 int seekTime = (Integer) args[0];
-                mListener.seek(seekTime);
+                listener.seek(seekTime);
 
             }catch(Exception e){
                 e.printStackTrace();
@@ -201,7 +229,7 @@ public class ServerReceiver implements Receiver{
      * the new song start time - ms
      *
      */
-    private Emitter.Listener mResumeListener = new Emitter.Listener() {
+    private Emitter.Listener resumeListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
@@ -212,7 +240,7 @@ public class ServerReceiver implements Receiver{
                 // update them
                 long resumeTime = resumeObject.getLong("resumeTime");
                 Long newSongStartTime = resumeObject.getLong("songStartTime");
-                mListener.resume(resumeTime , newSongStartTime);
+                listener.resume(resumeTime, newSongStartTime);
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -222,7 +250,7 @@ public class ServerReceiver implements Receiver{
     /**
      * The socket.IO listener for when a song is added.
      */
-    private Emitter.Listener mAddSongListener = new Emitter.Listener() {
+    private Emitter.Listener addSongListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG , "add song received from server");
@@ -232,7 +260,7 @@ public class ServerReceiver implements Receiver{
                 String type = object.getString("type");
                 if(type.equals(UnisongSong.TYPE_STRING)){
                     UnisongSong song = new UnisongSong(object);
-                    mListener.addSong(song);
+                    listener.addSong(song);
                 }
                 // TODO : when added add SoundcloudSong and Spotify/Google play songs.
             } catch (Exception e){
@@ -244,26 +272,26 @@ public class ServerReceiver implements Receiver{
     /**
      *
      */
-    private Emitter.Listener mDeleteSongListener = new Emitter.Listener() {
+    private Emitter.Listener deleteSongListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG , "Delete song received");
             try{
                 int songID = (Integer) args[0];
 
-                mListener.deleteSong(songID);
+                listener.deleteSong(songID);
             } catch (Exception e){
                 e.printStackTrace();
             }
         }
     };
 
-    private Emitter.Listener mUpdateSongListener = new Emitter.Listener() {
+    private Emitter.Listener updateSongListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             try{
                 JSONObject object = (JSONObject) args[1];
-                mListener.updateSong(object);
+                listener.updateSong(object);
             } catch (ClassCastException e){
                 Log.d(LOG_TAG , "UpdateSongListener threw ClassCastException!");
             } catch (NullPointerException e){
@@ -278,6 +306,28 @@ public class ServerReceiver implements Receiver{
      * @param sessionID
      */
     public void joinSession(int sessionID){
-        mClient.joinSession(sessionID);
+        client.joinSession(sessionID);
+    }
+
+    @Override
+    public void requestData(Song songToRequest, int startRange, int endRange) {
+        Log.d(LOG_TAG, "Requesting from " + startRange + " to " + endRange);
+        for(int i = startRange ; i <= endRange; i++){
+            try {
+                JSONObject requestObject = new JSONObject();
+                requestObject.put("dataID", i);
+                requestObject.put("songID" , songToRequest.getID());
+                requestObject.put("sessionID" , songToRequest.getSessionID());
+
+                client.emit("request data", requestObject);
+            } catch (JSONException e){
+                e.printStackTrace();
+                Log.d(LOG_TAG , "JSONException in requestData!");
+            }
+        }
+    }
+
+    public void destroy(){
+        disconnectSocketIO();
     }
 }

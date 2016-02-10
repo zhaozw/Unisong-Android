@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import io.unisong.android.Unisong;
 import io.unisong.android.audio.audiotrack.AudioTrackManager;
+import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.ntp.TimeManager;
@@ -43,7 +45,6 @@ public class AudioStatePublisher {
     public static final int START_SONG = 6;
 
     private Broadcaster broadcaster;
-    private boolean mSocketIOConfigured;
     //The time that we are seeking to
     private long seekTime;
 
@@ -66,7 +67,6 @@ public class AudioStatePublisher {
         handler = new Handler();
         state = IDLE;
         observers = new ArrayList<>();
-        mSocketIOConfigured = false;
         instance = this;
     }
 
@@ -76,45 +76,66 @@ public class AudioStatePublisher {
 
     //Attaches a AudioObserver to this AudioStateSubject
     public void attach(AudioObserver observer){
-        observers.add(observer);
+        synchronized (observers) {
+            if (!observers.contains(observer))
+                observers.add(observer);
+        }
     }
 
     public void detach(AudioObserver observer){
-        observers.remove(observer);
+        synchronized (observers) {
+            observers.remove(observer);
+        }
     }
 
     public void update(int state){
-        synchronized (observers) {
-            //Set the state
-            if (state == RESUME || state == START_SONG) {
-                this.state = PLAYING;
-            } else if(state == END_SONG) {
-                this.state = IDLE;
-            } else if(state != SEEK){
-                this.state = state;
-            }
+        try {
+            synchronized (observers) {
+                Song song = null;
 
-            if (state == PAUSED && resumeTime != 0) {
-                // If I put this into the constructor it causes a loop of instantiation between
-                // AudioTrackManager and this class due to their dual singleton design pattern.
-                if (manager == null) {
-                    manager = AudioTrackManager.getInstance();
+                //Set the state
+                if (state == RESUME || state == START_SONG) {
+                    this.state = PLAYING;
+                } else if (state == END_SONG) {
+                    this.state = IDLE;
+                    song = UnisongSession.getCurrentSession().getCurrentSong();
+                } else if (state != SEEK) {
+                    this.state = state;
                 }
-                resumeTime = manager.getLastFrameTime();
-            }
 
-            // set the songStartTime first
-            if (broadcaster != null) {
-                broadcaster.update(state);
-                observers.remove(observers.indexOf(broadcaster));
-            }
+                if (state == PAUSED && resumeTime != 0) {
+                    // If I put this into the constructor it causes a loop of instantiation between
+                    // AudioTrackManager and this class due to their dual singleton design pattern.
+                    if (manager == null) {
+                        manager = AudioTrackManager.getInstance();
+                    }
+                    resumeTime = manager.getLastFrameTime();
+                }
 
-            for (int i = 0; i < observers.size(); i++) {
-                observers.get(i).update(state);
-            }
+                // set the songStartTime first
+                if (broadcaster != null) {
+                    broadcaster.update(state);
+                    observers.remove(observers.indexOf(broadcaster));
+                }
 
-            if (broadcaster != null)
-                observers.add(broadcaster);
+                for (int i = 0; i < observers.size(); i++) {
+                    observers.get(i).update(state);
+                }
+
+                if (broadcaster != null)
+                    observers.add(broadcaster);
+
+                if (song != null) {
+                    if (observers.contains(song)) {
+                        observers.remove(song);
+                        Song currentSong = UnisongSession.getCurrentSession().getCurrentSong();
+                        if (currentSong != null)
+                            observers.add(song);
+                    }
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -196,6 +217,8 @@ public class AudioStatePublisher {
      */
     public void endSong(int songID){
         resumeTime = 0;
+        seekTime = 0;
+        pausedTime = 0;
         songToEnd = songID;
         Log.d(LOG_TAG, "Song Ending!");
         update(AudioStatePublisher.END_SONG);
@@ -205,6 +228,13 @@ public class AudioStatePublisher {
 
     public int getSongToEnd(){
         return songToEnd;
+    }
+
+    public void clear(){
+        resumeTime = 0;
+        seekTime = 0;
+        pausedTime = 0;
+        broadcaster = null;
     }
 
     /**

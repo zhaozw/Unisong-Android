@@ -12,6 +12,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import io.socket.emitter.Emitter;
@@ -82,6 +84,7 @@ public class UnisongSession {
     private HttpClient client;
     private SessionSongsAdapter adapter;
     private long lastUpdate;
+    private Timer timer;
 
     /**
      * This constructor creates a UnisongSession where the current user is the
@@ -104,6 +107,7 @@ public class UnisongSession {
         socketIOConfigured = false;
         Broadcaster broadcaster = new Broadcaster(this);
         broadcaster.addTransmitter(new ServerTransmitter(this));
+        timer = new Timer();
 
     }
 
@@ -129,6 +133,7 @@ public class UnisongSession {
 
         socketIOConfigured = false;
         getInfoFromServer();
+        timer = new Timer();
 
     }
 
@@ -246,21 +251,9 @@ public class UnisongSession {
                 // TODO : re-enable this when we're ready, then test and implement it seperately
 
                 sessionState = object.getString("sessionState");
-                AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+                if(this == currentSession)
+                    timer.schedule(updatePublisher, 5000);
 
-                if (sessionState.equals("idle")) {
-                    if (publisher.getState() != AudioStatePublisher.IDLE)
-                        publisher.update(AudioStatePublisher.IDLE);
-
-                } else if (sessionState.equals("paused")) {
-                    if (publisher.getState() != AudioStatePublisher.PAUSED)
-                        publisher.update(AudioStatePublisher.PAUSED);
-
-                } else if (sessionState.equals("playing")) {
-                    if (publisher.getState() != AudioStatePublisher.PLAYING)
-                        publisher.update(AudioStatePublisher.PLAYING);
-
-                }
             }
 
             if (object.has("songID")) {
@@ -273,6 +266,26 @@ public class UnisongSession {
             Log.d(LOG_TAG, "Unknown Exception in UnisongSession.parseJSON!");
         }
     }
+
+    private TimerTask updatePublisher = new TimerTask() {
+        @Override
+        public void run() {
+
+            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+            if (sessionState.equals("idle")) {
+                if (publisher.getState() != AudioStatePublisher.IDLE)
+                    publisher.update(AudioStatePublisher.IDLE);
+
+            } else if (sessionState.equals("paused")) {
+                if (publisher.getState() != AudioStatePublisher.PAUSED)
+                    publisher.update(AudioStatePublisher.PAUSED);
+
+            } else if (sessionState.equals("playing")) {
+                if (publisher.getState() != AudioStatePublisher.PLAYING)
+                    publisher.update(AudioStatePublisher.PLAYING);
+            }
+        }
+    };
 
     /**
      * Creates the session on the server side.
@@ -291,12 +304,12 @@ public class UnisongSession {
 
         // NOTE : be sure to keep this up to doate with disconnectSocketIO()
         socketIOConfigured = true;
-        socketIOClient.on("user joined", mUserJoined);
-        socketIOClient.on("update session", mUpdateSessionListener);
-        socketIOClient.on("user left", mUserLeft);
-        socketIOClient.on("end session", mEndSession);
-        socketIOClient.on("kick", mKickListener);
-        socketIOClient.on("kick result", mKickResultListener);
+        socketIOClient.on("user joined", userJoined);
+        socketIOClient.on("update session", updateSessionListener);
+        socketIOClient.on("user left", userLeft);
+        socketIOClient.on("end session", endSession);
+        socketIOClient.on("kick", kickListener);
+        socketIOClient.on("kick result", kickResultListener);
         Log.d(LOG_TAG, "Configured Socket.IO");
     }
 
@@ -308,12 +321,12 @@ public class UnisongSession {
             return;
 
         socketIOConfigured = false;
-        socketIOClient.off("user joined", mUserJoined);
-        socketIOClient.off("update session", mUpdateSessionListener);
-        socketIOClient.off("user left", mUserLeft);
-        socketIOClient.off("end session", mEndSession);
-        socketIOClient.off("kick", mKickListener);
-        socketIOClient.off("kick result", mKickResultListener);
+        socketIOClient.off("user joined", userJoined);
+        socketIOClient.off("update session", updateSessionListener);
+        socketIOClient.off("user left", userLeft);
+        socketIOClient.off("end session", endSession);
+        socketIOClient.off("kick", kickListener);
+        socketIOClient.off("kick result", kickResultListener);
         Log.d(LOG_TAG , "Socket.IO disconnected for session #" + sessionID);
     }
 
@@ -458,7 +471,7 @@ public class UnisongSession {
             socketIOClient.emit("delete song" , args);
     }
 
-    private Emitter.Listener mUpdateSessionListener = new Emitter.Listener() {
+    private Emitter.Listener updateSessionListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             try{
@@ -513,9 +526,15 @@ public class UnisongSession {
 
         disconnectSocketIO();
         setCurrentSession(null);
+        AudioStatePublisher publisher = AudioStatePublisher.getInstance();
 
-        if(AudioStatePublisher.getInstance().getState() == AudioStatePublisher.PLAYING)
-            AudioStatePublisher.getInstance().pause();
+        if(publisher.getState() == AudioStatePublisher.PLAYING)
+            publisher.pause();
+
+
+        publisher.setState(AudioStatePublisher.IDLE);
+        publisher.clear();
+
     }
 
     /**
@@ -538,7 +557,7 @@ public class UnisongSession {
      *     response : descriptive but probably unhelpful string
      * }
      */
-    private Emitter.Listener mKickResultListener = (Object[] args) -> {
+    private Emitter.Listener kickResultListener = (Object[] args) -> {
         try{
             JSONObject response = (JSONObject) args[0];
 
@@ -577,7 +596,7 @@ public class UnisongSession {
      * args ->
      * args[0] - String uuid - the UUID of the user to be kicked
      */
-    private Emitter.Listener mKickListener = (Object[] args) -> {
+    private Emitter.Listener kickListener = (Object[] args) -> {
         try{
             String uuid = (String) args[0];
 
@@ -651,7 +670,7 @@ public class UnisongSession {
 
 
     // The listener for when a user joins a session
-    private Emitter.Listener mUserJoined = new Emitter.Listener() {
+    private Emitter.Listener userJoined = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG , "User joined received");
@@ -670,7 +689,7 @@ public class UnisongSession {
     };
 
     // The listener for when a user leaves a session
-    private Emitter.Listener mUserLeft = new Emitter.Listener() {
+    private Emitter.Listener userLeft = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.d(LOG_TAG , "user left received");
@@ -689,7 +708,7 @@ public class UnisongSession {
 
 
     // The listener for when a user leaves a session
-    private Emitter.Listener mEndSession = new Emitter.Listener() {
+    private Emitter.Listener endSession = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             try{

@@ -25,31 +25,31 @@ public class LANReceiver {
     private static final String LOG_TAG = LANReceiver.class.getSimpleName();
 
     //the socket for receiving the stream
-    private DatagramSocket mSocket;
+    private DatagramSocket socket;
 
     //The ArrayList of received packets
-    private Map<Integer , NetworkPacket> mPackets;
+    private Map<Integer , NetworkPacket> packets;
 
     //The boolean indicating whether we are listening to a stream
-    private boolean mIsListening;
+    private boolean isListening;
 
     //The boolean that tells the processing thread that the packets are ready
     private boolean mPacketsReady;
 
     //The thread where the socket listens for packets
-    private Thread mListenThread;
+    private Thread listenThread;
 
     //The thread that processes the packets
-    private Thread mProcessingThread;
+    private Thread processingThread;
 
-    private Queue<DatagramPacket> mProcessingQueue;
+    private Queue<DatagramPacket> processingQueue;
 
-    private Listener mParent;
+    private Listener parent;
 
     private int mPort;
 
     public LANReceiver(Listener parent){
-        mParent = parent;
+        this.parent = parent;
     }
 
     //Start playing from a host, start listening to the stream
@@ -57,18 +57,18 @@ public class LANReceiver {
 
         Log.d(LOG_TAG, "Listening from host: " + host.getIP().toString().substring(1) + ":" + host.getPort());
 
-        mPackets = convertPackets(host.getPackets());
+        packets = convertPackets(host.getPackets());
 
         mPort = host.getPort();
-        mIsListening = true;
+        isListening = true;
 
-        mSocket = host.getSocket();
+        socket = host.getSocket();
 
-        mListenThread = getListenThread();
-        mListenThread.start();
+        listenThread = getListenThread();
+        listenThread.start();
 
-        mProcessingThread = getProcessingThread();
-        mProcessingThread.start();
+        processingThread = getProcessingThread();
+        processingThread.start();
 
 
     }
@@ -76,7 +76,7 @@ public class LANReceiver {
         return new Thread(){
             public void run(){
                 Log.d(LOG_TAG, "Listening started");
-                while(mIsListening){
+                while(isListening){
                     listenForPacket();
                 }
             }
@@ -86,18 +86,18 @@ public class LANReceiver {
     private Thread getProcessingThread(){
         return new Thread(){
             public void run(){
-                while(mIsListening){
+                while(isListening){
 
                     //Check that we are the one being notified
-                    if(mProcessingQueue.size() > 0) {
+                    if(processingQueue.size() > 0) {
 
                         ArrayList<DatagramPacket> packets = new ArrayList<DatagramPacket>();
                         //long beforeSynchronized = System.currentTimeMillis();
-                        synchronized (mProcessingQueue) {
+                        synchronized (processingQueue) {
                             //long after = System.currentTimeMillis();
                             //Log.d(LOG_TAG, "Time to synchronize: " + (after - beforeSynchronized));
-                            while(!mProcessingQueue.isEmpty()) {
-                                packets.add(mProcessingQueue.poll());
+                            while(!processingQueue.isEmpty()) {
+                                packets.add(processingQueue.poll());
                             }
                         }
                         //Log.d(LOG_TAG, "Total time to complete operation: " + (System.currentTimeMillis() - beforeSynchronized));
@@ -109,16 +109,16 @@ public class LANReceiver {
 
                         //for(NetworkPacket pack : networkPackets){
                         //    Log.d(LOG_TAG , "Packet ID: " + pack);
-                        //if(!mPackets.containsKey(pack.getPacketID())){
+                        //if(!packets.containsKey(pack.getPacketID())){
                         //    Log.d(LOG_TAG , "adding");
-                        //    mPackets.put(pack.getPacketID() , pack);
+                        //    packets.put(pack.getPacketID() , pack);
                         //}
                         //}
                     }
 
                     try {
-                        synchronized (mProcessingThread){
-                            mProcessingThread.wait();
+                        synchronized (processingThread){
+                            processingThread.wait();
                         }
                     } catch (InterruptedException e){
                         //This is supposed to happen, nbd
@@ -142,8 +142,8 @@ public class LANReceiver {
     }
 
 
-    private double mCounter = 0;
-    private double mLastPacket = 0;
+    private double counter = 0;
+    private double lastPacket = 0;
 
     private long finishTime = 0;
     private long startTime = 0;
@@ -155,7 +155,7 @@ public class LANReceiver {
         try{
             //startTime = System.currentTimeMillis();
             //Log.d(LOG_TAG , "Time difference is : " + (startTime - finishTime));
-            mSocket.receive(packet);
+            socket.receive(packet);
             //finishTime = System.currentTimeMillis();
 
         } catch(IOException e){
@@ -165,15 +165,15 @@ public class LANReceiver {
 
 
         //long before = System.currentTimeMillis();
-        synchronized (mProcessingQueue){
-            mProcessingQueue.add(packet);
+        synchronized (processingQueue){
+            processingQueue.add(packet);
         }
         //mCountsProcessing++;
         //mTotalProcessingDelay += System.currentTimeMillis() - before;
 
         //before = System.currentTimeMillis();
-        synchronized (mProcessingThread){
-            mProcessingThread.notify();
+        synchronized (processingThread){
+            processingThread.notify();
         }
         /*
         mNotifyCounts++;
@@ -201,19 +201,19 @@ public class LANReceiver {
         //}
         if(networkPacket != null) {
 //            Log.d(LOG_TAG , networkPacket.toString());
-            mParent.packetReceived(networkPacket.getPacketID());
-            if(!mPackets.containsKey(networkPacket.getPacketID())){
+            parent.packetReceived(networkPacket.getPacketID());
+            if(!packets.containsKey(networkPacket.getPacketID())){
 
-                mCounter++;
+                counter++;
 
-                mLastPacket = networkPacket.getPacketID();
-                if(mCounter % 100 == 0){
-                    double packetLoss = (mLastPacket - mCounter) / mLastPacket;
-                    Log.d(LOG_TAG , "The number of datagrams received : " + mCounter + ", and the current packet number: " + networkPacket.getPacketID() + " which is a loss rate of : " + packetLoss);
+                lastPacket = networkPacket.getPacketID();
+                if(counter % 100 == 0){
+                    double packetLoss = (lastPacket - counter) / lastPacket;
+                    Log.d(LOG_TAG , "The number of datagrams received : " + counter + ", and the current packet number: " + networkPacket.getPacketID() + " which is a loss rate of : " + packetLoss);
                 }
             }
 
-            mPackets.put(networkPacket.getPacketID() , networkPacket);
+            packets.put(networkPacket.getPacketID(), networkPacket);
         }
         //TODO: get rid of old packets that we don't need anymore
         return networkPacket;
@@ -225,19 +225,19 @@ public class LANReceiver {
 
         AudioFrame frame = new AudioFrame(fp.getData(), fp.getFrameID()  , fp.getPlayTime());
 
-        mParent.addFrame(frame);
+        parent.addFrame(frame);
         return fp;
     }
 
     public DatagramPacket getPacket(int ID){
-        synchronized (mPackets){
-            return mPackets.get(ID).getPacket();
+        synchronized (packets){
+            return packets.get(ID).getPacket();
         }
     }
 
     public void destroy(){
-        mSocket.close();
-        mIsListening = false;
+        socket.close();
+        isListening = false;
     }
 
 }

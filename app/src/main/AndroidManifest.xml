@@ -111,6 +111,10 @@
             android:label="@string/add_friend_facebook"
             />
 
+
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="b05995d0c9a445ac9786f3c788d3b2af176741bf" />
     </application>
 
 </manifest>

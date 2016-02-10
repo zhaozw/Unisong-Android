@@ -32,6 +32,14 @@ public class AudioTrackThread extends Thread {
 
     @Override
     public void run(){
+
+        if(!song.started()){
+            Log.d(LOG_TAG , "Song has not been started! Starting now.");
+            song.start();
+            if(resumeTime != 0)
+                song.seek(resumeTime);
+        }
+
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
         running = true;
 
@@ -44,10 +52,6 @@ public class AudioTrackThread extends Thread {
 
     private void writeToTrack(){
 
-        if(!song.started()){
-            Log.d(LOG_TAG , "Song has not been started! Starting now.");
-            song.start();
-        }
 
         long waitTime = timeManager.getSongStartTime() + resumeTime - System.currentTimeMillis() ;
         Log.d(LOG_TAG, "Waiting for " + waitTime + "ms, and resume time is :" + resumeTime);

@@ -32,34 +32,34 @@ public class Listener{
 
     private final static String LOG_TAG = Listener.class.getSimpleName();
 
-    private static Listener sInstance;
+    private static Listener instance;
 
     public static Listener getInstance(){
-        return sInstance;
+        return instance;
     }
 
     //The class that handles all of the time operations
-    private TimeManager mTimeManager;
+    private TimeManager timeManager;
 
     //The class that tells us what the current audio state is
-    private AudioStatePublisher mAudioStatePublisher;
+    private AudioStatePublisher audioStatePublisher;
 
-    private AudioTrackManager mManager;
+    private AudioTrackManager manager;
 
     private LANReceiver mLANReceiver;
     private ServerReceiver mServerReceiever;
-    private List<Receiver> mReceivers;
+    private List<Receiver> receivers;
 
-    private Handler mHandler;
-    private UnisongSession mSession;
+    private Handler handler;
+    private UnisongSession session;
 
     //TODO: when receiving from the server, hold on to the AAC data just in case we do a skip backwards to save on bandwidth and battery.
     public Listener(UnisongSession session){
-        mManager = AudioTrackManager.getInstance();
+        manager = AudioTrackManager.getInstance();
 
-        mSession = session;
-        mTimeManager = TimeManager.getInstance();
-        mAudioStatePublisher = AudioStatePublisher.getInstance();
+        this.session = session;
+        timeManager = TimeManager.getInstance();
+        audioStatePublisher = AudioStatePublisher.getInstance();
 
         Log.d(LOG_TAG, "Audio Listener Started");
 
@@ -68,16 +68,16 @@ public class Listener{
         //mServerReceiever = new ServerReceiver(this);
 
         // TODO : set session.
-        //mSession = UnisongSession.getInstance();
+        //session = UnisongSession.getInstance();
 
-        mReceivers = new ArrayList<>();
-        mHandler = new Handler();
+        receivers = new ArrayList<>();
+        handler = new Handler();
 
-        if(sInstance != null)
+        if(instance != null)
             Log.d(LOG_TAG , "Listener double instantiated!");
 
         // Set this instance to the singleton
-        sInstance = this;
+        instance = this;
     }
 
 
@@ -110,19 +110,19 @@ public class Listener{
         //TODO : calculate the current frame to play?
         //mSongDecoder = new UnisongDecoder(channels);
 
-        mTimeManager.setSongStartTime(startTime - TimeManager.getInstance().getOffset());
+        timeManager.setSongStartTime(startTime - TimeManager.getInstance().getOffset());
 
-        Song song = mSession.getSongQueue().getSong(songID);
+        Song song = session.getSongQueue().getSong(songID);
         if(song == null){
             Log.d(LOG_TAG , "We do not have the song! Update the session!");
             if(System.currentTimeMillis() - mLastUpdate >= 1000) {
-                mSession.getUpdate();
+                session.getUpdate();
                 mLastUpdate = System.currentTimeMillis();
             }
 
-            mHandler.postDelayed(() -> {
+            handler.postDelayed(() -> {
                 startSong(startTime, songID);
-            } , 100);
+            }, 100);
         } else {
 
             AudioStatePublisher.getInstance().startSong();
@@ -131,7 +131,7 @@ public class Listener{
     }
 
     public void addReceiver(Receiver receiver){
-        mReceivers.add(receiver);
+        receivers.add(receiver);
     }
 
     public DatagramPacket getPacket(int ID){
@@ -139,53 +139,61 @@ public class Listener{
     }
 
     public void deleteSong(int songID){
-        mSession.deleteSong(songID);
+        session.getSongQueue().deleteSong(songID);
     }
 
     public void addSong(Song song){
-        mSession.addSong(song);
+        session.addSong(song);
     }
 
     public void updateSong(JSONObject object){
-        mSession.updateSong(object);
+        session.updateSong(object);
     }
 
     public void addFrame(AudioFrame frame){
 //        Log.d(LOG_TAG , "Add Frame received!");
-        mSession.addFrame(frame);
+        session.addFrame(frame);
     }
 
     public void seek(long seekTime){
         Log.d(LOG_TAG , "Seek received!");
-        mAudioStatePublisher.seek(seekTime);
+        audioStatePublisher.seek(seekTime);
     }
 
     public void pause(){
         Log.d(LOG_TAG , "Pause received!");
-        mAudioStatePublisher.pause();
+        audioStatePublisher.pause();
     }
 
     public void play(){
         Log.d(LOG_TAG , "Play received!");
-        mAudioStatePublisher.play();
+        audioStatePublisher.play();
     }
 
     public void resume(long resumeTime,  long newSongStartTime){
         Log.d(LOG_TAG , "Resume received!");
-        mTimeManager.setSongStartTime(newSongStartTime);
-        mAudioStatePublisher.resume(resumeTime);
+        timeManager.setSongStartTime(newSongStartTime);
+        audioStatePublisher.resume(resumeTime);
     }
 
     //Ends the current song, either in preparation for another or not
     public void endSong(int songID){
-        mAudioStatePublisher.endSong(songID);
+        audioStatePublisher.endSong(songID);
     }
 
-    public synchronized void destroy() {
-        //mClientTCPHandler.destroy();
+    public void destroy() {
+        for(Receiver receiver : receivers){
+            receiver.destroy();
+        }
 
-        if(mLANReceiver != null){
-            mLANReceiver.destroy();
+        receivers = null;
+
+        instance = null;
+    }
+
+    public void requestData(Song requestFor , int startRange , int endRange){
+        for(Receiver receiver : receivers){
+            receiver.requestData(requestFor , startRange , endRange);
         }
     }
 
