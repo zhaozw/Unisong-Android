@@ -29,11 +29,11 @@ import io.unisong.android.network.session.SongQueue;
  * Created by Ethan on 10/2/2015.
  */
 public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter.ViewHolder> {
-    private List<Song> mDataset;
+    private List<Song> dataset;
 
     private final static String LOG_TAG = SessionSongsAdapter.class.getSimpleName();
 
-    private SongQueue mSongQueue;
+    private SongQueue songQueue;
 
     public static final int CHANGED = 231892;
     public static final int ADD = 1823139;
@@ -79,8 +79,8 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
      * @param song
      */
     public void add(Song song){
-        mDataset.add(song);
-        notifyItemInserted(mDataset.size());
+        dataset.add(song);
+        notifyItemInserted(dataset.size());
     }
 
     /**
@@ -89,25 +89,25 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
      * @param song
      */
     public void add(int position, Song song) {
-        mDataset.add(position, song);
+        dataset.add(position, song);
         notifyItemInserted(position);
     }
 
     public void remove(Song song) {
-        int position = mDataset.indexOf(song);
+        int position = dataset.indexOf(song);
         remove(position);
     }
 
     public void remove(int position) {
-        mDataset.remove(position);
+        dataset.remove(position);
         notifyItemRemoved(position);
     }
 
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public SessionSongsAdapter(List<Song> myDataset, SongQueue queue) {
-        mDataset = myDataset;
-        mSongQueue = queue;
+        dataset = myDataset;
+        songQueue = queue;
         // Give the dataset to the session so that it can be updated manually
 
         queue.registerHandler(new IncomingHandler(this));
@@ -140,7 +140,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
     public void onBindViewHolder(ViewHolder holder, final int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        Song song = mDataset.get(position);
+        Song song = dataset.get(position);
 
         holder.mRelativeLayout.setTag(song.getID() + "");
 //        holder.mRemoveButton.setTag(song.getID() + "");
@@ -153,8 +153,8 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
                     .load(song.getImageURL())
                     .into((holder.profileView));
         }
-        holder.nameView.setText(mDataset.get(position).getName());
-        holder.artistView.setText(mDataset.get(position).getArtist());
+        holder.nameView.setText(dataset.get(position).getName());
+        holder.artistView.setText(dataset.get(position).getArtist());
 
     }
 
@@ -171,12 +171,12 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mDataset.size();
+        return dataset.size();
     }
 
     @Override
     public int getAdapterItemCount() {
-        return mDataset.size();
+        return dataset.size();
     }
 
     @Override
@@ -190,7 +190,7 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
 
     @Override
     public void onItemDismiss(int position) {
-        mSongQueue.remove(position, true);
+        songQueue.remove(position, true);
     }
 
     @Override
@@ -205,15 +205,15 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
         }
 
         super.onItemMove(startPos, endPosition);
-        mSongQueue.move(startPos, endPosition);
+        songQueue.move(startPos, endPosition);
     }
 
     public static class IncomingHandler extends Handler{
 
-        private SessionSongsAdapter mAdapter;
+        private SessionSongsAdapter adapter;
         public IncomingHandler(SessionSongsAdapter adapter){
             super();
-            mAdapter = adapter;
+            this.adapter = adapter;
         }
 
 
@@ -229,10 +229,10 @@ public class SessionSongsAdapter extends UltimateViewAdapter<SessionSongsAdapter
                         Log.d(LOG_TAG, "ClassCatchException thrown in handleMessage()!");
                         return;
                     }
-                    mAdapter.add(message.arg1 , song);
+                    adapter.add(message.arg1, song);
                     break;
                 case REMOVE:
-                    mAdapter.remove(message.arg1);
+                    adapter.remove(message.arg1);
                     break;
             }
         }

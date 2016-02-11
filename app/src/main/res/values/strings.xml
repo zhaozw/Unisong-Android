@@ -46,6 +46,7 @@
     <string name="add_friend_label">Add Friend</string>
     <string name="friends_label">Friends</string>
 
+    <string name="leave">Leave</string>
     <string name="join">Join</string>
     <string name="change">Change</string>
     <string name="cancel">Cancel</string>
@@ -99,4 +100,6 @@
     <string name="need_update">Unisong requires an update!</string>
 
     <string name="log_out_message">Would you like to log out?</string>
+    <string name="leave_session_message">Would you like to leave the session?</string>
+    <string name="join_session_message">Would you like to join USER_NAME\'s session?</string>
 </resources>

@@ -13,6 +13,7 @@ import io.unisong.android.audio.decoder.UnisongDecoder;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.ntp.TimeManager;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * This class handles songs that are broadcasted over the Unisong network.
@@ -53,7 +54,9 @@ public class UnisongSong extends Song {
         songID = object.getInt("songID");
         sessionID = object.getInt("sessionID");
 
-        if(object.has("songStartTime")) {
+        if(object.has("songStartTime") && AudioStatePublisher.getInstance().getState() != AudioStatePublisher.PLAYING
+                && UnisongSession.getCurrentSession().getSessionState().equals("playing")) {
+            Log.d(LOG_TAG , "JSONObject has songStartTime! Starting song");
             TimeManager timeManager = TimeManager.getInstance();
             timeManager.setSongStartTime(object.getLong("songStartTime"));
 

@@ -63,8 +63,8 @@ public class SocketIOClient {
         if(!connected) {
             Log.d(LOG_TAG, "Connecting to server with socket.io");
             socket.connect();
-            socket.on(Socket.EVENT_CONNECT, mConnectListener);
-            socket.on(Socket.EVENT_RECONNECT, mReconnectListener);
+            socket.on(Socket.EVENT_CONNECT, connectListener);
+            socket.on(Socket.EVENT_RECONNECT, reconnectListener);
             socket.on(Socket.EVENT_DISCONNECT, disconnectListener);
             // TODO : see if there's a better place to put this
             socket.on("invite user", inviteListener);
@@ -87,8 +87,10 @@ public class SocketIOClient {
     }
 
     public void joinSession(int sessionID){
-        if(socket.connected())
+        if(socket.connected()) {
             socket.emit("join session", sessionID);
+            socket.emit("get session", sessionID);
+        }
     }
 
     private Runnable loginRunnable = () -> login();
@@ -130,7 +132,7 @@ public class SocketIOClient {
      * The listener for when the socket gets connected.
      *
      */
-    private Emitter.Listener mConnectListener = new Emitter.Listener() {
+    private Emitter.Listener connectListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {
@@ -154,7 +156,7 @@ public class SocketIOClient {
      * The listener for when the socket gets disconnected.
      *
      */
-    private Emitter.Listener mReconnectListener = new Emitter.Listener() {
+    private Emitter.Listener reconnectListener = new Emitter.Listener() {
 
         @Override
         public void call(Object... args) {

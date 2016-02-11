@@ -159,9 +159,9 @@ public class AudioStatePublisher {
             pausedTime = time;
         }
 
-        if(previousState == PAUSED){
+        if(previousState == PAUSED)
             pausedTime = time;
-        }
+
 
         seekTime = time;
         resumeTime = time;
@@ -213,7 +213,8 @@ public class AudioStatePublisher {
         songToEnd = songID;
         Log.d(LOG_TAG, "Song Ending!");
         update(AudioStatePublisher.END_SONG);
-        if(UnisongSession.getCurrentSession().getCurrentSong() != null)
+        if(UnisongSession.getCurrentSession() != null &&
+                UnisongSession.getCurrentSession().getCurrentSong() != null)
             update(AudioStatePublisher.START_SONG);
     }
 

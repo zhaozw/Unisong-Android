@@ -186,6 +186,10 @@ public class UnisongSession {
     private void parseJSONObject(JSONObject object) throws JSONException{
 
         try {
+
+            if (object.has("sessionState") && !isMaster())
+                sessionState = object.getString("sessionState");
+
             if (object.has("master")) {
                 master = object.getString("master");
                 User user = CurrentUser.getInstance();
@@ -255,7 +259,6 @@ public class UnisongSession {
             if (object.has("sessionState") && !isMaster()) {
                 // TODO : re-enable this when we're ready, then test and implement it seperately
 
-                sessionState = object.getString("sessionState");
                 if(this == currentSession)
                     timer.schedule(updatePublisher, 5000);
 
@@ -411,7 +414,8 @@ public class UnisongSession {
     }
 
     public void disconnect(){
-        socketIOClient.emit("leave", getSessionID());
+        if(socketIOConfigured)
+            socketIOClient.emit("leave", getSessionID());
     }
 
     public void destroy(){
@@ -458,6 +462,10 @@ public class UnisongSession {
         // If we are the master, then notify the server. If not, then we are simply responding.
         if(isMaster())
             socketIOClient.emit("add song" , song.toJSON());
+    }
+
+    public String getSessionState(){
+        return sessionState;
     }
 
     /**
@@ -517,10 +525,9 @@ public class UnisongSession {
 
             Broadcaster broadcaster = Broadcaster.getInstance();
 
-            if(broadcaster != null){
+            if(broadcaster != null)
                 broadcaster.destroy();
-            }
-            destroy();
+
 
         } else {
             Listener listener = Listener.getInstance();
@@ -529,17 +536,25 @@ public class UnisongSession {
 
         }
 
-        disconnectSocketIO();
-        setCurrentSession(null);
-        AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+        SessionUtils.removeSession(getSessionID());
 
-        if(publisher.getState() == AudioStatePublisher.PLAYING)
-            publisher.pause();
+        // This should always be true
+        if(this == currentSession) {
+            disconnectSocketIO();
+            setCurrentSession(null);
+            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+            publisher.detach(songQueue);
+
+            if (publisher.getState() == AudioStatePublisher.PLAYING)
+                publisher.endSong(getCurrentSongID());
 
 
-        publisher.setState(AudioStatePublisher.IDLE);
-        publisher.clear();
+            publisher.clear();
+        } else {
+            Log.d(LOG_TAG , "Leaving session that is not current session!");
+        }
 
+        destroy();
     }
 
     /**

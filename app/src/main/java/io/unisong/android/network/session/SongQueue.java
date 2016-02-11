@@ -202,6 +202,8 @@ public class SongQueue implements AudioObserver {
             e.printStackTrace();
         }
 
+        Log.d(LOG_TAG , "Song updating finished, queue size is : " + songQueue.size());
+
         this.songArray = null;
         this.queue = null;
     }
@@ -337,7 +339,8 @@ public class SongQueue implements AudioObserver {
     public void update(int state) {
         switch (state){
             case AudioStatePublisher.END_SONG:
-                remove(0 , true);
+                if(getSong(publisher.getSongToEnd()) != null)
+                    remove(0 , true);
                 break;
             case AudioStatePublisher.START_SONG:
                 getCurrentSong().start();

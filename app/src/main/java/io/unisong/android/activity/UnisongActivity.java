@@ -540,28 +540,79 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     private Runnable checkUserSession = () ->{
         if(tempUserCheck != null){
             if(tempUserCheck.getSession() != null){
-                Log.d(LOG_TAG , "Selected user has a session! Joining");
-                UnisongSession session = tempUserCheck.getSession();
-
-                User currentUser = CurrentUser.getInstance();
-                currentUser.setSession(session);
-
-                SocketIOClient client = SocketIOClient.getInstance();
-
-                client.joinSession(session.getSessionID());
-
-                // Remember to nullify sessionToNotify
-                UnisongSession.notifyWhenLoaded(null);
-                UnisongSession.setCurrentSession(session);
-                session.getMembers().add(currentUser);
-
-                Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
-                startActivity(intent);
+                Log.d(LOG_TAG, "Selected user has a session! Joining");
+                if(UnisongSession.getCurrentSession() != null){
+                    leaveSessionConfirmationDialog(tempUserCheck);
+                } else {
+                    joinSessionConfirmationDialog(tempUserCheck);
+                }
             }
         }
 
         tempUserCheck = null;
     };
+
+    /**
+     * Displays a dialog asking the user if they would like to leave their current session
+     * @param userToJoin
+     */
+    private void leaveSessionConfirmationDialog(User userToJoin){
+        new MaterialDialog.Builder(this)
+                .content(R.string.leave_session_message)
+                .positiveText(R.string.leave)
+                .negativeText(R.string.cancel)
+                .theme(Theme.LIGHT)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(MaterialDialog materialDialog, DialogAction dialogAction) {
+                        UnisongSession session = UnisongSession.getCurrentSession();
+                        session.leave();
+                        joinSessionConfirmationDialog(userToJoin);
+                    }
+                })
+                .show();
+    }
+
+    private void joinSessionConfirmationDialog(User userToJoin){
+        String message = getResources().getString(R.string.join_session_message);
+        message = message.replace("USER_NAME" , userToJoin.getName());
+
+        new MaterialDialog.Builder(this)
+                .content(message)
+                .positiveText(R.string.join)
+                .negativeText(R.string.cancel)
+                .theme(Theme.LIGHT)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(MaterialDialog materialDialog, DialogAction dialogAction) {
+                        joinSession(userToJoin);
+                    }
+                })
+                .show();
+
+    }
+    /**
+     * Joins the session of the designated user
+     * @param user
+     */
+    private void joinSession(User user){
+        UnisongSession session = user.getSession();
+
+        User currentUser = CurrentUser.getInstance();
+        currentUser.setSession(session);
+
+        SocketIOClient client = SocketIOClient.getInstance();
+
+        client.joinSession(session.getSessionID());
+
+        // Remember to nullify sessionToNotify
+        UnisongSession.notifyWhenLoaded(null);
+        UnisongSession.setCurrentSession(session);
+        session.getMembers().add(currentUser);
+
+        Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
+        startActivity(intent);
+    }
 
 
     public static class IncomingHandler extends Handler{
@@ -596,10 +647,6 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
     }
 
     public void addFriendDialog(){

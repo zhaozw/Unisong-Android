@@ -330,14 +330,39 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
             inviteFriend();
             return true;
         } else if(id == R.id.action_leave_session){
-            onBackPressed();
-            CurrentUser.leaveSession();
+            confirmLeaveSession();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Creates a dialog asking the user if they are sure they would like to leave
+     * the session.
+     */
+    private void confirmLeaveSession(){
+        new MaterialDialog.Builder(this)
+                .content(R.string.leave_session_message)
+                .positiveText(R.string.action_leave_session)
+                .negativeText(R.string.cancel)
+                .theme(Theme.LIGHT)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(MaterialDialog materialDialog, DialogAction dialogAction) {
+                        leaveSession();
+                    }
+                })
+                .show();
+    }
+
+    /**
+     * Leaves the session and goes back to UnisongActivity.
+     */
+    private void leaveSession(){
+            CurrentUser.leaveSession();
+            onBackPressed();
+    }
 
     private void finishActivity(){
         finishAffinity();
@@ -518,18 +543,16 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
                     .content(kickedMessage)
                     .positiveText(R.string.sorry)
                     .theme(Theme.LIGHT)
-                    .callback(new MaterialDialog.ButtonCallback() {
+                    .onPositive(new MaterialDialog.SingleButtonCallback() {
                         @Override
-                        public void onPositive(MaterialDialog dialog) {
-                            onBackPressed();
-                        }
-
-                        @Override
-                        public void onNegative(MaterialDialog dialog){
+                        public void onClick(MaterialDialog dialog, DialogAction action) {
                             onBackPressed();
                         }
                     })
-            .show();
+                    .dismissListener((DialogInterface dialog) -> {
+                        onBackPressed();
+                    })
+                    .show();
         } catch (Resources.NotFoundException e){
             e.printStackTrace();
             Log.d(LOG_TAG , "kicked_message not found! Please rename something if you change it.");
