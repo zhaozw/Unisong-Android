@@ -2,6 +2,7 @@ package io.unisong.android.network.session;
 
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 
 import com.squareup.okhttp.Response;
@@ -90,6 +91,9 @@ public class UnisongSession {
     private SessionSongsAdapter adapter;
     private long lastUpdate;
     private Timer timer;
+
+    // This is the layout that gets notified when we have received an update.
+    private SwipeRefreshLayout swipeRefresh;
 
     /**
      * This constructor creates a UnisongSession where the current user is the
@@ -256,11 +260,11 @@ public class UnisongSession {
             // TODO : ensure that this works in sync with Listener.
             // TODO : figure out how to know when to update the Master's audiosessionstate, and when to
             // update the server instead
-            if (object.has("sessionState") && !isMaster()) {
+            if (object.has("sessionState")) {
                 // TODO : re-enable this when we're ready, then test and implement it seperately
 
                 if(this == currentSession)
-                    timer.schedule(updatePublisher, 5000);
+                    timer.schedule(updatePublisher, 2500);
 
             }
 
@@ -314,8 +318,9 @@ public class UnisongSession {
         socketIOConfigured = true;
         socketIOClient.on("user joined", userJoined);
         socketIOClient.on("update session", updateSessionListener);
+        socketIOClient.on("get session", getSessionListener);
         socketIOClient.on("user left", userLeft);
-        socketIOClient.on("end session", endSession);
+        socketIOClient.on("end session", endSessionListener);
         socketIOClient.on("kick", kickListener);
         socketIOClient.on("kick result", kickResultListener);
         Log.d(LOG_TAG, "Configured Socket.IO");
@@ -331,8 +336,9 @@ public class UnisongSession {
         socketIOConfigured = false;
         socketIOClient.off("user joined", userJoined);
         socketIOClient.off("update session", updateSessionListener);
+        socketIOClient.off("get session", getSessionListener);
         socketIOClient.off("user left", userLeft);
-        socketIOClient.off("end session", endSession);
+        socketIOClient.off("end session", endSessionListener);
         socketIOClient.off("kick", kickListener);
         socketIOClient.off("kick result", kickResultListener);
         Log.d(LOG_TAG , "Socket.IO disconnected for session #" + sessionID);
@@ -490,9 +496,25 @@ public class UnisongSession {
             try{
                 JSONObject object = (JSONObject) args[0];
                 parseJSONObject(object);
+                Log.d(LOG_TAG  , "update session Received");
             } catch (Exception e){
                 e.printStackTrace();
             }
+        }
+    };
+
+    private Emitter.Listener getSessionListener = (Object... args) -> {
+
+        try{
+            JSONObject object = (JSONObject) args[0];
+            parseJSONObject(object);
+            Log.d(LOG_TAG  , "get session Received");
+            if(swipeRefresh != null){
+                swipeRefresh.setRefreshing(false);
+                swipeRefresh = null;
+            }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     };
 
@@ -535,6 +557,9 @@ public class UnisongSession {
                 listener.destroy();
 
         }
+
+
+        socketIOClient.emit("leave" , getSessionID());
 
         SessionUtils.removeSession(getSessionID());
 
@@ -728,7 +753,7 @@ public class UnisongSession {
 
 
     // The listener for when a user leaves a session
-    private Emitter.Listener endSession = new Emitter.Listener() {
+    private Emitter.Listener endSessionListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             try{
@@ -736,6 +761,13 @@ public class UnisongSession {
 
                 if(UnisongSession.this.sessionID == sessionID && !isMaster())
                     endSession();
+
+
+                if(sessionHandler != null) {
+                    Message message = new Message();
+                    message.what = MainSessionActivity.END_SESSION;
+                    sessionHandler.sendMessage(message);
+                }
 
             } catch (ClassCastException e){
                 e.printStackTrace();
@@ -751,6 +783,10 @@ public class UnisongSession {
 
     public void setSessionActivityHandler(MainSessionActivity.SessionMessageHandler handler){
         sessionHandler = handler;
+    }
+
+    public void setRefreshLayout(SwipeRefreshLayout swipeRefresh){
+        this.swipeRefresh = swipeRefresh;
     }
 
 }

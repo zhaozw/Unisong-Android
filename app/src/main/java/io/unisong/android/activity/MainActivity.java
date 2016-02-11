@@ -23,15 +23,12 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String LOG_TAG = MainActivity.class.getSimpleName();
 
-    //The handler for interacting with the UI thread
-    private static Handler sHandler;
-
     private Intent networkIntent;
     private Intent mediaIntent;
     private HttpClient client;
 
     //The Intent
-    private Intent mIntent;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
 
-        mIntent = getIntent();
-        hasStarted = mIntent.getBooleanExtra("has-started", false);
+        intent = getIntent();
+        hasStarted = intent.getBooleanExtra("has-started", false);
 
 
         if(!hasStarted) {
@@ -57,24 +54,7 @@ public class MainActivity extends AppCompatActivity {
             mediaIntent = new Intent(getApplicationContext(), MediaService.class);
             startService(mediaIntent);
 
-            mIntent.putExtra("has-started"  , true);
-        }
-
-        if(sHandler == null) {
-            sHandler = new Handler(Looper.getMainLooper()) {
-
-                /*
-                * handleMessage() defines the operations to perform when
-                * the Handler receives a new Message to process.
-                */
-                @Override
-                public void handleMessage(Message inputMessage) {
-                    // Gets the image task from the incoming Message object.
-
-                }
-
-
-            };
+            intent.putExtra("has-started", true);
         }
 
         if(PrefUtils.getFromPrefs(this , PrefUtils.PREFS_HAS_OPENED_APP_KEY , "no").equals("yes")) {
@@ -182,37 +162,5 @@ public class MainActivity extends AppCompatActivity {
 
         // Logs 'app deactivate' App Event.
         AppEventsLogger.deactivateApp(this);
-    }
-
-    public void pause(View v){
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command", "pause");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    public void resume(View v){
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "resume");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    public void seek(View v){
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "seek");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    public void retransmit(View v){
-        Intent intent = new Intent("unisong-service-interface");
-        // You can also include some extra data.
-        intent.putExtra("command" , "retransmit");
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 }

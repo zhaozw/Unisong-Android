@@ -17,13 +17,18 @@
         android:text="@string/songs"
         android:textSize="16sp"/>
 
-    <com.marshalchen.ultimaterecyclerview.UltimateRecyclerView
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_layout"
         android:layout_below="@id/session_songs_label"
-        android:id="@+id/session_songs_recyclerview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="match_parent">
+        <com.marshalchen.ultimaterecyclerview.UltimateRecyclerView
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            android:id="@+id/session_songs_recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 
     <com.getbase.floatingactionbutton.FloatingActionButton

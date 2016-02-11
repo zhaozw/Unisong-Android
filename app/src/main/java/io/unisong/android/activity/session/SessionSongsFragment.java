@@ -3,6 +3,7 @@ package io.unisong.android.activity.session;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
@@ -33,6 +34,7 @@ public class SessionSongsFragment extends Fragment {
 
     private UnisongSession session;
     private UltimateRecyclerView ultimateRecyclerView;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView.LayoutManager layoutManager;
     private FloatingActionButton FAB;
     private SessionSongsAdapter adapter;
@@ -49,6 +51,15 @@ public class SessionSongsFragment extends Fragment {
         try {
             session = UnisongSession.getCurrentSession();
             ultimateRecyclerView = (UltimateRecyclerView) view.findViewById(R.id.session_songs_recyclerview);
+            swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_layout);
+
+            swipeRefreshLayout.setOnRefreshListener(() ->{
+                UnisongSession session = UnisongSession.getCurrentSession();
+                if(session != null) {
+                    session.getUpdate();
+                    session.setRefreshLayout(swipeRefreshLayout);
+                }
+            });
 
             if (session == null)
                 Log.d(LOG_TAG, "Session is null!");

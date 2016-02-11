@@ -46,6 +46,10 @@ public class Listener{
 
     private AudioTrackManager manager;
 
+    private List<Integer> dataReceived;
+    private List<Integer> dataRequested;
+    private Integer dataToRequestTo = Integer.MAX_VALUE;
+
     private LANReceiver mLANReceiver;
     private ServerReceiver mServerReceiever;
     private List<Receiver> receivers;
@@ -78,6 +82,8 @@ public class Listener{
 
         // Set this instance to the singleton
         instance = this;
+        dataReceived = new ArrayList<>();
+        dataRequested = new ArrayList<>();
     }
 
 
@@ -151,7 +157,23 @@ public class Listener{
     }
 
     public void addFrame(AudioFrame frame){
-//        Log.d(LOG_TAG , "Add Frame received!");
+        Log.d(LOG_TAG , "Frame #" + frame.getID() + " received");
+
+        if(dataToRequestTo != -1 && dataRequested.size() != 0 && !dataRequested.contains(frame.getID())){
+            if(frame.getID() < dataToRequestTo){
+                int maxDataRequested = dataRequested.get(dataRequested.size() -1);
+                dataToRequestTo = frame.getID() - 1;
+
+                if(maxDataRequested < frame.getID()){
+                    if(receivers.size() == 1){
+                        receivers.get(0).requestData(session.getCurrentSong() , maxDataRequested + 1 , dataToRequestTo);
+                    } else {
+                        // TODO : implement
+                    }
+                }
+                dataToRequestTo = -1;
+            }
+        }
         session.addFrame(frame);
     }
 
@@ -179,6 +201,8 @@ public class Listener{
     //Ends the current song, either in preparation for another or not
     public void endSong(int songID){
         audioStatePublisher.endSong(songID);
+        dataReceived = new ArrayList<>();
+        dataRequested = new ArrayList<>();
     }
 
     public void destroy() {
@@ -191,10 +215,36 @@ public class Listener{
         instance = null;
     }
 
-    public void requestData(Song requestFor , int startRange , int endRange){
-        for(Receiver receiver : receivers){
-            receiver.requestData(requestFor , startRange , endRange);
+    /**
+     * This begins requesting data required to play the song, and then subsequently
+     * adjusts the requests based on data received.
+     */
+    public void requestData(Song song){
+        int currentFrame = (int) ((timeManager.getSongTime()) / (1024000.0 / 44100.0));
+
+        if(receivers.size() == 1){
+            Receiver receiver = receivers.get(0);
+
+            receiver.requestData(song , currentFrame , currentFrame + 150);
+
+            for(int i = currentFrame; i < currentFrame + 150; i++){
+                dataRequested.add(i);
+            }
+
+            handler.postDelayed(requestMoreDataRunnable , 5);
+        } else {
+            // TODO : implement for Omnius
         }
     }
+
+    private Runnable requestMoreDataRunnable = () ->{
+
+        if(receivers.size() == 1){
+            receivers.get(0).requestData(session.getCurrentSong() , dataRequested.get(dataRequested.size() - 1)  , dataRequested.get(dataRequested.size() - 1));
+            dataRequested.add(dataRequested.get(dataRequested.size() -1) + 1);
+        } else {
+            // TODO : implement for omnius
+        }
+    };
 
 }

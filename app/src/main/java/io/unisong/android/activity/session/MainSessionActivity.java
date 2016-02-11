@@ -38,7 +38,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.R;
-import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
+import io.unisong.android.activity.session.tabs.SlidingTabLayout;
 import io.unisong.android.activity.session.invite.InviteMemberActivity;
 import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
 import io.unisong.android.audio.AudioStatePublisher;
@@ -59,6 +59,7 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
 
     // The message code for when we have been kicked out of a session
     public static final int KICKED = 23929;
+    public static final int END_SESSION = 23719283;
 
     private static final String LOG_TAG = MainSessionActivity.class.getSimpleName();
     public final static String POSITION = "position";
@@ -559,6 +560,28 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
         }
     }
 
+    private void endSession(){
+        try {
+            new MaterialDialog.Builder(this)
+                    .content(R.string.end_session_message)
+                    .positiveText(R.string.sorry)
+                    .theme(Theme.LIGHT)
+                    .onPositive(new MaterialDialog.SingleButtonCallback() {
+                        @Override
+                        public void onClick(MaterialDialog dialog, DialogAction action) {
+                            onBackPressed();
+                        }
+                    })
+                    .dismissListener((DialogInterface dialog) -> {
+                        onBackPressed();
+                    })
+                    .show();
+        } catch (Resources.NotFoundException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "kicked_message not found! Please rename something if you change it.");
+        }
+    }
+
     @Override
     public void onDestroy(){
         super.onDestroy();
@@ -592,6 +615,9 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
             switch (message.what){
                 case KICKED:
                     activity.runOnUiThread(activity::kicked);
+                    break;
+                case END_SESSION:
+                    activity.runOnUiThread(activity::endSession);
                     break;
 
             }

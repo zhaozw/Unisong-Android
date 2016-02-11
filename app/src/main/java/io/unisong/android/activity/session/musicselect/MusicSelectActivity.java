@@ -23,7 +23,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import io.unisong.android.R;
-import io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout;
+import io.unisong.android.activity.session.tabs.SlidingTabLayout;
 import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.song.LocalSong;
 import io.unisong.android.network.session.UnisongSession;

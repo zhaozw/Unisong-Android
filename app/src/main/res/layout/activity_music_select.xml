@@ -10,7 +10,7 @@
         layout="@layout/music_bar">
     </include>
 
-    <io.unisong.android.activity.musicplayer.tabs.SlidingTabLayout
+    <io.unisong.android.activity.session.tabs.SlidingTabLayout
         android:layout_below="@id/music_bar"
         android:id="@+id/player_tabs"
         android:layout_width="match_parent"

@@ -29,6 +29,7 @@ public class Unisong extends Application {
         super.onCreate();
 //        Fabric.with(this, new Crashlytics());
 //        refWatcher = LeakCanary.install(this);
+
     }
 
     protected void attachBaseContext(Context base) {

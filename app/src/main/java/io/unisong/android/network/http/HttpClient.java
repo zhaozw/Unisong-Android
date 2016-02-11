@@ -340,6 +340,7 @@ public class HttpClient {
                     CurrentUser user = new CurrentUser(context, new User(fBAccessToken));
                     isLoggedIn = true;
                 } else {
+                    Log.d(LOG_TAG , "Response code is : " + response.code());
                     Log.d(LOG_TAG , "Facebook Login Failure");
                     isLoggedIn = false;
                 }

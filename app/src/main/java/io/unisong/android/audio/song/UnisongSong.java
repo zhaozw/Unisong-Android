@@ -51,20 +51,25 @@ public class UnisongSong extends Song {
             Log.d(LOG_TAG, format.toString());
         }
 
+        UnisongSession currentSession =  UnisongSession.getCurrentSession();
         songID = object.getInt("songID");
         sessionID = object.getInt("sessionID");
 
+        if(currentSession == null)
+            return;
+
         if(object.has("songStartTime") && AudioStatePublisher.getInstance().getState() != AudioStatePublisher.PLAYING
-                && UnisongSession.getCurrentSession().getSessionState().equals("playing")) {
-            Log.d(LOG_TAG , "JSONObject has songStartTime! Starting song");
+                && sessionID == currentSession.getSessionID() && currentSession.getSessionState().equals("playing")) {
+            Log.d(LOG_TAG, "JSONObject has songStartTime! Starting song");
             TimeManager timeManager = TimeManager.getInstance();
             timeManager.setSongStartTime(object.getLong("songStartTime"));
 
-            int currentFrame = (int) (timeManager.getSongTime() / (1024000.0 / 44100.0));
 
             // TODO : replace the default 500 frames.
             Listener listener = Listener.getInstance();
-            listener.requestData(this , currentFrame , currentFrame + 500);
+            listener.requestData(this);
+
+            start(timeManager.getSongTime() + 100);
         }
 
     }
