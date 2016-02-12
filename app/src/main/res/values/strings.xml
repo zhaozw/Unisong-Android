@@ -98,4 +98,5 @@
     <string name="leave_session_message">Would you like to leave the session?</string>
     <string name="join_session_message">Would you like to join USER_NAME\'s session?</string>
     <string name="end_session_message">The session has been ended.</string>
+    <string name="no_thanks">No Thanks</string>
 </resources>

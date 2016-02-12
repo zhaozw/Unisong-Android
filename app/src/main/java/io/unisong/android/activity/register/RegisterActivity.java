@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -29,6 +30,9 @@ import java.io.IOException;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.UnisongActivity;
+import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivity;
+import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivity;
+import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 
@@ -202,5 +206,47 @@ public class RegisterActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
         startActivity(intent);
         finish();
+
+        PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+        String[] options = getResources().getStringArray(R.array.add_friend_options);
+
+        runOnUiThread(() -> {
+            new MaterialDialog.Builder(this)
+                    .title(R.string.add_friend_label)
+                    .items(options)
+                    .theme(Theme.LIGHT)
+                    .negativeText(R.string.no_thanks)
+                    .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice() {
+                        @Override
+                        public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                            switch (which) {
+                                case 0:
+                                    Intent intent = new Intent(getApplicationContext(), AddFriendByUsernameActivity.class);
+                                    intent.putExtra("fromRegister", true);
+                                    startActivity(intent);
+                                    finish();
+                                    break;
+
+                                case 1:
+                                    intent = new Intent(getApplicationContext(), AddFriendsFromContactsActivity.class);
+                                    intent.putExtra("fromRegister", true);
+                                    startActivity(intent);
+                                    finish();
+                                    break;
+                            }
+                            return true;
+                        }
+                    })
+                    .onNegative(new MaterialDialog.SingleButtonCallback() {
+                        @Override
+                        public void onClick(MaterialDialog materialDialog, DialogAction dialogAction) {
+                            Intent intent = new Intent(getApplicationContext(), UnisongActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    })
+                    .positiveText(R.string.choose)
+                    .show();
+        });
     }
 }
