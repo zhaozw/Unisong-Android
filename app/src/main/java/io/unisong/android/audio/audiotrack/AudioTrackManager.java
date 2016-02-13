@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import io.unisong.android.audio.AudioObserver;
@@ -67,7 +68,12 @@ public class AudioTrackManager implements AudioObserver {
         audioStatePublisher.attach(this);
 
 
-        handler = new Handler();
+        try {
+            handler = new Handler();
+        } catch (RuntimeException e){
+            Looper.prepare();
+            handler = new Handler();
+        }
         instance = this;
 
         Log.d(LOG_TAG, "AudioTrackManager created and attached to AudioStatePublisher");
@@ -127,6 +133,8 @@ public class AudioTrackManager implements AudioObserver {
                 // TODO : replace with START_SONG
                 Log.d(LOG_TAG , "Playing Received");
                 if(!isPlaying){
+                    if(timeManager == null)
+                        timeManager = TimeManager.getInstance();
                     resume(timeManager.getSongTime() + 500);
                 }
                 break;

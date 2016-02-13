@@ -26,7 +26,7 @@ public class DiscoveryHandler {
         instance = handler;
     }
 
-    private ConnectionUtils mConnection;
+    private ConnectionUtils connection;
     private final static String LOG_TAG = DiscoveryHandler.class.getSimpleName();
     private DatagramSocket socket;
     private Handler mHandler;
@@ -41,7 +41,7 @@ public class DiscoveryHandler {
             Log.d(LOG_TAG, "Creating discovery socket failed!");
         }
 
-        mConnection = ConnectionUtils.getInstance();
+        connection = ConnectionUtils.getInstance();
     }
 
     public Thread getDiscoveryThread(){

@@ -255,8 +255,8 @@ public class HttpClient {
                 String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
 
 
-                if(username.equals("") || password.equals("") && accountType.equals("unisong")) {
-                    Log.d(LOG_TAG , "Saved username and password blank for Unisong account.");
+                if((username.equals("") || password.equals("")) && accountType.equals("unisong")) {
+                    Log.d(LOG_TAG , "Saved username and password blank for Unisong account. accountType : " );
                     isLoggedIn = false;
                 } else {
                     new CurrentUser(context, accountType);

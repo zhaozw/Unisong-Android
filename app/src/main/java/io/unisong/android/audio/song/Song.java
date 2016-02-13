@@ -23,6 +23,8 @@ public abstract class Song {
     //The # of the song
     protected int songID, sessionID;
 
+    protected long songStartTime;
+
     /**
      * This is the constructor for a song created from a network source. We do not need the path
      * since we will be taking it in over wifi.
@@ -111,6 +113,11 @@ public abstract class Song {
 
     public  void notifyDone(){
         publisher.endSong(songID);
+    }
+
+
+    public long getSongStartTime(){
+        return songStartTime;
     }
 
     public abstract void destroy();

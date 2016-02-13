@@ -119,6 +119,7 @@ public class CurrentUser {
         UnisongSession session = currentUser.getSession();
         currentUser = null;
 
+        PrefUtils.saveToPrefs(context, PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "no");
         // delete the Unisong session if we have one
         if(session != null){
             session.leave();

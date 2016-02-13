@@ -123,6 +123,7 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         String phonenumber = formattedPhoneNumber;
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
+        PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "yes");
 
         phonenumber = phonenumber.replace("(" , "");
         phonenumber = phonenumber.replace(")" , "");

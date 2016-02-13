@@ -39,19 +39,19 @@ public class MusicSelectActivity extends AppCompatActivity{
 
 
     public final static String POSITION = "position";
-    private Toolbar mToolbar;
+    private Toolbar toolbar;
 
-    private ViewPager mPager;
-    private SlidingTabLayout mTabs;
+    private ViewPager pager;
+    private SlidingTabLayout tabs;
 
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music_select);
 
-        mToolbar = (Toolbar) findViewById(R.id.music_bar);
+        toolbar = (Toolbar) findViewById(R.id.music_bar);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
         // get and configure actionbar
         ActionBar bar = getSupportActionBar();
         if(bar != null) {
@@ -60,13 +60,13 @@ public class MusicSelectActivity extends AppCompatActivity{
             bar.setHomeButtonEnabled(true);
         }
 
-        mPager = (ViewPager) findViewById(R.id.player_pager);
-        mPager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        pager = (ViewPager) findViewById(R.id.player_pager);
+        pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
 
-        mTabs = (SlidingTabLayout) findViewById(R.id.player_tabs);
-        mTabs.setViewPager(mPager);
-        mTabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.white));
-        mTabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
+        tabs = (SlidingTabLayout) findViewById(R.id.player_tabs);
+        tabs.setViewPager(pager);
+        tabs.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.white));
+        tabs.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryColor));
     }
 
 

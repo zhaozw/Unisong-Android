@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 
@@ -37,10 +38,15 @@ public class FriendsList implements Serializable{
     private final static String FILE_NAME = "FriendsList";
     private final static String LOG_TAG = FriendsList.class.getSimpleName();
 
+    private static UnisongActivity activityToNotify;
     private static FriendsList instance;
 
     public static FriendsList getInstance(){
         return instance;
+    }
+
+    public static void setActivityToNotify(UnisongActivity activity){
+        activityToNotify = activity;
     }
 
     private HttpClient client;
@@ -95,6 +101,10 @@ public class FriendsList implements Serializable{
 
         loadFriends();
 
+        if(activityToNotify != null){
+            activityToNotify.setFriendsList(this);
+            activityToNotify = null;
+        }
     }
 
     private void loadFriends(){

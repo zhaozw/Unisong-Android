@@ -341,4 +341,29 @@ public class User implements Serializable {
     public void update(){
         getSessionStatusThread().start();
     }
+
+    public JSONObject toJSON(){
+        try {
+            JSONObject object = new JSONObject();
+            if (uuid != null)
+                object.put("userID", uuid.toString());
+
+            if(username != null)
+                object.put("username" , username);
+
+            if(name != null)
+                object.put("name" , name);
+
+            if(phoneNumber != null)
+                object.put("phoneNumber" , phoneNumber);
+
+            if(facebookID != null)
+                object.put("facebookID" , facebookID);
+
+            return object;
+        } catch (JSONException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

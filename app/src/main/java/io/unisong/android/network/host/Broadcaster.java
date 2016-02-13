@@ -1,6 +1,7 @@
 package io.unisong.android.network.host;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -60,7 +61,12 @@ public class Broadcaster implements AudioObserver{
         //transmitters.add(mLANTransmitter);
 
         Log.d(LOG_TAG , "Broadcaster Created!");
-        handler = new Handler();
+        try {
+            handler = new Handler();
+        } catch (RuntimeException e){
+            Looper.prepare();
+            handler = new Handler();
+        }
         instance = this;
     }
 

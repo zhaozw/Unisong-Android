@@ -182,6 +182,7 @@ public class LoginActivity extends ActionBarActivity {
             } else if(response.toString().contains("code=200")){
                 //If a user exists with that FB ID then we can proceed straight to FriendsActivity
 
+                PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "yes");
                 client.loginFacebook(facebookLoginResult.getAccessToken());
 
                 startActivity(UnisongActivity.class);
@@ -261,6 +262,7 @@ public class LoginActivity extends ActionBarActivity {
         AccountManager manager = AccountManager.get(this);
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_LOGIN_USERNAME_KEY, username);
         PrefUtils.saveToPrefs(this , PrefUtils.PREFS_LOGIN_PASSWORD_KEY , password);
+        PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "yes");
         startActivity(UnisongActivity.class);
     }
 

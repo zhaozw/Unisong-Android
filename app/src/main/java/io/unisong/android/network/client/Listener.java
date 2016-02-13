@@ -1,6 +1,7 @@
 package io.unisong.android.network.client;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import org.json.JSONObject;
@@ -75,7 +76,12 @@ public class Listener{
         //session = UnisongSession.getInstance();
 
         receivers = new ArrayList<>();
-        handler = new Handler();
+        try {
+            handler = new Handler();
+        } catch (RuntimeException e){
+            Looper.prepare();
+            handler = new Handler();
+        }
 
         if(instance != null)
             Log.d(LOG_TAG , "Listener double instantiated!");
@@ -157,7 +163,6 @@ public class Listener{
     }
 
     public void addFrame(AudioFrame frame){
-        Log.d(LOG_TAG , "Frame #" + frame.getID() + " received");
 
         if(dataToRequestTo != -1 && dataRequested.size() != 0 && !dataRequested.contains(frame.getID())){
             if(frame.getID() < dataToRequestTo){
@@ -194,7 +199,7 @@ public class Listener{
 
     public void resume(long resumeTime,  long newSongStartTime){
         Log.d(LOG_TAG , "Resume received!");
-        timeManager.setSongStartTime(newSongStartTime);
+        timeManager.setSongStartTime(newSongStartTime - timeManager.getOffset());
         audioStatePublisher.resume(resumeTime);
     }
 
@@ -225,7 +230,8 @@ public class Listener{
         if(receivers.size() == 1){
             Receiver receiver = receivers.get(0);
 
-            receiver.requestData(song , currentFrame , currentFrame + 150);
+            // TODO : replace 0 with currentFrame
+            receiver.requestData(song , 0 , currentFrame + 150);
 
             for(int i = currentFrame; i < currentFrame + 150; i++){
                 dataRequested.add(i);

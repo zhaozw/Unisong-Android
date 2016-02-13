@@ -47,8 +47,11 @@ public abstract class Decoder {
 
 
     public void start(){
-        decodeThread = getDecodeThread();
-        decodeThread.start();
+        if(!isRunning) {
+            isRunning = true;
+            decodeThread = getDecodeThread();
+            decodeThread.start();
+        }
     }
 
     public void start(long startTime){
@@ -91,7 +94,6 @@ public abstract class Decoder {
     protected Thread getDecodeThread(){
         return new Thread(() -> {
             try {
-                isRunning = true;
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
                 configureCodec();
                 decode();

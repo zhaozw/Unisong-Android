@@ -66,6 +66,9 @@ public class LocalSong extends Song {
         } else {
             format = new SongFormat(path);
         }
+
+        if(songJSON.has("songStartTime"))
+            songStartTime = songJSON.getLong("songStartTime")- TimeManager.getInstance().getOffset();
     }
 
     /**

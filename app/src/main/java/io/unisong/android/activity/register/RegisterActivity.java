@@ -203,6 +203,7 @@ public class RegisterActivity extends AppCompatActivity {
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY , username);
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_PASSWORD_KEY, password);
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong");
+        PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "yes");
         Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
         startActivity(intent);
         finish();

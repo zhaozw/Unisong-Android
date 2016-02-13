@@ -222,18 +222,17 @@ public class UnisongDecoder extends Decoder {
 
     public void destroy(){
         stop = true;
-        while(isRunning){}
-        decodeThread = null;
-        outputFrames = null;
     }
 
 
     private void waitForFrame(int size){
         boolean firstWait = true;
+        boolean waited = false;
         //TODO: Rewrite this to feed blank AAC frames instead of creating an empty PCM one
         while(!inputFrames.containsKey(inputFrameID)){
 
             if(firstWait) {
+                waited = true;
                 Log.d(LOG_TAG, "Waiting for frame #" + inputFrameID);
                 firstWait = false;
             }
@@ -250,8 +249,12 @@ public class UnisongDecoder extends Decoder {
                 e.printStackTrace();
                 Log.d(LOG_TAG , "Interrupted in waitForFrame()");
             }
-
         }
+
+        if(waited)
+            Log.d(LOG_TAG , "Frame #" + inputFrameID + " has arrived.");
+
+
     }
 
     public Map<Integer, AudioFrame> getInputFrames(){

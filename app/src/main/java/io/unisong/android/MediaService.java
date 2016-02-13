@@ -19,19 +19,19 @@ public class MediaService extends Service{
 
     static final String LOG_TAG = MediaService.class.getSimpleName();
 
-    private IBinder mBinder = new MediaServiceBinder();
+    private IBinder binder = new MediaServiceBinder();
 
     private ContactsLoader mContactsLoader;
 
     private BroadcastReceiver mMessageReceiver;
-    private MusicDataManager mMusicDataManager;
+    private MusicDataManager musicDataManager;
 
     public static final String TEST_FILE_PATH = "/storage/emulated/0/music/05  My Chemical Romance - Welcome To The Black Parade.mp3";
     public static final String LARGE_TEST_FILE_PATH = "/storage/emulated/0/music/1hour.mp3";
 
-    private AudioStatePublisher mAudioStatePublisher;
+    private AudioStatePublisher audioStatePublisher;
 
-    private AudioTrackManager mAudioTrackManager;
+    private AudioTrackManager audioTrackManager;
     @Override
     public void onCreate(){
         //TODO : check server to see if this is the current application version ,and disable the app if its not
@@ -39,26 +39,26 @@ public class MediaService extends Service{
         super.onCreate();
         Log.d(LOG_TAG, "Starting MediaService");
 
-        mAudioStatePublisher = AudioStatePublisher.getInstance();
+        audioStatePublisher = AudioStatePublisher.getInstance();
 
-        if(mAudioStatePublisher == null)
-            mAudioStatePublisher = new AudioStatePublisher();
+        if(audioStatePublisher == null)
+            audioStatePublisher = new AudioStatePublisher();
         // Create AudioStatePublisher first, because many other components will try to access it
 
         //The instanatiation of AudioTrackManager needs to be after that of TimeManager!
         // TODO : fix above bug
-        mAudioTrackManager = new AudioTrackManager();
+        audioTrackManager = new AudioTrackManager();
 
 
-        mMusicDataManager = new MusicDataManager(getApplicationContext());
-        MusicDataManager.setInstance(mMusicDataManager);
+        musicDataManager = new MusicDataManager(getApplicationContext());
+        MusicDataManager.setInstance(musicDataManager);
 
         // Start ConnectionUtils and assign it to the static instance.
 
     }
 
     public IBinder onBind(Intent arg0){
-        return mBinder;
+        return binder;
     }
 
     public class MediaServiceBinder extends Binder {
@@ -75,27 +75,27 @@ public class MediaService extends Service{
     @Override
     public void onDestroy(){
         super.onDestroy();
-        Log.d(LOG_TAG , "Destroying mAudioTrackManager");
+        Log.d(LOG_TAG , "Destroying audioTrackManager");
 
-        if(mMusicDataManager != null)
-            mMusicDataManager.destroy();
+        if(musicDataManager != null)
+            musicDataManager.destroy();
 
-        mMusicDataManager = null;
+        musicDataManager = null;
 
-        if(mAudioTrackManager != null)
-            mAudioTrackManager.destroy();
+        if(audioTrackManager != null)
+            audioTrackManager.destroy();
 
-        mAudioTrackManager = null;
+        audioTrackManager = null;
 
-        if(mAudioStatePublisher != null)
-            mAudioStatePublisher.destroy();
+        if(audioStatePublisher != null)
+            audioStatePublisher.destroy();
 
-        mAudioStatePublisher = null;
+        audioStatePublisher = null;
 
-        if(mMusicDataManager != null)
-            mMusicDataManager.destroy();
+        if(musicDataManager != null)
+            musicDataManager.destroy();
 
-        mMusicDataManager = null;
+        musicDataManager = null;
 
     }
 

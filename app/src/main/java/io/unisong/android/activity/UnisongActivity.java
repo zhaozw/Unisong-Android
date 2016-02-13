@@ -31,6 +31,8 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
 import com.squareup.picasso.Picasso;
 import com.thedazzler.droidicon.IconicFontDrawable;
 
@@ -46,6 +48,7 @@ import java.util.List;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import io.unisong.android.MediaService;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.friends.FriendsAdapter;
@@ -53,6 +56,8 @@ import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivi
 import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivity;
 import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 import io.unisong.android.activity.session.MainSessionActivity;
+import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.network.NetworkService;
 import io.unisong.android.network.SocketIOClient;
 import io.unisong.android.network.connection.ConnectionObserver;
 import io.unisong.android.network.connection.ConnectionStatePublisher;
@@ -87,6 +92,7 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_unisong);
 
         recyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
@@ -99,27 +105,27 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
+        startServices();
+
+
+        String loggedIn = PrefUtils.getFromPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY, "no");
+
+        if(loggedIn.equals("no")){
+            Intent loginIntent = new Intent(getApplicationContext() , LoginActivity.class);
+            startActivity(loginIntent);
+        }
+
+
         friendsList = FriendsList.getInstance();
         long currentTime = System.currentTimeMillis();
         boolean restartedServices = false;
 
         // TODO : ensure friendSList
-        while(friendsList == null){
-
-            try{
-                synchronized (this){
-                    this.wait(1);
-                }
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-            friendsList = FriendsList.getInstance();
+        if(friendsList == null){
+            FriendsList.setActivityToNotify(this);
+        } else {
+            loadFriendsList();
         }
-
-
-        // specify an adapter (see also next example)
-        adapter = new FriendsAdapter(friendsList.getFriends());
-        recyclerView.setAdapter(adapter);
 
         Log.d(LOG_TAG, "creating UnisongActivity");
 
@@ -134,22 +140,17 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
         if(session != null){
             Log.d(LOG_TAG , "UnisongSession Loaded!");
-            Intent intent = new Intent(getApplicationContext() , MainSessionActivity.class);
-            startActivity(intent);
+            Intent sessionIntent = new Intent(getApplicationContext() , MainSessionActivity.class);
+            startActivity(sessionIntent);
         } else {
             UnisongSession.notifyWhenLoaded(this);
             Log.d(LOG_TAG, "UnisongSession Not Loaded");
         }
 
-
-
         handler = new IncomingHandler(this);
         SocketIOClient client = SocketIOClient.getInstance();
 
-        if(!client.isConnected())
-            client.connect();
-
-        client.registerInviteHandler(handler);
+        SocketIOClient.registerInviteHandler(handler);
 
         userProfileImageView = (CircleImageView) findViewById(R.id.user_image);
 
@@ -191,11 +192,21 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
         addFriendButton.setBackground(iconicFontDrawable);
 
-        SocketIOClient socketIO = SocketIOClient.getInstance();
+    }
 
-        if(!socketIO.isConnected())
-            socketIO.connect();
+    public void onResume(){
+        super.onResume();
 
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 
     public void onProfileClick(View view){
@@ -390,7 +401,6 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
         public void run() {
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             startActivity(intent);
-            finish();
         }
     };
 
@@ -477,15 +487,20 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     @Override
     protected void onDestroy(){
         super.onDestroy();
+        // TODO : query isChangingconfigurations
 
-        if(networkIntent != null)
+        if(!isFinishing())
+            return;
+
+        if (networkIntent != null)
             stopService(networkIntent);
 
-        if(mediaIntent != null)
+        if (mediaIntent != null)
             stopService(mediaIntent);
 
         networkIntent = null;
         mediaIntent = null;
+
     }
 
     /**
@@ -713,5 +728,35 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
                         .show();
                 break;
         }
+    }
+
+
+    private void startServices(){
+        Intent intent = getIntent();
+        boolean hasStarted = intent.getBooleanExtra("has-started", false);
+
+        if(!hasStarted) {
+            Log.d(LOG_TAG , "Creating services.");
+            new AudioStatePublisher();
+            new ConnectionStatePublisher(getApplicationContext());
+            //Start MediaService
+            networkIntent = new Intent(getApplicationContext(), NetworkService.class);
+            startService(networkIntent);
+            mediaIntent = new Intent(getApplicationContext(), MediaService.class);
+            startService(mediaIntent);
+
+            intent.putExtra("has-started", true);
+        }
+    }
+
+    public void setFriendsList(FriendsList friendsList){
+        this.friendsList = friendsList;
+        runOnUiThread(this::loadFriendsList);
+    }
+
+    private void loadFriendsList(){
+        // specify an adapter (see also next example)
+        adapter = new FriendsAdapter(friendsList.getFriends());
+        recyclerView.setAdapter(adapter);
     }
 }

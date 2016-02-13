@@ -34,7 +34,7 @@ public class SocketIOClient {
     }
     private final String LOG_TAG = SocketIOClient.class.getSimpleName();
 
-    private Handler inviteHandler;
+    private static Handler inviteHandler;
     private HttpClient httpClient;
     private Socket socket;
     private ServerReceiver mReceiver;
@@ -53,6 +53,7 @@ public class SocketIOClient {
         socket = IO.socket(NetworkUtilities.getSocketIOUri() , opts);
 
         instance = this;
+        connect();
     }
 
     public void setServerReceiver(ServerReceiver receiver){
@@ -253,7 +254,7 @@ public class SocketIOClient {
         }
     };
 
-    public void registerInviteHandler(UnisongActivity.IncomingHandler handler){
+    public static void registerInviteHandler(UnisongActivity.IncomingHandler handler){
         inviteHandler = handler;
     }
 

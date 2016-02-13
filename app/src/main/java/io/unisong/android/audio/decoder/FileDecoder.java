@@ -230,18 +230,7 @@ public class FileDecoder extends Decoder{
     }
 
     public void destroy(){
-
         stop = true;
-
-        while(isRunning){
-
-        }
-        outputFrames = new HashMap<>();
-        inputFrames = new HashMap<>();
-
-        codec = null;
-        extractor = null;
-        song = null;
     }
 
     private void notifyDone(){

@@ -5,6 +5,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
@@ -55,22 +56,8 @@ public class UnisongSong extends Song {
         songID = object.getInt("songID");
         sessionID = object.getInt("sessionID");
 
-        if(currentSession == null)
-            return;
-
-        if(object.has("songStartTime") && AudioStatePublisher.getInstance().getState() != AudioStatePublisher.PLAYING
-                && sessionID == currentSession.getSessionID() && currentSession.getSessionState().equals("playing")) {
-            Log.d(LOG_TAG, "JSONObject has songStartTime! Starting song");
-            TimeManager timeManager = TimeManager.getInstance();
-            timeManager.setSongStartTime(object.getLong("songStartTime"));
-
-
-            // TODO : replace the default 500 frames.
-            Listener listener = Listener.getInstance();
-            listener.requestData(this);
-
-            start(timeManager.getSongTime() + 100);
-        }
+        if(object.has("songStartTime"))
+            songStartTime = object.getLong("songStartTime") - TimeManager.getInstance().getOffset();
 
     }
 
@@ -130,7 +117,13 @@ public class UnisongSong extends Song {
         if(decoder != null)
             decoder.destroy();
 
-        Map<Integer, AudioFrame> inputFrames = ((UnisongDecoder)decoder).getInputFrames();
+        Map<Integer, AudioFrame> inputFrames;
+
+        if(decoder == null){
+            inputFrames = new HashMap<>();
+        } else {
+            inputFrames = ((UnisongDecoder)decoder).getInputFrames();
+        }
         decoder = new UnisongDecoder(getFormat());
         ((UnisongDecoder)decoder).setInputFrames(inputFrames);
         decoder.start(seekTime);

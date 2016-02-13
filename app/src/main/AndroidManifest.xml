@@ -28,23 +28,25 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             >
-
-        </activity>
-
-        <activity
-            android:name="io.unisong.android.activity.MainActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <activity
+            android:name="io.unisong.android.activity.MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
+        </activity>
+
         <activity
             android:name="io.unisong.android.activity.session.invite.InviteMemberActivity"
             android:label="@string/action_invite_friend" >
         </activity>
+
         <activity
             android:name="io.unisong.android.activity.LoginActivity"
             android:label="@string/login" >
@@ -83,6 +85,7 @@
         <activity android:name=".activity.session.MainSessionActivity"
             android:label="@string/app_name"
             />
+
         <activity android:name=".activity.session.musicselect.CollectionSelectActivity"
             android:label="@string/app_name"
             />

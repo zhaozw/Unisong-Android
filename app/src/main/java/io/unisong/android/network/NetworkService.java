@@ -39,15 +39,19 @@ public class NetworkService extends Service {
 
     @Override
     public void onCreate(){
-        FacebookSdk.sdkInitialize(getApplicationContext());
+        super.onCreate();
+        Log.d(LOG_TAG, "Creating NetworkService");
+        timeManager = new TimeManager();
 
-        connectionStatePublisher = new ConnectionStatePublisher(getApplicationContext());
+        connectionStatePublisher = ConnectionStatePublisher.getInstance();
+
+        if(connectionStatePublisher == null)
+            connectionStatePublisher = new ConnectionStatePublisher(getApplicationContext());
 
         // TODO : only keep us connected when A: the user is using the app
         // TODO : and B: a user is logged in
         socketIO = new SocketIOClient(getApplicationContext());
 
-        Log.d(LOG_TAG, "Creating NetworkService");
 
         client = HttpClient.getInstance();
         if(client == null) {
@@ -58,7 +62,6 @@ public class NetworkService extends Service {
         connectionStatePublisher.setHttpClient(client);
 
 
-        timeManager = new TimeManager();
 
         ConnectionUtils utils = new ConnectionUtils();
         ConnectionUtils.setInstance(utils);

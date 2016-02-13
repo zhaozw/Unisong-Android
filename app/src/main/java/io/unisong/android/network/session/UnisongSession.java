@@ -5,6 +5,8 @@ import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONArray;
@@ -33,6 +35,7 @@ import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.host.transmitter.ServerTransmitter;
 import io.unisong.android.network.host.transmitter.Transmitter;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
@@ -42,7 +45,7 @@ import io.unisong.android.network.user.UserUtils;
  * This class will contain all the information about the session and those
  * within it, along with the information on current and future songs.
  *
- * Utilizes the Singleton design pattern.
+ * Utilizes the Singleton design pattern for the current session.
  * Created by Ethan on 8/1/2015.
  */
 public class UnisongSession {
@@ -78,16 +81,17 @@ public class UnisongSession {
 
     private int newSongID, sessionID;
 
-    private boolean isMaster, socketIOConfigured;
+    private boolean isMaster, socketIOConfigured, isLoaded = false;
 
     private SongQueue songQueue;
     private String master, sessionState;
 
     private MainSessionActivity.SessionMessageHandler sessionHandler;
-    private SocketIOClient socketIOClient;
+    private AudioStatePublisher publisher = AudioStatePublisher.getInstance();
+    private SocketIOClient socketIOClient = SocketIOClient.getInstance();
     private SessionMembers members;
     private List<Client> clients;
-    private HttpClient client;
+    private HttpClient client = HttpClient.getInstance();
     private SessionSongsAdapter adapter;
     private long lastUpdate;
     private Timer timer;
@@ -100,10 +104,6 @@ public class UnisongSession {
      * session host.
      */
     public UnisongSession(){
-
-        client = HttpClient.getInstance();
-        socketIOClient = SocketIOClient.getInstance();
-
         songQueue = new SongQueue(this);
         members = new SessionMembers(this);
         isMaster = true;
@@ -134,8 +134,6 @@ public class UnisongSession {
             e.printStackTrace();
         }*/
         Log.d(LOG_TAG , "Creating session based on ID : " + ID);
-        client = HttpClient.getInstance();
-        socketIOClient = SocketIOClient.getInstance();
 
         songQueue = new SongQueue(this);
         members = new SessionMembers(this);
@@ -146,45 +144,37 @@ public class UnisongSession {
 
     }
 
-    public UnisongSession(User userToJoin){
-
-    }
-
     /**
-     * Starts a thread to download the relevant issues from the server
+     * Sends an async GET request to the server to retrieve info about this session.
      */
     private void getInfoFromServer(){
-        Log.d(LOG_TAG , "Posting");
-        // TODO : don't use thread here.
-        new Thread(() ->{
-            Log.d(LOG_TAG , "calling download");
-            Looper.prepare();
-            downloadInfo();
-        }).start();
-    }
-
-    /**
-     * Downloads the info about the current info from the server
-     */
-    private void downloadInfo(){
-        try {
-            Log.d(LOG_TAG, "Sending GET about session.");
-            Response response = client.syncGet(NetworkUtilities.HTTP_URL + "/session/" + sessionID);
-
-            Log.d(LOG_TAG , "Code : " + response.code() );
-            if(response.code() == 200){
-                String body = response.body().string();
-                Log.d(LOG_TAG , body);
-
-                JSONObject object = new JSONObject(body);
-
-                parseJSONObject(object);
-            } else if(response.code() == 404){
-                Log.d(LOG_TAG , "Session not found!");
+        Callback callback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Http GET for Session failed!");
             }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                try {
+                    if (response.code() == 200) {
+                        String body = response.body().string();
+                        Log.d(LOG_TAG, body);
+
+                        JSONObject object = new JSONObject(body);
+
+                        parseJSONObject(object);
+                    } else if (response.code() == 404) {
+                        Log.d(LOG_TAG, "Session not found!");
+                    }
+                } catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        Log.d(LOG_TAG, "Sending GET about session.");
+        client.get(NetworkUtilities.HTTP_URL + "/session/" + sessionID, callback);
     }
 
     private void parseJSONObject(JSONObject object) throws JSONException{
@@ -263,9 +253,6 @@ public class UnisongSession {
             if (object.has("sessionState")) {
                 // TODO : re-enable this when we're ready, then test and implement it seperately
 
-                if(this == currentSession)
-                    timer.schedule(updatePublisher, 2500);
-
             }
 
             if (object.has("songID")) {
@@ -273,31 +260,12 @@ public class UnisongSession {
             }
 
             Log.d(LOG_TAG, "Parsing complete");
+            isLoaded = true;
         } catch (Exception e){
             e.printStackTrace();
             Log.d(LOG_TAG, "Unknown Exception in UnisongSession.parseJSON!");
         }
     }
-
-    private TimerTask updatePublisher = new TimerTask() {
-        @Override
-        public void run() {
-
-            AudioStatePublisher publisher = AudioStatePublisher.getInstance();
-            if (sessionState.equals("idle")) {
-                if (publisher.getState() != AudioStatePublisher.IDLE)
-                    publisher.update(AudioStatePublisher.IDLE);
-
-            } else if (sessionState.equals("paused")) {
-                if (publisher.getState() != AudioStatePublisher.PAUSED)
-                    publisher.update(AudioStatePublisher.PAUSED);
-
-            } else if (sessionState.equals("playing")) {
-                if (publisher.getState() != AudioStatePublisher.PLAYING)
-                    publisher.update(AudioStatePublisher.PLAYING);
-            }
-        }
-    };
 
     /**
      * Creates the session on the server side.
@@ -334,6 +302,7 @@ public class UnisongSession {
             return;
 
         socketIOConfigured = false;
+        socketIOClient.emit("leave", getSessionID());
         socketIOClient.off("user joined", userJoined);
         socketIOClient.off("update session", updateSessionListener);
         socketIOClient.off("get session", getSessionListener);
@@ -367,6 +336,7 @@ public class UnisongSession {
 
                     socketIOClient.joinSession(sessionID);
                     members.add(CurrentUser.getInstance());
+                    isLoaded = true;
                 }
             } catch (IOException e){
                 e.printStackTrace();
@@ -387,14 +357,6 @@ public class UnisongSession {
 
         });
 
-    }
-
-    public void addClient(Client client){
-        for (Client comp : clients){
-            if(comp.equals(client)) return;
-        }
-
-        clients.add(client);
     }
 
     public int getCurrentSongID(){
@@ -419,16 +381,9 @@ public class UnisongSession {
 
     }
 
-    public void disconnect(){
-        if(socketIOConfigured)
-            socketIOClient.emit("leave", getSessionID());
-    }
-
     public void destroy(){
         if(isMaster)
             socketIOClient.emit("end session" , getSessionID());
-
-        disconnect();
 
         songQueue = null;
         clients = null;
@@ -490,6 +445,9 @@ public class UnisongSession {
             socketIOClient.emit("delete song" , args);
     }
 
+    /**
+     * The Listener for socket.io that listens for session update events.
+     */
     private Emitter.Listener updateSessionListener = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
@@ -503,6 +461,9 @@ public class UnisongSession {
         }
     };
 
+    /**
+     * Listens for returns to the "get session" event to update the session state on the client.
+     */
     private Emitter.Listener getSessionListener = (Object... args) -> {
 
         try{
@@ -542,6 +503,26 @@ public class UnisongSession {
         return isMaster;
     }
 
+    /**
+     * Leaves the current session. If this user is the master, the session is destroyed.
+     *
+     * The following steps are taken.
+     * If Master:
+     * The broadcaster is destroyed.
+     *
+     * If not:
+     * The listener is destroyed
+     *
+     * Always :
+     * The socket.io listeners are disconnected, "leave" is emitted,
+     * SongQueue is disconnected from the AudioStatePublisher
+     * The current session is set to null
+     *
+     * If we are currently playing, an END_SONG is emitted.
+     *
+     * The publisher is cleared.
+     * destroy() is called.
+     */
     public void leave(){
         if(isMaster()){
 
@@ -557,9 +538,6 @@ public class UnisongSession {
                 listener.destroy();
 
         }
-
-
-        socketIOClient.emit("leave" , getSessionID());
 
         SessionUtils.removeSession(getSessionID());
 
@@ -788,5 +766,6 @@ public class UnisongSession {
     public void setRefreshLayout(SwipeRefreshLayout swipeRefresh){
         this.swipeRefresh = swipeRefresh;
     }
+
 
 }

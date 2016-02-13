@@ -31,7 +31,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     private boolean transmitting;
     private AudioStatePublisher publisher;
     private TimeManager timeManager;
-    private int frameToUpload;
+    private Integer frameToUpload;
     private ScheduledFuture<?> scheduledFuture;
     private ScheduledExecutorService worker;
     private UnisongSession session;
@@ -147,7 +147,9 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 if(uploadCount >= 100){
                     Log.d(LOG_TAG , "Frame #" + frameToUpload + " uploaded");
                 }
-                frameToUpload++;
+                synchronized (frameToUpload) {
+                    frameToUpload++;
+                }
             }
         } else {
 //            Log.d(LOG_TAG , "Looking for frame #" + frameToUpload + " while size is : " + song.getPCMFrames().size());
@@ -165,6 +167,7 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             case AudioStatePublisher.RESUME:
                 try {
                     JSONObject object = new JSONObject();
+                    object.put("songID" , session.getCurrentSongID());
                     object.put("resumeTime", publisher.getResumeTime());
                     object.put("songStartTime", TimeManager.getInstance().getSongStartTime() + TimeManager.getInstance().getOffset());
                     client.emit("resume", object);

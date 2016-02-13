@@ -14,6 +14,7 @@ public class PrefUtils {
     public static final String PREFS_HAS_OPENED_APP_KEY = "__OPENED__" ;
     public static final String PREFS_FACEBOOK_ACCESS_TOKEN_KEY = "__FB_ACCESS_TOKEN__";
     public static final String PREFS_ACCOUNT_TYPE_KEY = "__ACCOUNT_TYPE__";
+    public static final String PREFS_HAS_LOGGED_IN_KEY = "__LOGGED_IN__";
 
     /**
      * Called to save supplied value in shared preferences against given key.
@@ -25,7 +26,7 @@ public class PrefUtils {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         final SharedPreferences.Editor editor = prefs.edit();
         editor.putString(key,value);
-        editor.commit();
+        editor.apply();
     }
 
     /**
