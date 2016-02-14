@@ -3,7 +3,15 @@ package io.unisong.android.audio.encoder;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.util.Base64;
 import android.util.Log;
+
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,6 +22,9 @@ import java.util.Map;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.decoder.FileDecoder;
 import io.unisong.android.audio.song.LocalSong;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * This class represents a single Thread running in the AACEncoder class
@@ -77,6 +88,7 @@ public class AACEncoderThread extends Thread {
     }
 
     private void encode(){
+        boolean firstData = true;
         // TODO : get rid of frames that have been played.
         long startTime = System.currentTimeMillis();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -212,7 +224,10 @@ public class AACEncoderThread extends Thread {
                 final byte[] chunk = new byte[info.size];
                 buf.get(chunk);
                 buf.clear();
-                if(chunk.length > 0){
+                if(firstData){
+                    uploadCSDBuffer(chunk);
+                    firstData = false;
+                } else if(chunk.length > 0){
                     createFrame(chunk);
                 }
 
@@ -325,6 +340,45 @@ public class AACEncoderThread extends Thread {
             synchronized (outputFrames) {
                 outputFrames.put(frame.getID(), frame);
             }
+        }
+
+    }
+
+    /**
+     * Uploads the CSD Buffers to the server for standalone download by the clients.
+     */
+    private void uploadCSDBuffer(byte[] buffer){
+        HttpClient client = HttpClient.getInstance();
+        Log.d(LOG_TAG , "Posting CSD Buffers");
+
+        Callback callback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                e.printStackTrace();
+                Log.d(LOG_TAG , "Posting CSD Buffers failed");
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if(response.code() == 403){
+                    client.reauthorize();
+                } else if(response.code() == 200){
+                    Log.d(LOG_TAG , "CSD Buffers posted correctly.");
+                }
+            }
+        };
+
+        String base64 = Base64.encodeToString(buffer, Base64.DEFAULT);
+        JSONObject object = new JSONObject();
+
+        Log.d(LOG_TAG , "URL : " + NetworkUtilities.HTTP_URL + "/session/" +
+                UnisongSession.getCurrentSession().getSessionID() + "/song/" + songID + "/CSDBuffer");
+        try{
+            object.put("buffer" , base64);
+            client.post(NetworkUtilities.HTTP_URL + "/session/" +
+                    UnisongSession.getCurrentSession().getSessionID() + "/song/" + songID + "/CSDBuffer", object , callback);
+        } catch (JSONException e){
+            e.printStackTrace();
         }
 
     }

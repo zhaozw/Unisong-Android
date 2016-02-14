@@ -9,10 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.decoder.UnisongDecoder;
 import io.unisong.android.network.NetworkUtilities;
-import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.ntp.TimeManager;
 import io.unisong.android.network.session.UnisongSession;
 
@@ -48,16 +46,16 @@ public class UnisongSong extends Song {
         // TODO : fix the imageURL stuff
         super(object.getString("name"), object.getString("artist"), object.getInt("songID"), null);//object.getString("imageURL"));
 
+        songID = object.getInt("songID");
+        sessionID = object.getInt("sessionID");
         frames = new HashMap<>();
         if(object.has("format")) {
             format = new SongFormat(object.getJSONObject("format"));
-            decoder = new UnisongDecoder(format , frames);
+            decoder = new UnisongDecoder(format , frames, songID);
             Log.d(LOG_TAG, format.toString());
         }
 
         UnisongSession currentSession =  UnisongSession.getCurrentSession();
-        songID = object.getInt("songID");
-        sessionID = object.getInt("sessionID");
 
         if(object.has("songStartTime"))
             songStartTime = object.getLong("songStartTime") - TimeManager.getInstance().getOffset();
@@ -109,7 +107,7 @@ public class UnisongSong extends Song {
     @Override
     public void start(long startTime) {
         if(!started){
-            decoder = new UnisongDecoder(getFormat() , frames);
+            decoder = new UnisongDecoder(getFormat() , frames, songID);
             decoder.start(startTime);
             started = true;
         }
@@ -120,7 +118,7 @@ public class UnisongSong extends Song {
         if(decoder != null)
             decoder.destroy();
 
-        decoder = new UnisongDecoder(getFormat() , frames);
+        decoder = new UnisongDecoder(getFormat() , frames, songID);
         decoder.start(seekTime);
     }
 

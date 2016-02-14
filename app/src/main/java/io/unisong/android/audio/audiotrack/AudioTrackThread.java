@@ -83,13 +83,15 @@ public class AudioTrackThread extends Thread {
         } else {
             Log.d(LOG_TAG , "Starting Write, " + (timeManager.getSongStartTime() + resumeTime - System.currentTimeMillis())  + "ms until song start time." );
         }
+        long lastWriteTime = System.currentTimeMillis();
         while(running) {
+            lastWriteTime = System.currentTimeMillis();
 
             if(!song.hasPCMFrame(frameToPlay)){
                 Log.d(LOG_TAG , "Song does not have frame #" + frameToPlay);
             }
 
-            boolean firstWait = true;
+
             while (!song.hasPCMFrame(frameToPlay)) {
                 try {
                     waiting = true;
@@ -116,6 +118,7 @@ public class AudioTrackThread extends Thread {
 
 
             audioTrack.write(data, 0, data.length);
+            Log.d(LOG_TAG, "Last write time was :" + (System.currentTimeMillis() - lastWriteTime) + "ms ago");
         }
 
 

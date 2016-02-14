@@ -38,9 +38,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.R;
-import io.unisong.android.activity.session.tabs.SlidingTabLayout;
 import io.unisong.android.activity.session.invite.InviteMemberActivity;
 import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
+import io.unisong.android.activity.session.tabs.SlidingTabLayout;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.connection.ConnectionObserver;

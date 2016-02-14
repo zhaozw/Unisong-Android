@@ -106,7 +106,9 @@ public class AACEncoder{
 
     public void seek(long seekTime){
         // TODO : uncomment this as well.
-        encodeThread.stopEncoding();
+        if(encodeThread != null)
+            encodeThread.stopEncoding();
+
         encodeThread = new AACEncoderThread(outputFrames , song.getID(), filePath);
         encodeThread.startEncode(seekTime);
     }

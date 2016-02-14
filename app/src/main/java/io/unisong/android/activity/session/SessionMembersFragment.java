@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import io.unisong.android.R;
-import io.unisong.android.Unisong;
 import io.unisong.android.network.session.UnisongSession;
 
 

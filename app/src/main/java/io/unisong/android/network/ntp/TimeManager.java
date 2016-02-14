@@ -2,7 +2,6 @@ package io.unisong.android.network.ntp;
 
 import android.util.Log;
 
-import io.unisong.android.Unisong;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.song.Song;

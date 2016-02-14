@@ -1,8 +1,10 @@
 package io.unisong.android.audio.decoder;
 
 import android.media.MediaCodec;
-import android.media.MediaFormat;
+import android.util.Base64;
 import android.util.Log;
+
+import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,6 +13,9 @@ import java.util.Map;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.song.SongFormat;
+import io.unisong.android.network.NetworkUtilities;
+import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.session.UnisongSession;
 
 /**
  * A decoder class that decodes a single song.
@@ -29,16 +34,17 @@ public class UnisongDecoder extends Decoder {
     private MediaCodec codec;
 
 
-    private byte[] manualData = new byte[] {18 , 16};
+    private byte[] csdBuffer;
 
     private boolean started = false;
-    private int frameBufferSize;
+    private int songID;
     private SongFormat songFormat;
 
 
-    public UnisongDecoder(SongFormat format, Map<Integer, AudioFrame> frames){
+    public UnisongDecoder(SongFormat format, Map<Integer, AudioFrame> frames, int songID){
         super();
         songFormat = format;
+        this.songID = songID;
         inputFormat = songFormat.getMediaFormat();
         frameBufferSize = 50;
         outputFrameID = 0;
@@ -80,9 +86,11 @@ public class UnisongDecoder extends Decoder {
 
         waitForFrame();
 
+        getCSDBuffer();
+
         synchronized (inputFrames){
             int oneLower = inputFrameID - 1;
-            AudioFrame bufferData = new AudioFrame(manualData , oneLower , 1);
+            AudioFrame bufferData = new AudioFrame(csdBuffer, oneLower , songID);
             inputFrames.put(oneLower , bufferData);
             inputFrameID = oneLower;
         }
@@ -131,7 +139,6 @@ public class UnisongDecoder extends Decoder {
                     dstBuf.clear();
 
                     int sampleSize = setData(frame , dstBuf);
-                    Log.d(LOG_TAG , "sampleSize is : " + sampleSize + " when frame ID #" + frame.getID() + " and frame size of : " + frame.getData().length);
 
                     codec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
 
@@ -273,4 +280,26 @@ public class UnisongDecoder extends Decoder {
 
     }
 
+    private void getCSDBuffer(){
+        HttpClient client = HttpClient.getInstance();
+
+        Response response;
+        try {
+            response = client.syncGet(NetworkUtilities.HTTP_URL + "/session/" +
+                    UnisongSession.getCurrentSession().getSessionID() + "/song/" + songID + "/CSDBuffer");
+
+            if(response.code() == 200){
+                String base64 = response.body().string();
+                Log.d(LOG_TAG , base64);
+                csdBuffer = Base64.decode(base64 , Base64.DEFAULT);
+            } else {
+                getCSDBuffer();
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+            getCSDBuffer();
+            return;
+        }
+
+    }
 }

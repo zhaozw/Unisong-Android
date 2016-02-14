@@ -3,7 +3,6 @@ package io.unisong.android.audio.song;
 import org.json.JSONObject;
 
 import io.unisong.android.audio.AudioFrame;
-import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.decoder.Decoder;
 

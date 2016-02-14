@@ -7,7 +7,6 @@ import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
@@ -35,7 +34,6 @@ import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivi
 import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
-import io.unisong.android.network.user.CurrentUser;
 import io.unisong.android.network.user.FacebookAccessToken;
 
 /**

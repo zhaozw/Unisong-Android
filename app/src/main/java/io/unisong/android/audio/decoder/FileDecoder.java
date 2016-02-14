@@ -8,7 +8,6 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 
 import io.unisong.android.audio.encoder.AACEncoder;
 import io.unisong.android.audio.song.Song;

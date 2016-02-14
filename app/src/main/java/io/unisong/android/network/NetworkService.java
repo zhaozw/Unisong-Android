@@ -6,11 +6,9 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.facebook.FacebookSdk;
-
-import io.unisong.android.network.discovery.DiscoveryHandler;
 import io.unisong.android.network.client.Listener;
 import io.unisong.android.network.connection.ConnectionStatePublisher;
+import io.unisong.android.network.discovery.DiscoveryHandler;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.http.HttpClient;
 import io.unisong.android.network.ntp.TimeManager;

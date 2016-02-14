@@ -1,6 +1,5 @@
 package io.unisong.android.network.session;
 
-import android.os.Looper;
 import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;

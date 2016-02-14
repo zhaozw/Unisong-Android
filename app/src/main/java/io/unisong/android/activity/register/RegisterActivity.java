@@ -31,7 +31,6 @@ import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
 import io.unisong.android.activity.UnisongActivity;
 import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivity;
-import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivity;
 import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;

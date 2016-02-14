@@ -26,9 +26,8 @@ public class AudioTrackManager implements AudioObserver {
         }
         return instance;
     }
-
-    //TODO: change this to AudioTrackManager.class.getSimpleName()
-    private String LOG_TAG = "AudioTrackManager";
+    
+    private String LOG_TAG = AudioTrackManager.class.getSimpleName();
 
 
     //the last frame ID that has been played

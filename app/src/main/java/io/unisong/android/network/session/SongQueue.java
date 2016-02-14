@@ -142,7 +142,7 @@ public class SongQueue implements AudioObserver {
         Log.d(LOG_TAG, songArray.toString());
         MusicDataManager manager = MusicDataManager.getInstance();
         // TODO : revert isLoaded to manager.isDoneLoading()
-        if( manager.isDoneLoading()){
+        if(manager != null && manager.isDoneLoading()){
             parseUpdate(songArray, queue);
         } else {
             this.songArray = songArray;

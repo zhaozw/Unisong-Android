@@ -10,7 +10,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.socket.emitter.Emitter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
@@ -130,32 +129,33 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         if(scheduledFuture != null)
             scheduledFuture.cancel(false);
 
-        scheduledFuture = worker.scheduleAtFixedRate(broadcastRunnable, 0, 5, TimeUnit.MILLISECONDS);
+        scheduledFuture = worker.scheduleAtFixedRate(broadcastRunnable, 0, 22, TimeUnit.MILLISECONDS);
     }
 
     private int uploadCount = 0;
 
     private Runnable broadcastRunnable = () -> {
+        synchronized (frameToUpload) {
 
-        if(song.hasAACFrame(frameToUpload)){
-            AudioFrame frame = song.getAACFrame(frameToUpload);
+            if (song.hasAACFrame(frameToUpload)) {
+                AudioFrame frame = song.getAACFrame(frameToUpload);
 //            Log.d(LOG_TAG, "Frame is null? " + (frame == null));
-            if(frame != null) {
+                if (frame != null) {
 //                Log.d(LOG_TAG, "Frame #" + frameToUpload + " uploaded");
-                uploadFrame(frame);
+                    uploadFrame(frame);
 
-                if(uploadCount >= 100){
-                    Log.d(LOG_TAG , "Frame #" + frameToUpload + " uploaded");
-                }
-                synchronized (frameToUpload) {
+                    if (uploadCount >= 100) {
+                        Log.d(LOG_TAG, "Frame #" + frameToUpload + " uploaded");
+                    }
+
                     frameToUpload++;
                 }
-            }
-        } else {
+            } else {
 //            Log.d(LOG_TAG , "Looking for frame #" + frameToUpload + " while size is : " + song.getPCMFrames().size());
+            }
+
+
         }
-
-
     };
 
     @Override
@@ -177,7 +177,9 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 break;
             case AudioStatePublisher.SEEK:
                 client.emit("seek", publisher.getSeekTime());
-                frameToUpload = (int) (publisher.getSeekTime() / ((1024.0 * 1000.0) / 44100.0));
+                synchronized (frameToUpload) {
+                    frameToUpload = (int) (publisher.getSeekTime() / ((1024.0 * 1000.0) / 44100.0));
+                }
                 break;
             case AudioStatePublisher.PLAYING:
 //                client.emit("playing", "playing");

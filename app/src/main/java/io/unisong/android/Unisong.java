@@ -5,9 +5,7 @@ import android.content.Context;
 import android.support.multidex.MultiDex;
 
 //import com.crashlytics.android.Crashlytics;
-
 //import io.fabric.sdk.android.Fabric;
-import io.unisong.android.network.user.User;
 
 /**
  * Created by Ethan on 2/14/2015.

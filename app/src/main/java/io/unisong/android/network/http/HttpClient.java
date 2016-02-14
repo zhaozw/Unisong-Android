@@ -39,6 +39,7 @@ import io.unisong.android.network.user.User;
 public class HttpClient {
 
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    public static final MediaType STRING = MediaType.parse("text/plain; charset=utf-8");
     private static final String LOG_TAG = HttpClient.class.getSimpleName();
 
     private AccessToken fBAccessToken;
@@ -70,6 +71,41 @@ public class HttpClient {
     public void login(String username, String password){
         loginDone = false;
         getLoginThread(username , password).start();
+    }
+
+    public void login(){
+        JSONObject object = new JSONObject();
+        String username = PrefUtils.getFromPrefs(context , PrefUtils.PREFS_LOGIN_USERNAME_KEY , "");
+        String password = PrefUtils.getFromPrefs(context, PrefUtils.PREFS_LOGIN_PASSWORD_KEY , "");
+
+        try {
+            object.put("username", username);
+            object.put("password", password);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        Callback callback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                e.printStackTrace();
+                loginDone = true;
+                isLoggedIn = false;
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if(response.code() == 200){
+                    isLoggedIn = true;
+                } else if(response.code() == 403){
+                    isLoggedIn = false;
+                    Log.d(LOG_TAG , "login() failed! Wrong credentials");
+                }
+                loginDone = true;
+            }
+        };
+
+        post(NetworkUtilities.HTTP_URL + "/login", object, callback);
     }
 
     public OkHttpClient getClient(){
@@ -394,4 +430,16 @@ public class HttpClient {
             }
         }
     };
+
+    /**
+     * Authorizes the user upon receipt of a 403 error. This will help avoid errors
+     */
+    public void reauthorize(){
+
+        if(PrefUtils.getFromPrefs(context , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong").equals("unisong")){
+            login();
+        } else {
+            loginFacebook(AccessToken.getCurrentAccessToken());
+        }
+    }
 }
