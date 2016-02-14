@@ -26,7 +26,7 @@ public class AudioTrackManager implements AudioObserver {
         }
         return instance;
     }
-    
+
     private String LOG_TAG = AudioTrackManager.class.getSimpleName();
 
 

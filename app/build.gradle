@@ -29,7 +29,6 @@ android {
 
     buildTypes {
         release {
-            debuggable true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -62,6 +61,9 @@ dependencies {
     compile 'com.marshalchen.ultimaterecyclerview:library:0.3.18'
     compile 'org.apache.commons:commons-math3:3.6'
     compile 'com.googlecode.libphonenumber:libphonenumber:7.2.4'
+    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
+        transitive = true;
+    }
 
 }
 
@@ -75,3 +77,4 @@ repositories {
 
 apply plugin: 'com.android.application' //or apply plugin: 'java'
 apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'io.fabric'

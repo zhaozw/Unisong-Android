@@ -116,9 +116,8 @@ public class AudioTrackThread extends Thread {
 
             byte[] data = frame.getData();
 
-
-            audioTrack.write(data, 0, data.length);
             Log.d(LOG_TAG, "Last write time was :" + (System.currentTimeMillis() - lastWriteTime) + "ms ago");
+            audioTrack.write(data, 0, data.length);
         }
 
 
