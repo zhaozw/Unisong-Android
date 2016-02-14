@@ -164,4 +164,8 @@ public class SongFormat {
 
         return format;
     }
+
+    public String toString(){
+        return toJSON().toString();
+    }
 }

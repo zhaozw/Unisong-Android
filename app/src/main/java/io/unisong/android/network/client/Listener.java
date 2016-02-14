@@ -180,6 +180,8 @@ public class Listener{
             }
         }
         session.addFrame(frame);
+
+
     }
 
     public void seek(long seekTime){
@@ -231,7 +233,7 @@ public class Listener{
             Receiver receiver = receivers.get(0);
 
             // TODO : replace 0 with currentFrame
-            receiver.requestData(song , 0 , currentFrame + 150);
+            receiver.requestData(song , currentFrame - 1 , currentFrame + 150);
 
             for(int i = currentFrame; i < currentFrame + 150; i++){
                 dataRequested.add(i);

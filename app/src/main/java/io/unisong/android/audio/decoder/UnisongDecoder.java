@@ -1,6 +1,7 @@
 package io.unisong.android.audio.decoder;
 
 import android.media.MediaCodec;
+import android.media.MediaFormat;
 import android.util.Log;
 
 import java.io.IOException;
@@ -29,12 +30,12 @@ public class UnisongDecoder extends Decoder {
 
 
 
+    private boolean started = false;
     private int frameBufferSize;
     private SongFormat songFormat;
 
 
-
-    public UnisongDecoder(SongFormat format){
+    public UnisongDecoder(SongFormat format, Map<Integer, AudioFrame> frames){
         super();
         songFormat = format;
         inputFormat = songFormat.getMediaFormat();
@@ -44,6 +45,8 @@ public class UnisongDecoder extends Decoder {
         bitrate = format.getBitrate();
         sampleRate = format.getSampleRate();
         isRunning = false;
+        inputFrames = frames;
+        Log.d(LOG_TAG, "Creating decoder with format : " + format.toString());
     }
 
 
@@ -99,7 +102,7 @@ public class UnisongDecoder extends Decoder {
         //TODO: deal with no data/end of stream
         while(!stop){
 
-            waitForFrame(info.size);
+            waitForFrame();
 
             if(stop)   break;
 
@@ -118,6 +121,7 @@ public class UnisongDecoder extends Decoder {
                     dstBuf.clear();
 
                     int sampleSize = setData(frame , dstBuf);
+                    Log.d(LOG_TAG , "sampleSize is : " + sampleSize + " when frame ID #" + frame.getID() + " and frame size of : " + frame.getData().length);
 
                     codec.queueInputBuffer(inputBufIndex, 0, sampleSize, presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
 
@@ -129,9 +133,12 @@ public class UnisongDecoder extends Decoder {
             // encode to AAC and then put in inputFrames
             int outputBufIndex = 0;
             try {
-                 outputBufIndex = codec.dequeueOutputBuffer(info, kTimeOutUs);
+                outputBufIndex = codec.dequeueOutputBuffer(info, kTimeOutUs);
             } catch (IllegalStateException e){
+                resetCodec();
                 e.printStackTrace();
+                // TODO : delete.
+                Log.d(LOG_TAG, "Exception thrown " + (System.currentTimeMillis() - startTime) + "ms after start.");
             }
 
             if (outputBufIndex >= 0){
@@ -220,12 +227,18 @@ public class UnisongDecoder extends Decoder {
         return data.length;
     }
 
+
+    private void resetCodec(){
+        codec.reset();
+        configureCodec();
+    }
+
     public void destroy(){
         stop = true;
     }
 
 
-    private void waitForFrame(int size){
+    private void waitForFrame(){
         boolean firstWait = true;
         boolean waited = false;
         //TODO: Rewrite this to feed blank AAC frames instead of creating an empty PCM one
@@ -255,14 +268,6 @@ public class UnisongDecoder extends Decoder {
             Log.d(LOG_TAG , "Frame #" + inputFrameID + " has arrived.");
 
 
-    }
-
-    public Map<Integer, AudioFrame> getInputFrames(){
-        return inputFrames;
-    }
-
-    public void setInputFrames(Map<Integer, AudioFrame> inputFrames){
-        this.inputFrames = inputFrames;
     }
 
 }

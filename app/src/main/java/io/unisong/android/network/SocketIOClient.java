@@ -245,9 +245,9 @@ public class SocketIOClient {
 
     private Emitter.Listener joinResultListener = (Object[] args) -> {
         try{
-            JSONObject object = (JSONObject) args[0];
+//            JSONObject object = (JSONObject) args[0];
 
-            Log.d(LOG_TAG , "Join Result Received: " + object.toString());
+//            Log.d(LOG_TAG , "Join Result Received: " + object.toString());
         } catch (ClassCastException e){
             e.printStackTrace();
             Log.d(LOG_TAG , "Casting failed in JoinResultListener");

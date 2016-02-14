@@ -25,6 +25,7 @@ public class UnisongSong extends Song {
     private final static String LOG_TAG = UnisongSong.class.getSimpleName();
     public final static String TYPE_STRING = "UnisongSong";
 
+    private Map<Integer, AudioFrame> frames;
     private SongFormat format;
 
     /**
@@ -47,8 +48,10 @@ public class UnisongSong extends Song {
         // TODO : fix the imageURL stuff
         super(object.getString("name"), object.getString("artist"), object.getInt("songID"), null);//object.getString("imageURL"));
 
+        frames = new HashMap<>();
         if(object.has("format")) {
             format = new SongFormat(object.getJSONObject("format"));
+            decoder = new UnisongDecoder(format , frames);
             Log.d(LOG_TAG, format.toString());
         }
 
@@ -106,7 +109,7 @@ public class UnisongSong extends Song {
     @Override
     public void start(long startTime) {
         if(!started){
-            decoder = new UnisongDecoder(getFormat());
+            decoder = new UnisongDecoder(getFormat() , frames);
             decoder.start(startTime);
             started = true;
         }
@@ -117,15 +120,7 @@ public class UnisongSong extends Song {
         if(decoder != null)
             decoder.destroy();
 
-        Map<Integer, AudioFrame> inputFrames;
-
-        if(decoder == null){
-            inputFrames = new HashMap<>();
-        } else {
-            inputFrames = ((UnisongDecoder)decoder).getInputFrames();
-        }
-        decoder = new UnisongDecoder(getFormat());
-        ((UnisongDecoder)decoder).setInputFrames(inputFrames);
+        decoder = new UnisongDecoder(getFormat() , frames);
         decoder.start(seekTime);
     }
 
@@ -136,10 +131,9 @@ public class UnisongSong extends Song {
 
     @Override
     public void addFrame(AudioFrame frame) {
-        if(decoder == null)
-            decoder = new UnisongDecoder(getFormat());
-
-        decoder.addInputFrame(frame);
+        synchronized (frames){
+            frames.put(frame.getID() , frame);
+        }
     }
 
     public JSONObject toJSON(){

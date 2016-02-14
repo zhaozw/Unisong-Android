@@ -72,6 +72,7 @@ public class UnisongSession {
         if(session != null){
             AudioStatePublisher.getInstance().attach(session.getSongQueue());
             session.configureSocketIO();
+            session.playIfPlaying();
         }
     }
 
@@ -386,6 +387,7 @@ public class UnisongSession {
             socketIOClient.emit("end session" , getSessionID());
 
         songQueue = null;
+        isLoaded = false;
         clients = null;
     }
 
@@ -486,6 +488,7 @@ public class UnisongSession {
     public void getUpdate(){
         if(System.currentTimeMillis() - lastUpdate >= 100) {
             lastUpdate = System.currentTimeMillis();
+            Log.d(LOG_TAG , "Updating UnisongSession");
             socketIOClient.emit("get session", getSessionID());
         }
     }
@@ -524,6 +527,7 @@ public class UnisongSession {
      * destroy() is called.
      */
     public void leave(){
+        isLoaded = false;
         if(isMaster()){
 
             Broadcaster broadcaster = Broadcaster.getInstance();
@@ -767,5 +771,45 @@ public class UnisongSession {
         this.swipeRefresh = swipeRefresh;
     }
 
+
+    /**
+     * If the session is currently playing, then play the song
+     */
+    public void playIfPlaying(){
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                startPlaying();
+            }
+        }, 5000);
+    }
+
+    private void startPlaying(){
+
+        if(this != currentSession || !isLoaded || sessionState == null || !sessionState.equals("playing"))
+            return;
+
+        try {
+            Log.d(LOG_TAG, "Playing the session with a RESUME.");
+            TimeManager timeManager = TimeManager.getInstance();
+            Song currentSong = getCurrentSong();
+            long startTime = currentSong.getSongStartTime();
+
+            if (startTime == 0)
+                return;
+
+            timeManager.setSongStartTime(startTime);
+
+
+            // TODO : replace the default 500 frames.
+            Listener listener = Listener.getInstance();
+            listener.requestData(getCurrentSong());
+
+            publisher.seek(timeManager.getSongTime());
+
+        } catch (NullPointerException e){
+            e.printStackTrace();
+        }
+    }
 
 }

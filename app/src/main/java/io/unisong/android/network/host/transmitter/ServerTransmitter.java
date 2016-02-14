@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.socket.emitter.Emitter;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
@@ -44,7 +45,6 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
         worker = Executors.newSingleThreadScheduledExecutor();
         this.session = session;
     }
-
 
     private boolean stop = false;
     private Song song;
