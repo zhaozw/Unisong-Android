@@ -233,9 +233,9 @@ public class Listener{
             Receiver receiver = receivers.get(0);
 
             // TODO : replace 0 with currentFrame
-            receiver.requestData(song , currentFrame - 1 , currentFrame + 150);
+            receiver.requestData(song , currentFrame - 1 , currentFrame + 1000);
 
-            for(int i = currentFrame; i < currentFrame + 150; i++){
+            for(int i = currentFrame; i < currentFrame + 1000; i++){
                 dataRequested.add(i);
             }
 

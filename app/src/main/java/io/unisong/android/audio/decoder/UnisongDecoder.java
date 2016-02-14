@@ -29,6 +29,7 @@ public class UnisongDecoder extends Decoder {
     private MediaCodec codec;
 
 
+    private byte[] manualData = new byte[] {18 , 16};
 
     private boolean started = false;
     private int frameBufferSize;
@@ -76,6 +77,15 @@ public class UnisongDecoder extends Decoder {
 
     @Override
     protected void decode(){
+
+        waitForFrame();
+
+        synchronized (inputFrames){
+            int oneLower = inputFrameID - 1;
+            AudioFrame bufferData = new AudioFrame(manualData , oneLower , 1);
+            inputFrames.put(oneLower , bufferData);
+            inputFrameID = oneLower;
+        }
 
         long startTime = System.currentTimeMillis();
 
@@ -135,7 +145,6 @@ public class UnisongDecoder extends Decoder {
             try {
                 outputBufIndex = codec.dequeueOutputBuffer(info, kTimeOutUs);
             } catch (IllegalStateException e){
-                resetCodec();
                 e.printStackTrace();
                 // TODO : delete.
                 Log.d(LOG_TAG, "Exception thrown " + (System.currentTimeMillis() - startTime) + "ms after start.");
@@ -225,12 +234,6 @@ public class UnisongDecoder extends Decoder {
         dstBuf.put(data);
 
         return data.length;
-    }
-
-
-    private void resetCodec(){
-        codec.reset();
-        configureCodec();
     }
 
     public void destroy(){

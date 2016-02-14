@@ -805,6 +805,7 @@ public class UnisongSession {
             Listener listener = Listener.getInstance();
             listener.requestData(getCurrentSong());
 
+            publisher.setState(AudioStatePublisher.PLAYING);
             publisher.seek(timeManager.getSongTime());
 
         } catch (NullPointerException e){
