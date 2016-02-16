@@ -97,7 +97,7 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
             return;
         }
         if(contact.userExists()) {
-            FriendsList.getInstance().addFriend(UserUtils.getUser(contact.getUserUUID()), addFriendCallback);
+            FriendsList.getInstance().addFriendToList(UserUtils.getUser(contact.getUserUUID()), addFriendCallback);
         } else {
             // TODO : implement text invite
         }
@@ -114,7 +114,7 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
         public void onResponse(Response response) throws IOException {
             if(response.code() == 200){
                 FriendsList list = FriendsList.getInstance();
-                list.addFriend(UserUtils.getUser(response.body().string()));
+                list.addFriendToList(UserUtils.getUser(response.body().string()));
                 runOnUiThread(() -> {
                     Toast toast = Toast.makeText(getBaseContext() , "Friend Added!" , Toast.LENGTH_LONG);
                     toast.show();

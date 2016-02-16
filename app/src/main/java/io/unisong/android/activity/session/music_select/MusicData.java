@@ -1,4 +1,6 @@
-package io.unisong.android.activity.session.musicselect;
+package io.unisong.android.activity.session.music_select;
+
+import android.support.annotation.Nullable;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ public interface MusicData {
 
     long getID();
 
+    @Nullable
     String getImageURL();
 
     int getType();

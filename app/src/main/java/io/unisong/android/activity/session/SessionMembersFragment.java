@@ -55,7 +55,7 @@ public class SessionMembersFragment extends Fragment{
 
 
             // specify an adapter (see also next example)
-            adapter = new SessionMembersAdapter(session.getMembers());
+            adapter = new SessionMembersAdapter(session.getMembers() , false);
             recyclerView.setAdapter(adapter);
         } catch (NullPointerException e){
             e.printStackTrace();

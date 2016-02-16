@@ -1,4 +1,4 @@
-package io.unisong.android.activity.session.musicselect;
+package io.unisong.android.activity.session.music_select;
 
 import java.util.List;
 
@@ -7,61 +7,61 @@ import java.util.List;
  */
 public class UISong implements MusicData{
 
-    private long mID;
-    private String mName;
-    private String mArtistName;
-    private String mArtPath;
-    private UIArtist mArtist;
-    private UIAlbum mAlbum;
-    private String mPath;
-    private long mDuration;
+    private long ID;
+    private String name;
+    private String artistName;
+    private String artPath;
+    private UIArtist artist;
+    private UIAlbum album;
+    private String path;
+    private long duration;
 
     private long mArtistID;
     private long mAlbumID;
 
     //The class for storing song data
     public UISong(long songID, String songTitle, String path, long duration){
-        mID = songID;
-        mName = songTitle;
-        mPath = path;
-        mDuration = duration;
+        ID = songID;
+        name = songTitle;
+        this.path = path;
+        this.duration = duration;
     }
 
     public String getName(){
-        return mName;
+        return name;
     }
 
     public void setArtist(UIArtist artist){
-        mArtist = artist;
+        this.artist = artist;
         setArtistName(artist.getPrimaryText());
     }
 
     public void setArtistName(String name){
-        mArtistName = name;
+        artistName = name;
     }
 
     public void setAlbum(UIAlbum album){
-        mAlbum = album;
+        this.album = album;
         setAlbumArt(album.getImageURL());
     }
 
     public void setAlbumArt(String path){
-        mArtPath = path;
+        artPath = path;
     }
 
-    public long getID () {return mID;}
+    public long getID () {return ID;}
 
-    public String getPrimaryText () {return mName;}
+    public String getPrimaryText () {return name;}
 
     //The string that will show up below the name
-    public String getSecondaryText() {return mArtistName;}
+    public String getSecondaryText() {return artistName;}
 
-    public String getArtist () {return mArtistName;}
+    public String getArtist () {return artistName;}
 
-    public String getImageURL(){return mArtPath;}
+    public String getImageURL(){return artPath;}
 
     public long getDuration(){
-        return mDuration;
+        return duration;
     }
 
     public int getType(){
@@ -69,7 +69,7 @@ public class UISong implements MusicData{
     }
 
     public String getPath(){
-        return mPath;
+        return path;
     }
 
     // Not great design lol, but better than making an entire nother interface to separate that functionality from UISong, right?

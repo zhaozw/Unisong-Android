@@ -1,4 +1,4 @@
-package io.unisong.android.activity.session.musicselect;
+package io.unisong.android.activity.session.music_select;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,9 +25,9 @@ public class CollectionSelectActivity extends AppCompatActivity {
 
     private final static String LOG_TAG = CollectionSelectActivity.class.getSimpleName();
     private Toolbar toolbar;
-    private MusicDataManager mDataManager;
+    private MusicDataManager dataManager;
     private RecyclerView musicDataRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private RecyclerView.LayoutManager layoutManager;
     private MusicAdapter adapter;
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,12 +46,12 @@ public class CollectionSelectActivity extends AppCompatActivity {
 
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        mDataManager = MusicDataManager.getInstance();
+        dataManager = MusicDataManager.getInstance();
         musicDataRecyclerView = (RecyclerView) findViewById(R.id.music_recycler_view);
 
         // use a linear mLayout manager
-        mLayoutManager = new LinearLayoutManager(this);
-        musicDataRecyclerView.setLayoutManager(mLayoutManager);
+        layoutManager = new LinearLayoutManager(this);
+        musicDataRecyclerView.setLayoutManager(layoutManager);
 
         adapter = new MusicAdapter(this);
 
@@ -67,19 +67,19 @@ public class CollectionSelectActivity extends AppCompatActivity {
 
         switch(type){
             case MusicData.ALBUM:
-                data = mDataManager.getAlbumByID(ID);
+                data = dataManager.getAlbumByID(ID);
                 break;
 
             case MusicData.ARTIST:
-                data = mDataManager.getArtistByID(ID);
+                data = dataManager.getArtistByID(ID);
                 break;
 
             case MusicData.GENRE:
-                data = mDataManager.getGenreByID(ID);
+                data = dataManager.getGenreByID(ID);
                 break;
 
             case MusicData.PLAYLIST:
-                data = mDataManager.getPlaylistByID(ID);
+                data = dataManager.getPlaylistByID(ID);
                 break;
         }
 

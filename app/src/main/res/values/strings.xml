@@ -10,6 +10,7 @@
     <string name="action_search">Search</string>
     <string name="action_invite_friend">Invite Friend</string>
     <string name="action_leave_session">Leave Session</string>
+    <string name="action_see_friend_requests">Friend Requests</string>
     <string name="session_members">Session Members</string>
 
     <string name="artist">Artists</string>
@@ -95,12 +96,23 @@
     <string name="need_update">Unisong requires an update!</string>
 
     <string name="log_out_message">Would you like to log out?</string>
+    <string name="friend_requests_message">You have XXXX friend requests, would you like to see them?</string>
     <string name="leave_session_message">Would you like to leave the session?</string>
     <string name="join_session_message">Would you like to join USER_NAME\'s session?</string>
     <string name="end_session_message">The session has been ended.</string>
     <string name="add_friend_contacts_message">Would you like to add friends from your contacts?</string>
+
     <string name="no_thanks">No Thanks</string>
     <string name="yes">Yes</string>
+
     <string name="from_facebook">From Facebook</string>
     <string name="from_contacts">From Contacts</string>
+    <string name="friend_requests_label">Friend Requests</string>
+
+    <string name="add_friend_failed">Failed to add friend</string>
+    <string name="add_friend_succeeded">Friend added!</string>
+    <string name="deny_friend_failed">Failed to deny friend request</string>
+    <string name="deny_friend_succeeded">Friend request denied!</string>
+
+    <string name="resync">Resync</string>
 </resources>

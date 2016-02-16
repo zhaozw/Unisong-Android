@@ -207,10 +207,12 @@ public class HttpClient {
         client.newCall(request).enqueue(callback);
     }
 
-    public void delete(String url, Callback callback) {
+    public void delete(String url,JSONObject json,  Callback callback) {
+        RequestBody body = RequestBody.create(JSON, json.toString());
         Request request = new Request.Builder()
                 .url(url)
                 .delete()
+                .put(body)
                 .build();
         client.newCall(request).enqueue(callback);
     }

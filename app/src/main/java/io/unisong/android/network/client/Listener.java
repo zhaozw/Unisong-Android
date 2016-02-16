@@ -12,7 +12,7 @@ import java.util.List;
 
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.audiotrack.AudioTrackManager;
+import io.unisong.android.audio.audio_track.AudioTrackManager;
 import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.Host;
 import io.unisong.android.network.client.receiver.LANReceiver;

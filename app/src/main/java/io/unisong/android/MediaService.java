@@ -10,7 +10,7 @@ import android.util.Log;
 import io.unisong.android.activity.friends.contacts.ContactsLoader;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.MusicDataManager;
-import io.unisong.android.audio.audiotrack.AudioTrackManager;
+import io.unisong.android.audio.audio_track.AudioTrackManager;
 
 /**
  * Created by Ethan on 1/25/2015.

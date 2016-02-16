@@ -58,7 +58,7 @@
             android:label="@string/register" >
         </activity>
         <activity
-            android:name=".activity.session.musicselect.MusicSelectActivity"
+            android:name=".activity.session.music_select.MusicSelectActivity"
             android:label="@string/add_song"
             android:screenOrientation="portrait" >
         </activity>
@@ -88,7 +88,7 @@
             android:label="@string/app_name"
             />
 
-        <activity android:name=".activity.session.musicselect.CollectionSelectActivity"
+        <activity android:name=".activity.session.music_select.CollectionSelectActivity"
             android:label="@string/app_name"
             />
         <activity android:name=".activity.friends.contacts.AddFriendsFromContactsActivity"
@@ -99,6 +99,9 @@
             android:label="@string/add_friend_facebook"
             />
 
+        <activity android:name=".activity.friends.friend_requests.FriendRequestActivity"
+            android:label="@string/friend_requests_label"
+            />
 
         <meta-data
             android:name="io.fabric.ApiKey"

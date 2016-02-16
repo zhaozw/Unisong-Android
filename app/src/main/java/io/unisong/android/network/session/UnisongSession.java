@@ -291,6 +291,7 @@ public class UnisongSession {
         socketIOClient.on("end session", endSessionListener);
         socketIOClient.on("kick", kickListener);
         socketIOClient.on("kick result", kickResultListener);
+        getUpdate();
         Log.d(LOG_TAG, "Configured Socket.IO");
     }
 

@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
@@ -26,7 +27,6 @@ import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -51,6 +51,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import io.unisong.android.MediaService;
 import io.unisong.android.PrefUtils;
 import io.unisong.android.R;
+import io.unisong.android.activity.friends.friend_requests.FriendRequestActivity;
 import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivity;
 import io.unisong.android.activity.friends.facebook.AddFriendsFromFacebookActivity;
@@ -82,11 +83,12 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     private Toolbar mToolbar;
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
-    private FriendsAdapter adapter;
+    private FriendsAdapter friendsAapter;
     private FriendsList friendsList;
     private CircleImageView userProfileImageView;
     private Intent networkIntent;
     private Intent mediaIntent;
+    private SwipeRefreshLayout swipeRefreshLayout;
     
 
     @Override
@@ -96,6 +98,12 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
         setContentView(R.layout.activity_unisong);
 
         recyclerView = (RecyclerView) findViewById(R.id.friends_recyclerview);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            if(friendsAapter != null)
+                friendsAapter.notifyDataSetChanged();
+        });
 
         // use this setting to improve performance if you know that changes
         // in content do not change the mLayout size of the RecyclerView
@@ -196,6 +204,9 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
     public void onResume(){
         super.onResume();
+
+        if(friendsAapter != null)
+            friendsAapter.notifyDataSetChanged();
 
         // Logs 'install' and 'app activate' App Events.
         AppEventsLogger.activateApp(this);
@@ -372,15 +383,15 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
 
-        if(id == R.id.action_settings){
-            // TODO : see if we need this?
-            Toast.makeText(this, "Hey, you just hit the button! ", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if(id == R.id.action_add_friend){
+        if(id == R.id.action_add_friend){
             addFriendDialog();
             return true;
         } else if(id == R.id.action_log_out){
             logout();
+            return true;
+        } else if(id == R.id.action_see_friend_requests){
+            Intent intent = new Intent(getApplicationContext(), FriendRequestActivity.class);
+            startActivity(intent);
             return true;
         }
 
@@ -755,8 +766,32 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     }
 
     private void loadFriendsList(){
-        // specify an adapter (see also next example)
-        adapter = new FriendsAdapter(friendsList.getFriends());
-        recyclerView.setAdapter(adapter);
+        // specify an friendsAapter (see also next example)
+        friendsAapter = new FriendsAdapter(friendsList.getFriends());
+        recyclerView.setAdapter(friendsAapter);
+    }
+
+    public void friendsListLoaded(){
+        if(friendsList.getIncomingRequests().size() != 0){
+            runOnUiThread(this::notifyOfFriendRequests);
+        }
+    }
+
+    private void notifyOfFriendRequests(){
+
+        String content = getResources().getString(R.string.friend_requests_message);
+
+        content = content.replace("XXXX" , friendsList.getIncomingRequests().size() + "");
+
+
+        new MaterialDialog.Builder(this)
+                .content(content)
+                .positiveText(R.string.yes)
+                .theme(Theme.LIGHT)
+                .onPositive((MaterialDialog dialog, DialogAction action) -> {
+                    Intent intent = new Intent(getApplicationContext(), FriendRequestActivity.class);
+                    startActivity(intent);
+                })
+                .show();
     }
 }

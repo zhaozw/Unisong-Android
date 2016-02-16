@@ -9,7 +9,7 @@ import java.util.List;
 
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
-import io.unisong.android.audio.audiotrack.AudioTrackManager;
+import io.unisong.android.audio.audio_track.AudioTrackManager;
 import io.unisong.android.audio.song.Song;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.host.transmitter.Transmitter;

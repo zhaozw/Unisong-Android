@@ -16,12 +16,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.unisong.android.activity.session.musicselect.MusicData;
-import io.unisong.android.activity.session.musicselect.UIAlbum;
-import io.unisong.android.activity.session.musicselect.UIArtist;
-import io.unisong.android.activity.session.musicselect.UIGenre;
-import io.unisong.android.activity.session.musicselect.UIPlaylist;
-import io.unisong.android.activity.session.musicselect.UISong;
+import io.unisong.android.activity.session.music_select.MusicData;
+import io.unisong.android.activity.session.music_select.UIAlbum;
+import io.unisong.android.activity.session.music_select.UIArtist;
+import io.unisong.android.activity.session.music_select.UIGenre;
+import io.unisong.android.activity.session.music_select.UIPlaylist;
+import io.unisong.android.activity.session.music_select.UISong;
 
 /**
  * Created by Ethan on 10/3/2015.
@@ -30,41 +30,41 @@ public class MusicDataManager {
 
     private final static String LOG_TAG = MusicDataManager.class.getSimpleName();
 
-    private static MusicDataManager sInstance;
+    private static MusicDataManager instance;
 
     public static MusicDataManager getInstance(){
-        return sInstance;
+        return instance;
     }
 
     public static void setInstance(MusicDataManager manager){
-        sInstance = manager;
+        instance = manager;
     }
 
     //The list of songs on the device
-    private List<MusicData> mSongs;
+    private List<MusicData> songs;
 
     //The list of playlists on the device
-    private List<MusicData> mPlaylists;
+    private List<MusicData> playlists;
 
     //The list of artists on the device
-    private List<MusicData> mArtists;
+    private List<MusicData> artists;
 
     //The list of albums on the device
-    private List<MusicData> mAlbums;
+    private List<MusicData> albums;
 
     //The list of albums on the device
-    private List<MusicData> mGenres;
-    private boolean mDoneLoading;
+    private List<MusicData> genres;
+    private boolean doneLoading;
 
-    private Context mContext;
-    private Handler mHandler;
+    private Context context;
+    private Handler handler;
 
     public MusicDataManager(Context applicationContext){
         Log.d(LOG_TAG , "MusicDataManager created");
-        mContext = applicationContext;
-        mHandler = new Handler();
-        mDoneLoading = false;
-        mHandler.post(mGetMusicInfoRunnable);
+        context = applicationContext;
+        handler = new Handler();
+        doneLoading = false;
+        handler.post(mGetMusicInfoRunnable);
     }
 
 
@@ -82,17 +82,17 @@ public class MusicDataManager {
     //retrieve song info
     private void getMusicInfo() {
         //Get the content resolver
-        ContentResolver musicResolver = mContext.getContentResolver();
+        ContentResolver musicResolver = context.getContentResolver();
         //TODO: Verify that EXTERNAL_CONTENT_URI gets all music, and that we don't need to use INTERNAL_CONTENT_URI
 
         //the map for the art resource urls
         Map<Long, String> artMap = new HashMap<>();
 
-        mArtists = new ArrayList<>();
-        mSongs = new ArrayList<>();
-        mAlbums = new ArrayList<>();
-        mPlaylists = new ArrayList<>();
-        mGenres = new ArrayList<>();
+        artists = new ArrayList<>();
+        songs = new ArrayList<>();
+        albums = new ArrayList<>();
+        playlists = new ArrayList<>();
+        genres = new ArrayList<>();
 
         //Get all the artist info
         Uri externalArtistUri = MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI;
@@ -115,7 +115,7 @@ public class MusicDataManager {
                 long artistId = artistCursor.getLong(idColumn);
                 String artistName = artistCursor.getString(nameColumn);
 
-                mArtists.add(new UIArtist(artistId, artistName));
+                artists.add(new UIArtist(artistId, artistName));
             }
             while (artistCursor.moveToNext());
         }
@@ -158,7 +158,7 @@ public class MusicDataManager {
 
                 UIAlbum album = new UIAlbum(albumId, albumName , albumArt , artistName);
 
-                mAlbums.add(album);
+                albums.add(album);
 
                 UIArtist artist = getArtistByName(artistName);
                 if(artist != null){
@@ -223,7 +223,7 @@ public class MusicDataManager {
                 //if(!thisTitle.equals("Hangouts message") || !thisTitle.equals("Hangouts video call") || !thisTitle.equals("Facebook Pop")) {
 
                     UISong song = new UISong(thisId, thisTitle, path, duration);
-                    mSongs.add(song);
+                    songs.add(song);
                     if(album != null){
                         album.addSong(song);
                         song.setAlbum(album);
@@ -268,7 +268,7 @@ public class MusicDataManager {
                 String playlistName = playlistCursor.getString(nameColumn);
                 String data = playlistCursor.getString(dataColumn);
                 UIPlaylist playlist = new UIPlaylist(playlistID, playlistName, data);
-                mPlaylists.add(playlist);
+                playlists.add(playlist);
 
                 String [] STAR= {"*"};
 
@@ -327,7 +327,7 @@ public class MusicDataManager {
                 long genreID = genreCursor.getLong(idColumn);
                 String genreName = genreCursor.getString(nameColumn);
                 UIGenre genre = new UIGenre(genreID, genreName);
-                mGenres.add(genre);
+                genres.add(genre);
 
                 String [] STAR= {"*"};
                 Cursor membersCursor = musicResolver.query(MediaStore.Audio.Genres.Members.getContentUri("external", genreID),
@@ -360,11 +360,11 @@ public class MusicDataManager {
         if(genreCursor != null)
             genreCursor.close();
 
-        mDoneLoading = true;
+        doneLoading = true;
     }
 
     public UIArtist getArtistByName(String artist){
-        for(MusicData data : mArtists){
+        for(MusicData data : artists){
             if(data.getPrimaryText().equals(artist)){
                 return (UIArtist)data;
             }
@@ -373,23 +373,23 @@ public class MusicDataManager {
     }
 
     public UIArtist getArtistByID(long artistID){
-        return (UIArtist) getDataByID(mArtists , artistID);
+        return (UIArtist) getDataByID(artists, artistID);
     }
 
     public UIAlbum getAlbumByID(long albumID){
-        return (UIAlbum) getDataByID(mAlbums , albumID);
+        return (UIAlbum) getDataByID(albums, albumID);
     }
 
     public UISong getSongByID(long songID){
-        return (UISong) getDataByID(mSongs , songID);
+        return (UISong) getDataByID(songs, songID);
     }
 
     public UIGenre getGenreByID(long genreID){
-        return (UIGenre) getDataByID(mGenres , genreID);
+        return (UIGenre) getDataByID(genres, genreID);
     }
 
     public UIPlaylist getPlaylistByID(long playlistID){
-        return (UIPlaylist) getDataByID(mPlaylists , playlistID);
+        return (UIPlaylist) getDataByID(playlists, playlistID);
     }
 
     private MusicData getDataByID(List<MusicData> datas, long ID){
@@ -409,7 +409,7 @@ public class MusicDataManager {
     public List<UISong> getSongsByName(String name){
         List<UISong> songs = new ArrayList<>();
 
-        for(MusicData songData : mSongs){
+        for(MusicData songData : this.songs){
             UISong song = (UISong) songData;
             if(song.getName().equals(name)){
                 songs.add(song);
@@ -423,22 +423,22 @@ public class MusicDataManager {
     public List<MusicData> getData(int pos){
         switch(pos){
             case 0:
-                return mPlaylists;
+                return playlists;
             case 1:
-                return mArtists;
+                return artists;
             case 2:
-                return mAlbums;
+                return albums;
             case 3:
-                return mSongs;
+                return songs;
             // TODO : load genres as well.
             case 4:
-                return mGenres;
+                return genres;
         }
-        return mSongs;
+        return songs;
     }
 
     public void destroy(){
-        mContext = null;
+        context = null;
     }
 
     public UISong getSongByJSON(JSONObject json) throws JSONException, NullPointerException{
@@ -481,6 +481,6 @@ public class MusicDataManager {
     }
 
     public boolean isDoneLoading(){
-        return mDoneLoading;
+        return doneLoading;
     }
 }

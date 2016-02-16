@@ -20,13 +20,9 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import io.unisong.android.R;
-import io.unisong.android.activity.friends.contacts.Contact;
-import io.unisong.android.activity.friends.contacts.ContactsAdapter;
-import io.unisong.android.activity.friends.contacts.ContactsLoader;
 import io.unisong.android.network.user.FriendsList;
 import io.unisong.android.network.user.User;
 import io.unisong.android.network.user.UserUtils;
@@ -40,14 +36,12 @@ public class AddFriendsFromFacebookActivity extends AppCompatActivity implements
     private static final String LOG_TAG = AddFriendsFromFacebookActivity.class.getSimpleName();
     private RecyclerView contactsView;
     private FacebookFriendsAdapter fbFriendsAdapter;
-    private FacebookFriendsLoader fbFriendsLoader;
     private Toolbar toolbar;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_friend_from_facebook);
-        fbFriendsLoader = new FacebookFriendsLoader();
 
         toolbar = (Toolbar) findViewById(io.unisong.android.R.id.add_friend_bar);
 
@@ -55,10 +49,6 @@ public class AddFriendsFromFacebookActivity extends AppCompatActivity implements
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         getSupportActionBar().setHomeButtonEnabled(true);
-
-        List<User> contacts = getFBFriendUsers();
-
-        Log.d(LOG_TAG, "Size of contacts is : " + contacts.size());
 
         fbFriendsAdapter = new FacebookFriendsAdapter();
 
@@ -97,7 +87,7 @@ public class AddFriendsFromFacebookActivity extends AppCompatActivity implements
             Log.d(LOG_TAG , "View did not have tag of class Contact!");
             return;
         }
-        FriendsList.getInstance().addFriend(user, addFriendCallback);
+        FriendsList.getInstance().addFriendToList(user, addFriendCallback);
     }
 
     private Callback addFriendCallback = new Callback() {
@@ -111,7 +101,7 @@ public class AddFriendsFromFacebookActivity extends AppCompatActivity implements
         public void onResponse(Response response) throws IOException {
             if(response.code() == 200){
                 FriendsList list = FriendsList.getInstance();
-                list.addFriend(UserUtils.getUser(response.body().string()));
+                list.addFriendToList(UserUtils.getUser(response.body().string()));
                 runOnUiThread(() -> {
                     Toast toast = Toast.makeText(getBaseContext() , "Friend Added!" , Toast.LENGTH_LONG);
                     toast.show();
@@ -122,17 +112,17 @@ public class AddFriendsFromFacebookActivity extends AppCompatActivity implements
 
     @Override
     public boolean onQueryTextChange(String query) {
-        final List<Contact> filteredModelList = filter(getNonFriendContacts(), query);
+        final List<User> filteredModelList = filter(fbFriendsAdapter.getOriginalUsers(), query);
         fbFriendsAdapter.animateTo(filteredModelList);
         contactsView.scrollToPosition(0);
         return true;
     }
 
-    private List<Contact> filter(List<Contact> models, String query) {
+    private List<User> filter(List<User> models, String query) {
         query = query.toLowerCase();
 
-        final List<Contact> filteredModelList = new ArrayList<>();
-        for (Contact model : models) {
+        final List<User> filteredModelList = new ArrayList<>();
+        for (User model : models) {
             final String text = model.getName().toLowerCase();
             if (text.contains(query)) {
                 filteredModelList.add(model);
@@ -144,31 +134,5 @@ public class AddFriendsFromFacebookActivity extends AppCompatActivity implements
     @Override
     public boolean onQueryTextSubmit(String query) {
         return false;
-    }
-
-    /**
-     * Returns a list of contacts that are not already friends of the current user
-     * @return newList the list of Contacts not already friends of the user
-     */
-    private List<Contact> getFBFriendUsers(){
-        FriendsList list = FriendsList.getInstance();
-        List<Contact> newList = new ArrayList<>(fbFriendsLoader.getContacts());
-        Iterator<Contact> iterator = newList.iterator();
-
-        while(iterator.hasNext()){
-            Contact contact = iterator.next();
-
-            // If there is no user, proceed to the next element
-            if(!contact.userExists())
-                break;
-
-            // If there is, load it and check it against the friends list
-            User user = contact.getUser();
-
-            if(list.isFriend(user))
-                iterator.remove();
-        }
-
-        return newList;
     }
 }

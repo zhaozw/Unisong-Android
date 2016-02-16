@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.unisong.android.R;
 import io.unisong.android.activity.session.invite.InviteMemberActivity;
-import io.unisong.android.activity.session.musicselect.MusicSelectActivity;
+import io.unisong.android.activity.session.music_select.MusicSelectActivity;
 import io.unisong.android.activity.session.tabs.SlidingTabLayout;
 import io.unisong.android.audio.AudioStatePublisher;
 import io.unisong.android.audio.song.Song;
@@ -91,10 +91,10 @@ public class MainSessionActivity extends AppCompatActivity implements Connection
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_session_main);
 
-        toolbar = (Toolbar) findViewById(R.id.session_bar);
 
         Log.d(LOG_TAG, "Creating MainSessionActivity");
         // Configure the action bar.
+        toolbar = (Toolbar) findViewById(R.id.session_bar);
         setSupportActionBar(toolbar);
         ActionBar bar = getSupportActionBar();
         if (bar != null) {

@@ -30,12 +30,13 @@ import io.unisong.android.network.user.User;
  */
 public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAdapter.ViewHolder>{
     private final static String LOG_TAG = SessionMembersAdapter.class.getSimpleName();
-    private List<User> mDataset;
+    private List<User> dataset;
 
     public static final int ADD = 1823139;
     public static final int REMOVE = 142789;
-    private IncomingHandler mHandler;
-    private SessionMembers mMembers;
+    private IncomingHandler handler;
+    private SessionMembers members;
+    private boolean overrideMaster;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -74,32 +75,32 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
     }
 
     public void add(int position, User user) {
-        mDataset.add(position, user);
+        dataset.add(position, user);
         notifyItemInserted(position);
     }
 
     public void remove(User user) {
-        int position = mDataset.indexOf(user);
+        int position = dataset.indexOf(user);
         remove(position);
     }
 
     public void remove(int position){
-        mDataset.remove(position);
+        dataset.remove(position);
         notifyItemRemoved(position);
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public SessionMembersAdapter(SessionMembers members) {
+    public SessionMembersAdapter(SessionMembers members, boolean overrideMaster) {
 
-        mHandler = new IncomingHandler(this);
-        mDataset = new ArrayList<>();
+        handler = new IncomingHandler(this);
+        dataset = new ArrayList<>();
 
         for(User user : members.getList()){
-            mDataset.add(user);
+            dataset.add(user);
         }
 
-        mMembers = members;
-        mMembers.registerHandler(mHandler);
+        this.members = members;
+        this.members.registerHandler(handler);
     }
 
     // Create new views (invoked by the layout manager)
@@ -118,11 +119,11 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
 
-        User user = mDataset.get(position);
+        User user = dataset.get(position);
         holder.kickButton.setTag(user.getUUID());
         Picasso.with(holder.profileView.getContext()).load(user.getProfileURL()).into((holder.profileView));
-        holder.nameView.setText(mDataset.get(position).getName());
-        String userNameText = "@" + mDataset.get(position).getUsername();
+        holder.nameView.setText(dataset.get(position).getName());
+        String userNameText = "@" + dataset.get(position).getUsername();
         holder.usernameView.setText(userNameText);
 
         if(CurrentUser.getInstance() != null && CurrentUser.getInstance() == user)
@@ -134,16 +135,16 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mDataset.size();
+        return dataset.size();
     }
 
 
     public static class IncomingHandler extends Handler{
 
-        private SessionMembersAdapter mAdapter;
+        private SessionMembersAdapter adapter;
         public IncomingHandler(SessionMembersAdapter adapter){
             super();
-            mAdapter = adapter;
+            this.adapter = adapter;
         }
 
 
@@ -159,10 +160,10 @@ public class SessionMembersAdapter extends RecyclerView.Adapter<SessionMembersAd
                         Log.d(LOG_TAG, "ClassCatchException thrown in handleMessage()!");
                         return;
                     }
-                    mAdapter.add(message.arg1 , user);
+                    adapter.add(message.arg1, user);
                     break;
                 case REMOVE:
-                    mAdapter.remove(message.arg1);
+                    adapter.remove(message.arg1);
                     break;
             }
         }

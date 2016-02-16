@@ -1,4 +1,4 @@
-package io.unisong.android.activity.session.musicselect;
+package io.unisong.android.activity.session.music_select;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,34 +9,34 @@ import java.util.List;
 public class UIAlbum implements MusicData{
 
 
-    private long mID;
-    private String mName;
-    private String mCoverArt;
-    private String mArtist;
-    private List<MusicData> mSongs;
+    private long ID;
+    private String name;
+    private String coverArt;
+    private String artist;
+    private List<MusicData> songs;
 
     //The class for storing album data
     public UIAlbum(long albumID, String albumName, String albumArt, String artistName) {
-        mID = albumID;
-        mName = albumName;
-        mCoverArt = albumArt;
-        mArtist = artistName;
-        mSongs = new ArrayList<>();
+        ID = albumID;
+        name = albumName;
+        coverArt = albumArt;
+        artist = artistName;
+        songs = new ArrayList<>();
     }
 
     public void addSong(UISong song){
-        mSongs.add(song);
+        songs.add(song);
     }
 
     public List<MusicData> getSongs(){
-        return mSongs;
+        return songs;
     }
 
-    public long getID() {return mID;}
+    public long getID() {return ID;}
 
-    public String getPrimaryText() {return mName;}
+    public String getPrimaryText() {return name;}
 
-    public String getImageURL() {return mCoverArt;}
+    public String getImageURL() {return coverArt;}
 
     @Override
     public int getType() {
@@ -45,13 +45,13 @@ public class UIAlbum implements MusicData{
 
     //The string that will be below the name
     public String getSecondaryText(){
-        if(mArtist == null)
+        if(artist == null)
             return "<unknown>";
 
-        return mArtist;
+        return artist;
     }
 
     public List<MusicData> getChildren(){
-        return mSongs;
+        return songs;
     }
 }

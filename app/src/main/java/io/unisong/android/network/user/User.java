@@ -262,7 +262,7 @@ public class User implements Serializable {
         username = object.getString("username");
         phoneNumber = object.getString("phone_number");
         name = object.getString("name");
-        if(object.has("facebookID")) {
+        if(object.has("facebookID") && object.get("facebookID") != null) {
             long facebookID = object.getLong("facebookID");
             if(facebookID != 0){
                 isFacebookUser = true;

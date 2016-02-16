@@ -1,4 +1,4 @@
-package io.unisong.android.audio.audiotrack;
+package io.unisong.android.audio.audio_track;
 
 import android.media.AudioTrack;
 import android.util.Log;
@@ -83,9 +83,9 @@ public class AudioTrackThread extends Thread {
         } else {
             Log.d(LOG_TAG , "Starting Write, " + (timeManager.getSongStartTime() + resumeTime - System.currentTimeMillis())  + "ms until song start time." );
         }
-        long lastWriteTime = System.currentTimeMillis();
+//        long lastWriteTime = System.currentTimeMillis();
         while(running) {
-            lastWriteTime = System.currentTimeMillis();
+//            lastWriteTime = System.currentTimeMillis();
 
             if(!song.hasPCMFrame(frameToPlay)){
                 Log.d(LOG_TAG , "Song does not have frame #" + frameToPlay);
@@ -110,13 +110,13 @@ public class AudioTrackThread extends Thread {
 
 
             AudioFrame frame = song.getPCMFrame(frameToPlay);
-            // TODO : synchronize frame playing, and investigate how the time is spent in this thread
+            // TODO : synchronize frame playing
 
             frameToPlay++;
 
             byte[] data = frame.getData();
 
-            Log.d(LOG_TAG, "Last write time was :" + (System.currentTimeMillis() - lastWriteTime) + "ms ago");
+//            Log.d(LOG_TAG, "Last write time was :" + (System.currentTimeMillis() - lastWriteTime) + "ms ago");
             audioTrack.write(data, 0, data.length);
         }
 

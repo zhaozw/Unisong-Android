@@ -1,4 +1,4 @@
-package io.unisong.android.activity.session.musicselect;
+package io.unisong.android.activity.session.music_select;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -23,24 +23,24 @@ import io.unisong.android.R;
 class MusicAdapter extends RecyclerView.Adapter <MusicAdapter.MusicViewHolder>
 {
     private final static String LOG_TAG = MusicAdapter.class.getSimpleName();
-    private LayoutInflater mInflater;
-    private List<MusicViewHolder> mViewHolders;
-    private List<MusicData> mMusicData;
+    private LayoutInflater inflater;
+    private List<MusicViewHolder> viewHolders;
+    private List<MusicData> musicData;
 
 
     public MusicAdapter(Context context){
-        mInflater = LayoutInflater.from(context);
+        inflater = LayoutInflater.from(context);
     }
 
     public void setData(List<MusicData> musicData){
-        mMusicData = musicData;
+        this.musicData = musicData;
     }
 
 
 
     @Override
     public MusicViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        View view = mInflater.inflate(R.layout.music_row , viewGroup , false);
+        View view = inflater.inflate(R.layout.music_row , viewGroup , false);
 
         MusicViewHolder holder = new MusicViewHolder(view);
 
@@ -50,7 +50,7 @@ class MusicAdapter extends RecyclerView.Adapter <MusicAdapter.MusicViewHolder>
     @Override
     public void onBindViewHolder(MusicViewHolder viewHolder, int i) {
 
-        MusicData data = mMusicData.get(i);
+        MusicData data = musicData.get(i);
 
         RelativeLayout layout = (RelativeLayout) viewHolder.mImage.getParent();
 
@@ -90,7 +90,7 @@ class MusicAdapter extends RecyclerView.Adapter <MusicAdapter.MusicViewHolder>
 
     @Override
     public int getItemCount() {
-        return mMusicData.size();
+        return musicData.size();
     }
 
     class MusicViewHolder extends RecyclerView.ViewHolder{

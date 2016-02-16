@@ -100,7 +100,7 @@ public class AddFriendByUsernameActivity extends AppCompatActivity{
 
             if(response.code() == 200){
                 FriendsList list = FriendsList.getInstance();
-                list.addFriend(new User(UUID.fromString(userID)));
+                list.addFriendToList(new User(UUID.fromString(userID)));
                 return "Friend added!";
             }
             return "Failure";

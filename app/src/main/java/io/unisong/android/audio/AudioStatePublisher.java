@@ -3,11 +3,13 @@ package io.unisong.android.audio;
 import android.os.Handler;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import io.unisong.android.audio.audiotrack.AudioTrackManager;
+import io.unisong.android.audio.audio_track.AudioTrackManager;
 import io.unisong.android.network.CONSTANTS;
 import io.unisong.android.network.host.Broadcaster;
 import io.unisong.android.network.ntp.TimeManager;
@@ -115,7 +117,12 @@ public class AudioStatePublisher {
                 }
 
                 for (int i = 0; i < observers.size(); i++) {
-                    observers.get(i).update(state);
+                    try {
+                        observers.get(i).update(state);
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        Log.d(LOG_TAG , "Unhandled exception in update() !");
+                    }
                 }
 
                 if (broadcaster != null)

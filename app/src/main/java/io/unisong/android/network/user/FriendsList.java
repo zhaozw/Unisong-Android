@@ -103,7 +103,6 @@ public class FriendsList implements Serializable{
 
         if(activityToNotify != null){
             activityToNotify.setFriendsList(this);
-            activityToNotify = null;
         }
     }
 
@@ -139,6 +138,9 @@ public class FriendsList implements Serializable{
 
                 loadFriendsFromServer();
 
+                if(activityToNotify != null){
+                    activityToNotify.friendsListLoaded();
+                }
                 handler.post(checkFriendStatusRunnable);
 
             }
@@ -301,9 +303,12 @@ public class FriendsList implements Serializable{
         //
     }
 
-    // TODO : implement
-    public void addFriend(User user, Callback callback){
-
+    /**
+     * Adds a friend using the HttpClient and calls to the callback
+     * @param user the user to add
+     * @param callback the callback that is called
+     */
+    public void addFriendToList(User user, Callback callback){
         try{
             JSONObject object = new JSONObject();
             object.put("friendID" , user.getUUID().toString());
@@ -313,7 +318,17 @@ public class FriendsList implements Serializable{
         }
     }
 
-    public void addFriend(User user){
+    public void deleteFriend(User user, Callback callback){
+        try{
+            JSONObject object = new JSONObject();
+            object.put("friendID" , user.getUUID().toString());
+            HttpClient.getInstance().delete(NetworkUtilities.HTTP_URL + "/user/friends", object, callback);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void addFriendToList(User user){
         synchronized (friends){
             friends.add(user);
         }
@@ -398,7 +413,6 @@ public class FriendsList implements Serializable{
 
     // reads an object using an output stream
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException{
-
         friends = inputList(in);
         incomingRequests = inputList(in);
         outgoingRequests = inputList(in);

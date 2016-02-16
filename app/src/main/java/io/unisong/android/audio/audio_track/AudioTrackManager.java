@@ -1,4 +1,4 @@
-package io.unisong.android.audio.audiotrack;
+package io.unisong.android.audio.audio_track;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;

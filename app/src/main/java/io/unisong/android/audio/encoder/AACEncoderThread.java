@@ -183,9 +183,6 @@ public class AACEncoderThread extends Thread {
 
             }
 
-
-
-
             AudioFrame frame = inputFrames.get(currentInputID);
 
             // TODO : replace this when we've got a better idea what's going on

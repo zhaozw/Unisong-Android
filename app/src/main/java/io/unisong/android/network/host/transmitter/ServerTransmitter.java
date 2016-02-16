@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.AudioObserver;
 import io.unisong.android.audio.AudioStatePublisher;
+import io.unisong.android.audio.song.LocalSong;
 import io.unisong.android.audio.song.Song;
 import io.unisong.android.audio.song.SongFormat;
 import io.unisong.android.network.SocketIOClient;
@@ -135,8 +136,25 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
     private int uploadCount = 0;
 
     private Runnable broadcastRunnable = () -> {
-        synchronized (frameToUpload) {
 
+
+        AudioFrame frame = ((LocalSong)song).getLowestAACFrame();
+
+        if(frame == null)
+            return;
+
+
+
+        uploadFrame(frame);
+
+        if (uploadCount % 100 == 0) {
+            Log.d(LOG_TAG, "Frame #" + frame.getID() + " uploaded");
+
+        }
+
+        uploadCount++;
+
+            /*
             if (song.hasAACFrame(frameToUpload)) {
                 AudioFrame frame = song.getAACFrame(frameToUpload);
 //            Log.d(LOG_TAG, "Frame is null? " + (frame == null));
@@ -153,9 +171,8 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
             } else {
 //            Log.d(LOG_TAG , "Looking for frame #" + frameToUpload + " while size is : " + song.getPCMFrames().size());
             }
+            */
 
-
-        }
     };
 
     @Override
