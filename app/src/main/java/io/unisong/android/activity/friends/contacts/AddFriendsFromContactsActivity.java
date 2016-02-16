@@ -55,8 +55,6 @@ public class AddFriendsFromContactsActivity extends AppCompatActivity implements
 
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        contactsLoader = new ContactsLoader(getBaseContext());
-
         List<Contact> contacts = getNonFriendContacts();
 
         Log.d(LOG_TAG, "Size of contacts is : " + contacts.size());

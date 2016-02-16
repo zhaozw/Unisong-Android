@@ -98,5 +98,9 @@
     <string name="leave_session_message">Would you like to leave the session?</string>
     <string name="join_session_message">Would you like to join USER_NAME\'s session?</string>
     <string name="end_session_message">The session has been ended.</string>
+    <string name="add_friend_contacts_message">Would you like to add friends from your contacts?</string>
     <string name="no_thanks">No Thanks</string>
+    <string name="yes">Yes</string>
+    <string name="from_facebook">From Facebook</string>
+    <string name="from_contacts">From Contacts</string>
 </resources>

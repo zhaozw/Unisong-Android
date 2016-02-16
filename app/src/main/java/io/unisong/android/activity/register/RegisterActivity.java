@@ -201,52 +201,35 @@ public class RegisterActivity extends AppCompatActivity {
         //TODO : save account credentials with AccountManager/shared prefs/something
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY , username);
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_PASSWORD_KEY, password);
-        PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_ACCOUNT_TYPE_KEY , "unisong");
-        PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "yes");
+        PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+        PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY, "yes");
+
+        PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+
+
         Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
         startActivity(intent);
         finish();
-
-        PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
-        String[] options = getResources().getStringArray(R.array.add_friend_options);
-
+        /*
         runOnUiThread(() -> {
             new MaterialDialog.Builder(this)
                     .title(R.string.add_friend_label)
-                    .items(options)
+                    .content(R.string.add_friend_contacts_message)
                     .theme(Theme.LIGHT)
                     .negativeText(R.string.no_thanks)
-                    .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice() {
-                        @Override
-                        public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                            switch (which) {
-                                case 0:
-                                    Intent intent = new Intent(getApplicationContext(), AddFriendByUsernameActivity.class);
-                                    intent.putExtra("fromRegister", true);
-                                    startActivity(intent);
-                                    finish();
-                                    break;
-
-                                case 1:
-                                    intent = new Intent(getApplicationContext(), AddFriendsFromContactsActivity.class);
-                                    intent.putExtra("fromRegister", true);
-                                    startActivity(intent);
-                                    finish();
-                                    break;
-                            }
-                            return true;
-                        }
+                    .positiveText(R.string.yes)
+                    .onPositive((MaterialDialog materialDialog, DialogAction dialogAction) -> {
+                        Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
+                        intent.putExtra("fromRegister" , true);
+                        startActivity(intent);
+                        finish();
                     })
-                    .onNegative(new MaterialDialog.SingleButtonCallback() {
-                        @Override
-                        public void onClick(MaterialDialog materialDialog, DialogAction dialogAction) {
-                            Intent intent = new Intent(getApplicationContext(), UnisongActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
+                    .onNegative((MaterialDialog materialDialog, DialogAction dialogAction) -> {
+                        Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
+                        startActivity(intent);
+                        finish();
                     })
-                    .positiveText(R.string.choose)
                     .show();
-        });
+        });*/
     }
 }

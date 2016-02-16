@@ -111,8 +111,8 @@
     <orderEntry type="library" exported="" name="picasso-2.5.2" level="project" />
     <orderEntry type="library" exported="" name="dnsjava-2.1.1" level="project" />
     <orderEntry type="library" exported="" name="okhttp-2.5.0" level="project" />
-    <orderEntry type="library" exported="" name="libphonenumber-7.2.4" level="project" />
     <orderEntry type="library" exported="" name="commons-math3-3.6" level="project" />
+    <orderEntry type="library" exported="" name="libphonenumber-7.2.4" level="project" />
     <orderEntry type="library" exported="" name="floatlabel-1.0.4" level="project" />
     <orderEntry type="library" exported="" name="ultra-ptr-1.0.10" level="project" />
     <orderEntry type="library" exported="" name="recyclerview-v7-23.1.1" level="project" />

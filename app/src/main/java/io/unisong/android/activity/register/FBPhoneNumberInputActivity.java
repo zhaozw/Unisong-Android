@@ -123,24 +123,22 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "facebook");
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY , "yes");
 
-        phonenumber = phonenumber.replace("(" , "");
-        phonenumber = phonenumber.replace(")" , "");
-        phonenumber = phonenumber.replace("-" , "");
-        phonenumber = phonenumber.replace(" " , "");
-
         client.loginFacebook(AccessToken.getCurrentAccessToken(), username, phonenumber);
         FacebookAccessToken.saveFacebookAccessToken(getApplicationContext());
 
-        String[] options = getResources().getStringArray(R.array.add_friend_options);
-        List<String> optionsArray = new ArrayList<String>(Arrays.asList(options));
-        optionsArray.add("From Facebook");
-        final String[] facebookOptions = optionsArray.toArray(options);
 
+        Intent intent = new Intent(getApplicationContext(), UnisongActivity.class);
+        startActivity(intent);
+        finish();
+        /*
+        String fromContacts = getResources().getString(R.string.from_contacts);
+        String fromFacebook = getResources().getString(R.string.from_facebook);
+        String[] options = new String[] {fromContacts , fromFacebook};
 
         runOnUiThread(() -> {
             new MaterialDialog.Builder(this)
                     .title(R.string.add_friend_label)
-                    .items(facebookOptions)
+                    .items(options)
                     .theme(Theme.LIGHT)
                     .negativeText(R.string.no_thanks)
                     .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice() {
@@ -148,20 +146,13 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
                         public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                             switch (which) {
                                 case 0:
-                                    Intent intent = new Intent(getApplicationContext(), AddFriendByUsernameActivity.class);
+                                    Intent intent = new Intent(getApplicationContext(), AddFriendsFromContactsActivity.class);
                                     intent.putExtra("fromRegister", true);
                                     startActivity(intent);
                                     finish();
                                     break;
 
                                 case 1:
-                                    intent = new Intent(getApplicationContext(), AddFriendsFromContactsActivity.class);
-                                    intent.putExtra("fromRegister", true);
-                                    startActivity(intent);
-                                    finish();
-                                    break;
-
-                                case 2:
                                     intent = new Intent(getApplicationContext(), AddFriendsFromFacebookActivity.class);
                                     intent.putExtra("fromRegister", true);
                                     startActivity(intent);
@@ -171,17 +162,14 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
                             return true;
                         }
                     })
-                    .onNegative(new MaterialDialog.SingleButtonCallback() {
-                        @Override
-                        public void onClick(MaterialDialog materialDialog, DialogAction dialogAction) {
-                            Intent intent = new Intent(getApplicationContext(), UnisongActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
+                    .onNegative((MaterialDialog materialDialog, DialogAction dialogAction) -> {
+                        Intent intent = new Intent(getApplicationContext(), UnisongActivity.class);
+                        startActivity(intent);
+                        finish();
                     })
                     .positiveText(R.string.choose)
                     .show();
-        });
+        });*/
     }
 
 }
