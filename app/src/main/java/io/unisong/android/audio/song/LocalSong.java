@@ -42,7 +42,6 @@ public class LocalSong extends Song {
     private String path;
     private AACEncoder encoder;
     private SongFormat format;
-    private long songStartTime;
 
     /**
      * This is the constructor for a song created from a network source. We do not need the path

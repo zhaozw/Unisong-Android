@@ -147,12 +147,9 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
 
         uploadFrame(frame);
 
-        if (uploadCount % 100 == 0) {
+        if (frame.getID() % 100 == 0)
             Log.d(LOG_TAG, "Frame #" + frame.getID() + " uploaded");
 
-        }
-
-        uploadCount++;
 
             /*
             if (song.hasAACFrame(frameToUpload)) {
@@ -194,9 +191,6 @@ public class ServerTransmitter implements Transmitter, AudioObserver {
                 break;
             case AudioStatePublisher.SEEK:
                 client.emit("seek", publisher.getSeekTime());
-                synchronized (frameToUpload) {
-                    frameToUpload = (int) (publisher.getSeekTime() / ((1024.0 * 1000.0) / 44100.0));
-                }
                 break;
             case AudioStatePublisher.PLAYING:
 //                client.emit("playing", "playing");

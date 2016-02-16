@@ -170,6 +170,8 @@ public class UnisongSession {
                     }
                 } catch (JSONException e){
                     e.printStackTrace();
+                } catch(Exception e){
+                    e.printStackTrace();
                 }
             }
         };
@@ -234,6 +236,8 @@ public class UnisongSession {
                         listener.addReceiver(new ServerReceiver(listener));
                     }
                 }
+
+                Log.d(LOG_TAG , "isMaster is : " + isMaster + "with master" + master);
             }
 
             if (object.has("users")) {
@@ -467,7 +471,6 @@ public class UnisongSession {
      * Listens for returns to the "get session" event to update the session state on the client.
      */
     private Emitter.Listener getSessionListener = (Object... args) -> {
-
         try{
             JSONObject object = (JSONObject) args[0];
             parseJSONObject(object);
@@ -786,11 +789,14 @@ public class UnisongSession {
 
     private void startPlaying(){
 
-        if(this != currentSession || !isLoaded || sessionState == null || !sessionState.equals("playing"))
+        if(this != currentSession || !isLoaded || sessionState == null || !sessionState.equals("playing")) {
+            Log.d(LOG_TAG , "Not updating session status.");
             return;
+        }
+
 
         try {
-            Log.d(LOG_TAG, "Playing the session with a RESUME.");
+            Log.d(LOG_TAG, "Playing the session with a seek");
             TimeManager timeManager = TimeManager.getInstance();
             Song currentSong = getCurrentSong();
             long startTime = currentSong.getSongStartTime();
@@ -800,12 +806,19 @@ public class UnisongSession {
 
             timeManager.setSongStartTime(startTime);
 
+            if(timeManager.getSongTime() > currentSong.getDuration()){
+                timeManager.setSongStartTime(0);
+                return;
+            }
 
-            // TODO : replace the default 500 frames.
-            Listener listener = Listener.getInstance();
-            listener.requestData(getCurrentSong());
+            if(!isMaster) {
+                // TODO : replace the default 500 frames.
+                Listener listener = Listener.getInstance();
+                listener.requestData(getCurrentSong());
+            }
 
             publisher.setState(AudioStatePublisher.PLAYING);
+            Log.d(LOG_TAG , "Seeking to time " + timeManager.getSongTime());
             publisher.seek(timeManager.getSongTime());
 
         } catch (NullPointerException e){
