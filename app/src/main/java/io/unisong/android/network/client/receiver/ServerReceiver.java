@@ -312,19 +312,19 @@ public class ServerReceiver implements Receiver{
     @Override
     public void requestData(Song songToRequest, int startRange, int endRange) {
         Log.d(LOG_TAG, "Requesting from " + startRange + " to " + endRange);
-        for(int i = startRange ; i <= endRange; i++){
-            try {
-                JSONObject requestObject = new JSONObject();
-                requestObject.put("dataID", i);
-                requestObject.put("songID" , songToRequest.getID());
-                requestObject.put("sessionID" , songToRequest.getSessionID());
+        try {
+            JSONObject requestObject = new JSONObject();
+            requestObject.put("startDataID", startRange);
+            requestObject.put("stopDataID", endRange);
+            requestObject.put("songID" , songToRequest.getID());
+            requestObject.put("sessionID" , songToRequest.getSessionID());
 
-                client.emit("request data", requestObject);
-            } catch (JSONException e){
-                e.printStackTrace();
-                Log.d(LOG_TAG , "JSONException in requestData!");
-            }
+            client.emit("request data", requestObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG , "JSONException in requestData!");
         }
+
     }
 
     public void destroy(){

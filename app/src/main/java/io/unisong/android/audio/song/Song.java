@@ -100,6 +100,10 @@ public abstract class Song {
 
     public abstract void addFrame(AudioFrame frame);
 
+    /**
+     * Duration is in microseconds
+     * @return duration - duration of the song
+     */
     public abstract long getDuration();
 
     public abstract JSONObject toJSON();
