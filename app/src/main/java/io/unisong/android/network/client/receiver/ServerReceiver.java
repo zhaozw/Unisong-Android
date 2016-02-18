@@ -315,11 +315,11 @@ public class ServerReceiver implements Receiver{
         try {
             JSONObject requestObject = new JSONObject();
             requestObject.put("startDataID", startRange);
-            requestObject.put("stopDataID", endRange);
+            requestObject.put("endDataID", endRange);
             requestObject.put("songID" , songToRequest.getID());
             requestObject.put("sessionID" , songToRequest.getSessionID());
 
-            client.emit("request data", requestObject);
+            client.emit("request data range", requestObject);
         } catch (JSONException e){
             e.printStackTrace();
             Log.d(LOG_TAG , "JSONException in requestData!");
