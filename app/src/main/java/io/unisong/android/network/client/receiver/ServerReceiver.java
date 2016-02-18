@@ -324,7 +324,6 @@ public class ServerReceiver implements Receiver{
             e.printStackTrace();
             Log.d(LOG_TAG , "JSONException in requestData!");
         }
-
     }
 
     public void destroy(){
