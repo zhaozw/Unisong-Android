@@ -320,6 +320,9 @@ public class FriendsList implements Serializable{
      * @param callback the callback that is called
      */
     public void addFriendToList(User user, Callback callback){
+        if(outgoingRequests.contains(user))
+            return;
+
         try{
             JSONObject object = new JSONObject();
             object.put("friendID" , user.getUUID().toString());
@@ -340,6 +343,9 @@ public class FriendsList implements Serializable{
     }
 
     public void addFriendToList(User user){
+        if(outgoingRequests.contains(user))
+            return;
+
         Callback callback = new Callback() {
             @Override
             public void onFailure(Request request, IOException e) {
