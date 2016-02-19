@@ -164,8 +164,8 @@ public class LoginActivity extends ActionBarActivity {
                             e.printStackTrace();
                         }
 
-
                     }
+
 
 
                 };
@@ -177,7 +177,10 @@ public class LoginActivity extends ActionBarActivity {
                 Bundle parameters = new Bundle();
                 parameters.putString("fields", "email");
                 request.setParameters(parameters);
-                request.executeAsync();
+                runOnUiThread(() -> {
+                    request.executeAsync();
+                    Log.d(LOG_TAG, "Executing Async on UI thread");
+                });
 
             } else if(response.toString().contains("code=200")){
                 //If a user exists with that FB ID then we can proceed straight to FriendsActivity

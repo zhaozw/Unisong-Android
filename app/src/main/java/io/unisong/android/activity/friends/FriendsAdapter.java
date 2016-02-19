@@ -2,6 +2,7 @@ package io.unisong.android.activity.friends;
 
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,6 +29,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
     private List<User> dataset;
 
+    private SwipeRefreshLayout refreshLayout;
     private Handler handler;
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -162,5 +164,6 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
                 username.setText("@" + user.getUsername());
         }
     }
+
 
 }

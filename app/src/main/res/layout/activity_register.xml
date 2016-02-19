@@ -23,9 +23,21 @@
         android:layout="@layout/custom_float_label"/>
 
     <com.iangclifton.android.floatlabel.FloatLabel
-        android:id="@+id/registerPassword"
+        android:id="@+id/registerName"
         android:textColorHint="@color/secondaryText"
         android:layout_below="@+id/registerUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/name"
+        android:layout_marginLeft="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_vertical_margin"
+        android:layout="@layout/custom_float_label"/>
+
+    <com.iangclifton.android.floatlabel.FloatLabel
+        android:id="@+id/registerPassword"
+        android:textColorHint="@color/secondaryText"
+        android:layout_below="@+id/registerName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"

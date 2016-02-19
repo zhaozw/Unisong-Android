@@ -83,12 +83,12 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     private Toolbar mToolbar;
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
-    private FriendsAdapter friendsAapter;
-    private FriendsList friendsList;
+    private FriendsAdapter friendsAdapter;
     private CircleImageView userProfileImageView;
     private Intent networkIntent;
     private Intent mediaIntent;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private FriendsList friendsList;
     
 
     @Override
@@ -101,8 +101,11 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
 
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            if(friendsAapter != null)
-                friendsAapter.notifyDataSetChanged();
+            if(friendsList != null) {
+                friendsList.update();
+                friendsList.setFriendsAdapter(friendsAdapter);
+                friendsList.setRefreshLayout(swipeRefreshLayout);
+            }
         });
 
         // use this setting to improve performance if you know that changes
@@ -200,13 +203,19 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
         addFriendButton.setBackground(iconicFontDrawable);
 
+        boolean fromRegister = getIntent().getBooleanExtra("fromRegister", false);
+
+        // if the user is registering and not from facebook then
+        if(fromRegister)
+            onProfileClick(null);
+
     }
 
     public void onResume(){
         super.onResume();
 
-        if(friendsAapter != null)
-            friendsAapter.notifyDataSetChanged();
+        if(friendsAdapter != null)
+            friendsAdapter.notifyDataSetChanged();
 
         // Logs 'install' and 'app activate' App Events.
         AppEventsLogger.activateApp(this);
@@ -222,6 +231,13 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
 
     public void onProfileClick(View view){
         Log.d(LOG_TAG, "User Profile onClick Received!");
+
+        // Facebook users can't change their profile pictures
+        User user = CurrentUser.getInstance();
+
+        if(user != null && user.isFacebookUser())
+            return;
+
         // TODO : set the colors for the text.
         new MaterialDialog.Builder(this)
                 .content(R.string.change_profile_picture)
@@ -766,9 +782,10 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
     }
 
     private void loadFriendsList(){
-        // specify an friendsAapter (see also next example)
-        friendsAapter = new FriendsAdapter(friendsList.getFriends());
-        recyclerView.setAdapter(friendsAapter);
+        // specify an friendsAdapter (see also next example)
+        friendsAdapter = new FriendsAdapter(friendsList.getFriends());
+        friendsList.setFriendsAdapter(friendsAdapter);
+        recyclerView.setAdapter(friendsAdapter);
     }
 
     public void friendsListLoaded(){

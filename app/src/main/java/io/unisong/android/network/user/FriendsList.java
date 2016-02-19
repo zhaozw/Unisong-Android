@@ -3,9 +3,11 @@ package io.unisong.android.network.user;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 
 import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONArray;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import io.unisong.android.activity.UnisongActivity;
+import io.unisong.android.activity.friends.FriendsAdapter;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
 
@@ -40,6 +43,7 @@ public class FriendsList implements Serializable{
 
     private static UnisongActivity activityToNotify;
     private static FriendsList instance;
+    private FriendsAdapter adapter;
 
     public static FriendsList getInstance(){
         return instance;
@@ -53,6 +57,7 @@ public class FriendsList implements Serializable{
     private List<User> friends;
     private List<User> incomingRequests;
     private List<User> outgoingRequests;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     // Users not currently in an Unisong session.
     private List<User> idleUsers;
@@ -205,7 +210,7 @@ public class FriendsList implements Serializable{
             for(int i = 0; i < friendsArray.length(); i++){
 
                 JSONObject object = friendsArray.getJSONObject(i);
-                User userToAdd = new User(UUID.fromString(object.getString("userID")));
+                User userToAdd = UserUtils.getUser(UUID.fromString(object.getString("userID")));
                 boolean isEqual = false;
 
                 // Make sure the user we're loading isn't already in friends
@@ -273,6 +278,12 @@ public class FriendsList implements Serializable{
                 // TODO : enable caching.
                 //writeToDisk();
             }
+
+            if(swipeRefreshLayout != null)
+                swipeRefreshLayout.setRefreshing(false);
+
+            if(adapter != null)
+                adapter.notifyDataSetChanged();
         } catch (IOException e){
             // TODO : handle
             e.printStackTrace();
@@ -329,8 +340,29 @@ public class FriendsList implements Serializable{
     }
 
     public void addFriendToList(User user){
-        synchronized (friends){
-            friends.add(user);
+        Callback callback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+
+            }
+        };
+
+        try{
+            JSONObject object = new JSONObject();
+            object.put("friendID" , user.getUUID().toString());
+            HttpClient.getInstance().delete(NetworkUtilities.HTTP_URL + "/user/friends", object, callback);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+        if(incomingRequests.contains(user)) {
+            synchronized (friends) {
+                friends.add(user);
+            }
         }
     }
 
@@ -482,5 +514,14 @@ public class FriendsList implements Serializable{
         idleUsers = null;
         incomingRequests = null;
         outgoingRequests = null;
+    }
+
+
+    public void setRefreshLayout(SwipeRefreshLayout refreshLayout){
+        this.swipeRefreshLayout = refreshLayout;
+    }
+
+    public void setFriendsAdapter(FriendsAdapter adapter){
+        this.adapter = adapter;
     }
 }

@@ -49,7 +49,7 @@ public class UserUtils {
     @Nullable
     public static User getUserByPhone(String formattedPhoneNumber){
         for(User user : users){
-            if(user.getPhoneNumber().equals(formattedPhoneNumber)){
+            if(user != null && user.getPhoneNumber() != null && user.getPhoneNumber().equals(formattedPhoneNumber)){
                 return user;
             }
         }

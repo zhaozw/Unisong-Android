@@ -34,6 +34,7 @@ import io.unisong.android.activity.friends.contacts.AddFriendsFromContactsActivi
 import io.unisong.android.activity.friends.username.AddFriendByUsernameActivity;
 import io.unisong.android.network.NetworkUtilities;
 import io.unisong.android.network.http.HttpClient;
+import io.unisong.android.network.user.CurrentUser;
 
 /**
  * This activity handles user registration. If a user desires to register with a Username
@@ -48,7 +49,7 @@ public class RegisterActivity extends AppCompatActivity {
     private Toolbar toolbar;
 
     private String formattedPhoneNumber;
-    private FloatLabel username, password, passwordVerify, phoneNumber;
+    private FloatLabel username, password, passwordVerify, phoneNumber, name;
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -58,6 +59,7 @@ public class RegisterActivity extends AppCompatActivity {
         password = (FloatLabel) findViewById(R.id.registerPassword);
         passwordVerify = (FloatLabel) findViewById(R.id.registerPasswordVerify);
         phoneNumber = (FloatLabel) findViewById(R.id.register_phone_number);
+        name = (FloatLabel) findViewById(R.id.registerName);
 
         toolbar = (Toolbar) findViewById(R.id.login_bar);
 
@@ -157,6 +159,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         String username = this.username.getEditText().getText().toString();
         String password = this.password.getEditText().getText().toString();
+        String name = this.name.getEditText().getText().toString();
         String phonenumber = formattedPhoneNumber;
 
         if(!PhoneNumberUtils.isGlobalPhoneNumber(phonenumber)){
@@ -169,6 +172,7 @@ public class RegisterActivity extends AppCompatActivity {
             json.put("username", username);
             json.put("password", password);
             json.put("phone_number", phonenumber);
+            json.put("name" , name);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -202,12 +206,16 @@ public class RegisterActivity extends AppCompatActivity {
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_USERNAME_KEY , username);
         PrefUtils.saveToPrefs(getApplicationContext() , PrefUtils.PREFS_LOGIN_PASSWORD_KEY, password);
         PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+
         PrefUtils.saveToPrefs(this, PrefUtils.PREFS_HAS_LOGGED_IN_KEY, "yes");
 
         PrefUtils.saveToPrefs(getApplicationContext(), PrefUtils.PREFS_ACCOUNT_TYPE_KEY, "unisong");
+        new CurrentUser(getApplicationContext() , "unisong");
 
 
+        Log.d(LOG_TAG , "Creating user");
         Intent intent = new Intent(getApplicationContext() , UnisongActivity.class);
+        intent.putExtra("fromRegister" , true);
         startActivity(intent);
         finish();
         /*

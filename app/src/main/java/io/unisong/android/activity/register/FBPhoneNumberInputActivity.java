@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberFormattingTextWatcher;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -20,6 +21,8 @@ import com.iangclifton.android.floatlabel.FloatLabel;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -102,7 +105,43 @@ public class FBPhoneNumberInputActivity extends ActionBarActivity{
         });
 
         Log.d(LOG_TAG, "onRegister called, starting register thread.");
-        getRegisterThread().start();
+
+        Callback verifyCodeCallback = new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if(response.code() == 200) {
+                    getRegisterThread().start();
+                } else {
+                    runOnUiThread(() -> {
+                        String message = getResources().getString(R.string.wrong_code);
+                        Toast toast = Toast.makeText(getApplicationContext() , message , Toast.LENGTH_LONG);
+                        toast.show();
+                    });
+                }
+            }
+        };
+
+
+        new MaterialDialog.Builder(this)
+                .title(R.string.verification_code)
+                .content(R.string.verification_code_text)
+                .inputType(InputType.TYPE_CLASS_TEXT)
+                .theme(Theme.LIGHT)
+                .input(R.string.verification_code, R.string.empty, new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(MaterialDialog dialog, CharSequence input) {
+                        // Do something
+                        HttpClient.getInstance().post(NetworkUtilities.HTTP_URL +
+                                "/user/verify-phone-confirmation-code/" + formattedPhoneNumber
+                                + "/code/" + input.toString() , new JSONObject(), verifyCodeCallback );
+
+                    }
+                }).show();
     }
 
     private Thread getRegisterThread(){

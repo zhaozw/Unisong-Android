@@ -115,4 +115,6 @@
     <string name="deny_friend_succeeded">Friend request denied!</string>
 
     <string name="resync">Resync</string>
+    <string name="wrong_code">Wrong Code!</string>
+    <string name="name">Name</string>
 </resources>

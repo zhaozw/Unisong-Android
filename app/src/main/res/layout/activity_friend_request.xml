@@ -18,12 +18,13 @@
         android:text="@string/friend_requests_label"
         android:textSize="16sp"/>
 
-        <android.support.v7.widget.RecyclerView
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
-            android:id="@+id/friend_requests_recyclerview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/friend_request_label"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:id="@+id/friend_requests_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
 
 

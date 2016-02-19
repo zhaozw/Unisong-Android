@@ -38,7 +38,8 @@ public class Contact {
         this.name = name;
         this.phoneNumber = phoneNumber;
         HttpClient client = HttpClient.getInstance();
-        client.get(NetworkUtilities.HTTP_URL + "/user/get-by-phonenumber/" + phoneNumber, checkUserExists);
+        Log.d(LOG_TAG , "Checking User for name : " + name + " and phoneNumber : " + phoneNumber);
+        client.get(NetworkUtilities.HTTP_URL + "/user/get-by-phone/" + phoneNumber, checkUserExists);
     }
 
     public String getName(){
@@ -65,11 +66,11 @@ public class Contact {
             if(response.code() == 200){
                 try {
                     Log.d(LOG_TAG , "User exists!");
-                    String body = response.body().toString();
+                    String body = response.body().string();
                     JSONObject userJSON = new JSONObject(body);
                     try{
 
-                        String phoneNumber = userJSON.getString("phonenumber");
+                        String phoneNumber = userJSON.getString("phone_number");
 
                         user = UserUtils.getUserByPhone(phoneNumber);
 
