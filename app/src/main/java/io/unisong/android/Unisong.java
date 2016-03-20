@@ -8,6 +8,10 @@ import com.crashlytics.android.Crashlytics;
 import io.fabric.sdk.android.Fabric;
 
 /**
+ * This is the Application class used to A. create and instantiate the Crashlytics instance and
+ * provide access to the static application context in case it is required.
+ *
+ * It also allows for MultiDex support.
  * Created by Ethan on 2/14/2015.
  */
 public class Unisong extends Application {
