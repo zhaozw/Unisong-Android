@@ -82,29 +82,6 @@ public class AACEncoder{
     }
 
 
-
-
-    private void releaseCodec(){
-        if(codec != null) {
-            codec.stop();
-            codec.release();
-            codec = null;
-        }
-    }
-
-    //The code to stop the decoding
-    public void stopDecode(){
-    }
-
-    private int mCount = 0;
-
-
-    public void stop(){
-        if(encodeThread != null)
-            encodeThread.stopEncoding();
-    }
-
-
     /**
      * Seeks the AACEncoder, stopping the old thread(if it exists)
      * and starting another
@@ -119,21 +96,8 @@ public class AACEncoder{
         encodeThread.startEncode(seekTime);
     }
 
-    public void setInputFormat(MediaFormat format){
-        inputFormat = format;
-    }
-
     public Map<Integer , AudioFrame> getFrames(){
         return outputFrames;
-    }
-
-
-    public void lastFrame(int currentID){
-        lastFrame = currentID;
-    }
-
-    public int getLastFrame(){
-        return lastFrame;
     }
 
     public void destroy(){

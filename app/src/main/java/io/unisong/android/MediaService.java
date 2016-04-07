@@ -13,6 +13,7 @@ import io.unisong.android.audio.MusicDataManager;
 import io.unisong.android.audio.audio_track.AudioTrackManager;
 
 /**
+ * The MediaService is a long-running service used to provide Media data, such as the MusicDataManager.
  * Created by Ethan on 1/25/2015.
  */
 public class MediaService extends Service{
