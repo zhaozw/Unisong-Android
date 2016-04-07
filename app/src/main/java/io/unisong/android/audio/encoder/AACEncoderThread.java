@@ -35,12 +35,13 @@ public class AACEncoderThread extends Thread {
 
     private static final String LOG_TAG = AACEncoderThread.class.getSimpleName();
 
-    private boolean running = false , waiting = false;
+    private boolean running = false;
     private int dataIndex = 0;
 
     private long startTime;
-    private Map<Integer, AudioFrame> inputFrames;
-    private Map<Integer, AudioFrame> outputFrames;
+
+    // The input frames in PCM and the output frames in AAC
+    private Map<Integer, AudioFrame> inputFrames, outputFrames;
 
     private int currentInputID, currentOutputID;
     private int frameBufferSize = 50, songID;
@@ -54,6 +55,13 @@ public class AACEncoderThread extends Thread {
     private FileDecoder decoder;
     private MediaCodec codec;
 
+    /**
+     * Create an AACEncoderThread instance to handle the encoding and
+     * of a given song
+     * @param outputFrames the map of output frames to be shared with the AACEncoder
+     * @param songID the songID of the song to encode (for the AudioFrame)
+     * @param filePath the path of the file to encode from
+     */
     public AACEncoderThread(Map<Integer, AudioFrame> outputFrames,
                             int songID , String filePath){
         this.outputFrames = outputFrames;
@@ -62,18 +70,35 @@ public class AACEncoderThread extends Thread {
         inputFrames = new HashMap<>();
     }
 
+    /**
+     * Sets the buffer size in number of frames
+     * @param size the number of frames to keep in the buffer
+     */
     public void setFrameBufferSize(int size){
         frameBufferSize = size;
     }
 
+    /**
+     * Begins the encoding process and starts a thread.
+     */
     public void startEncode(){
         currentInputID = 0;
         decoder = new FileDecoder(filePath);
+        // set the buffer size to larger than usual to ensure there is no latency
+        decoder.setFrameBufferSize(100);
+
+        // begin the decoder so we have PCM data
         decoder.start(startTime);
         Log.d(LOG_TAG , "Starting for path : " + filePath);
+
+        // start the thread
         this.start();
     }
 
+    /**
+     * Begins the encoding process at a given time
+     * @param time the time to begin at in microseconds
+     */
     public void startEncode(long time){
         startTime = time;
         currentOutputID = (int) (startTime / (1024000.0 / 44100.0));
@@ -87,6 +112,9 @@ public class AACEncoderThread extends Thread {
         running = false;
     }
 
+    /**
+     * Begins the process of encoding the AAC data.
+     */
     private void encode(){
         boolean firstData = true;
         // TODO : get rid of frames that have been played.
@@ -101,7 +129,8 @@ public class AACEncoderThread extends Thread {
         } catch(IOException e){
             e.printStackTrace();
         }
-        // check we have a valid codec instance
+
+        // ensure that we have a valid codec instance
         if (codec == null){
             Log.d(LOG_TAG , "codec is null ):");
             return;
@@ -127,19 +156,14 @@ public class AACEncoderThread extends Thread {
         final long kTimeOutUs = 1000;
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
         Log.d(LOG_TAG , "Info size is : "  + info.size);
-        //TODO: set sawInputEOS when we see the input EOS
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
         int noOutputCounter = 0;
-        int noOutputCounterLimit = 10;
-
-        int largestSize = 0;
 
 
-        //TODO: deal with no data/end of stream
         while(running){
 
-
+            // wait while we do not have the input frame
             if(!inputFrames.containsKey(currentInputID)) {
                 boolean firstWait = true;
                 while (!decoder.hasOutputFrame(currentInputID)) {
@@ -153,14 +177,11 @@ public class AACEncoderThread extends Thread {
                     }
 
                     try {
-                        waiting = true;
                         synchronized (this) {
                             this.wait(10);
                         }
-                        waiting = false;
                     } catch (InterruptedException e) {
                         Log.d(LOG_TAG, "Waiting interrupted");
-                        waiting = false;
                     }
 
 
@@ -172,6 +193,7 @@ public class AACEncoderThread extends Thread {
             if(!inputFrames.containsKey(currentInputID))
                 Log.d(LOG_TAG , "Does not contain key");
 
+            // while our output frames are full, wait.
             while(outputFrames.size() >= frameBufferSize){
                 try{
                     synchronized (this){
@@ -185,11 +207,9 @@ public class AACEncoderThread extends Thread {
 
             AudioFrame frame = inputFrames.get(currentInputID);
 
-            // TODO : replace this when we've got a better idea what's going on
             if(frame == null)
                 continue;
 
-//            Log.d(LOG_TAG , frame.toString());
             long playTime = -1;
             long length = -1;
 
@@ -221,10 +241,12 @@ public class AACEncoderThread extends Thread {
                 final byte[] chunk = new byte[info.size];
                 buf.get(chunk);
                 buf.clear();
+                // if this is the first data received, upload the CSD buffers
                 if(firstData){
                     uploadCSDBuffer(chunk);
                     firstData = false;
                 } else if(chunk.length > 0){
+                    // otherwise create a frame
                     createFrame(chunk);
                 }
 
@@ -241,7 +263,6 @@ public class AACEncoderThread extends Thread {
                 codecOutputBuffers = codec.getOutputBuffers();
                 Log.d(LOG_TAG, "output buffers have changed.");
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
-                //TODO: inform AudioBroadcaster of this format.
                 MediaFormat outFormat = codec.getOutputFormat();
                 Log.d(LOG_TAG, "output format has changed to " + outFormat);
             } else {
@@ -266,12 +287,10 @@ public class AACEncoderThread extends Thread {
      * @param dstBuf - the ByteBuffer to place data into
      * @return
      */
-    //TODO: Make this more efficient by getting rid of the byte array assignments and check if it makes a difference
     private int setData(AudioFrame frame , ByteBuffer dstBuf){
 
         byte[] data = frame.getData();
         int sampleSize = data.length;
-//        Log.d(LOG_TAG , "Data size is: " + sampleSize + " mOldDataIndex: " + dataIndex  + " , and currentFrame is " + currentInputID);
 
         int spaceLeft = dstBuf.capacity() - dstBuf.position();
 
@@ -284,7 +303,6 @@ public class AACEncoderThread extends Thread {
             }
 
             inputFrames.remove(frame.getID());
-//            Log.d(LOG_TAG , "1: Data is : " + data.length);
             currentInputID++;
 
         } else {
@@ -303,7 +321,6 @@ public class AACEncoderThread extends Thread {
             }
 
             data = Arrays.copyOfRange(data, startIndex , endIndex);
-//            Log.d(LOG_TAG , "2: Data is : " + data.length);
         }
 
         dstBuf.put(data);
@@ -311,18 +328,17 @@ public class AACEncoderThread extends Thread {
         return data.length;
     }
 
+    /**
+     * Signals to the thread that we are done encoding.
+     */
     public void stopEncoding(){
         running = false;
-
-        if(!waiting)
-            return;
-
-        synchronized (this) {
-            this.interrupt();
-        }
     }
 
-    //Creates a frame out of PCM data and adds it to the outputFrames
+    /**
+     *
+     * @param data
+     */
     private void createFrame(byte[] data){
         AudioFrame frame = new AudioFrame(data, currentOutputID, songID);
         currentOutputID++;
@@ -342,7 +358,9 @@ public class AACEncoderThread extends Thread {
     }
 
     /**
-     * Uploads the CSD Buffers to the server for standalone download by the clients.
+     * Uploads the CSD(Codec specific data) Buffers to the server for standalone download by the clients.
+     * Without the CSD buffers when the client attempts to download the data at some point in the middle
+     * of the output it will fail.
      */
     private void uploadCSDBuffer(byte[] buffer){
         HttpClient client = HttpClient.getInstance();

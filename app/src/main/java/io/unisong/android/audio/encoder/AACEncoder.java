@@ -11,7 +11,8 @@ import io.unisong.android.audio.AudioFrame;
 import io.unisong.android.audio.song.Song;
 
 /**
- * Takes in PCM data and encodes to AAC
+ * This class handles the encoding of AAC data for transmission over
+ * the network to client devices. An encoder is created for a song as a whole,
  * Created by Ethan on 4/27/2015.
  */
 public class AACEncoder{
@@ -44,11 +45,9 @@ public class AACEncoder{
 
     //The highest frame # used.
     private int highestFrameUsed;
-    private int frameBufferSize;
     private boolean removeFrames = true;
 
     public AACEncoder(Song song){
-        frameBufferSize = 20;
         highestFrameUsed = 0;
         this.song = song;
 
@@ -56,10 +55,6 @@ public class AACEncoder{
 
         lastFrame = -1;
         currentInputFrameID = 0;
-    }
-
-    public void setBufferSize(int size){
-        frameBufferSize = size;
     }
 
     /**
@@ -70,14 +65,20 @@ public class AACEncoder{
         removeFrames = remove;
     }
 
+    /**
+     * Start the encoding
+     * @param startTime
+     * @param filePath
+     */
     public void encode(long startTime, String filePath){
-        try {
-            this.filePath = filePath;
-            encodeThread = new AACEncoderThread(outputFrames, song.getID() , filePath);
-            encodeThread.startEncode(startTime);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        this.filePath = filePath;
+
+        // If we have a thread currently running, stop it
+        if(encodeThread != null)
+            encodeThread.stopEncoding();
+
+        encodeThread = new AACEncoderThread(outputFrames, song.getID() , filePath);
+        encodeThread.startEncode(startTime);
     }
 
 
@@ -104,6 +105,11 @@ public class AACEncoder{
     }
 
 
+    /**
+     * Seeks the AACEncoder, stopping the old thread(if it exists)
+     * and starting another
+     * @param seekTime
+     */
     public void seek(long seekTime){
         // TODO : uncomment this as well.
         if(encodeThread != null)

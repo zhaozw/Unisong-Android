@@ -7,6 +7,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
@@ -18,6 +19,9 @@ import io.unisong.android.network.packets.FramePacket;
 import io.unisong.android.network.packets.NetworkPacket;
 
 /**
+ * The LANReceiver class listens to broadcast packets to retrieve information
+ * from the local area network. Implemented in conjunction with ClientTCPHandler
+ * to provide reliable multicast/broadcast functionality
  * Created by ezturner on 6/8/2015.
  */
 public class LANReceiver {
@@ -33,45 +37,56 @@ public class LANReceiver {
     //The boolean indicating whether we are listening to a stream
     private boolean isListening;
 
-    //The boolean that tells the processing thread that the packets are ready
-    private boolean mPacketsReady;
-
     //The thread where the socket listens for packets
     private Thread listenThread;
 
     //The thread that processes the packets
     private Thread processingThread;
 
+    //The queue of packets to be processed.
     private Queue<DatagramPacket> processingQueue;
 
+    // The parent Listener which coordinates various communication methods
     private Listener parent;
 
-    private int mPort;
-
+    /**
+     * Creates a LANReceiver with a selected Listener as its parent.
+     * @param parent the Listener to utilize to coordinate with the host
+     */
     public LANReceiver(Listener parent){
         this.parent = parent;
     }
 
-    //Start playing from a host, start listening to the stream
+    /**
+     * Start listening from a selected Host
+     * Begins a listening and processing thread
+     * @param host the host to listen from
+     */
     public void playFromMaster(Host host){
 
         Log.d(LOG_TAG, "Listening from host: " + host.getIP().toString().substring(1) + ":" + host.getPort());
 
+        // retrieve any packets already stored in memory
         packets = convertPackets(host.getPackets());
 
-        mPort = host.getPort();
         isListening = true;
 
+        // Create the socket and queue
         socket = host.getSocket();
+        processingQueue = new LinkedList<>();
 
+        // begin listening
         listenThread = getListenThread();
         listenThread.start();
 
         processingThread = getProcessingThread();
         processingThread.start();
-
-
     }
+
+    /**
+     * Retrieves a thread that will listen on Unisong's port
+     * @return
+     */
     private Thread getListenThread(){
         return new Thread(){
             public void run(){
@@ -83,6 +98,11 @@ public class LANReceiver {
         };
     }
 
+    /**
+     * Retrieves a thread that will process the queue of received
+     * DatagramPackets and turn them into networkPackets for
+     * @return
+     */
     private Thread getProcessingThread(){
         return new Thread(){
             public void run(){
@@ -129,7 +149,11 @@ public class LANReceiver {
         };
     }
 
-    //Changes the packets from DatagramPacket to
+    /**
+     *
+     * @param packets
+     * @return
+     */
     private Map<Integer , NetworkPacket> convertPackets(ArrayList<DatagramPacket> packets){
         Map<Integer , NetworkPacket> networkPackets = new HashMap<Integer , NetworkPacket>();
 
@@ -149,7 +173,9 @@ public class LANReceiver {
     private long startTime = 0;
 
 
-
+    /**
+     *
+     */
     private void listenForPacket(){
         DatagramPacket packet = new DatagramPacket(new byte[1030] , 1030);
         try{
@@ -188,6 +214,11 @@ public class LANReceiver {
         }*/
     }
 
+    /**
+     *
+     * @param packet
+     * @return
+     */
     private NetworkPacket handlePacket(DatagramPacket packet){
         NetworkPacket networkPacket = null;
         //TODO: put stream ID back and implement all dat junk
@@ -219,6 +250,11 @@ public class LANReceiver {
         return networkPacket;
     }
 
+    /**
+     *
+     * @param packet
+     * @return
+     */
     private NetworkPacket handleFramePacket(DatagramPacket packet){
 
         FramePacket fp = new FramePacket(packet);
@@ -229,12 +265,20 @@ public class LANReceiver {
         return fp;
     }
 
+    /**
+     *
+     * @param ID
+     * @return
+     */
     public DatagramPacket getPacket(int ID){
         synchronized (packets){
             return packets.get(ID).getPacket();
         }
     }
 
+    /**
+     *
+     */
     public void destroy(){
         socket.close();
         isListening = false;
