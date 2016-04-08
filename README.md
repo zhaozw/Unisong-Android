@@ -29,4 +29,10 @@ AudioStatePublisher is a Publisher class that notifies all registered AudioObser
 
 This class simply takes in a file path and decodes it to PCM data. It is used for both the playing of a local song and the conversion to AAC (File -> PCM -> AAC)
 
-#### SongDecoder
+#### UnisongDecoder
+
+This will decode a UnisongSong, that is AAC information from the network
+
+#### AACEncoder
+
+This class starts an AACEncoderThread to start the process of extracting PCM data and encoding it into AAC
