@@ -1,6 +1,7 @@
 package io.unisong.android.network.session;
 
 import android.os.Message;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 
@@ -53,6 +54,7 @@ public class UnisongSession {
 
     private static UnisongActivity activityToNotify;
     private static UnisongSession currentSession;
+    private FragmentActivity refreshActivity;
 
     public static UnisongSession getCurrentSession(){
         return currentSession;
@@ -471,15 +473,20 @@ public class UnisongSession {
      * Listens for returns to the "get session" event to update the session state on the client.
      */
     private Emitter.Listener getSessionListener = (Object... args) -> {
-        try{
+        try {
             JSONObject object = (JSONObject) args[0];
             parseJSONObject(object);
-            Log.d(LOG_TAG  , "get session Received");
-            if(swipeRefresh != null){
-                swipeRefresh.setRefreshing(false);
-                swipeRefresh = null;
+            Log.d(LOG_TAG, "get session Received");
+            if (swipeRefresh != null&& refreshActivity != null) {
+                refreshActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        swipeRefresh.setRefreshing(false);
+                        swipeRefresh = null;
+                    }
+                });
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     };
@@ -770,7 +777,8 @@ public class UnisongSession {
         sessionHandler = handler;
     }
 
-    public void setRefreshLayout(SwipeRefreshLayout swipeRefresh){
+    public void setRefreshLayout(FragmentActivity activity, SwipeRefreshLayout swipeRefresh){
+        this.refreshActivity = activity;
         this.swipeRefresh = swipeRefresh;
     }
 

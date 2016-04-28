@@ -57,7 +57,7 @@ public class SessionSongsFragment extends Fragment {
                 UnisongSession session = UnisongSession.getCurrentSession();
                 if(session != null) {
                     session.getUpdate();
-                    session.setRefreshLayout(swipeRefreshLayout);
+                    session.setRefreshLayout(getActivity(), swipeRefreshLayout);
                 }
             });
 

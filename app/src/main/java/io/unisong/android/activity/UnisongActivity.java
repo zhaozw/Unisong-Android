@@ -104,7 +104,7 @@ public class UnisongActivity extends AppCompatActivity implements ConnectionObse
             if(friendsList != null) {
                 friendsList.update();
                 friendsList.setFriendsAdapter(friendsAdapter);
-                friendsList.setRefreshLayout(swipeRefreshLayout);
+                friendsList.setRefreshLayout(this, swipeRefreshLayout);
             }
         });
 

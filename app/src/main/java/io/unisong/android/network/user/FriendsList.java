@@ -1,5 +1,6 @@
 package io.unisong.android.network.user;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -44,6 +45,7 @@ public class FriendsList implements Serializable{
     private static UnisongActivity activityToNotify;
     private static FriendsList instance;
     private FriendsAdapter adapter;
+    private Activity refreshAcitivy;
 
     public static FriendsList getInstance(){
         return instance;
@@ -279,11 +281,18 @@ public class FriendsList implements Serializable{
                 //writeToDisk();
             }
 
-            if(swipeRefreshLayout != null)
-                swipeRefreshLayout.setRefreshing(false);
+            if(refreshAcitivy != null) {
+                refreshAcitivy.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (swipeRefreshLayout != null)
+                            swipeRefreshLayout.setRefreshing(false);
 
-            if(adapter != null)
-                adapter.notifyDataSetChanged();
+                        if (adapter != null)
+                            adapter.notifyDataSetChanged();
+                    }
+                });
+            }
         } catch (IOException e){
             // TODO : handle
             e.printStackTrace();
@@ -517,7 +526,8 @@ public class FriendsList implements Serializable{
     }
 
 
-    public void setRefreshLayout(SwipeRefreshLayout refreshLayout){
+    public void setRefreshLayout(Activity activity, SwipeRefreshLayout refreshLayout){
+        this.refreshAcitivy = activity;
         this.swipeRefreshLayout = refreshLayout;
     }
 
